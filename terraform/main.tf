@@ -108,3 +108,4 @@ resource "aws_cloudfront_distribution" "website" {
     Name        = "AI Portfolio Website"
     Environment = var.environment
   }
+}
