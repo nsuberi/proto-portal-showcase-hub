@@ -1,0 +1,50 @@
+name: Deploy AI Portfolio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: ./scripts/build.sh
+      
+    - name: Deploy infrastructure
+      run: ./scripts/deploy-infrastructure.sh
+      env:
+        TF_VAR_bucket_name: ${{ vars.BUCKET_NAME }}
+        TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+        TF_VAR_environment: ${{ vars.ENVIRONMENT || 'production' }}
+        
+    - name: Deploy site
+      run: ./scripts/deploy-site.sh
+      env:
+        BUCKET_NAME: ${{ vars.BUCKET_NAME }}
