@@ -6,40 +6,46 @@ import heroImage from "@/assets/hero-bg.jpg";
 const Portfolio = () => {
   const prototypes = [
     {
-      title: "AI Chat Assistant",
-      description: "Intelligent conversational AI with natural language processing and context awareness.",
-      link: "https://example.com/prototype1",
-      tags: ["AI", "NLP", "Chat"]
+      title: "Onboarding Advisor Council",
+      description: "A team of AI advisors guides new employees through company knowledge, helping them get productive quickly with role-based memory and stakeholder alignment.",
+      link: "#prototype1",
+      tags: ["Multi-agent", "Memory", "Onboarding"]
     },
     {
-      title: "Smart Analytics Dashboard",
-      description: "Data visualization tool powered by machine learning for predictive insights.",
-      link: "https://example.com/prototype2",
-      tags: ["Analytics", "ML", "Visualization"]
+      title: "Guitar Spiral + Music Learning",
+      description: "Interactive visual interface where musical notes spiral by pitch and octaves, with real-time chord-to-shape translation for guitar learning.",
+      link: "#prototype2",
+      tags: ["Music", "Visualization", "Learning"]
     },
     {
-      title: "Voice Recognition App",
-      description: "Real-time voice processing application with speech-to-text capabilities.",
-      link: "https://example.com/prototype3",
-      tags: ["Voice AI", "Speech", "Real-time"]
+      title: "Conversing Forest / Living Museum",
+      description: "Embodied AI agents simulate philosophical conversations about nature harmony. When visitors speak, agents pause and respond contextually.",
+      link: "#prototype3",
+      tags: ["Embodied AI", "Museum", "Interaction"]
     },
     {
-      title: "Computer Vision Tool",
-      description: "Image recognition and processing system for automated content analysis.",
-      link: "https://example.com/prototype4",
-      tags: ["Computer Vision", "Image AI", "Automation"]
+      title: "AI Development Team Simulation",
+      description: "A lightweight, always-on development team of AI agents that creates tickets, works on features, and presents demos with continuous collaboration.",
+      link: "#prototype4",
+      tags: ["Dev Team", "Automation", "Collaboration"]
     },
     {
-      title: "Recommendation Engine",
-      description: "Personalized content recommendation system using collaborative filtering.",
-      link: "https://example.com/prototype5",
-      tags: ["Recommendations", "Personalization", "AI"]
+      title: "IAM Governance: Path to Production",
+      description: "Infrastructure management that validates AWS IAM policies automatically, ensuring sandbox environments follow guidelines without ops bottlenecks.",
+      link: "#prototype5",
+      tags: ["Infrastructure", "Security", "Automation"]
     },
     {
-      title: "Natural Language Processor",
-      description: "Advanced NLP tool for text analysis, sentiment detection, and summarization.",
-      link: "https://example.com/prototype6",
-      tags: ["NLP", "Text Analysis", "Sentiment"]
+      title: "InfraOracle: Cost-Aware Architecture",
+      description: "Analyzes cloud infrastructure and offers cost-saving suggestions using AI agents, with visual dashboards and memory of past decisions.",
+      link: "#prototype6",
+      tags: ["Cloud", "Cost Optimization", "AI Analysis"]
+    },
+    {
+      title: "Story Tags: QR Characters in the Wild",
+      description: "Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.",
+      link: "#prototype7",
+      tags: ["Location-based", "Storytelling", "Tourism"]
     }
   ];
 
@@ -55,10 +61,10 @@ const Portfolio = () => {
         
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
-            AI Product Creator
+            Interactive AI Experiences
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Crafting innovative AI-powered solutions that transform ideas into intelligent experiences
+            Creating AI-powered interactions that bring people together and enhance human connection
           </p>
           <Button size="lg" className="bg-gradient-primary hover:shadow-glow transition-smooth">
             Explore My Work
@@ -73,7 +79,7 @@ const Portfolio = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Featured Prototypes</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Explore my latest AI innovations and prototype developments
+              Exploring human-AI collaboration through interactive prototypes that enhance connection and understanding
             </p>
           </div>
           
@@ -118,13 +124,13 @@ const Portfolio = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8">About Me</h2>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-            I'm a passionate AI product creator dedicated to building innovative solutions that push the boundaries 
-            of artificial intelligence. With expertise in machine learning, natural language processing, and user 
-            experience design, I transform complex AI concepts into intuitive, accessible products.
+            I explore how AI can create meaningful interactions between people through thoughtful design and technology. 
+            My work combines human-computer interaction research with practical applications that make AI more accessible 
+            and genuinely helpful in bringing communities together.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            My work focuses on creating AI systems that enhance human capabilities while maintaining ethical 
-            standards and user-centered design principles.
+            Each prototype investigates different ways technology can enhance human connection - from collaborative learning 
+            experiences to immersive storytelling that bridges digital and physical worlds.
           </p>
         </div>
       </section>
@@ -134,7 +140,7 @@ const Portfolio = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8">Let's Connect</h2>
           <p className="text-lg text-muted-foreground mb-12">
-            Interested in collaborating or learning more about my work? Get in touch!
+            Interested in exploring how AI can enhance human connection? Let's discuss ideas and collaborate!
           </p>
           
           <div className="flex justify-center gap-6">
