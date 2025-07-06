@@ -3,12 +3,6 @@ set -e
 
 echo "🏗️ Deploying AWS infrastructure with Terraform..."
 
-# Check required environment variables
-if [ -z "$TF_VAR_bucket_name" ]; then
-    echo "❌ Error: TF_VAR_bucket_name environment variable is required"
-    exit 1
-fi
-
 # Navigate to terraform directory
 cd terraform
 
