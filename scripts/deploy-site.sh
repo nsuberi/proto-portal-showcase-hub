@@ -3,15 +3,10 @@ set -e
 
 echo "📤 Deploying website to AWS S3..."
 
-# Check required environment variables
-if [ -z "$BUCKET_NAME" ]; then
-    echo "❌ Error: BUCKET_NAME environment variable is required"
-    exit 1
-fi
-
 # Get Terraform outputs
 cd terraform
 DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+BUCKET_NAME=$(terraform output -raw s3_bucket_name)
 cd ..
 
 # Sync files to S3
