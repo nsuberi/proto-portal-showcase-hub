@@ -6,9 +6,9 @@ import heroImage from "@/assets/hero-bg.jpg";
 const Portfolio = () => {
   const prototypes = [
     {
-      title: "Final Fantasy Skill Map - Upskilling Pathways",
+      title: "FFX Skill Map",
       description: "Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.",
-      link: "http://localhost:3002",
+      link: "/prototypes/ffx-skill-map/",
       tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"]
     },
     {
@@ -113,7 +113,15 @@ const Portfolio = () => {
                     variant="outline" 
                     size="sm" 
                     className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
-                    onClick={() => window.open(prototype.link, '_blank')}
+                    onClick={() => {
+                      if (prototype.link.startsWith('/')) {
+                        // Internal link - open in same tab
+                        window.location.href = prototype.link;
+                      } else {
+                        // External link - open in new tab
+                        window.open(prototype.link, '_blank');
+                      }
+                    }}
                   >
                     View Prototype
                     <ExternalLink className="ml-2 h-4 w-4" />

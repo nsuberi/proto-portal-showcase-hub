@@ -18,7 +18,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   default: '#6b7280',   // gray-500
 };
 
-function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }) {
+function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }: {
+  skills: any[],
+  connections: any[],
+  masteredSkills: string[],
+  selectedEmployeeId: string
+}) {
   const sigmaContainerRef = useRef<HTMLDivElement>(null);
   const sigmaInstanceRef = useRef<Sigma | null>(null);
   

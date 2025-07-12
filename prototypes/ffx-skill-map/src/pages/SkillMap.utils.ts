@@ -1,5 +1,5 @@
 // Utility for SkillMap Sigma.js node generation
-export function getGraphNodes(skills, masteredSkills, categoryColors) {
+export function getGraphNodes(skills: any[], masteredSkills: string[], categoryColors: any) {
   // Group skills by level for layout
   const skillsByLevel = {};
   skills.forEach(skill => {
