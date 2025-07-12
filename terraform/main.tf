@@ -61,16 +61,28 @@ resource "aws_s3_bucket_policy" "website" {
 resource "aws_cloudfront_function" "index_rewrite" {
   name    = "${var.bucket_name}-index-rewrite"
   runtime = "cloudfront-js-1.0"
-  comment = "Rewrite URLs ending with / to append index.html"
+  comment = "Rewrite URLs for prototype subdirectories and SPA routing"
   publish = true
   code    = <<-EOT
 function handler(event) {
     var request = event.request;
     var uri = request.uri;
     
-    // If the URI ends with a slash, append index.html
+    // Handle prototype directory access (e.g., /prototypes/ffx-skill-map/)
     if (uri.endsWith('/')) {
         request.uri += 'index.html';
+        return request;
+    }
+    
+    // Handle SPA routing within prototypes
+    // If the URI starts with /prototypes/ and doesn't have a file extension, 
+    // redirect to the prototype's index.html
+    if (uri.startsWith('/prototypes/')) {
+        var pathParts = uri.split('/');
+        if (pathParts.length >= 3 && !uri.includes('.')) {
+            var prototypeName = pathParts[2];
+            request.uri = '/prototypes/' + prototypeName + '/index.html';
+        }
     }
     
     return request;
