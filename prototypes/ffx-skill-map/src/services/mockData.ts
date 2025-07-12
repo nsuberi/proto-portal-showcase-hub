@@ -40,7 +40,7 @@ const mockEmployees: Employee[] = [
     id: 'emp1',
     name: 'Tidus',
     role: 'Warrior',
-    mastered_skills: ['attack', 'defend', 'fire'],
+    mastered_skills: ['attack', 'defend', 'haste', 'firaga'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -48,7 +48,7 @@ const mockEmployees: Employee[] = [
     id: 'emp2',
     name: 'Yuna',
     role: 'Mage',
-    mastered_skills: ['cure', 'fire', 'haste'],
+    mastered_skills: ['cure', 'cura', 'curaga', 'holy', 'reflect'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -56,7 +56,7 @@ const mockEmployees: Employee[] = [
     id: 'emp3',
     name: 'Auron',
     role: 'Guardian',
-    mastered_skills: ['attack', 'defend', 'protect'],
+    mastered_skills: ['attack', 'protect', 'shell', 'gravity'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -64,7 +64,7 @@ const mockEmployees: Employee[] = [
     id: 'emp4',
     name: 'Lulu',
     role: 'Black Mage',
-    mastered_skills: ['fire', 'fira', 'slow'],
+    mastered_skills: ['fire', 'fira', 'firaga', 'ultima'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -72,7 +72,7 @@ const mockEmployees: Employee[] = [
     id: 'emp5',
     name: 'Wakka',
     role: 'Ranger',
-    mastered_skills: ['attack', 'haste'],
+    mastered_skills: ['attack', 'haste', 'slow', 'protect'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -80,7 +80,7 @@ const mockEmployees: Employee[] = [
     id: 'emp6',
     name: 'Kimahri',
     role: 'Blue Mage',
-    mastered_skills: ['attack', 'cure', 'shell'],
+    mastered_skills: ['cure', 'shell', 'gravity', 'reflect'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -88,7 +88,7 @@ const mockEmployees: Employee[] = [
     id: 'emp7',
     name: 'Rikku',
     role: 'Alchemist',
-    mastered_skills: ['haste', 'slow', 'protect'],
+    mastered_skills: ['haste', 'slow', 'cura', 'protect', 'shell'],
     quizCompleted: false,
     quizConfidence: 0
   },
@@ -96,7 +96,7 @@ const mockEmployees: Employee[] = [
     id: 'emp8',
     name: 'Seymour',
     role: 'Dark Mage',
-    mastered_skills: ['fire', 'fira', 'gravity'],
+    mastered_skills: ['fire', 'fira', 'firaga', 'ultima', 'holy'],
     quizCompleted: false,
     quizConfidence: 0
   }
