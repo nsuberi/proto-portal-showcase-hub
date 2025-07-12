@@ -34,16 +34,17 @@ export * from './ui/scroll-area';
 export * from './ui/select';
 export * from './ui/separator';
 export * from './ui/sheet';
-export * from './ui/sidebar';
+
 export * from './ui/skeleton';
 export * from './ui/slider';
-export * from './ui/sonner';
+// Export sonner with unique names to avoid conflicts
+export { Toaster as SonnerToaster, toast as sonnerToast } from './ui/sonner';
 export * from './ui/switch';
 export * from './ui/table';
 export * from './ui/tabs';
 export * from './ui/textarea';
 export * from './ui/toast';
-export * from './ui/toaster';
+export { Toaster as UiToaster } from './ui/toaster';
 export * from './ui/toggle-group';
 export * from './ui/toggle';
 export * from './ui/tooltip';

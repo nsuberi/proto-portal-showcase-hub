@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@proto-portal/design-system";
+import { Card, CardContent } from "@proto-portal/design-system";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroImage from "@/assets/hero-bg.jpg";
 
