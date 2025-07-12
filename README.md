@@ -1,137 +1,216 @@
-# Welcome to your Lovable project
+# Proto Portal Showcase Hub
 
-## Project info
+A monorepo containing various prototypes and shared design components for demonstrating innovative web technologies and concepts.
 
-**URL**: https://lovable.dev/projects/c4d0bd77-922a-46ab-a74a-a9ebe9fd77fe
+## 🏗️ Monorepo Structure
 
-## How can I edit this code?
+```
+proto-portal-showcase-hub/
+├── shared/
+│   └── design-system/     # Shared UI components and utilities
+├── prototypes/
+│   └── ffx-skill-map/     # Final Fantasy X Skill Map Prototype
+├── scripts/               # Build and deployment scripts
+└── terraform/             # Infrastructure as Code
+```
 
-There are several ways of editing your application.
+## 🎯 Current Prototypes
 
-**Use Lovable**
+### Final Fantasy X Skill Map
+A graph-based skill development system inspired by Final Fantasy X's Sphere Grid, built with Neo4j and React.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c4d0bd77-922a-46ab-a74a-a9ebe9fd77fe) and start prompting.
+**Features:**
+- 🗺️ Interactive skill map with 48 skills across 5 categories
+- 👥 Employee skill tracking and analytics
+- 🧠 Intelligent skill assessment quiz
+- 🎯 Personalized skill recommendations
+- 📊 Dashboard with charts and statistics
 
-Changes made via Lovable will be committed automatically to this repo.
+**Tech Stack:**
+- React 18 + TypeScript + Vite
+- Neo4j 5.15 Community Edition
+- Shadcn/ui + Tailwind CSS
+- TanStack Query + React Router
 
-**Use your preferred IDE**
+**Quick Start:**
+```bash
+# Start the FFX prototype
+npm run dev:ffx
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Start Neo4j database
+npm run docker:up
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Seed database
+cd prototypes/ffx-skill-map && npm run db:seed
+```
 
-Follow these steps:
+## 🎨 Shared Design System
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+The `shared/design-system` package contains reusable UI components and utilities that can be imported by any prototype:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **UI Components**: Complete set of Shadcn/ui components
+- **Utilities**: Common helper functions and utilities
+- **Types**: Shared TypeScript type definitions
+- **Styles**: Consistent styling and theming
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 Getting Started
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Prerequisites
+- Node.js 18+ and npm
+- Docker and Docker Compose (for database prototypes)
+- Git
+
+### Installation
+```bash
+# Clone the repository
+git clone <repository-url>
+cd proto-portal-showcase-hub
+
+# Install dependencies for all workspaces
+npm install
+
+# Install dependencies for specific prototype
+cd prototypes/ffx-skill-map
+npm install
+```
+
+### Development
+
+#### Main Application
+```bash
+# Start the main application
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-### Option 1: Lovable Hosting (Easiest)
-
-Simply open [Lovable](https://lovable.dev/projects/c4d0bd77-922a-46ab-a74a-a9ebe9fd77fe) and click on Share -> Publish.
-
-### Option 2: AWS Deployment with GitHub Actions
-
-For full control and custom domain support, deploy to AWS using our automated CI/CD pipeline.
-
-#### Prerequisites
-
-1. **AWS Account** with programmatic access
-2. **GitHub repository** connected to this project
-3. **Terraform** knowledge (optional, but helpful for customization)
-
-#### Setup Instructions
-
-1. **Configure GitHub Secrets**
-   
-   In your GitHub repository, go to Settings → Secrets and variables → Actions, then add:
-
-   **Required Secrets:**
-   - `AWS_ACCESS_KEY_ID` - Your AWS access key
-   - `AWS_SECRET_ACCESS_KEY` - Your AWS secret key
-
-   **Required Variables:**
-   - `BUCKET_NAME` - Unique S3 bucket name (e.g., `my-ai-portfolio-2024`)
-   - `AWS_REGION` - AWS region (e.g., `us-east-1`)
-   - `ENVIRONMENT` - Environment name (e.g., `production`)
-
-2. **Create AWS User with Required Permissions**
-
-   Create an IAM user with the following managed policies:
-   - `AmazonS3FullAccess`
-   - `CloudFrontFullAccess`
-   - `AmazonRoute53FullAccess` (if using custom domain)
-   - `AWSCertificateManagerFullAccess` (if using custom domain)
-
-3. **Trigger Deployment**
-
-   Push changes to the `main` branch or manually trigger the workflow from the Actions tab.
-
-#### What the Pipeline Does
-
-- ✅ Builds your React application
-- ✅ Deploys AWS infrastructure (S3 + CloudFront) using Terraform
-- ✅ Uploads your site files to S3
-- ✅ Invalidates CloudFront cache for instant updates
-- ✅ Provides secure HTTPS access via CloudFront
-
-#### Manual Deployment
-
-You can also deploy manually using the provided scripts:
-
+#### FFX Skill Map Prototype
 ```bash
-# Build the application
-./scripts/build.sh
+# Start the FFX prototype
+npm run dev:ffx
 
-# Deploy infrastructure (requires terraform/ directory)
-./scripts/deploy-infrastructure.sh
-
-# Deploy the site
-./scripts/deploy-site.sh
+# Or navigate to the prototype directory
+cd prototypes/ffx-skill-map
+npm run dev
 ```
 
-For detailed AWS deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+#### Database Setup (for FFX prototype)
+```bash
+# Start Neo4j
+npm run docker:up
 
-## Can I connect a custom domain to my Lovable project?
+# Seed the database
+cd prototypes/ffx-skill-map
+npm run db:seed
 
-Yes, you can!
+# Reset database (if needed)
+npm run db:reset
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📁 Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Shared Components (`shared/design-system/`)
+```
+shared/design-system/
+├── ui/                   # Shadcn/ui components
+├── lib/                  # Utility functions
+└── index.ts             # Main export file
+```
+
+### FFX Skill Map (`prototypes/ffx-skill-map/`)
+```
+prototypes/ffx-skill-map/
+├── src/
+│   ├── components/       # React components
+│   ├── pages/           # Application pages
+│   ├── services/        # Neo4j service layer
+│   ├── types/           # TypeScript types
+│   ├── data/            # Quiz questions and static data
+│   └── hooks/           # Custom React hooks
+├── scripts/             # Database seeding scripts
+├── docker-compose.yml   # Neo4j container setup
+└── README.md           # Detailed documentation
+```
+
+## 🛠️ Available Scripts
+
+### Root Level
+```bash
+npm run dev              # Start main application
+npm run dev:ffx          # Start FFX prototype
+npm run build:ffx        # Build FFX prototype
+npm run docker:up        # Start Neo4j for FFX
+npm run docker:down      # Stop Neo4j
+```
+
+### FFX Prototype Specific
+```bash
+cd prototypes/ffx-skill-map
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run docker:up        # Start Neo4j container
+npm run docker:down      # Stop Neo4j container
+npm run db:seed          # Seed database
+npm run db:reset         # Reset and reseed database
+```
+
+## 🎯 Prototype Features
+
+### FFX Skill Map
+- **Dashboard**: Overview with statistics and charts
+- **Skill Map**: Interactive exploration of skills by category and level
+- **Employees**: Employee management with skill tracking
+- **Quiz**: Behavioral assessment for skill inference
+- **Recommendations**: AI-powered skill suggestions
+
+### Key Technologies Demonstrated
+- **Graph Databases**: Neo4j for complex relationship modeling
+- **React Query**: Efficient data fetching and caching
+- **TypeScript**: Type-safe development
+- **Modern UI**: Shadcn/ui components with Tailwind CSS
+- **Docker**: Containerized database setup
+- **Monorepo**: Shared components across prototypes
+
+## 🔧 Development
+
+### Adding New Prototypes
+1. Create a new directory in `prototypes/`
+2. Set up package.json with workspace dependencies
+3. Import shared components from `@proto-portal/design-system`
+4. Add scripts to root package.json
+5. Update this README
+
+### Shared Component Development
+1. Add new components to `shared/design-system/ui/`
+2. Export from `shared/design-system/index.ts`
+3. Update package.json dependencies as needed
+4. Test in prototypes
+
+### Database Prototypes
+1. Create `docker-compose.yml` for database setup
+2. Add seeding scripts in `scripts/`
+3. Create service layer for database interactions
+4. Document setup process
+
+## 📚 Documentation
+
+- [FFX Skill Map README](prototypes/ffx-skill-map/README.md) - Detailed documentation for the FFX prototype
+- [Deployment Guide](DEPLOYMENT.md) - Infrastructure and deployment instructions
+
+## 🚀 Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions including:
+- Terraform infrastructure setup
+- Docker container deployment
+- CI/CD pipeline configuration
+- Environment management
+
+## 🤝 Contributing
+
+This repository is designed for prototyping and demonstrating concepts. Feel free to:
+- Fork and experiment with the codebase
+- Add new prototypes or features
+- Improve existing implementations
+- Share feedback and suggestions
+
+## 📄 License
+
+This project is intended for educational and demonstration purposes as part of the Proto Portal Showcase Hub.
