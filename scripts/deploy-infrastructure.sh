@@ -3,27 +3,25 @@ set -e
 
 echo "🏗️ Deploying AWS infrastructure with Terraform..."
 
-# Navigate to terraform directory
-cd terraform
-
-# Initialize Terraform
+# Setup environment
 echo "🔧 Initializing Terraform..."
+cd terraform
 terraform init
 
-# Validate configuration
-echo "🔍 Validating Terraform configuration..."
-terraform validate
+echo "📋 Planning infrastructure changes..."
+terraform plan
 
-# Plan deployment
-echo "📋 Planning Terraform deployment..."
-terraform plan -out=tfplan
+echo "🚀 Applying infrastructure changes..."
 
-# Apply deployment
-echo "🚀 Applying Terraform configuration..."
-terraform apply tfplan
+# Apply with targeted approach to handle CloudFront Function dependency
+echo "📦 Updating CloudFront distribution first to handle function dependencies..."
+terraform apply -target=aws_cloudfront_distribution.website -auto-approve || true
 
-# Output important values
+echo "🔄 Applying full configuration..."
+terraform apply -auto-approve
+
 echo "📊 Deployment outputs:"
 terraform output
 
+cd ..
 echo "✅ Infrastructure deployment completed!"
