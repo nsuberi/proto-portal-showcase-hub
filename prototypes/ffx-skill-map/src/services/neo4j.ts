@@ -1,3 +1,11 @@
+// Browser-compatible mock service
+import MockNeo4jService from './mockData';
+
+// Export the mock service for browser compatibility
+export const neo4jService = new MockNeo4jService();
+
+// Original Neo4j service code (commented out for browser compatibility)
+/*
 import neo4j, { Driver, Session } from 'neo4j-driver';
 import { Skill, Employee, SkillConnection, QuizResult, SkillRecommendation } from '../types';
 
@@ -265,4 +273,5 @@ class Neo4jService {
   }
 }
 
-export const neo4jService = new Neo4jService(); 
+export const neo4jService = new Neo4jService();
+*/ 

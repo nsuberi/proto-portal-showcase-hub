@@ -1012,6 +1012,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-plugin-react-hooks", "virtual:01b8e530adca5e8f50906ccf79d3e1248a4258105acc586ed86c54f1e6e10c7a331c30486081abbee4c1c2e4483447132207a7ccf416228d879b0dff8cb2e32a#npm:5.2.0"],\
           ["eslint-plugin-react-refresh", "virtual:01b8e530adca5e8f50906ccf79d3e1248a4258105acc586ed86c54f1e6e10c7a331c30486081abbee4c1c2e4483447132207a7ccf416228d879b0dff8cb2e32a#npm:0.4.20"],\
           ["globals", "npm:15.15.0"],\
+          ["lucide-react", "virtual:f77c58a6af1ff889ef31a8f2a9e2e45852038232bc951dfb647d7c12228535e06ef713e4dc416e20d74cd7b7cbe346094fa8056e6c761a85d5c56c55f28ced28#npm:0.462.0"],\
           ["neo4j-driver", "npm:5.28.1"],\
           ["postcss", "npm:8.5.6"],\
           ["react", "npm:18.3.1"],\

@@ -6,6 +6,12 @@ import heroImage from "@/assets/hero-bg.jpg";
 const Portfolio = () => {
   const prototypes = [
     {
+      title: "Final Fantasy Skill Map - Upskilling Pathways",
+      description: "Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.",
+      link: "http://localhost:3002",
+      tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"]
+    },
+    {
       title: "Onboarding Advisor Council",
       description: "A team of AI advisors guides new employees through company knowledge, helping them get productive quickly with role-based memory and stakeholder alignment.",
       link: "#prototype1",

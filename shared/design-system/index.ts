@@ -39,6 +39,9 @@ export * from './ui/skeleton';
 export * from './ui/slider';
 // Export sonner with unique names to avoid conflicts
 export { Toaster as SonnerToaster, toast as sonnerToast } from './ui/sonner';
+// Add backward compatibility aliases
+export { Toaster } from './ui/sonner';
+export { toast } from './ui/sonner';
 export * from './ui/switch';
 export * from './ui/table';
 export * from './ui/tabs';
@@ -50,4 +53,7 @@ export * from './ui/toggle';
 export * from './ui/tooltip';
 
 // Export utilities
-export * from './lib/utils'; 
+export * from './lib/utils';
+
+// Export hooks
+export * from './hooks/use-toast'; 

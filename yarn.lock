@@ -756,6 +756,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^5.1.0-rc.0"
     eslint-plugin-react-refresh: "npm:^0.4.9"
     globals: "npm:^15.9.0"
+    lucide-react: "npm:^0.462.0"
     neo4j-driver: "npm:^5.20.0"
     postcss: "npm:^8.4.47"
     react: "npm:^18.3.1"

@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@proto-portal/design-system": path.resolve(__dirname, "./shared/design-system"),
     },
   },
 }));

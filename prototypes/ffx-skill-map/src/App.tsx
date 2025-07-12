@@ -7,7 +7,10 @@ import Employees from './pages/Employees'
 import Quiz from './pages/Quiz'
 import Recommendations from './pages/Recommendations'
 import { useEffect } from 'react'
-import { neo4jService } from './services/neo4j'
+import MockNeo4jService from './services/mockData'
+
+// Use mock service instead of real Neo4j for browser compatibility
+const neo4jService = new MockNeo4jService()
 
 function App() {
   useEffect(() => {
