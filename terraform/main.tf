@@ -57,6 +57,27 @@ resource "aws_s3_bucket_policy" "website" {
   depends_on = [aws_s3_bucket_public_access_block.website]
 }
 
+# CloudFront function to handle index.html rewriting for subdirectories
+resource "aws_cloudfront_function" "index_rewrite" {
+  name    = "${var.bucket_name}-index-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite URLs ending with / to append index.html"
+  publish = true
+  code    = <<-EOT
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    // If the URI ends with a slash, append index.html
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    }
+    
+    return request;
+}
+EOT
+}
+
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
   origin {
@@ -67,6 +88,33 @@ resource "aws_cloudfront_distribution" "website" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
+
+  # Custom cache behavior for prototypes subdirectories
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    # Handle directory requests by appending index.html
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.index_rewrite.arn
+    }
+  }
 
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
