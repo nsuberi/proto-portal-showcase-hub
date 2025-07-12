@@ -12,11 +12,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Lambda@Edge functions must be in us-east-1
-provider "aws" {
-  alias  = "us-east-1"
-  region = "us-east-1"
-}
+# Lambda@Edge provider removed (no longer needed)
 
 # S3 bucket for hosting
 resource "aws_s3_bucket" "website" {
@@ -63,96 +59,128 @@ resource "aws_s3_bucket_policy" "website" {
   depends_on = [aws_s3_bucket_public_access_block.website]
 }
 
-# Create the Lambda deployment package
-data "archive_file" "spa_routing_zip" {
-  type        = "zip"
-  output_path = "spa-routing.zip"
-  source {
-    content = <<-EOT
-exports.handler = async (event, context) => {
-    const request = event.Records[0].cf.request;
-    const uri = request.uri;
-    
-    // Handle prototype directory access
-    if (uri.endsWith('/')) {
-        request.uri += 'index.html';
-        return request;
-    }
-    
-    // Handle SPA routing within prototypes
-    if (uri.startsWith('/prototypes/')) {
-        const pathParts = uri.split('/');
-        if (pathParts.length >= 3 && !uri.includes('.')) {
-            const prototypeName = pathParts[2];
-            request.uri = `/prototypes/$${prototypeName}/index.html`;
-        }
-    }
-    
-    return request;
-};
-EOT
-    filename = "index.js"
-  }
-}
+# Lambda@Edge resources temporarily removed due to IAM permission complexities
+# Can be re-added later once AWS service-linked roles are properly configured
 
-# IAM role for Lambda@Edge
-resource "aws_iam_role" "lambda_edge_role" {
-  name = "${var.bucket_name}-lambda-edge-role"
-  provider = aws.us-east-1
+# Uncomment the following resources when ready to implement Lambda@Edge:
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = [
-            "lambda.amazonaws.com",
-            "edgelambda.amazonaws.com"
-          ]
-        }
-      }
-    ]
-  })
-}
+# # Create the Lambda deployment package
+# data "archive_file" "spa_routing_zip" {
+#   type        = "zip"
+#   output_path = "spa-routing.zip"
+#   source {
+#     content = <<-EOT
+# exports.handler = async (event, context) => {
+#     const request = event.Records[0].cf.request;
+#     const uri = request.uri;
+#     
+#     // Handle prototype directory access
+#     if (uri.endsWith('/')) {
+#         request.uri += 'index.html';
+#         return request;
+#     }
+#     
+#     // Handle SPA routing within prototypes
+#     if (uri.startsWith('/prototypes/')) {
+#         const pathParts = uri.split('/');
+#         if (pathParts.length >= 3 && !uri.includes('.')) {
+#             const prototypeName = pathParts[2];
+#             request.uri = `/prototypes/$${prototypeName}/index.html`;
+#         }
+#     }
+#     
+#     return request;
+# };
+# EOT
+#     filename = "index.js"
+#   }
+# }
 
-# IAM policy for Lambda@Edge
-resource "aws_iam_role_policy" "lambda_edge_policy" {
-  name = "${var.bucket_name}-lambda-edge-policy"
-  role = aws_iam_role.lambda_edge_role.id
-  provider = aws.us-east-1
+# # IAM role for Lambda@Edge
+# resource "aws_iam_role" "lambda_edge_role" {
+#   name = "${var.bucket_name}-lambda-edge-role"
+#   provider = aws.us-east-1
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = [
+#             "lambda.amazonaws.com",
+#             "edgelambda.amazonaws.com"
+#           ]
+#         }
+#       }
+#     ]
+#   })
+# }
 
-# Lambda@Edge function for SPA routing
-resource "aws_lambda_function" "spa_routing" {
-  filename         = data.archive_file.spa_routing_zip.output_path
-  function_name    = "${var.bucket_name}-spa-routing"
-  role            = aws_iam_role.lambda_edge_role.arn
-  handler         = "index.handler"
-  runtime         = "nodejs18.x"
-  publish         = true
-  timeout         = 5
-  source_code_hash = data.archive_file.spa_routing_zip.output_base64sha256
+# # IAM policy for Lambda@Edge
+# resource "aws_iam_role_policy" "lambda_edge_policy" {
+#   name = "${var.bucket_name}-lambda-edge-policy"
+#   role = aws_iam_role.lambda_edge_role.id
+#   provider = aws.us-east-1
 
-  # Lambda@Edge functions must be in us-east-1
-  provider = aws.us-east-1
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "logs:CreateLogGroup",
+#           "logs:CreateLogStream",
+#           "logs:PutLogEvents"
+#         ]
+#         Resource = "arn:aws:logs:*:*:*"
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "lambda:EnableReplication*",
+#           "lambda:GetFunction",
+#           "lambda:GetFunctionConfiguration",
+#           "lambda:PublishVersion"
+#         ]
+#         Resource = [
+#           "arn:aws:lambda:us-east-1:671388079324:function:${var.bucket_name}-spa-routing",
+#           "arn:aws:lambda:us-east-1:671388079324:function:${var.bucket_name}-spa-routing:*"
+#         ]
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "iam:CreateServiceLinkedRole"
+#         ]
+#         Resource = "arn:aws:iam::*:role/aws-service-role/replicator.lambda.amazonaws.com/AWSServiceRoleForLambdaReplicator"
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "iam:CreateServiceLinkedRole"
+#         ]
+#         Resource = "arn:aws:iam::*:role/aws-service-role/logger.cloudfront.amazonaws.com/AWSServiceRoleForCloudFrontLogger"
+#       }
+#     ]
+#   })
+# }
+
+# # Lambda@Edge function for SPA routing
+# resource "aws_lambda_function" "spa_routing" {
+#   filename         = data.archive_file.spa_routing_zip.output_path
+#   function_name    = "${var.bucket_name}-spa-routing"
+#   role            = aws_iam_role.lambda_edge_role.arn
+#   handler         = "index.handler"
+#   runtime         = "nodejs18.x"
+#   publish         = true
+#   timeout         = 5
+#   source_code_hash = data.archive_file.spa_routing_zip.output_base64sha256
+
+#   # Lambda@Edge functions must be in us-east-1
+#   provider = aws.us-east-1
+# }
 
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
@@ -185,11 +213,11 @@ resource "aws_cloudfront_distribution" "website" {
     default_ttl = 3600
     max_ttl     = 86400
 
-    # Use Lambda@Edge for origin-request processing
-    lambda_function_association {
-      event_type   = "origin-request"
-      lambda_arn   = aws_lambda_function.spa_routing.qualified_arn
-    }
+    # Lambda@Edge will be added back once permissions are resolved
+    # lambda_function_association {
+    #   event_type   = "origin-request"
+    #   lambda_arn   = aws_lambda_function.spa_routing.qualified_arn
+    # }
   }
 
   default_cache_behavior {

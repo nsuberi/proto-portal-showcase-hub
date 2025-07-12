@@ -29,3 +29,6 @@ dist-ssr
 *.tfstate.backup
 .terraform/
 .terraform.lock.hcl
+
+# Terraform build artifacts
+terraform/*.zip
