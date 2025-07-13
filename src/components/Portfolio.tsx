@@ -65,7 +65,7 @@ const Portfolio = () => {
         />
         
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 text-gradient-primary">
+          <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
             Interactive AI Experiences
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -74,7 +74,6 @@ const Portfolio = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="hover:bg-primary hover:text-primary-foreground transition-smooth"
             onClick={() => {
               document.getElementById('prototypes-section')?.scrollIntoView({ 
                 behavior: 'smooth' 
@@ -120,7 +119,7 @@ const Portfolio = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
+                    className="w-full"
                     onClick={() => {
                       if (prototype.link.startsWith('/')) {
                         // Internal link - open in same tab
@@ -166,15 +165,15 @@ const Portfolio = () => {
           </p>
           
           <div className="flex justify-center gap-6">
-            <Button variant="outline" size="lg" className="hover:bg-primary hover:text-primary-foreground transition-smooth">
+            <Button variant="outline" size="lg">
               <Mail className="mr-2 h-5 w-5" />
               Email
             </Button>
-            <Button variant="outline" size="lg" className="hover:bg-primary hover:text-primary-foreground transition-smooth">
+            <Button variant="outline" size="lg">
               <Linkedin className="mr-2 h-5 w-5" />
               LinkedIn
             </Button>
-            <Button variant="outline" size="lg" className="hover:bg-primary hover:text-primary-foreground transition-smooth">
+            <Button variant="outline" size="lg">
               <Github className="mr-2 h-5 w-5" />
               GitHub
             </Button>
