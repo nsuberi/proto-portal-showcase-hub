@@ -63,7 +63,7 @@ const Portfolio = () => {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-primary opacity-10" />
+        <div className="absolute inset-0 bg-gradient-subtle opacity-30" />
         
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
@@ -72,7 +72,7 @@ const Portfolio = () => {
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Creating AI-powered interactions that bring people together and enhance human connection
           </p>
-          <Button size="lg" className="bg-gradient-primary hover:shadow-glow transition-smooth">
+          <Button size="lg" className="hover:shadow-glow transition-smooth">
             Explore My Work
             <ExternalLink className="ml-2 h-5 w-5" />
           </Button>
