@@ -72,8 +72,8 @@ const Portfolio = () => {
             Creating AI-powered interactions that bring people together and enhance human connection
           </p>
           <Button 
-            variant="outline" 
             size="lg" 
+            className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 hover:shadow-glow transition-smooth"
             onClick={() => {
               document.getElementById('prototypes-section')?.scrollIntoView({ 
                 behavior: 'smooth' 
@@ -98,7 +98,7 @@ const Portfolio = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {prototypes.map((prototype, index) => (
-              <Card key={index} className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-primary/30">
+              <Card key={index} className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-primary/30 bg-card">
                 <CardContent className="p-6">
                   <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-smooth">
                     {prototype.title}
@@ -119,7 +119,7 @@ const Portfolio = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full"
+                    className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
                     onClick={() => {
                       if (prototype.link.startsWith('/')) {
                         // Internal link - open in same tab
