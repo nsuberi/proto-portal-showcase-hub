@@ -132,4 +132,12 @@ All colors MUST be HSL.
   .bg-gradient-subtle {
     background: var(--gradient-subtle);
   }
+  
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
 }
