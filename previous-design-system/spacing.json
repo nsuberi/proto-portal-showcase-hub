@@ -1,0 +1,49 @@
+{
+  "spacing": {
+    "sections": {
+      "vertical": "py-20",
+      "horizontal": "px-6",
+      "description": "Standard section spacing"
+    },
+    "containers": {
+      "max-width": {
+        "content": "max-w-7xl",
+        "text": "max-w-4xl",
+        "hero": "max-w-4xl",
+        "description": "Container max-width values"
+      },
+      "centering": "mx-auto",
+      "description": "Container spacing and centering"
+    },
+    "cards": {
+      "grid": {
+        "gap": "gap-8",
+        "columns": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+      },
+      "content": "p-6",
+      "header": "p-6",
+      "footer": "p-6 pt-0",
+      "description": "Card-specific spacing"
+    },
+    "text": {
+      "hero": {
+        "title-margin": "mb-6",
+        "subtitle-margin": "mb-8"
+      },
+      "section": {
+        "heading-margin": "mb-4",
+        "description-margin": "mb-8",
+        "section-margin": "mb-16"
+      },
+      "card": {
+        "title-margin": "mb-3",
+        "description-margin": "mb-4",
+        "tags-margin": "mb-4"
+      }
+    },
+    "tags": {
+      "padding": "px-2 py-1",
+      "gap": "gap-2"
+    }
+  }
+}

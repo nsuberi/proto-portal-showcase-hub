@@ -11,7 +11,7 @@ All colors MUST be HSL.
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
-    --card: 240 3.7% 15.9%;
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
 
     --popover: 240 10% 3.9%;
@@ -109,6 +109,32 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .bg-gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow) !important;
+  }
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant) !important;
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
   }
 }
 

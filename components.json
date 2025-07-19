@@ -13,7 +13,7 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@proto-portal/design-system",
+    "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
   }

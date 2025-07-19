@@ -1,0 +1,94 @@
+{
+  "buttons": {
+    "variants": {
+      "default": {
+        "background": "bg-primary",
+        "color": "text-primary-foreground",
+        "hover": "hover:bg-primary/90",
+        "description": "Default button variant"
+      },
+      "destructive": {
+        "background": "bg-destructive",
+        "color": "text-destructive-foreground",
+        "hover": "hover:bg-destructive/90",
+        "description": "Destructive action button"
+      },
+      "outline": {
+        "border": "border border-input",
+        "background": "bg-background",
+        "hover": "hover:bg-accent hover:text-accent-foreground",
+        "description": "Outline button variant"
+      },
+      "secondary": {
+        "background": "bg-secondary",
+        "color": "text-secondary-foreground",
+        "hover": "hover:bg-secondary/80",
+        "description": "Secondary button variant"
+      },
+      "ghost": {
+        "hover": "hover:bg-accent hover:text-accent-foreground",
+        "description": "Ghost button variant"
+      },
+      "link": {
+        "color": "text-primary",
+        "decoration": "underline-offset-4 hover:underline",
+        "description": "Link-styled button"
+      }
+    },
+    "sizes": {
+      "default": {
+        "height": "h-10",
+        "padding": "px-4 py-2",
+        "description": "Default button size"
+      },
+      "sm": {
+        "height": "h-9",
+        "border": "rounded-md",
+        "padding": "px-3",
+        "description": "Small button size"
+      },
+      "lg": {
+        "height": "h-11",
+        "border": "rounded-md",
+        "padding": "px-8",
+        "description": "Large button size"
+      },
+      "icon": {
+        "size": "h-10 w-10",
+        "description": "Icon-only button size"
+      }
+    },
+    "custom": {
+      "hero-cta": {
+        "size": "lg",
+        "background": "bg-gradient-primary",
+        "hover": "hover:shadow-glow",
+        "transition": "transition-smooth",
+        "description": "Hero section CTA button using CSS custom property gradient in commit version"
+      },
+      "prototype-view": {
+        "variant": "outline",
+        "size": "sm",
+        "width": "w-full",
+        "hover": "hover:bg-primary hover:text-primary-foreground",
+        "transition": "transition-smooth",
+        "description": "View prototype button on cards"
+      }
+    },
+    "base": {
+      "display": "inline-flex",
+      "align": "items-center justify-center",
+      "gap": "gap-2",
+      "whitespace": "whitespace-nowrap",
+      "border": "rounded-md",
+      "fontSize": "text-sm",
+      "fontWeight": "font-medium",
+      "ring": "ring-offset-background",
+      "transition": "transition-colors",
+      "focus": "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      "disabled": "disabled:pointer-events-none disabled:opacity-50",
+      "svg": "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+      "description": "Base button styling applied to all variants"
+    }
+  }
+}

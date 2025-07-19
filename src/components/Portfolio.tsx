@@ -1,5 +1,5 @@
-import { Button } from "@proto-portal/design-system";
-import { Card, CardContent } from "@proto-portal/design-system";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroImage from "@/assets/hero-bg.jpg";
 
@@ -7,76 +7,88 @@ const Portfolio = () => {
   const prototypes = [
     {
       title: "FFX Skill Map",
-      description: "Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.",
+      description:
+        "Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.",
       link: "/prototypes/ffx-skill-map/",
-      tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"]
+      tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"],
     },
     {
       title: "Onboarding Advisor Council",
-      description: "A team of AI advisors guides new employees through company knowledge, helping them get productive quickly with role-based memory and stakeholder alignment.",
+      description:
+        "A team of AI advisors guides new employees through company knowledge, helping them get productive quickly with role-based memory and stakeholder alignment.",
       link: "#prototype1",
-      tags: ["Multi-agent", "Memory", "Onboarding"]
+      tags: ["Multi-agent", "Memory", "Onboarding"],
     },
     {
       title: "Guitar Spiral + Music Learning",
-      description: "Interactive visual interface where musical notes spiral by pitch and octaves, with real-time chord-to-shape translation for guitar learning.",
+      description:
+        "Interactive visual interface where musical notes spiral by pitch and octaves, with real-time chord-to-shape translation for guitar learning.",
       link: "#prototype2",
-      tags: ["Music", "Visualization", "Learning"]
+      tags: ["Music", "Visualization", "Learning"],
     },
     {
       title: "Conversing Forest / Living Museum",
-      description: "Embodied AI agents simulate philosophical conversations about nature harmony. When visitors speak, agents pause and respond contextually.",
+      description:
+        "Embodied AI agents simulate philosophical conversations about nature harmony. When visitors speak, agents pause and respond contextually.",
       link: "#prototype3",
-      tags: ["Embodied AI", "Museum", "Interaction"]
+      tags: ["Embodied AI", "Museum", "Interaction"],
     },
     {
       title: "AI Development Team Simulation",
-      description: "A lightweight, always-on development team of AI agents that creates tickets, works on features, and presents demos with continuous collaboration.",
+      description:
+        "A lightweight, always-on development team of AI agents that creates tickets, works on features, and presents demos with continuous collaboration.",
       link: "#prototype4",
-      tags: ["Dev Team", "Automation", "Collaboration"]
+      tags: ["Dev Team", "Automation", "Collaboration"],
     },
     {
       title: "IAM Governance: Path to Production",
-      description: "Infrastructure management that validates AWS IAM policies automatically, ensuring sandbox environments follow guidelines without ops bottlenecks.",
+      description:
+        "Infrastructure management that validates AWS IAM policies automatically, ensuring sandbox environments follow guidelines without ops bottlenecks.",
       link: "#prototype5",
-      tags: ["Infrastructure", "Security", "Automation"]
+      tags: ["Infrastructure", "Security", "Automation"],
     },
     {
       title: "InfraOracle: Cost-Aware Architecture",
-      description: "Analyzes cloud infrastructure and offers cost-saving suggestions using AI agents, with visual dashboards and memory of past decisions.",
+      description:
+        "Analyzes cloud infrastructure and offers cost-saving suggestions using AI agents, with visual dashboards and memory of past decisions.",
       link: "#prototype6",
-      tags: ["Cloud", "Cost Optimization", "AI Analysis"]
+      tags: ["Cloud", "Cost Optimization", "AI Analysis"],
     },
     {
       title: "Story Tags: QR Characters in the Wild",
-      description: "Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.",
+      description:
+        "Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.",
       link: "#prototype7",
-      tags: ["Location-based", "Storytelling", "Tourism"]
-    }
+      tags: ["Location-based", "Storytelling", "Tourism"],
+    },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        
+        <div className="absolute inset-0 bg-gradient-primary opacity-10" />
+
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-            Interactive AI Experiences
+          <h1 className="text-6xl md:text-8xl font-bold mb-6">
+            <span style={{ color: "rgb(144, 19, 254)" }}>
+              Interactive AI Experiences
+            </span>
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Creating AI-powered interactions that bring people together and enhance human connection
+            Creating AI-powered interactions that bring people together and
+            enhance human connection
           </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 hover:shadow-glow transition-smooth"
+          <Button
+            size="lg"
+            className="bg-gradient-primary text-white hover:shadow-glow transition-smooth"
             onClick={() => {
-              document.getElementById('prototypes-section')?.scrollIntoView({ 
-                behavior: 'smooth' 
+              document.getElementById("prototypes-section")?.scrollIntoView({
+                behavior: "smooth",
               });
             }}
           >
@@ -90,15 +102,21 @@ const Portfolio = () => {
       <section id="prototypes-section" className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Featured Prototypes</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Featured Prototypes
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Exploring human-AI collaboration through interactive prototypes that enhance connection and understanding
+              Exploring human-AI collaboration through interactive prototypes
+              that enhance connection and understanding
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {prototypes.map((prototype, index) => (
-              <Card key={index} className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-primary/30 bg-card">
+              <Card
+                key={index}
+                className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-primary/30"
+              >
                 <CardContent className="p-6">
                   <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-smooth">
                     {prototype.title}
@@ -108,7 +126,7 @@ const Portfolio = () => {
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {prototype.tags.map((tag, tagIndex) => (
-                      <span 
+                      <span
                         key={tagIndex}
                         className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
                       >
@@ -116,17 +134,15 @@ const Portfolio = () => {
                       </span>
                     ))}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
                     onClick={() => {
-                      if (prototype.link.startsWith('/')) {
-                        // Internal link - open in same tab
+                      if (prototype.link.startsWith("/")) {
                         window.location.href = prototype.link;
                       } else {
-                        // External link - open in new tab
-                        window.open(prototype.link, '_blank');
+                        window.open(prototype.link, "_blank");
                       }
                     }}
                   >
@@ -145,13 +161,16 @@ const Portfolio = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8">About Me</h2>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-            I explore how AI can create meaningful interactions between people through thoughtful design and technology. 
-            My work combines human-computer interaction research with practical applications that make AI more accessible 
-            and genuinely helpful in bringing communities together.
+            I explore how AI can create meaningful interactions between people
+            through thoughtful design and technology. My work combines
+            human-computer interaction research with practical applications that
+            make AI more accessible and genuinely helpful in bringing
+            communities together.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Each prototype investigates different ways technology can enhance human connection - from collaborative learning 
-            experiences to immersive storytelling that bridges digital and physical worlds.
+            Each prototype investigates different ways technology can enhance
+            human connection - from collaborative learning experiences to
+            immersive storytelling that bridges digital and physical worlds.
           </p>
         </div>
       </section>
@@ -161,19 +180,32 @@ const Portfolio = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8">Let's Connect</h2>
           <p className="text-lg text-muted-foreground mb-12">
-            Interested in exploring how AI can enhance human connection? Let's discuss ideas and collaborate!
+            Interested in exploring how AI can enhance human connection? Let's
+            discuss ideas and collaborate!
           </p>
-          
+
           <div className="flex justify-center gap-6">
-            <Button variant="outline" size="lg">
+            <Button
+              variant="outline"
+              size="lg"
+              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+            >
               <Mail className="mr-2 h-5 w-5" />
               Email
             </Button>
-            <Button variant="outline" size="lg">
+            <Button
+              variant="outline"
+              size="lg"
+              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+            >
               <Linkedin className="mr-2 h-5 w-5" />
               LinkedIn
             </Button>
-            <Button variant="outline" size="lg">
+            <Button
+              variant="outline"
+              size="lg"
+              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+            >
               <Github className="mr-2 h-5 w-5" />
               GitHub
             </Button>

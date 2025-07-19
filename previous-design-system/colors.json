@@ -1,0 +1,54 @@
+{
+  "colors": {
+    "background": {
+      "value": "hsl(240, 10%, 3.9%)",
+      "description": "Main background color - dark theme"
+    },
+    "foreground": {
+      "value": "hsl(0, 0%, 98%)",
+      "description": "Main text color"
+    },
+    "card": {
+      "background": "hsl(240, 10%, 3.9%)",
+      "foreground": "hsl(0, 0%, 98%)",
+      "description": "Card component background and text colors - same as main background in commit version"
+    },
+    "primary": {
+      "value": "hsl(263, 70%, 60%)",
+      "foreground": "hsl(0, 0%, 98%)",
+      "description": "Primary brand color - purple"
+    },
+    "secondary": {
+      "background": "hsl(240, 3.7%, 15.9%)",
+      "foreground": "hsl(0, 0%, 98%)",
+      "description": "Secondary color scheme"
+    },
+    "muted": {
+      "background": "hsl(240, 3.7%, 15.9%)",
+      "foreground": "hsl(240, 5%, 64.9%)",
+      "description": "Muted/subdued colors for less important content"
+    },
+    "accent": {
+      "background": "hsl(240, 3.7%, 15.9%)",
+      "foreground": "hsl(0, 0%, 98%)",
+      "description": "Accent colors for highlighting"
+    },
+    "destructive": {
+      "background": "hsl(0, 84.2%, 60.2%)",
+      "foreground": "hsl(0, 0%, 98%)",
+      "description": "Error/destructive action colors"
+    },
+    "border": {
+      "value": "hsl(240, 3.7%, 15.9%)",
+      "description": "Border color for components"
+    },
+    "input": {
+      "value": "hsl(240, 3.7%, 15.9%)",
+      "description": "Input field background color"
+    },
+    "ring": {
+      "value": "hsl(263, 70%, 60%)",
+      "description": "Focus ring color"
+    }
+  }
+}

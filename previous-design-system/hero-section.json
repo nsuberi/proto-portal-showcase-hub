@@ -1,0 +1,38 @@
+{
+  "hero-section": {
+    "layout": {
+      "container": "relative h-screen flex items-center justify-center overflow-hidden",
+      "content": "relative z-10 text-center max-w-4xl mx-auto px-6",
+      "description": "Full-height hero section with centered content"
+    },
+    "background": {
+      "image": {
+        "layer": "absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20",
+        "source": "heroImage from @/assets/hero-bg.jpg",
+        "description": "Background image with 20% opacity"
+      },
+      "gradient-overlay": {
+        "layer": "absolute inset-0 bg-gradient-primary opacity-10",
+        "description": "Additional gradient overlay present in commit version, not in current"
+      }
+    },
+    "title": {
+      "classes": "text-6xl md:text-8xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent",
+      "text": "Interactive AI Experiences",
+      "description": "Large responsive title with gradient text effect using CSS custom property"
+    },
+    "subtitle": {
+      "classes": "text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto",
+      "text": "Creating AI-powered interactions that bring people together and enhance human connection",
+      "description": "Subtitle with muted color and constrained width"
+    },
+    "cta-button": {
+      "size": "lg",
+      "classes": "bg-gradient-primary hover:shadow-glow transition-smooth",
+      "text": "Explore My Work",
+      "icon": "ExternalLink",
+      "action": "scroll to prototypes section",
+      "description": "Large CTA button with gradient background and glow hover effect"
+    }
+  }
+}

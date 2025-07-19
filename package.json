@@ -3,10 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "shared/*",
-    "prototypes/*"
-  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,13 +13,12 @@
     "build:ffx": "cd prototypes/ffx-skill-map && npm run build",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
-    "test": "yarn workspace @proto-portal/design-system test",
-    "test:design-system": "yarn workspace @proto-portal/design-system test",
-    "test:watch": "yarn workspace @proto-portal/design-system test:watch"
+    "test": "echo \"No tests configured\"",
+    "test:design-system": "echo \"No design system tests\"",
+    "test:watch": "echo \"No test watch configured\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@proto-portal/design-system": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",

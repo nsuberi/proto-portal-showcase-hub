@@ -1,0 +1,51 @@
+{
+  "typography": {
+    "hero": {
+      "title": {
+        "size": ["text-6xl", "md:text-8xl"],
+        "weight": "font-bold",
+        "background": "bg-gradient-primary",
+        "clip": "bg-clip-text text-transparent",
+        "description": "Main hero title styling using CSS custom property gradient in commit version"
+      },
+      "subtitle": {
+        "size": ["text-xl", "md:text-2xl"],
+        "color": "text-muted-foreground",
+        "description": "Hero subtitle styling"
+      }
+    },
+    "section": {
+      "heading": {
+        "size": ["text-4xl", "md:text-5xl"],
+        "weight": "font-bold",
+        "description": "Section headings"
+      },
+      "description": {
+        "size": "text-xl",
+        "color": "text-muted-foreground",
+        "description": "Section descriptions"
+      }
+    },
+    "card": {
+      "title": {
+        "size": "text-xl",
+        "weight": "font-semibold",
+        "hover": "group-hover:text-primary",
+        "description": "Card title styling"
+      },
+      "description": {
+        "color": "text-muted-foreground",
+        "lineHeight": "leading-relaxed",
+        "description": "Card description text"
+      }
+    },
+    "tags": {
+      "size": "text-xs",
+      "background": "bg-primary/10",
+      "color": "text-primary",
+      "border": "rounded-full",
+      "padding": "px-2 py-1",
+      "description": "Tag styling for prototype categories"
+    }
+  }
+}

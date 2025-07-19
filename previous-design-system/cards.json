@@ -1,0 +1,48 @@
+{
+  "cards": {
+    "base": {
+      "border": "rounded-lg border",
+      "background": "bg-card",
+      "color": "text-card-foreground",
+      "shadow": "shadow-sm",
+      "description": "Base card styling"
+    },
+    "prototype-card": {
+      "group": "group",
+      "hover": {
+        "shadow": "hover:shadow-elegant",
+        "border": "hover:border-primary/30"
+      },
+      "transition": "transition-smooth",
+      "border": "border-border/50",
+      "background": "bg-card",
+      "description": "Prototype showcase card styling"
+    },
+    "content": {
+      "padding": "p-6",
+      "description": "Card content padding"
+    },
+    "header": {
+      "layout": "flex flex-col space-y-1.5",
+      "padding": "p-6",
+      "description": "Card header styling"
+    },
+    "title": {
+      "fontSize": "text-2xl",
+      "fontWeight": "font-semibold",
+      "lineHeight": "leading-none",
+      "tracking": "tracking-tight",
+      "description": "Card title styling"
+    },
+    "description": {
+      "fontSize": "text-sm",
+      "color": "text-muted-foreground",
+      "description": "Card description styling"
+    },
+    "footer": {
+      "layout": "flex items-center",
+      "padding": "p-6 pt-0",
+      "description": "Card footer styling"
+    }
+  }
+}
