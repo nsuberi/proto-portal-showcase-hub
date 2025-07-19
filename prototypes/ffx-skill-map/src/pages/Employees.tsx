@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proto-portal/design-system'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@proto-portal/design-system'
-import { Badge } from '@proto-portal/design-system'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { neo4jService } from '../services/neo4j'
 import { useState } from 'react'
 import { Search, Filter } from 'lucide-react'
-import { Input } from '@proto-portal/design-system'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@proto-portal/design-system'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const Employees = () => {
   const [searchTerm, setSearchTerm] = useState('')

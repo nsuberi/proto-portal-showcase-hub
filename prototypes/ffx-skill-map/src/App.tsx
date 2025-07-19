@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { Toaster } from '@proto-portal/design-system'
+import { Toaster } from '@/components/ui/toast'
 import Navigation from './components/Navigation'
 import Dashboard from './pages/Dashboard'
 import SkillMap from './pages/SkillMap'
@@ -32,7 +32,7 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <main className="container mx-auto px-4 py-8">
         <Routes>

@@ -134,21 +134,25 @@ const Portfolio = () => {
                       </span>
                     ))}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
-                    onClick={() => {
-                      if (prototype.link.startsWith("/")) {
-                        window.location.href = prototype.link;
-                      } else {
-                        window.open(prototype.link, "_blank");
-                      }
-                    }}
-                  >
-                    View Prototype
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
+                  {prototype.link.startsWith("/") ? (
+                    <a
+                      href={prototype.link}
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-primary hover:text-primary-foreground h-9 rounded-md px-3 w-full transition-smooth"
+                    >
+                      View Prototype
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full hover:bg-primary hover:text-primary-foreground transition-smooth"
+                      onClick={() => window.open(prototype.link, "_blank")}
+                    >
+                      View Prototype
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

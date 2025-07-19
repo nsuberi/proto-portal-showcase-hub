@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proto-portal/design-system'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@proto-portal/design-system'
-import { Badge } from '@proto-portal/design-system'
-import { Button } from '@proto-portal/design-system'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { neo4jService } from '../services/neo4j'
 import { Target, TrendingUp, Clock, Star, ArrowRight } from 'lucide-react'
 

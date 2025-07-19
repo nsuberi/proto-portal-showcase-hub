@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proto-portal/design-system'
-import { Badge } from '@proto-portal/design-system'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@proto-portal/design-system'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { neo4jService } from '../services/neo4j'
 import { useState, useRef, useEffect } from 'react'
 import { Sword, Zap, Heart, Star, Crown, Filter } from 'lucide-react'
@@ -234,16 +234,20 @@ const SkillMap = () => {
       </div>
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Skill Map</h1>
-          <p className="text-gray-600 mt-2">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <span style={{ color: "rgb(144, 19, 254)" }}>
+              Skill Map
+            </span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Explore the Final Fantasy X-inspired skill grid. Skills are organized by level and category, 
             with arrows showing prerequisites and dependencies.
           </p>
         </div>
 
         {/* Filters */}
-        <Card>
+        <Card className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
           <CardHeader>
             <CardTitle>Filters</CardTitle>
             <CardDescription>
@@ -290,7 +294,7 @@ const SkillMap = () => {
             Object.entries(skillsByLevel)
               .sort(([a], [b]) => parseInt(a) - parseInt(b))
               .map(([level, levelSkills]) => (
-                <Card key={level}>
+                <Card key={level} className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       Level {level} Skills
@@ -388,10 +392,10 @@ const SkillMap = () => {
                 </Card>
               ))
           ) : (
-            <Card>
+            <Card className="border-border/50 shadow-elegant">
               <CardContent className="text-center py-12">
-                <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">
+                <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
                   No skills match the current filters. Try adjusting your selection.
                 </p>
               </CardContent>
@@ -400,7 +404,7 @@ const SkillMap = () => {
         </div>
 
         {/* Legend */}
-        <Card>
+        <Card className="border-border/50 shadow-elegant">
           <CardHeader>
             <CardTitle>Skill Categories</CardTitle>
             <CardDescription>
@@ -453,7 +457,7 @@ const SkillMap = () => {
         </Card>
 
         {/* Statistics */}
-        <Card>
+        <Card className="border-border/50 shadow-elegant">
           <CardHeader>
             <CardTitle>Skill Map Statistics</CardTitle>
           </CardHeader>

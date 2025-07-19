@@ -32,18 +32,18 @@ A graph-based skill development system inspired by Final Fantasy X's Sphere Grid
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
-- **UI Components**: Shadcn/ui + Tailwind CSS
-- **Database**: Neo4j 5.15 Community Edition
+- **UI Components**: Custom UI components + Tailwind CSS
+- **Data**: Mock Neo4j service (browser-compatible)
 - **State Management**: TanStack Query (React Query)
 - **Routing**: React Router DOM
 - **Charts**: Recharts
 - **Icons**: Lucide React
+- **Database (Optional)**: Neo4j 5.15 Community Edition
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+ and npm
-- Docker and Docker Compose
 - Git
 
 ### 1. Clone and Setup
@@ -55,7 +55,20 @@ cd prototypes/ffx-skill-map
 npm install
 ```
 
-### 2. Start Neo4j Database
+### 2. Start the Application
+```bash
+# Start the development server
+npm run dev
+
+# Open http://localhost:3001
+```
+
+The application now uses mock data instead of Neo4j for browser compatibility. No database setup is required!
+
+### Alternative: Neo4j Database (Optional)
+If you want to use a real Neo4j database instead of mock data:
+
+1. **Setup Neo4j with Docker**:
 ```bash
 # Start the Neo4j container
 npm run docker:up
@@ -64,19 +77,13 @@ npm run docker:up
 # Default credentials: neo4j/password
 ```
 
-### 3. Seed the Database
+2. **Seed the Database**:
 ```bash
 # Populate the database with FFX skill data
 npm run db:seed
 ```
 
-### 4. Start the Application
-```bash
-# Start the development server
-npm run dev
-
-# Open http://localhost:3001
-```
+3. **Update the service**: Modify `src/App.tsx` to use the real Neo4j service instead of MockNeo4jService.
 
 ## Database Schema
 
@@ -174,10 +181,12 @@ src/
 ```
 
 ### Key Files
-- `scripts/seed-database.js`: Database seeding script
-- `docker-compose.yml`: Neo4j container configuration
-- `src/services/neo4j.ts`: Database service layer
+- `src/components/ui/`: Custom UI components (Button, Card, etc.)
+- `src/services/mockData.ts`: Mock Neo4j service for browser compatibility
+- `src/services/neo4j.ts`: Real Neo4j service layer (optional)
 - `src/data/quiz-questions.ts`: Quiz system implementation
+- `scripts/seed-database.js`: Database seeding script (for Neo4j)
+- `docker-compose.yml`: Neo4j container configuration (optional)
 
 ### Available Scripts
 ```bash

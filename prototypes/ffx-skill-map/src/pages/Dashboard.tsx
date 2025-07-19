@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proto-portal/design-system'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { neo4jService } from '../services/neo4j'
 import { Link } from 'react-router-dom'
-import { Button } from '@proto-portal/design-system'
+import { Button } from '@/components/ui/button'
 import { Sword, Users, Brain, Target, TrendingUp, Award } from 'lucide-react'
 
 const Dashboard = () => {
