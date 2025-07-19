@@ -20,20 +20,13 @@ yarn build
 
 # Build FFX skill map prototype
 echo "🎮 Building FFX Skill Map prototype..."
-cd prototypes/ffx-skill-map
 
-# Install dependencies for FFX prototype (using npm)
-echo "📦 Installing FFX prototype dependencies..."
-nvm use 18 &> /dev/null || echo "Node 18 already active"
-npm install
-
-# Build FFX prototype
+# Build FFX prototype (dependencies already installed via workspace)
 echo "🏗️ Building FFX prototype..."
-npm run build
+yarn workspace @proto-portal/ffx-skill-map build
 
 # Copy FFX build to main dist directory
 echo "📋 Copying FFX build to main dist..."
-cd ../..
 mkdir -p dist/prototypes/ffx-skill-map
 cp -r prototypes/ffx-skill-map/dist/* dist/prototypes/ffx-skill-map/
 
