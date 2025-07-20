@@ -179,39 +179,41 @@ const Portfolio = () => {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8">Let's Connect</h2>
-          <p className="text-lg text-muted-foreground mb-12">
+      {/* Contact Section - Mobile Responsive */}
+      <section className="mobile-section max-vw-100">
+        <div className="container-mobile text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8">
+            Let's Connect
+          </h2>
+          <p className="mobile-text text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-mobile-safe">
             Interested in exploring how AI can enhance human connection? Let's
             discuss ideas and collaborate!
           </p>
 
-          <div className="flex justify-center gap-6">
+          <div className="btn-group-mobile max-w-none sm:max-w-fit mx-auto">
             <Button
               variant="outline"
-              size="lg"
-              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+              size="default"
+              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
             >
-              <Mail className="mr-2 h-5 w-5" />
-              Email
+              <Mail className="mr-2 mobile-icon" />
+              <span className="mobile-text">Email</span>
             </Button>
             <Button
               variant="outline"
-              size="lg"
-              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+              size="default"
+              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
             >
-              <Linkedin className="mr-2 h-5 w-5" />
-              LinkedIn
+              <Linkedin className="mr-2 mobile-icon" />
+              <span className="mobile-text">LinkedIn</span>
             </Button>
             <Button
               variant="outline"
-              size="lg"
-              className="hover:bg-primary hover:text-primary-foreground transition-smooth"
+              size="default"
+              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
             >
-              <Github className="mr-2 h-5 w-5" />
-              GitHub
+              <Github className="mr-2 mobile-icon" />
+              <span className="mobile-text">GitHub</span>
             </Button>
           </div>
         </div>

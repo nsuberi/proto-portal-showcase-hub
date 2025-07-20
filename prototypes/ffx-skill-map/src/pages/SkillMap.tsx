@@ -8,15 +8,10 @@ import { Sword, Zap, Heart, Star, Crown, Filter } from 'lucide-react'
 import Sigma from 'sigma';
 import Graph from 'graphology';
 import { getGraphNodes } from './SkillMap.utils';
+import { SKILL_CATEGORY_COLORS } from '../design-system';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  combat: '#ef4444',    // red-500
-  magic: '#3b82f6',     // blue-500
-  support: '#22c55e',   // green-500
-  special: '#a21caf',   // purple-800
-  advanced: '#eab308',  // yellow-500
-  default: '#6b7280',   // gray-500
-};
+// Use skill category colors from local design system
+const CATEGORY_COLORS = SKILL_CATEGORY_COLORS;
 
 function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }: {
   skills: any[],
@@ -101,7 +96,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
   return (
     <div
       ref={sigmaContainerRef}
-      style={{ width: "100%", height: 400, border: "1px solid #ccc", marginBottom: 16 }}
+      className="w-full h-96 border border-border mb-4"
       data-testid="sigma-graph"
     />
   );
@@ -202,7 +197,7 @@ const SkillMap = () => {
   return (
     <>
       {/* Employee dropdown */}
-      <div style={{ maxWidth: 400, marginBottom: 16 }}>
+      <div className="max-w-sm mb-4">
         <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select an employee to highlight mastered skills..." />
@@ -224,11 +219,14 @@ const SkillMap = () => {
         selectedEmployeeId={selectedEmployeeId}
       />
       {/* Legend for node colors */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
+      <div className="flex gap-4 mb-8">
         {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => (
-          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 8, background: color, border: '1px solid #ccc' }} />
-            <span style={{ textTransform: 'capitalize', fontSize: 14 }}>{cat}</span>
+          <div key={cat} className="flex items-center gap-2">
+            <span 
+              className="inline-block w-4 h-4 rounded-full border border-border"
+              style={{ backgroundColor: color }}
+            />
+            <span className="capitalize text-sm">{cat}</span>
           </div>
         ))}
       </div>
@@ -236,7 +234,7 @@ const SkillMap = () => {
       <div className="space-y-6">
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span style={{ color: "rgb(144, 19, 254)" }}>
+            <span className="text-primary">
               Skill Map
             </span>
           </h1>

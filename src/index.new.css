@@ -1,10 +1,10 @@
-/* Import shared design tokens first */
-@import "@proto-portal/design-tokens/css/tokens.css";
-@import "@proto-portal/design-tokens/css/utilities.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import shared design tokens */
+@import "@proto-portal/design-tokens/css/tokens.css";
+@import "@proto-portal/design-tokens/css/utilities.css";
 
 /* Portfolio-specific styles can be added here */
 @layer base {

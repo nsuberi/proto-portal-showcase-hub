@@ -5,6 +5,7 @@ import { neo4jService } from '../services/neo4j'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Sword, Users, Brain, Target, TrendingUp, Award } from 'lucide-react'
+import { CHART_COLORS } from '../design-system'
 
 const Dashboard = () => {
   const { data: skills, isLoading: skillsLoading } = useQuery({
@@ -47,7 +48,8 @@ const Dashboard = () => {
     value: item.total
   }))
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
+  // Use chart colors from local design system
+  const COLORS = CHART_COLORS;
 
   return (
     <div className="space-y-8">

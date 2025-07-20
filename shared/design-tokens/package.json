@@ -1,0 +1,28 @@
+{
+  "name": "@proto-portal/design-tokens",
+  "version": "1.0.0",
+  "description": "Shared design tokens for Proto Portal Showcase Hub",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "dist/**/*",
+    "css/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "tailwind",
+    "css-variables"
+  ]
+}

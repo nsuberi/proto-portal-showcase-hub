@@ -13,6 +13,4 @@ export default {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
-  // Add plugins that each application needs
-  plugins: [require("tailwindcss-animate")],
 } satisfies Config;
