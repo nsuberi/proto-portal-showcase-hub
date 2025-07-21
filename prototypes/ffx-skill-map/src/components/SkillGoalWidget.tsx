@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,10 @@ import {
   Clock,
   ArrowRight,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Star,
+  Gem
 } from 'lucide-react';
 import { sharedEnhancedService } from '../services/sharedService';
 import { Skill, Employee } from '../types';
@@ -23,6 +26,7 @@ interface SkillGoalWidgetProps {
   employeeId: string;
   employee?: Employee;
   onGoalSet?: (goalSkill: Skill | null, path: string[]) => void;
+  currentGoal?: Skill | null; // External goal state to sync with
 }
 
 interface GoalPath {
@@ -32,6 +36,7 @@ interface GoalPath {
   steps: number;
   remainingSteps: number;
   totalSteps: number;
+  originalTotalSteps: number; // Fixed denominator for progress calculation
   completedSteps: number;
   skills: Skill[];
   isCompleted: boolean;
@@ -40,13 +45,15 @@ interface GoalPath {
 const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   employeeId,
   employee,
-  onGoalSet
+  onGoalSet,
+  currentGoal
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<Skill | null>(null);
   const [goalPath, setGoalPath] = useState<GoalPath | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const originalTotalStepsRef = useRef<number | null>(null);
 
   const { data: skills } = useQuery({
     queryKey: ['enhanced-skills'],
@@ -142,6 +149,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       steps: shortestPath.length,
       remainingSteps,
       totalSteps,
+      originalTotalSteps: totalSteps, // Store original total for consistent progress calculation
       completedSteps,
       skills: pathSkills,
       isCompleted
@@ -154,6 +162,12 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     setIsSearchExpanded(false);
     
     const path = calculateGoalPath(skill);
+    
+    // Store original total steps for consistent progress calculation
+    if (path) {
+      originalTotalStepsRef.current = path.totalSteps;
+    }
+    
     setGoalPath(path);
     
     // Notify parent component
@@ -166,6 +180,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     setSelectedGoal(null);
     setGoalPath(null);
     setShowCompletionAnimation(false);
+    originalTotalStepsRef.current = null;
     if (onGoalSet) {
       onGoalSet(null, []);
     }
@@ -173,9 +188,15 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   // Recalculate path when employee mastered skills change
   useEffect(() => {
-    if (selectedGoal && employee && skills) {
+    if (selectedGoal && employee && skills && originalTotalStepsRef.current !== null) {
       const previouslyCompleted = goalPath?.isCompleted || false;
       const updatedPath = calculateGoalPath(selectedGoal);
+      
+      // Preserve the original total steps from when goal was first set
+      if (updatedPath) {
+        updatedPath.originalTotalSteps = originalTotalStepsRef.current;
+      }
+      
       setGoalPath(updatedPath);
       
       // Check if goal was just completed
@@ -185,6 +206,17 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       }
     }
   }, [employee?.mastered_skills, selectedGoal, skills]);
+
+  // Sync with external currentGoal state (for reset functionality)
+  useEffect(() => {
+    if (currentGoal === null && selectedGoal !== null) {
+      // External goal was cleared, clear internal state
+      setSelectedGoal(null);
+      setGoalPath(null);
+      setShowCompletionAnimation(false);
+      originalTotalStepsRef.current = null;
+    }
+  }, [currentGoal, selectedGoal]);
 
   const getCategoryIcon = (category: string) => {
     const iconClass = "h-4 w-4";
@@ -376,8 +408,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-600">
-                        {goalPath.completedSteps === goalPath.totalSteps ? '✓' : 
-                         `${Math.round((goalPath.completedSteps / goalPath.totalSteps) * 100)}%`}
+                        {goalPath.completedSteps === goalPath.originalTotalSteps ? '✓' : 
+                         `${Math.round((goalPath.completedSteps / goalPath.originalTotalSteps) * 100)}%`}
                       </div>
                       <div className="text-xs text-gray-600">Complete</div>
                     </div>
@@ -416,23 +448,83 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
                   {/* Completion Animation and Next Goal Prompt */}
                   {goalPath.isCompleted && (
-                    <div className={`mt-4 p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 transition-all duration-500 ${showCompletionAnimation ? 'animate-bounce shadow-lg' : ''}`}>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white transition-transform duration-300 ${showCompletionAnimation ? 'scale-125' : ''}`}>
+                    <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-50 border border-emerald-200 transition-all duration-500 shadow-lg relative overflow-hidden">
+                      {/* Sparkly Background Elements - Bouquet Eruption */}
+                      {showCompletionAnimation && (
+                        <>
+                          {/* Large Central Gems */}
+                          <div className="absolute top-1 left-6 animate-pulse">
+                            <Gem className="h-6 w-6 text-emerald-500 animate-spin drop-shadow-lg" style={{animationDuration: '3s'}} />
+                          </div>
+                          <div className="absolute top-2 right-8 animate-pulse" style={{animationDelay: '0.3s'}}>
+                            <Star className="h-7 w-7 text-yellow-500 animate-ping drop-shadow-lg" />
+                          </div>
+                          <div className="absolute bottom-2 left-12 animate-pulse" style={{animationDelay: '0.6s'}}>
+                            <Sparkles className="h-6 w-6 text-blue-500 animate-bounce drop-shadow-lg" />
+                          </div>
+                          
+                          {/* Medium Sparkles */}
+                          <div className="absolute top-4 left-1/2 animate-pulse" style={{animationDelay: '0.9s'}}>
+                            <Star className="h-5 w-5 text-purple-500 animate-ping drop-shadow-md" />
+                          </div>
+                          <div className="absolute bottom-3 right-6 animate-pulse" style={{animationDelay: '1.2s'}}>
+                            <Gem className="h-5 w-5 text-pink-500 animate-spin drop-shadow-md" style={{animationDuration: '2s'}} />
+                          </div>
+                          <div className="absolute top-6 right-16 animate-pulse" style={{animationDelay: '1.5s'}}>
+                            <Sparkles className="h-4 w-4 text-cyan-500 animate-bounce drop-shadow-md" />
+                          </div>
+                          <div className="absolute bottom-5 left-20 animate-pulse" style={{animationDelay: '1.8s'}}>
+                            <Star className="h-4 w-4 text-rose-500 animate-ping drop-shadow-md" />
+                          </div>
+                          
+                          {/* Small Sparkles - More Scattered */}
+                          <div className="absolute top-1 left-16 animate-pulse" style={{animationDelay: '0.2s'}}>
+                            <Sparkles className="h-3 w-3 text-amber-400 animate-spin" style={{animationDuration: '4s'}} />
+                          </div>
+                          <div className="absolute top-7 left-2 animate-pulse" style={{animationDelay: '0.4s'}}>
+                            <Star className="h-3 w-3 text-indigo-400 animate-ping" />
+                          </div>
+                          <div className="absolute bottom-1 right-12 animate-pulse" style={{animationDelay: '0.7s'}}>
+                            <Gem className="h-3 w-3 text-teal-400 animate-spin" style={{animationDuration: '3.5s'}} />
+                          </div>
+                          <div className="absolute top-2 right-2 animate-pulse" style={{animationDelay: '1.0s'}}>
+                            <Sparkles className="h-2 w-2 text-violet-400 animate-bounce" />
+                          </div>
+                          <div className="absolute bottom-6 left-4 animate-pulse" style={{animationDelay: '1.3s'}}>
+                            <Star className="h-2 w-2 text-orange-400 animate-ping" />
+                          </div>
+                          <div className="absolute top-5 left-24 animate-pulse" style={{animationDelay: '1.6s'}}>
+                            <Gem className="h-2 w-2 text-lime-400 animate-spin" style={{animationDuration: '2.5s'}} />
+                          </div>
+                          <div className="absolute bottom-2 right-20 animate-pulse" style={{animationDelay: '1.9s'}}>
+                            <Sparkles className="h-3 w-3 text-sky-400 animate-bounce" />
+                          </div>
+                          <div className="absolute top-3 right-24 animate-pulse" style={{animationDelay: '2.2s'}}>
+                            <Star className="h-2 w-2 text-fuchsia-400 animate-ping" />
+                          </div>
+                          
+                          {/* Radial burst effects */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-emerald-100/20 to-transparent animate-ping" style={{animationDelay: '0.5s'}}></div>
+                        </>
+                      )}
+                      
+                      <div className="flex items-center gap-3 mb-3 relative z-10">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg">
                           <CheckCircle2 className="h-5 w-5" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-green-800">Goal Completed!</h3>
-                          <p className="text-sm text-green-600">You've mastered all skills in this path</p>
+                          <h3 className="font-semibold text-emerald-800">Goal Completed!</h3>
+                          <p className="text-sm text-emerald-600">You've mastered all skills in this path</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 relative z-10">
                         <Button
                           onClick={() => {
                             clearGoal();
                             setIsSearchExpanded(true);
                           }}
-                          className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm shadow-md"
                         >
                           <Target className="h-4 w-4 mr-1" />
                           Set Next Goal
@@ -440,7 +532,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                         <Button
                           onClick={clearGoal}
                           variant="outline"
-                          className="text-green-700 border-green-300 hover:bg-green-50 text-sm"
+                          className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-sm"
                         >
                           Clear Goal
                         </Button>

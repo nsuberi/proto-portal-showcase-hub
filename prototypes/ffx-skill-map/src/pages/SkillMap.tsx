@@ -263,6 +263,9 @@ const SkillMap = () => {
     try {
       await enhancedNeo4jService.resetEmployeeSkills(selectedEmployeeId);
       
+      // Clear the current goal when skills are reset
+      setCurrentGoal(null);
+      
       // Use efficient non-blocking invalidation
       queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
       
@@ -589,6 +592,7 @@ const SkillMap = () => {
           <SkillGoalWidget
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
+            currentGoal={currentGoal?.skill || null}
             onGoalSet={(goalSkill, path) => {
               setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
               // Invalidate recommendations to refresh with goal-directed ones
