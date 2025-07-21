@@ -188,13 +188,35 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   // Recalculate path when employee mastered skills change
   useEffect(() => {
+    console.log('🔄 Goal recalculation effect triggered:', {
+      hasSelectedGoal: !!selectedGoal,
+      hasEmployee: !!employee,
+      hasSkills: !!skills,
+      originalTotalSteps: originalTotalStepsRef.current,
+      masteredSkills: employee?.mastered_skills?.length || 0
+    });
+    
     if (selectedGoal && employee && skills && originalTotalStepsRef.current !== null) {
       const previouslyCompleted = goalPath?.isCompleted || false;
       const updatedPath = calculateGoalPath(selectedGoal);
       
+      console.log('🎯 Path calculation result:', {
+        goal: selectedGoal.name,
+        pathFound: !!updatedPath,
+        completedSteps: updatedPath?.completedSteps,
+        totalSteps: updatedPath?.totalSteps,
+        originalTotal: originalTotalStepsRef.current,
+        masteredSkillsInEmployee: employee.mastered_skills
+      });
+      
       // Preserve the original total steps from when goal was first set
       if (updatedPath) {
         updatedPath.originalTotalSteps = originalTotalStepsRef.current;
+        console.log('📊 Final percentage calculation:', {
+          completedSteps: updatedPath.completedSteps,
+          originalTotalSteps: updatedPath.originalTotalSteps,
+          percentage: Math.round((updatedPath.completedSteps / updatedPath.originalTotalSteps) * 100)
+        });
       }
       
       setGoalPath(updatedPath);
@@ -205,7 +227,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         setTimeout(() => setShowCompletionAnimation(false), 3000);
       }
     }
-  }, [employee?.mastered_skills, selectedGoal, skills]);
+  }, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills]);
 
   // Sync with external currentGoal state (for reset functionality)
   useEffect(() => {
