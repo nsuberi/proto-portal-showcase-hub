@@ -141,15 +141,8 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
     setIsLearning(skill.id);
     
     try {
-      // Create updated employee with new skill and reduced XP
-      const updatedEmployee = {
-        ...employee,
-        mastered_skills: [...employee.mastered_skills, skill.id],
-        current_xp: (employee.current_xp || 0) - skill.xp_required
-      };
-      
-      // Call the parent handler
-      await onSkillLearn(skill, updatedEmployee);
+      // Call the parent handler - the service will handle XP decrementing
+      await onSkillLearn(skill, employee);
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations', employeeId] });
