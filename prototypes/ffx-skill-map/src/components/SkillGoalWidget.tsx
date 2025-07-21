@@ -477,7 +477,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                       <div className="text-base sm:text-lg font-bold text-purple-600">{formatXP(goalPath.remainingXP)}</div>
                       <div className="text-xs text-gray-600 font-medium">XP Needed</div>
                     </div>
-                    <div className="p-2 rounded-lg bg-green-50/50">
+                    <div className="p-2 rounded-lg bg-slate-50/50 border border-slate-200/30">
                       <div className="text-base sm:text-lg font-bold text-green-600 flex justify-center items-center min-h-[1.5rem]">
                         {goalPath.isCompleted ? (
                           <Check className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
