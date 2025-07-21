@@ -51,14 +51,14 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
     const graph = new Graph();
     const renderer = new Sigma(graph, sigmaContainerRef.current, {
       renderEdgeLabels: false,
-      labelRenderedSizeThreshold: 15,
-      labelDensity: 1,
+      labelRenderedSizeThreshold: 15, // Higher threshold to hide most labels
+      labelDensity: 1, // Standard label density
       // Performance optimizations
       enableEdgeClickEvents: false,
       enableEdgeWheelEvents: false,
       enableEdgeHoverEvents: false,
       hideEdgesOnMove: true,
-      hideLabelsOnMove: true,
+      hideLabelsOnMove: true, // Re-enable hiding labels on move
       allowInvalidContainer: false,
       nodeReducer: (node, data) => {
         // Handle transparency by converting hex to rgba when needed
@@ -73,16 +73,25 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
         let borderColor = data.borderColor || null;
         let borderWidth = data.borderWidth || 0;
         let labelSize = data.labelSize || 12;
+        let labelColor = data.labelColor || '#2C3E50';
+        let labelWeight = data.labelWeight || 'normal';
         
-        if (data.hasEmployeeSelected && data.isMastered) {
-          // Employee has this skill - show prominent golden border
-          borderColor = '#F39C12'; // Golden border for mastered skills
-          borderWidth = 3;
-          labelSize = 14; // Make labels bigger for mastered skills
+        // Always show outline and enhanced text for mastered skills, regardless of employee selection
+        if (data.isMastered) {
+          borderColor = '#000000'; // Black border for mastered skills
+          borderWidth = 4; // Thicker border for better visibility
+          labelSize = 18; // Larger labels for mastered skills to ensure visibility
+          labelColor = '#1A1A1A'; // Darker text for better contrast
+          labelWeight = 'bold'; // Bold text for mastered skills
           color = data.color; // Keep original vibrant color
         } else if (data.hasEmployeeSelected && !data.isMastered) {
           // Employee doesn't have this skill - make it translucent
-          color = hexToRgba(data.color, 0.7);
+          color = hexToRgba(data.color, 0.6);
+          borderWidth = 0;
+          borderColor = null;
+          labelColor = hexToRgba('#2C3E50', 0.7); // Fade the label as well
+        } else if (data.hasEmployeeSelected) {
+          // Employee is selected but this is not their skill - keep subtle styling
           borderWidth = 0;
           borderColor = null;
         } else {
@@ -96,15 +105,17 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
           label: data.label,
           color: color,
           // Make mastered skills bigger to ensure they stand out
-          size: data.isMastered ? data.size * 1.2 : data.size,
-          zIndex: data.isMastered ? 2 : (data.zIndex || 1),
+          size: data.isMastered ? data.size * 1.3 : data.size,
+          zIndex: data.isMastered ? 3 : (data.zIndex || 1), // Higher z-index for mastered skills
           // Ensure we're using standard Sigma.js properties
           type: 'circle',
           borderColor: borderColor,
           borderWidth: borderWidth,
           labelSize: labelSize,
-          labelColor: data.labelColor || '#2C3E50',
-          labelWeight: data.labelWeight || 'normal',
+          labelColor: labelColor,
+          labelWeight: labelWeight,
+          // Force label visibility for mastered skills
+          forceLabel: data.isMastered,
         };
       },
       // Add hover effects
