@@ -7,7 +7,7 @@ import { sharedEnhancedService } from '../services/sharedService'
 // Use the shared service instance to prevent multiple connections
 const enhancedNeo4jService = sharedEnhancedService
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
 import Graph from 'graphology';
@@ -234,6 +234,12 @@ const SkillMap = () => {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
   const [currentGoal, setCurrentGoal] = useState<{ skill: any; path: string[] } | null>(null)
+  const [showTutorial, setShowTutorial] = useState(() => {
+    // Show tutorial on first visit
+    return !localStorage.getItem('skillMapTutorialSeen')
+  })
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [showSkillExplorer, setShowSkillExplorer] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -462,21 +468,170 @@ const SkillMap = () => {
     }
   }
 
+  const handleTutorialComplete = () => {
+    setShowTutorial(false)
+    localStorage.setItem('skillMapTutorialSeen', 'true')
+  }
+
   return (
     <>
-      {/* Instructions */}
-      <div className="mb-6 md:mb-8 bg-blue-50/50 border border-blue-200 rounded-lg p-4 md:p-6 mx-4">
-        <div className="flex flex-col sm:flex-row items-start gap-4">
-          <div className="bg-blue-100 rounded-full p-2 flex-shrink-0">
-            <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 animate-in fade-in zoom-in duration-300">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <Sparkles className="h-6 w-6 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">Welcome to the Map of Mastery!</h2>
+              </div>
+              <div className="space-y-3 text-sm text-gray-600 mb-6">
+                <p className="font-medium text-gray-800">
+                  Visualize employee expertise through an interactive skill network and guide their professional development.
+                </p>
+                <div className="space-y-2">
+                  <p><strong className="text-blue-600">1. Select an employee</strong> from the dropdown to view their current skills and expertise</p>
+                  <p><strong className="text-purple-600">2. Set a learning goal</strong> using the Goal Planner - choose what skill they should work toward next</p>
+                  <p><strong className="text-green-600">3. Invest in recommended skills</strong> from the Next Steps section to progress toward your goal</p>
+                  <p><strong className="text-orange-600">4. Track your progress</strong> on the interactive skill network as you build expertise</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleTutorialComplete}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Let's Go!
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTutorial(false)}
+                  className="px-3"
+                >
+                  Skip
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base md:text-lg font-semibold text-blue-900 mb-2">How to Use the Map of Mastery</h3>
-            <div className="space-y-2 text-xs sm:text-sm text-blue-800">
-              <p>1. <strong>Select an employee</strong> from the dropdown to view their current skills and expertise</p>
-              <p>2. <strong>Set a learning goal</strong> using the Goal Planner - choose what skill they should work toward next</p>
-              <p>3. <strong>Invest in recommended skills</strong> from the Next Steps section to progress toward your goal</p>
-              <p>4. <strong>Track your progress</strong> on the interactive skill network as you build expertise</p>
+        </div>
+      )}
+
+      {/* Instructions Modal */}
+      {showInstructions && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-blue-600" />
+                How to Use the Map of Mastery
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInstructions(false)}
+                className="p-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <div className="space-y-3 text-sm">
+                <div className="flex gap-3">
+                  <div className="bg-blue-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <span className="block w-2 h-2 bg-blue-600 rounded-full"></span>
+                  </div>
+                  <div>
+                    <p><strong className="text-blue-600">Select an employee</strong></p>
+                    <p className="text-gray-600">Choose from the dropdown to view their current skills and expertise</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="bg-purple-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <span className="block w-2 h-2 bg-purple-600 rounded-full"></span>
+                  </div>
+                  <div>
+                    <p><strong className="text-purple-600">Set a learning goal</strong></p>
+                    <p className="text-gray-600">Use the Goal Planner to choose what skill they should work toward next</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="bg-green-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <span className="block w-2 h-2 bg-green-600 rounded-full"></span>
+                  </div>
+                  <div>
+                    <p><strong className="text-green-600">Invest in recommended skills</strong></p>
+                    <p className="text-gray-600">Progress toward your goal using the Next Steps section</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="bg-orange-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <span className="block w-2 h-2 bg-orange-600 rounded-full"></span>
+                  </div>
+                  <div>
+                    <p><strong className="text-orange-600">Track your progress</strong></p>
+                    <p className="text-gray-600">Monitor advancement on the interactive skill network</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header with Title and Intro */}
+      <div className="mb-6 md:mb-8 text-center px-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold flex-1"
+              style={{
+                background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                color: 'transparent'
+              }}>
+            Map of Mastery
+          </h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInstructions(true)}
+            className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 flex-shrink-0"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">How to Use</span>
+            <span className="sm:hidden">Help</span>
+          </Button>
+        </div>
+        <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
+          Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,
+          identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
+          prerequisite relationships and recommended next steps for professional development.
+        </p>
+        
+        {/* Feature highlights */}
+        <div className="mt-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-xs sm:text-sm">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2 rounded-full border border-primary/20">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+              <span className="font-medium text-primary">Skill Tracking</span>
+              <span className="text-muted-foreground">for employees</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600/10 to-blue-600/5 px-3 py-2 rounded-full border border-blue-200">
+              <Sparkles className="h-3 w-3 text-blue-600" />
+              <span className="font-medium text-blue-600">Smart Recommendations</span>
+              <span className="text-muted-foreground">based on expertise</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/10 to-purple-600/5 px-3 py-2 rounded-full border border-purple-200">
+              <TrendingUp className="h-3 w-3 text-purple-600" />
+              <span className="font-medium text-purple-600">Learning Pathways</span>
+              <span className="text-muted-foreground">between skills</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/10 to-green-600/5 px-3 py-2 rounded-full border border-green-200">
+              <BarChart3 className="h-3 w-3 text-green-600" />
+              <span className="font-medium text-green-600">Team Analytics</span>
+              <span className="text-muted-foreground">and gaps</span>
             </div>
           </div>
         </div>
@@ -536,9 +691,10 @@ const SkillMap = () => {
         goalPath={currentGoal?.path}
       />
 
-      {/* Legend for node colors - with hover tooltips */}
+      {/* Skill Types Legend */}
       <div className="mb-6 md:mb-8 relative mx-4">
         <div className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-lg p-3 md:p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-center mb-3 text-gray-700">Skill Types</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:justify-center gap-2 md:gap-4">
             {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => {
               const categoryInfo = getCategoryInfo(cat);
@@ -578,29 +734,6 @@ const SkillMap = () => {
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
-        <div className="text-center mb-6 md:mb-8 px-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 px-2"
-              style={{
-                background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                color: 'transparent'
-              }}>
-            Map of Mastery
-          </h1>
-          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-            Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,
-            identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
-            prerequisite relationships and recommended next steps for professional development.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mt-6 text-xs sm:text-sm text-muted-foreground max-w-4xl mx-auto px-4">
-            <span className="flex items-center justify-center gap-2">• <strong className="text-primary">Skill Tracking</strong> for employees</span>
-            <span className="flex items-center justify-center gap-2">• <strong className="text-blue-600">Smart Recommendations</strong> based on expertise</span>
-            <span className="flex items-center justify-center gap-2">• <strong className="text-purple-600">Learning Pathways</strong> between skills</span>
-            <span className="flex items-center justify-center gap-2">• <strong className="text-green-600">Team Analytics</strong> and gaps</span>
-          </div>
-        </div>
 
 
         {/* Skill Goal Widget */}
@@ -652,224 +785,366 @@ const SkillMap = () => {
           />
         </div>
 
-        {/* Filters */}
-        <Card className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth mx-4">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg md:text-xl">Filters</CardTitle>
-            <CardDescription className="text-sm">
-              Filter skills by category and level
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="combat">Combat</SelectItem>
-                  <SelectItem value="magic">Magic</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="special">Special</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Filter by level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="1">Level 1</SelectItem>
-                  <SelectItem value="2">Level 2</SelectItem>
-                  <SelectItem value="3">Level 3</SelectItem>
-                  <SelectItem value="4">Level 4</SelectItem>
-                  <SelectItem value="5">Level 5</SelectItem>
-                  <SelectItem value="6">Level 6</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Skill Grid */}
-        <div className="space-y-6 md:space-y-8 mx-4">
-          {Object.keys(skillsByLevel).length > 0 ? (
-            Object.entries(skillsByLevel)
-              .sort(([a], [b]) => parseInt(a) - parseInt(b))
-              .map(([level, levelSkills]) => (
-                <Card key={level} className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg md:text-xl">
-                          <span>Level {level} Skills</span>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="self-start sm:self-auto text-xs">{levelSkills?.length || 0} skills</Badge>
-                            {selectedEmployeeId && levelSkills && (
-                              <Badge 
-                                variant="secondary" 
-                                className="self-start sm:self-auto text-xs bg-green-100 text-green-800 border-green-200"
-                              >
-                                {levelSkills.filter(skill => masteredSkills.includes(skill.id)).length} mastered
-                              </Badge>
-                            )}
-                          </div>
-                        </CardTitle>
-
-                      </div>
-                      <button
-                        onClick={() => toggleLevelExpansion(level)}
-                        className="flex items-center gap-1 px-2 md:px-3 py-1 text-xs md:text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors flex-shrink-0"
-                      >
-                        {expandedLevels[level] ? (
-                          <>
-                            <Minimize2 className="h-3 w-3 md:h-4 md:w-4" />
-                            <span className="hidden sm:inline">Hide Skills</span>
-                            <span className="sm:hidden">Hide</span>
-                          </>
-                        ) : (
-                          <>
-                            <Maximize2 className="h-3 w-3 md:h-4 md:w-4" />
-                            <span className="hidden sm:inline">Show Skills</span>
-                            <span className="sm:hidden">Show</span>
-                          </>
-                        )}
-                      </button>
+        {/* Team Analytics */}
+        <div className="mb-8">
+          <Card className="border-border/50 shadow-elegant mx-4">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="h-5 w-5 text-green-600" />
+                Team Analytics
+              </CardTitle>
+              <CardDescription>Skill distribution across all team members</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Overall Statistics */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-2">
+                    <div className="text-xl font-bold text-blue-600">{skills?.length || 0}</div>
+                    <p className="text-xs text-gray-500">Total Skills</p>
+                  </div>
+                  <div className="text-center p-2">
+                    <div className="text-xl font-bold text-green-600">{employees?.length || 0}</div>
+                    <p className="text-xs text-gray-500">Employees</p>
+                  </div>
+                  <div className="text-center p-2">
+                    <div className="text-xl font-bold text-orange-600">
+                      {employees?.reduce((sum, emp) => sum + (emp.mastered_skills?.length || 0), 0) || 0}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {expandedLevels[level] ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                      {levelSkills.map(skill => {
-                        const prerequisites = getPrerequisites(skill.id)
-                        const dependents = getDependents(skill.id)
-                        const isMastered = masteredSkills.includes(skill.id)
-                        const hasEmployeeSelected = selectedEmployeeId !== ''
-                        const masteredColors = getCategoryMasteredColors(skill.category)
-                        
+                    <p className="text-xs text-gray-500">Skills Mastered</p>
+                  </div>
+                </div>
+
+                {/* Team Mastered Skills by Category */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Type</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                    {(() => {
+                      // Count all mastered skills by category across all employees
+                      const masteredByCategory: Record<string, number> = {};
+                      employees?.forEach(emp => {
+                        emp.mastered_skills?.forEach(skillId => {
+                          const skill = skills?.find(s => s.id === skillId);
+                          if (skill) {
+                            masteredByCategory[skill.category] = (masteredByCategory[skill.category] || 0) + 1;
+                          }
+                        });
+                      });
+                      
+                      return Object.entries(masteredByCategory).map(([category, count]) => {
+                        const categoryInfo = getCategoryInfo(category);
                         return (
-                          <div
-                            key={skill.id}
-                            className={`p-4 rounded-lg border skill-node skill-${skill.category} transition-all duration-200 ${
-                              hasEmployeeSelected 
-                                ? isMastered 
-                                  ? `${masteredColors.border} border-2 ${masteredColors.bg} shadow-md` 
-                                  : 'border-gray-300 bg-gray-50 opacity-60'
-                                : 'border-gray-200 bg-white'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                {getCategoryIcon(skill.category)}
-                                <h4 className={`font-medium text-sm ${
-                                  hasEmployeeSelected && isMastered ? `${masteredColors.text} font-semibold` : ''
-                                }`}>
-                                  {skill.name}
-                                  {hasEmployeeSelected && isMastered && (
-                                    <span className={`ml-2 ${masteredColors.check}`}>✓</span>
-                                  )}
-                                </h4>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                L{skill.level}
-                              </Badge>
+                          <div key={category} className="text-center p-2 rounded-lg bg-gray-50/50 border">
+                            <div className="flex items-center justify-center mb-1">
+                              <span className="text-sm" style={{ color: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] }}>
+                                {categoryInfo.icon}
+                              </span>
                             </div>
-                            
-                            <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                              {skill.description}
-                            </p>
-                            
-                            <div className="space-y-2">
-                              <Badge 
-                                variant="secondary" 
-                                className={`text-xs hidden sm:inline-flex ${getCategoryColor(skill.category)}`}
-                              >
-                                {skill.category}
-                              </Badge>
-                              
-                              {prerequisites.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-medium text-gray-700 mb-1">Prerequisites:</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {prerequisites.map(prereqId => {
-                                      const prereqSkill = skills?.find(s => s.id === prereqId)
-                                      return prereqSkill ? (
-                                        <Badge key={prereqId} variant="outline" className="text-xs">
-                                          {prereqSkill.name}
-                                        </Badge>
-                                      ) : null
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {dependents.length > 0 && (
-                                <div>
-                                  <p className="text-xs font-medium text-gray-700 mb-1">Unlocks:</p>
-                                  <div className="flex flex-wrap gap-1">
-                                    {dependents.map(depId => {
-                                      const depSkill = skills?.find(s => s.id === depId)
-                                      return depSkill ? (
-                                        <Badge key={depId} variant="outline" className="text-xs">
-                                          {depSkill.name}
-                                        </Badge>
-                                      ) : null
-                                    })}
-                                  </div>
-                                </div>
-                              )}
+                            <div className="text-lg font-bold" style={{ color: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] }}>
+                              {count}
                             </div>
+                            <p className="text-xs text-gray-500 capitalize">{category}</p>
                           </div>
-                        )
-                      })}
-                      </div>
-                    ) : (
-                      <div className="text-center py-6">
-                        <p className="text-muted-foreground text-sm">
-                          Level {level} skills currently hidden... Click "Show Skills" to view {levelSkills.length} skills
-                        </p>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                {/* Team Mastered Skills by Level */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Level</h4>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {[1, 2, 3, 4, 5, 6].map(level => {
+                      // Count all mastered skills by level across all employees
+                      const masteredAtLevel = employees?.reduce((count, emp) => {
+                        return count + (emp.mastered_skills?.filter(skillId => {
+                          const skill = skills?.find(s => s.id === skillId);
+                          return skill?.level === level;
+                        }).length || 0);
+                      }, 0) || 0;
+                      
+                      return (
+                        <div key={level} className="text-center p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200">
+                          <div className="text-lg font-bold text-blue-600">{masteredAtLevel}</div>
+                          <p className="text-xs text-gray-500">Level {level}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Skill Explorer */}
+        <div className="mb-8">
+          <Card className="border-border/50 shadow-elegant mx-4">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="flex items-center gap-3 text-lg md:text-xl">
+                    <Filter className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                    {selectedEmployee?.images?.face && (
+                      <div className="relative">
+                        <img 
+                          src={selectedEmployee.images.face} 
+                          alt={selectedEmployee.name}
+                          className="w-8 h-10 md:w-10 md:h-12 object-cover rounded-lg shadow-sm flex-shrink-0 max-w-full"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              ))
-          ) : (
-            <Card className="border-border/50 shadow-elegant">
-              <CardContent className="text-center py-8 md:py-12">
-                <Filter className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm md:text-base text-muted-foreground px-4">
-                  No skills match the current filters. Try adjusting your selection.
-                </p>
+                    <span className="truncate">
+                      {selectedEmployee ? `${selectedEmployee.name}'s Mastered Skills` : 'Skill Explorer'}
+                    </span>
+                  </CardTitle>
+                  <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm mt-1">
+                    <span>
+                      {showSkillExplorer 
+                        ? selectedEmployee 
+                          ? `Filter and browse all skills - mastered skills for ${selectedEmployee.name} are highlighted`
+                          : "Filter and browse all skills organized by level"
+                        : selectedEmployee
+                          ? `See all skills by level with ${selectedEmployee.name}'s mastered skills highlighted`
+                          : "See all skills by level with detailed breakdowns and filtering options"
+                      }
+                    </span>
+                    {selectedEmployee && showSkillExplorer && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                          <span>{masteredSkills.length} mastered</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <span>of {skills?.length || 0} total</span>
+                        </div>
+                      </div>
+                    )}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSkillExplorer(!showSkillExplorer)}
+                  className="flex items-center gap-2 flex-shrink-0 text-xs md:text-sm"
+                >
+                  {showSkillExplorer ? (
+                    <>
+                      <Minimize2 className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">Hide Explorer</span>
+                      <span className="sm:hidden">Hide</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="h-3 w-3 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">See All Skills</span>
+                      <span className="sm:hidden">Explore</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            
+            {showSkillExplorer && (
+              <CardContent>
+                {/* Filters */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-3">Filter Skills</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Filter by category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="combat">Combat</SelectItem>
+                        <SelectItem value="magic">Magic</SelectItem>
+                        <SelectItem value="support">Support</SelectItem>
+                        <SelectItem value="special">Special</SelectItem>
+                        <SelectItem value="advanced">Advanced</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Filter by level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Levels</SelectItem>
+                        <SelectItem value="1">Level 1</SelectItem>
+                        <SelectItem value="2">Level 2</SelectItem>
+                        <SelectItem value="3">Level 3</SelectItem>
+                        <SelectItem value="4">Level 4</SelectItem>
+                        <SelectItem value="5">Level 5</SelectItem>
+                        <SelectItem value="6">Level 6</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Skill Grid */}
+                <div className="space-y-6">
+                  {Object.keys(skillsByLevel).length > 0 ? (
+                    Object.entries(skillsByLevel)
+                      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                      .map(([level, levelSkills]) => (
+                        <Card key={level} className="border-border/50 hover:border-primary/30 shadow-sm transition-smooth">
+                          <CardHeader className="pb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-base md:text-lg">
+                                  <span>Level {level} Skills</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline" className="self-start sm:self-auto text-xs">{levelSkills?.length || 0} skills</Badge>
+                                    {selectedEmployeeId && levelSkills && (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="self-start sm:self-auto text-xs bg-green-100 text-green-800 border-green-200"
+                                      >
+                                        {levelSkills.filter(skill => masteredSkills.includes(skill.id)).length} mastered
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </CardTitle>
+                              </div>
+                              <button
+                                onClick={() => toggleLevelExpansion(level)}
+                                className="flex items-center gap-1 px-2 md:px-3 py-1 text-xs md:text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors flex-shrink-0"
+                              >
+                                {expandedLevels[level] ? (
+                                  <>
+                                    <ChevronUp className="h-3 w-3 md:h-4 md:w-4" />
+                                    <span className="hidden sm:inline">Hide Skills</span>
+                                    <span className="sm:hidden">Hide</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
+                                    <span className="hidden sm:inline">Show Skills</span>
+                                    <span className="sm:hidden">Show</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            {expandedLevels[level] ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                              {levelSkills.map(skill => {
+                                const prerequisites = getPrerequisites(skill.id)
+                                const dependents = getDependents(skill.id)
+                                const isMastered = masteredSkills.includes(skill.id)
+                                const hasEmployeeSelected = selectedEmployeeId !== ''
+                                const masteredColors = getCategoryMasteredColors(skill.category)
+                                
+                                return (
+                                  <div
+                                    key={skill.id}
+                                    className={`p-4 rounded-lg border skill-node skill-${skill.category} transition-all duration-200 ${
+                                      hasEmployeeSelected 
+                                        ? isMastered 
+                                          ? `${masteredColors.border} border-2 ${masteredColors.bg} shadow-md` 
+                                          : 'border-gray-300 bg-gray-50 opacity-60'
+                                        : 'border-gray-200 bg-white'
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        {getCategoryIcon(skill.category)}
+                                        <h4 className={`font-medium text-sm ${
+                                          hasEmployeeSelected && isMastered ? `${masteredColors.text} font-semibold` : ''
+                                        }`}>
+                                          {skill.name}
+                                          {hasEmployeeSelected && isMastered && (
+                                            <span className={`ml-2 ${masteredColors.check}`}>✓</span>
+                                          )}
+                                        </h4>
+                                      </div>
+                                      <Badge variant="outline" className="text-xs">
+                                        L{skill.level}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                                      {skill.description}
+                                    </p>
+                                    
+                                    <div className="space-y-2">
+                                      <Badge 
+                                        variant="secondary" 
+                                        className={`text-xs hidden sm:inline-flex ${getCategoryColor(skill.category)}`}
+                                      >
+                                        {skill.category}
+                                      </Badge>
+                                      
+                                      {prerequisites.length > 0 && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-700 mb-1">Prerequisites:</p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {prerequisites.map(prereqId => {
+                                              const prereqSkill = skills?.find(s => s.id === prereqId)
+                                              return prereqSkill ? (
+                                                <Badge key={prereqId} variant="outline" className="text-xs">
+                                                  {prereqSkill.name}
+                                                </Badge>
+                                              ) : null
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {dependents.length > 0 && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-700 mb-1">Unlocks:</p>
+                                          <div className="flex flex-wrap gap-1">
+                                            {dependents.map(depId => {
+                                              const depSkill = skills?.find(s => s.id === depId)
+                                              return depSkill ? (
+                                                <Badge key={depId} variant="outline" className="text-xs">
+                                                  {depSkill.name}
+                                                </Badge>
+                                              ) : null
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                              </div>
+                            ) : (
+                              <div className="text-center py-6">
+                                <p className="text-muted-foreground text-sm">
+                                  Level {level} skills currently hidden... Click "Show Skills" to view {levelSkills.length} skills
+                                </p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))
+                  ) : (
+                    <Card className="border-border/50 shadow-sm">
+                      <CardContent className="text-center py-8 md:py-12">
+                        <Filter className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-sm md:text-base text-muted-foreground px-4">
+                          No skills match the current filters. Try adjusting your selection.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </CardContent>
-            </Card>
-          )}
+            )}
+          </Card>
         </div>
 
 
-        {/* Statistics */}
-        <Card className="border-border/50 shadow-elegant mx-4">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg md:text-xl">Skill Map Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="text-center p-2 md:p-4">
-                <div className="text-xl md:text-2xl font-bold text-blue-600">{skills?.length || 0}</div>
-                <p className="text-xs md:text-sm text-gray-500">Total Skills</p>
-              </div>
-              
-              <div className="text-center p-2 md:p-4">
-                <div className="text-xl md:text-2xl font-bold text-purple-600">
-                  {connections?.length || 0}
-                </div>
-                <p className="text-xs md:text-sm text-gray-500">Connections</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </>
   )
