@@ -473,10 +473,10 @@ const SkillMap = () => {
           <div className="flex-1 min-w-0">
             <h3 className="text-base md:text-lg font-semibold text-blue-900 mb-2">How to Use the Map of Mastery</h3>
             <div className="space-y-2 text-xs sm:text-sm text-blue-800">
-              <p>1. <strong>Select an employee</strong> from the dropdown below to highlight their mastered skills</p>
-              <p>2. <strong>Explore the interactive network</strong> - each node represents a skill with prerequisite connections</p>
-              <p>3. <strong>View personalized recommendations</strong> - see suggested next skills based on current expertise</p>
-              <p>4. <strong>Hover over legend items</strong> to learn about different skill categories</p>
+              <p>1. <strong>Select an employee</strong> from the dropdown to view their current skills and expertise</p>
+              <p>2. <strong>Set a learning goal</strong> using the Goal Planner - choose what skill they should work toward next</p>
+              <p>3. <strong>Invest in recommended skills</strong> from the Next Steps section to progress toward your goal</p>
+              <p>4. <strong>Track your progress</strong> on the interactive skill network as you build expertise</p>
             </div>
           </div>
         </div>
