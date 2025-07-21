@@ -207,7 +207,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
   return (
     <div
       ref={sigmaContainerRef}
-      className="w-full h-[600px] border border-border/50 mb-6 rounded-lg shadow-elegant bg-gradient-to-br from-background via-card to-background/95"
+      className="w-full h-[600px] border border-border/50 mb-6 rounded-lg shadow-md bg-gradient-to-br from-background via-card to-background/95"
       data-testid="sigma-graph"
       style={{
         background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(139, 69, 19, 0.03) 100%)'
@@ -223,6 +223,7 @@ const SkillMap = () => {
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -387,6 +388,47 @@ const SkillMap = () => {
     }))
   }
 
+  const getCategoryInfo = (category: string) => {
+    switch (category) {
+      case 'combat':
+        return {
+          icon: <Sword className="h-5 w-5" />,
+          title: 'Combat',
+          description: 'Physical and tactical abilities for direct confrontation and battlefield strategy.'
+        }
+      case 'magic':
+        return {
+          icon: <Zap className="h-5 w-5" />,
+          title: 'Magic',
+          description: 'Elemental and arcane spells for damage and utility.'
+        }
+      case 'support':
+        return {
+          icon: <Heart className="h-5 w-5" />,
+          title: 'Support',
+          description: 'Healing and buffing abilities to aid allies.'
+        }
+      case 'special':
+        return {
+          icon: <Star className="h-5 w-5" />,
+          title: 'Special',
+          description: 'Unique utility abilities with specialized effects.'
+        }
+      case 'advanced':
+        return {
+          icon: <Crown className="h-5 w-5" />,
+          title: 'Advanced',
+          description: 'High-level master abilities requiring significant expertise.'
+        }
+      default:
+        return {
+          icon: <Sword className="h-5 w-5" />,
+          title: 'Unknown',
+          description: 'Category information not available.'
+        }
+    }
+  }
+
   return (
     <>
       {/* Employee dropdown */}
@@ -404,33 +446,6 @@ const SkillMap = () => {
           </SelectContent>
         </Select>
       </div>
-      {/* Camera Controls for Sphere Grid Exploration */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button 
-          className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-smooth"
-          onClick={() => {
-            const camera = document.querySelector('[data-testid="sigma-graph"]')?.querySelector('canvas');
-            // This would integrate with Sigma.js camera controls
-          }}
-        >
-          Overview
-        </button>
-        <button className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 border border-red-300 rounded-md transition-smooth">
-          Central Hub
-        </button>
-        <button className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 border border-blue-300 rounded-md transition-smooth">
-          Combat Cluster
-        </button>
-        <button className="px-3 py-1 text-xs bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-md transition-smooth">
-          Magic Cluster
-        </button>
-        <button className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 border border-green-300 rounded-md transition-smooth">
-          Support Cluster
-        </button>
-        <button className="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded-md transition-smooth">
-          Advanced Sphere
-        </button>
-      </div>
 
       {/* Sigma.js visualization container */}
       <SigmaGraph
@@ -440,23 +455,50 @@ const SkillMap = () => {
         selectedEmployeeId={selectedEmployeeId}
       />
 
-      {/* Legend for node colors - moved under SigmaJS graph */}
-      <div className="flex gap-4 mb-8">
-        {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => (
-          <div key={cat} className="flex items-center gap-2">
-            <span 
-              className="inline-block w-4 h-4 rounded-full border border-border"
-              style={{ backgroundColor: color }}
-            />
-            <span className="capitalize text-sm">{cat}</span>
+      {/* Legend for node colors - with hover tooltips */}
+      <div className="mb-8 relative">
+        <div className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-lg p-4 shadow-sm">
+          <div className="flex gap-4 justify-center flex-wrap">
+            {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => {
+              const categoryInfo = getCategoryInfo(cat);
+              return (
+                <div 
+                  key={cat} 
+                  className="relative flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                  onMouseEnter={() => setHoveredCategory(cat)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                >
+                  <span 
+                    className="inline-block w-4 h-4 rounded-full border border-border"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="capitalize text-sm">{cat}</span>
+                  
+                  {/* Tooltip */}
+                  {hoveredCategory === cat && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span style={{ color: color }}>
+                          {categoryInfo.icon}
+                        </span>
+                        <h4 className="font-semibold text-sm">{categoryInfo.title}</h4>
+                      </div>
+                      <p className="text-xs text-gray-600">{categoryInfo.description}</p>
+                      {/* Arrow */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-purple-600">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400 bg-clip-text text-transparent">
             Expert Sphere Grid
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -471,6 +513,7 @@ const SkillMap = () => {
             <span className="flex items-center gap-2">• <strong className="text-green-600">Team Analytics</strong> and gap identification</span>
           </div>
         </div>
+
 
         {/* Skill Recommendation Widget */}
         <div className="mb-8">
@@ -680,58 +723,6 @@ const SkillMap = () => {
           )}
         </div>
 
-        {/* Legend */}
-        <Card className="border-border/50 shadow-elegant">
-          <CardHeader>
-            <CardTitle>Skill Categories</CardTitle>
-            <CardDescription>
-              Understanding the different types of skills in the map
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-red-200 bg-red-50">
-                <Sword className="h-5 w-5" style={{ color: CATEGORY_COLORS.combat }} />
-                <div>
-                  <p className="font-medium text-red-800">Combat</p>
-                  <p className="text-xs text-red-600">Physical and tactical abilities</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50">
-                <Zap className="h-5 w-5" style={{ color: CATEGORY_COLORS.magic }} />
-                <div>
-                  <p className="font-medium text-blue-800">Magic</p>
-                  <p className="text-xs text-blue-600">Elemental and arcane spells</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50">
-                <Heart className="h-5 w-5" style={{ color: CATEGORY_COLORS.support }} />
-                <div>
-                  <p className="font-medium text-green-800">Support</p>
-                  <p className="text-xs text-green-600">Healing and buffing abilities</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-purple-200 bg-purple-50">
-                <Star className="h-5 w-5" style={{ color: CATEGORY_COLORS.special }} />
-                <div>
-                  <p className="font-medium text-purple-800">Special</p>
-                  <p className="text-xs text-purple-600">Unique utility abilities</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-yellow-200 bg-yellow-50">
-                <Crown className="h-5 w-5" style={{ color: CATEGORY_COLORS.advanced }} />
-                <div>
-                  <p className="font-medium text-yellow-800">Advanced</p>
-                  <p className="text-xs text-yellow-600">High-level master abilities</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Statistics */}
         <Card className="border-border/50 shadow-elegant">
