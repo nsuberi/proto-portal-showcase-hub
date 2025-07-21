@@ -13,6 +13,7 @@ import {
   Clock,
   ArrowRight,
   CheckCircle2,
+  Check,
   AlertCircle,
   Sparkles,
   Star,
@@ -94,6 +95,25 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
     const masteredSkills = employee.mastered_skills;
     
+    // Check if goal is already completed
+    const isGoalAlreadyMastered = masteredSkills.includes(goalSkill.id);
+    
+    if (isGoalAlreadyMastered) {
+      // Goal is already completed - return completed state
+      return {
+        path: [goalSkill.id],
+        totalXP: goalSkill.xp_required,
+        remainingXP: 0,
+        steps: 1,
+        remainingSteps: 0,
+        totalSteps: 1,
+        originalTotalSteps: originalTotalStepsRef.current || 1,
+        completedSteps: originalTotalStepsRef.current || 1,
+        skills: [goalSkill],
+        isCompleted: true
+      };
+    }
+    
     // Find shortest path from any mastered skill to goal
     let shortestPath: string[] = [];
     let shortestDistance = Infinity;
@@ -132,14 +152,29 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       .filter(Boolean) as Skill[];
 
     const masteredSet = new Set(employee.mastered_skills);
-    const completedSkills = pathSkills.filter(skill => masteredSet.has(skill.id));
-    const remainingSkills = pathSkills.filter(skill => !masteredSet.has(skill.id));
     
+    // Calculate steps based on original path when goal was first set
+    const originalTotal = originalTotalStepsRef.current;
+    let completedSteps: number;
+    
+    if (originalTotal !== null) {
+      // Use original total and calculate how many steps we've progressed
+      // since the original path was longer, we calculate based on how much closer we are to the goal
+      const currentRemainingSteps = pathSkills.filter(skill => !masteredSet.has(skill.id)).length;
+      completedSteps = originalTotal - currentRemainingSteps;
+      
+      // Ensure completedSteps doesn't exceed original total and isn't negative
+      completedSteps = Math.max(0, Math.min(completedSteps, originalTotal));
+    } else {
+      // Fallback: count directly mastered skills in current path
+      completedSteps = pathSkills.filter(skill => masteredSet.has(skill.id)).length;
+    }
+    
+    const remainingSkills = pathSkills.filter(skill => !masteredSet.has(skill.id));
     const totalXP = pathSkills.reduce((sum, skill) => sum + skill.xp_required, 0);
     const remainingXP = remainingSkills.reduce((sum, skill) => sum + skill.xp_required, 0);
-    const completedSteps = completedSkills.length;
     const totalSteps = pathSkills.length;
-    const remainingSteps = totalSteps - completedSteps;
+    const remainingSteps = remainingSkills.length;
     const isCompleted = remainingSteps === 0;
 
     return {
@@ -149,7 +184,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       steps: shortestPath.length,
       remainingSteps,
       totalSteps,
-      originalTotalSteps: totalSteps, // Store original total for consistent progress calculation
+      originalTotalSteps: originalTotal || totalSteps,
       completedSteps,
       skills: pathSkills,
       isCompleted
@@ -429,44 +464,49 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                       <div className="text-xs text-gray-600">XP Needed</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-green-600">
-                        {goalPath.completedSteps === goalPath.originalTotalSteps ? '✓' : 
-                         `${Math.round((goalPath.completedSteps / goalPath.originalTotalSteps) * 100)}%`}
+                      <div className="text-lg font-bold text-green-600 flex justify-center">
+                        {goalPath.isCompleted ? (
+                          <Check className="h-6 w-6 text-green-500" />
+                        ) : (
+                          `${Math.round((goalPath.completedSteps / goalPath.originalTotalSteps) * 100)}%`
+                        )}
                       </div>
                       <div className="text-xs text-gray-600">Complete</div>
                     </div>
                   </div>
                   
                   {/* Path Steps */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {goalPath.skills.map((skill, index) => {
-                        const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
-                        const categoryColorClass = getCategoryColor(skill.category);
-                        return (
-                          <React.Fragment key={skill.id}>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs transition-all duration-300 ${
-                                isSkillMastered 
-                                  ? categoryColorClass
-                                  : `${categoryColorClass} opacity-40 hover:opacity-60`
-                              }`}
-                            >
-                              {isSkillMastered && <span className="mr-1">✓</span>}
-                              {skill.name}
-                            </Badge>
-                            {index < goalPath.skills.length - 1 && (
-                              <ArrowRight className={`h-3 w-3 self-center transition-all duration-300 ${
-                                isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
-                              }`} />
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
+                  {!goalPath.isCompleted && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {goalPath.skills.map((skill, index) => {
+                          const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
+                          const categoryColorClass = getCategoryColor(skill.category);
+                          return (
+                            <React.Fragment key={skill.id}>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs transition-all duration-300 ${
+                                  isSkillMastered 
+                                    ? categoryColorClass
+                                    : `${categoryColorClass} opacity-40 hover:opacity-60`
+                                }`}
+                              >
+                                {isSkillMastered && <span className="mr-1">✓</span>}
+                                {skill.name}
+                              </Badge>
+                              {index < goalPath.skills.length - 1 && (
+                                <ArrowRight className={`h-3 w-3 self-center transition-all duration-300 ${
+                                  isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
+                                }`} />
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Completion Animation and Next Goal Prompt */}
                   {goalPath.isCompleted && (
