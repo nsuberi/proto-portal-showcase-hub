@@ -305,19 +305,19 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   if (!employeeId || !employee) {
     return (
-      <Card className="border-border/50 shadow-elegant mx-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
+      <Card className="border-border/50 shadow-elegant mx-2 sm:mx-4">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Skill Goal Planner
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             Select an employee to set skill learning goals
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
+        <CardContent className="text-center py-6 sm:py-8">
+          <Target className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground text-sm sm:text-base">
             Choose an employee from the dropdown above to set learning goals
           </p>
         </CardContent>
@@ -326,17 +326,17 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   }
 
   return (
-    <Card className="border-border/50 shadow-elegant mx-4">
+    <Card className="border-border/50 shadow-elegant mx-2 sm:mx-4">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          Skill Goal for {employee.name}
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <span className="truncate">Skill Goal for {employee.name}</span>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm">
           Search for a skill to set as your learning goal
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4">
         {!selectedGoal ? (
           <>
             {/* Search Interface */}
@@ -414,36 +414,43 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         ) : (
           <>
             {/* Selected Goal Display */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    {getCategoryIcon(selectedGoal.category)}
-                  </div>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                                              <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg truncate">{selectedGoal.name}</h3>
-                      <Badge variant="outline">Level {selectedGoal.level}</Badge>
-                      <Badge className={`${getCategoryColor(selectedGoal.category)}`}>
+                    {/* Title and icon row - properly aligned */}
+                    <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                      <div className="bg-blue-100 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                        {getCategoryIcon(selectedGoal.category)}
+                      </div>
+                      <h3 className="font-semibold text-base sm:text-lg text-gray-900 leading-tight flex-1">{selectedGoal.name}</h3>
+                    </div>
+                    
+                    {/* Badges row */}
+                    <div className="flex gap-1 flex-wrap ml-8 sm:ml-10 mb-2">
+                      <Badge variant="outline" className="text-xs">Level {selectedGoal.level}</Badge>
+                      <Badge className={`text-xs ${getCategoryColor(selectedGoal.category)}`}>
                         {selectedGoal.category}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{selectedGoal.description}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatXP(selectedGoal.xp_required)} XP
-                      </span>
+                    
+                    {/* Description and XP */}
+                    <div className="ml-8 sm:ml-10">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">{selectedGoal.description}</p>
+                      <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatXP(selectedGoal.xp_required)} XP
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearGoal}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 p-1 sm:p-2"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
 
@@ -454,32 +461,32 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                     <Route className="h-4 w-4 text-blue-600" />
                     <span className="font-medium text-blue-800">Learning Path</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 mb-3 text-center">
-                    <div>
-                      <div className="text-lg font-bold text-blue-600">{goalPath.remainingSteps}</div>
-                      <div className="text-xs text-gray-600">Remaining</div>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-3 text-center">
+                    <div className="p-2 rounded-lg bg-blue-50/50">
+                      <div className="text-base sm:text-lg font-bold text-blue-600">{goalPath.remainingSteps}</div>
+                      <div className="text-xs text-gray-600 font-medium">Steps Left</div>
                     </div>
-                    <div>
-                      <div className="text-lg font-bold text-purple-600">{formatXP(goalPath.remainingXP)}</div>
-                      <div className="text-xs text-gray-600">XP Needed</div>
+                    <div className="p-2 rounded-lg bg-purple-50/50">
+                      <div className="text-base sm:text-lg font-bold text-purple-600">{formatXP(goalPath.remainingXP)}</div>
+                      <div className="text-xs text-gray-600 font-medium">XP Needed</div>
                     </div>
-                    <div>
-                      <div className="text-lg font-bold text-green-600 flex justify-center">
+                    <div className="p-2 rounded-lg bg-green-50/50">
+                      <div className="text-base sm:text-lg font-bold text-green-600 flex justify-center items-center min-h-[1.5rem]">
                         {goalPath.isCompleted ? (
-                          <Check className="h-6 w-6 text-green-500" />
+                          <Check className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                         ) : (
                           `${Math.round((goalPath.completedSteps / goalPath.originalTotalSteps) * 100)}%`
                         )}
                       </div>
-                      <div className="text-xs text-gray-600">Complete</div>
+                      <div className="text-xs text-gray-600 font-medium">Complete</div>
                     </div>
                   </div>
                   
                   {/* Path Steps */}
                   {!goalPath.isCompleted && (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
-                      <div className="flex flex-wrap gap-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
+                      <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
                         {goalPath.skills.map((skill, index) => {
                           const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
                           const categoryColorClass = getCategoryColor(skill.category);
@@ -494,10 +501,10 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                                 }`}
                               >
                                 {isSkillMastered && <span className="mr-1">✓</span>}
-                                {skill.name}
+                                <span className="truncate max-w-[120px] sm:max-w-none">{skill.name}</span>
                               </Badge>
                               {index < goalPath.skills.length - 1 && (
-                                <ArrowRight className={`h-3 w-3 self-center transition-all duration-300 ${
+                                <ArrowRight className={`h-3 w-3 flex-shrink-0 transition-all duration-300 ${
                                   isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
                                 }`} />
                               )}
@@ -580,13 +587,13 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                           <p className="text-sm text-emerald-600">You've mastered all skills in this path</p>
                         </div>
                       </div>
-                      <div className="flex gap-2 relative z-10">
+                      <div className="flex flex-col sm:flex-row gap-2 relative z-10">
                         <Button
                           onClick={() => {
                             clearGoal();
                             setIsSearchExpanded(true);
                           }}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm shadow-md"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm shadow-md flex-1 sm:flex-initial"
                         >
                           <Target className="h-4 w-4 mr-1" />
                           Set Next Goal
@@ -594,7 +601,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                         <Button
                           onClick={clearGoal}
                           variant="outline"
-                          className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-sm"
+                          className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-sm flex-1 sm:flex-initial"
                         >
                           Clear Goal
                         </Button>
