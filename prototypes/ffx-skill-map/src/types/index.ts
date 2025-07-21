@@ -4,6 +4,11 @@ export interface Skill {
   description: string;
   level: number;
   category: 'combat' | 'magic' | 'support' | 'special' | 'advanced';
+  xp_required: number;
+  prerequisites?: string[];
+  sphere_cost?: number;
+  activation_cost?: number;
+  stat_bonuses?: Record<string, number>;
 }
 
 export interface Employee {
@@ -12,6 +17,10 @@ export interface Employee {
   role: string;
   department: string;
   mastered_skills: string[];
+  current_xp?: number;
+  skill_points?: number;
+  level?: number;
+  stats?: Record<string, number>;
 }
 
 export interface SkillConnection {

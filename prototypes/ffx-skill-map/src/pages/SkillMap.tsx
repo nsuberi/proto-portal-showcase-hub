@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,11 +7,12 @@ import { sharedEnhancedService } from '../services/sharedService'
 // Use the shared service instance to prevent multiple connections
 const enhancedNeo4jService = sharedEnhancedService
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react'
 import Sigma from 'sigma';
 import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
+import SkillRecommendationWidget from '../components/SkillRecommendationWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -221,6 +222,8 @@ const SkillMap = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
+  const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
+  const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
     queryKey: ['enhanced-skills'],
@@ -377,6 +380,13 @@ const SkillMap = () => {
     return connections?.filter(conn => conn.from === skillId).map(conn => conn.to) || []
   }
 
+  const toggleLevelExpansion = (level: string) => {
+    setExpandedLevels(prev => ({
+      ...prev,
+      [level]: !prev[level]
+    }))
+  }
+
   return (
     <>
       {/* Employee dropdown */}
@@ -429,7 +439,8 @@ const SkillMap = () => {
         masteredSkills={masteredSkills}
         selectedEmployeeId={selectedEmployeeId}
       />
-      {/* Legend for node colors */}
+
+      {/* Legend for node colors - moved under SigmaJS graph */}
       <div className="flex gap-4 mb-8">
         {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => (
           <div key={cat} className="flex items-center gap-2">
@@ -441,10 +452,11 @@ const SkillMap = () => {
           </div>
         ))}
       </div>
+
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-purple-600">
             Expert Sphere Grid
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -452,12 +464,34 @@ const SkillMap = () => {
             identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
             prerequisite relationships and recommended next steps for professional development.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm text-muted-foreground">
-            <span>• <strong className="text-primary">Skill Tracking</strong> for individual employees</span>
-            <span>• <strong className="text-blue-600">Smart Recommendations</strong> based on current expertise</span>
-            <span>• <strong className="text-purple-600">Learning Pathways</strong> between related skills</span>
-            <span>• <strong className="text-green-600">Team Analytics</strong> and gap identification</span>
+          <div className="flex flex-wrap justify-center gap-6 mt-6 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">• <strong className="text-primary">Skill Tracking</strong> for individual employees</span>
+            <span className="flex items-center gap-2">• <strong className="text-blue-600">Smart Recommendations</strong> based on current expertise</span>
+            <span className="flex items-center gap-2">• <strong className="text-purple-600">Learning Pathways</strong> between related skills</span>
+            <span className="flex items-center gap-2">• <strong className="text-green-600">Team Analytics</strong> and gap identification</span>
           </div>
+        </div>
+
+        {/* Skill Recommendation Widget */}
+        <div className="mb-8">
+          <SkillRecommendationWidget
+            employeeId={selectedEmployeeId}
+            employee={selectedEmployee}
+            onSkillLearn={async (skill, updatedEmployee) => {
+              try {
+                await enhancedNeo4jService.learnSkill(selectedEmployeeId, skill.id);
+                
+                // Refresh all queries to update the UI
+                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
+                queryClient.invalidateQueries({ queryKey: ['enhanced-skills'] });
+                queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] });
+                
+                console.log(`${updatedEmployee.name} learned ${skill.name}!`);
+              } catch (error) {
+                console.error('Failed to learn skill:', error);
+              }
+            }}
+          />
         </div>
 
         {/* Filters */}
@@ -510,16 +544,37 @@ const SkillMap = () => {
               .map(([level, levelSkills]) => (
                 <Card key={level} className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      Level {level} Skills
-                      <Badge variant="outline">{levelSkills.length} skills</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Skills available at level {level}
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          Level {level} Skills
+                          <Badge variant="outline">{levelSkills.length} skills</Badge>
+                        </CardTitle>
+                        <CardDescription>
+                          Skills available at level {level}
+                        </CardDescription>
+                      </div>
+                      <button
+                        onClick={() => toggleLevelExpansion(level)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors"
+                      >
+                        {expandedLevels[level] ? (
+                          <>
+                            <Minimize2 className="h-4 w-4" />
+                            Hide Skills
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className="h-4 w-4" />
+                            Show Skills
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {expandedLevels[level] ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {levelSkills.map(skill => {
                         const prerequisites = getPrerequisites(skill.id)
                         const dependents = getDependents(skill.id)
@@ -602,7 +657,14 @@ const SkillMap = () => {
                           </div>
                         )
                       })}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground text-sm">
+                          Level {level} skills currently hidden... Click "Show Skills" to view {levelSkills.length} skills
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))

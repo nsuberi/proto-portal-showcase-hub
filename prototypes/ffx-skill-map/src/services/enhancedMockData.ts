@@ -2,6 +2,7 @@
 // Based on Expert Sphere Grid network data with FFX-inspired skill names and categories
 
 import { Skill, Employee, SkillConnection } from '../types';
+import { SkillGraphAnalyzer, calculateSkillXP, expandMasteredSkills } from '../utils/graphUtils';
 
 // FFX-inspired skill names organized by node type and category
 const skillNames = {
@@ -103,6 +104,7 @@ class EnhancedMockNeo4jService {
   private connections: SkillConnection[] = [];
   private employees: Employee[] = [];
   private initialized = false;
+  private graphAnalyzer: SkillGraphAnalyzer | null = null;
 
   constructor() {
     this.initializeData();
@@ -114,6 +116,11 @@ class EnhancedMockNeo4jService {
     // Convert network nodes to FFX skills
     this.skills = this.createSkillsFromNetworkData();
     this.connections = this.createConnectionsFromNetworkData();
+    
+    // Initialize graph analyzer for recommendations
+    this.graphAnalyzer = new SkillGraphAnalyzer(this.skills, this.connections);
+    
+    // Create employees with expanded mastered skills
     this.employees = this.createEnhancedEmployees();
     
     this.initialized = true;
@@ -269,7 +276,7 @@ class EnhancedMockNeo4jService {
         }
       }
 
-      skills.push({
+      const skill: Skill = {
         id: node.id,
         name,
         description,
@@ -278,8 +285,13 @@ class EnhancedMockNeo4jService {
         prerequisites: [], // Will be filled by connections
         sphere_cost: node.level * 2,
         activation_cost: node.level * 10,
-        stat_bonuses: this.generateStatBonuses(category, node.level)
-      });
+        stat_bonuses: this.generateStatBonuses(category, node.level),
+        xp_required: 0 // Will be calculated after skill creation
+      };
+
+      // Calculate XP requirement with progressive scaling
+      skill.xp_required = calculateSkillXP(skill);
+      skills.push(skill);
     });
 
     return skills;
@@ -437,7 +449,7 @@ class EnhancedMockNeo4jService {
   }
 
   private createEnhancedEmployees(): Employee[] {
-    return [
+    const baseEmployees = [
       {
         id: 'tidus',
         name: 'Tidus',
@@ -445,6 +457,7 @@ class EnhancedMockNeo4jService {
         department: 'Combat Division',
         // Clustered in TOP CENTER area - Speed/Agility focused
         mastered_skills: ['tc_1', 'tc_2', 'tc_3', 'tc_4', 'path_2', 'inter_2', 'inter_10', 'scatter_7'],
+        current_xp: 2450,
         skill_points: 145,
         level: 28,
         stats: {
@@ -463,6 +476,7 @@ class EnhancedMockNeo4jService {
         department: 'Support Division',
         // Clustered in TOP RIGHT area - White Magic/Support focused
         mastered_skills: ['tr_1', 'tr_2', 'tr_3', 'tr_4', 'tr_5', 'tr_6', 'tr_7', 'tr_8'],
+        current_xp: 3200,
         skill_points: 168,
         level: 32,
         stats: {
@@ -481,6 +495,7 @@ class EnhancedMockNeo4jService {
         department: 'Combat Division',
         // Clustered in LEFT MIDDLE area - Combat/Break skills focused
         mastered_skills: ['lm_1', 'lm_2', 'lm_3', 'lm_4', 'lm_5', 'lm_6', 'lm_7', 'lm_8'],
+        current_xp: 4750,
         skill_points: 189,
         level: 38,
         stats: {
@@ -499,6 +514,7 @@ class EnhancedMockNeo4jService {
         department: 'Magic Division',
         // Clustered in TOP LEFT area - Black Magic focused
         mastered_skills: ['tl_1', 'tl_2', 'tl_3', 'tl_4', 'tl_5', 'tl_6', 'tl_7', 'tl_8'],
+        current_xp: 2980,
         skill_points: 156,
         level: 30,
         stats: {
@@ -517,6 +533,7 @@ class EnhancedMockNeo4jService {
         department: 'Special Operations',
         // Clustered in BOTTOM LEFT area - Status/Debuff focused
         mastered_skills: ['bl_1', 'bl_2', 'bl_3', 'bl_4', 'bl_5', 'bl_6', 'bl_7', 'bl_8'],
+        current_xp: 2150,
         skill_points: 134,
         level: 26,
         stats: {
@@ -535,6 +552,7 @@ class EnhancedMockNeo4jService {
         department: 'Multi-Division',
         // Clustered in RIGHT MIDDLE area - Special abilities focused
         mastered_skills: ['rm_1', 'rm_2', 'rm_3', 'rm_4', 'rm_5', 'rm_6', 'rm_7', 'rm_8'],
+        current_xp: 2350,
         skill_points: 142,
         level: 27,
         stats: {
@@ -553,6 +571,7 @@ class EnhancedMockNeo4jService {
         department: 'Special Operations',
         // Clustered in SCATTERED area - Utility/Special skills focused
         mastered_skills: ['scatter_1', 'scatter_2', 'scatter_3', 'scatter_4', 'scatter_5', 'scatter_6', 'scatter_7', 'scatter_8'],
+        current_xp: 1950,
         skill_points: 127,
         level: 24,
         stats: {
@@ -571,6 +590,7 @@ class EnhancedMockNeo4jService {
         department: 'Advanced Magic',
         // Clustered in BOTTOM RIGHT area - Advanced Magic focused
         mastered_skills: ['br_1', 'br_2', 'br_3', 'br_4', 'br_5', 'br_6', 'br_7', 'br_8'],
+        current_xp: 6800,
         skill_points: 245,
         level: 45,
         stats: {
@@ -583,6 +603,16 @@ class EnhancedMockNeo4jService {
         }
       }
     ];
+
+    // Expand mastered skills using graph analysis
+    if (this.graphAnalyzer) {
+      return baseEmployees.map(employee => ({
+        ...employee,
+        mastered_skills: expandMasteredSkills(employee, this.graphAnalyzer!, 3)
+      }));
+    }
+
+    return baseEmployees;
   }
 
   // Mock Neo4j service methods
@@ -649,6 +679,73 @@ class EnhancedMockNeo4jService {
     const connections = this.connections.filter(conn => conn.from === skillId);
     const dependentIds = connections.map(conn => conn.to);
     return this.skills.filter(skill => dependentIds.includes(skill.id));
+  }
+
+  async getSkillRecommendations(employeeId: string): Promise<{ skill: Skill; xp_required: number; reason: string }[]> {
+    if (!this.graphAnalyzer) return [];
+
+    const employee = await this.getEmployeeById(employeeId);
+    if (!employee) return [];
+
+    const availableSkills = this.graphAnalyzer.getAvailableNextSkills(employee.mastered_skills);
+    
+    return availableSkills
+      .map(skillId => {
+        const skill = this.skills.find(s => s.id === skillId);
+        if (!skill) return null;
+
+        return {
+          skill,
+          xp_required: skill.xp_required,
+          reason: this.generateRecommendationReason(skill, employee)
+        };
+      })
+      .filter((rec): rec is { skill: Skill; xp_required: number; reason: string } => rec !== null)
+      .slice(0, 10); // Limit to top 10 recommendations
+  }
+
+  private generateRecommendationReason(skill: Skill, employee: Employee): string {
+    const reasons = [
+      `Builds on your ${skill.category} expertise`,
+      `Natural progression from your current skills`,
+      `Enhances your role as ${employee.role}`,
+      `Unlocks advanced abilities in ${skill.category}`,
+      `Complements your existing skill set`
+    ];
+    
+    return reasons[Math.floor(Math.random() * reasons.length)];
+  }
+
+  async learnSkill(employeeId: string, skillId: string): Promise<Employee | null> {
+    const employee = await this.getEmployeeById(employeeId);
+    const skill = await this.getSkillById(skillId);
+    
+    if (!employee || !skill) return null;
+    
+    // Check if employee can afford the skill
+    if ((employee.current_xp || 0) < skill.xp_required) {
+      throw new Error('Insufficient XP to learn this skill');
+    }
+    
+    // Check if skill is already mastered
+    if (employee.mastered_skills.includes(skillId)) {
+      throw new Error('Skill already mastered');
+    }
+    
+    // Update employee with new skill and reduced XP
+    const updatedEmployee = {
+      ...employee,
+      mastered_skills: [...employee.mastered_skills, skillId],
+      current_xp: (employee.current_xp || 0) - skill.xp_required
+    };
+    
+    // Update the employee in the internal array
+    const employeeIndex = this.employees.findIndex(emp => emp.id === employeeId);
+    if (employeeIndex !== -1) {
+      this.employees[employeeIndex] = updatedEmployee;
+    }
+    
+    return updatedEmployee;
   }
 }
 
