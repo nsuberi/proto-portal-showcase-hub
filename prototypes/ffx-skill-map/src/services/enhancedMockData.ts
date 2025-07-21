@@ -125,15 +125,31 @@ class EnhancedMockNeo4jService {
     
     // Load employees from localStorage or create new ones
     const storedEmployees = this.loadEmployeesFromStorage();
-    if (storedEmployees) {
+    if (storedEmployees && this.isValidEmployeeData(storedEmployees)) {
       this.employees = storedEmployees;
     } else {
+      console.log('🔄 Creating fresh employee data with character images');
       this.employees = this.createEnhancedEmployees();
       // Save initial employee data to localStorage
       this.saveEmployeesToStorage();
     }
     
     this.initialized = true;
+  }
+
+  /**
+   * Validate that employee data has the required images structure
+   * This ensures we recreate data if the structure has changed
+   */
+  private isValidEmployeeData(employees: Employee[]): boolean {
+    // Check if all employees have the images object with face and full_body
+    return employees.every(emp => 
+      emp.images !== undefined &&
+      emp.images.face !== undefined &&
+      emp.images.full_body !== undefined &&
+      emp.images.face.includes('ffx-') &&
+      emp.images.full_body.includes('ffx-')
+    );
   }
 
   /**
@@ -532,6 +548,11 @@ class EnhancedMockNeo4jService {
         current_xp: 2450,
         skill_points: 145,
         level: 28,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-tidus.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-tidus.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/hi-res/ffx-tidus.jpg'
+        },
         stats: {
           strength: 45,
           magic: 25,
@@ -551,6 +572,11 @@ class EnhancedMockNeo4jService {
         current_xp: 3200,
         skill_points: 168,
         level: 32,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-yuna.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-yuna.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-yuna.jpg'
+        },
         stats: {
           strength: 20,
           magic: 65,
@@ -570,6 +596,11 @@ class EnhancedMockNeo4jService {
         current_xp: 4750,
         skill_points: 189,
         level: 38,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-auron.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-auron.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-auron.jpg'
+        },
         stats: {
           strength: 75,
           magic: 15,
@@ -589,6 +620,11 @@ class EnhancedMockNeo4jService {
         current_xp: 2980,
         skill_points: 156,
         level: 30,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-lulu.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-lulu.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/hi-res/ffx-lulu.jpg'
+        },
         stats: {
           strength: 18,
           magic: 78,
@@ -608,6 +644,11 @@ class EnhancedMockNeo4jService {
         current_xp: 2150,
         skill_points: 134,
         level: 26,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-wakka.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-wakka.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-wakka.jpg'
+        },
         stats: {
           strength: 42,
           magic: 28,
@@ -627,6 +668,11 @@ class EnhancedMockNeo4jService {
         current_xp: 2350,
         skill_points: 142,
         level: 27,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-kimahri.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-kimahri.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-kimahri.jpg'
+        },
         stats: {
           strength: 38,
           magic: 35,
@@ -646,6 +692,11 @@ class EnhancedMockNeo4jService {
         current_xp: 1950,
         skill_points: 127,
         level: 24,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-rikku.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-rikku.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-rikku.jpg'
+        },
         stats: {
           strength: 32,
           magic: 40,
@@ -665,6 +716,11 @@ class EnhancedMockNeo4jService {
         current_xp: 6800,
         skill_points: 245,
         level: 45,
+        images: {
+          face: '/prototypes/ffx-skill-map/images/characters/curated/faces/ffx-seymour.jpg',
+          full_body: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-seymour.jpg',
+          hi_res: '/prototypes/ffx-skill-map/images/characters/curated/full-body/ffx-seymour.jpg'
+        },
         stats: {
           strength: 25,
           magic: 95,

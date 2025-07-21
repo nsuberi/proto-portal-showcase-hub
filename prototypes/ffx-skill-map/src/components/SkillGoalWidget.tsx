@@ -335,8 +335,21 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   return (
     <Card className="border-border/50 shadow-elegant mx-2 sm:mx-4">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+        <CardTitle className="flex items-center gap-3 text-base sm:text-lg">
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          {employee.images?.face && (
+            <div className="relative">
+              <img 
+                src={employee.images.face} 
+                alt={employee.name}
+                className="w-10 h-12 sm:w-12 sm:h-16 object-cover rounded-lg shadow-sm flex-shrink-0 max-w-full"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           <span className="truncate">Skill Goal for {employee.name}</span>
         </CardTitle>
         <CardDescription className="text-sm">

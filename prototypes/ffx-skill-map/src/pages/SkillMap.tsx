@@ -493,8 +493,23 @@ const SkillMap = () => {
               <SelectContent>
                 {employees?.map(emp => (
                   <SelectItem key={emp.id} value={emp.id}>
-                    <span className="block sm:hidden">{emp.name}</span>
-                    <span className="hidden sm:block">{emp.name} - {emp.role}</span>
+                    <div className="flex items-center gap-3">
+                      {emp.images?.face && (
+                        <img 
+                          src={emp.images.face} 
+                          alt={emp.name}
+                          className="w-6 h-6 rounded-full object-cover flex-shrink-0 max-w-full"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <div>
+                        <span className="block sm:hidden">{emp.name}</span>
+                        <span className="hidden sm:block">{emp.name} - {emp.role}</span>
+                      </div>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

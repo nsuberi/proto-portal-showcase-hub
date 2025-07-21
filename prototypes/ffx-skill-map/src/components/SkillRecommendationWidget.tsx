@@ -233,8 +233,24 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
             <TrendingUp className="h-5 w-5 text-primary" />
             Skill Recommendations
           </CardTitle>
-          <CardDescription>
-            Analyzing skill paths for {employee?.name}...
+          <CardDescription className="flex items-center gap-3">
+            {employee?.images?.face && (
+              <div className="relative">
+                <img 
+                  src={employee.images.face} 
+                  alt={employee.name}
+                  className="w-12 h-16 md:w-16 md:h-20 object-cover rounded-lg shadow-md flex-shrink-0 max-w-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            <div>
+              <div className="font-medium text-foreground">Analyzing skill paths for {employee?.name}</div>
+              <div className="text-sm text-muted-foreground">Finding optimal learning opportunities</div>
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center py-8">
@@ -269,7 +285,22 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Skill Recommendations for {employee?.name}
+            <div className="flex items-center gap-3">
+              {employee?.images?.face && (
+                <div className="relative">
+                  <img 
+                    src={employee.images.face} 
+                    alt={employee.name}
+                    className="w-10 h-12 object-cover rounded-lg shadow-sm flex-shrink-0 max-w-full"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              Skill Recommendations for {employee?.name}
+            </div>
           </CardTitle>
           <CardDescription>
             No available skill recommendations at this time
@@ -290,8 +321,21 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <CardTitle className="flex items-center gap-3 text-lg md:text-xl">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+              {employee?.images?.face && (
+                <div className="relative">
+                  <img 
+                    src={employee.images.face} 
+                    alt={employee.name}
+                    className="w-10 h-12 md:w-12 md:h-16 object-cover rounded-lg shadow-sm flex-shrink-0 max-w-full"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
               <span className="truncate">
                 {goalSkillId ? `Goal-Directed Skills for ${employee?.name}` : `Next Skills for ${employee?.name}`}
               </span>

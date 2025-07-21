@@ -21,6 +21,11 @@ export interface Employee {
   skill_points?: number;
   level?: number;
   stats?: Record<string, number>;
+  images?: {
+    face?: string;
+    full_body?: string;
+    hi_res?: string;
+  };
 }
 
 export interface SkillConnection {
