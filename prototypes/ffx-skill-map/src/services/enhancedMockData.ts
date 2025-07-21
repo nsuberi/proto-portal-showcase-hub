@@ -766,12 +766,42 @@ class EnhancedMockNeo4jService {
     );
   }
 
-  async getSkillRecommendations(employeeId: string): Promise<{ skill: Skill; priority: string; reason: string; prerequisites: Skill[] }[]> {
+  async getSkillRecommendations(employeeId: string, goalSkillId?: string): Promise<{ skill: Skill; priority: string; reason: string; prerequisites: Skill[] }[]> {
     if (!this.graphAnalyzer) return [];
 
     const employee = await this.getEmployeeById(employeeId);
     if (!employee) return [];
 
+    // Use goal-directed recommendations if goal is provided
+    if (goalSkillId) {
+      const goalRecommendations = this.graphAnalyzer.getGoalDirectedRecommendations(
+        employee.mastered_skills,
+        goalSkillId,
+        8
+      );
+      
+      return goalRecommendations
+        .map(rec => {
+          const skill = this.skills.find(s => s.id === rec.skillId);
+          if (!skill) return null;
+          
+          // Get prerequisites for this skill
+          const prerequisiteSkills = this.connections
+            .filter(conn => conn.to === rec.skillId)
+            .map(conn => this.skills.find(s => s.id === conn.from))
+            .filter((s): s is Skill => s !== undefined);
+          
+          return {
+            skill,
+            priority: rec.priority,
+            reason: rec.reason,
+            prerequisites: prerequisiteSkills
+          };
+        })
+        .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null);
+    }
+
+    // Fallback to standard recommendations
     const availableSkills = this.graphAnalyzer.getAvailableNextSkills(employee.mastered_skills);
     
     return availableSkills

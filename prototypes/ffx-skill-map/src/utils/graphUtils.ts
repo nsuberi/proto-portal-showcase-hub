@@ -131,6 +131,183 @@ export class SkillGraphAnalyzer {
   }
 
   /**
+   * Find optimal path from any mastered skill to target goal skill
+   * Returns the shortest path considering XP cost and accessibility
+   */
+  findOptimalPathToGoal(masteredSkills: string[], goalSkill: string): {
+    path: string[];
+    startSkill: string;
+    totalXP: number;
+    isReachable: boolean;
+  } {
+    if (!this.graph.hasNode(goalSkill)) {
+      return { path: [], startSkill: '', totalXP: 0, isReachable: false };
+    }
+
+    let bestPath: string[] = [];
+    let bestStartSkill = '';
+    let shortestDistance = Infinity;
+    let lowestXPCost = Infinity;
+
+    // Try pathfinding from each mastered skill
+    for (const masteredSkill of masteredSkills) {
+      if (!this.graph.hasNode(masteredSkill)) continue;
+
+      const path = this.findShortestPath(masteredSkill, goalSkill);
+      if (path.length === 0) continue;
+
+      // Calculate total XP cost for path (excluding the starting mastered skill)
+      const pathXPCost = path.slice(1).reduce((total, skillId) => {
+        const attrs = this.getSkillAttributes(skillId);
+        return total + (attrs?.xp_required || 0);
+      }, 0);
+
+      // Prefer shorter paths, then lower XP cost
+      const isCurrentBetter = path.length < shortestDistance || 
+        (path.length === shortestDistance && pathXPCost < lowestXPCost);
+
+      if (isCurrentBetter) {
+        bestPath = path;
+        bestStartSkill = masteredSkill;
+        shortestDistance = path.length;
+        lowestXPCost = pathXPCost;
+      }
+    }
+
+    // If no direct path found, try finding path through immediately available skills
+    if (bestPath.length === 0) {
+      const availableNext = this.getAvailableNextSkills(masteredSkills);
+      
+      if (availableNext.includes(goalSkill)) {
+        // Goal is directly reachable from current progress
+        return {
+          path: [goalSkill],
+          startSkill: 'available',
+          totalXP: this.getSkillAttributes(goalSkill)?.xp_required || 0,
+          isReachable: true
+        };
+      }
+
+      // Try paths through available next skills
+      for (const nextSkill of availableNext) {
+        const pathFromNext = this.findShortestPath(nextSkill, goalSkill);
+        if (pathFromNext.length === 0) continue;
+
+        const fullPath = [nextSkill, ...pathFromNext.slice(1)];
+        const pathXPCost = fullPath.reduce((total, skillId) => {
+          const attrs = this.getSkillAttributes(skillId);
+          return total + (attrs?.xp_required || 0);
+        }, 0);
+
+        if (fullPath.length < shortestDistance || 
+           (fullPath.length === shortestDistance && pathXPCost < lowestXPCost)) {
+          bestPath = fullPath;
+          bestStartSkill = 'available';
+          shortestDistance = fullPath.length;
+          lowestXPCost = pathXPCost;
+        }
+      }
+    }
+
+    return {
+      path: bestPath,
+      startSkill: bestStartSkill,
+      totalXP: lowestXPCost,
+      isReachable: bestPath.length > 0
+    };
+  }
+
+  /**
+   * Get skills that are on the optimal path to a goal skill
+   * Useful for prioritizing recommendations
+   */
+  getSkillsOnPathToGoal(masteredSkills: string[], goalSkill: string): Set<string> {
+    const pathInfo = this.findOptimalPathToGoal(masteredSkills, goalSkill);
+    return new Set(pathInfo.path);
+  }
+
+  /**
+   * Enhanced recommendation system that prioritizes goal-directed learning
+   */
+  getGoalDirectedRecommendations(
+    masteredSkills: string[], 
+    goalSkill: string | null,
+    maxRecommendations: number = 5
+  ): Array<{
+    skillId: string;
+    reason: string;
+    priority: 'high' | 'medium' | 'low';
+    isOnGoalPath: boolean;
+    stepsToGoal?: number;
+  }> {
+    const availableSkills = this.getAvailableNextSkills(masteredSkills);
+    const recommendations: Array<{
+      skillId: string;
+      reason: string;
+      priority: 'high' | 'medium' | 'low';
+      isOnGoalPath: boolean;
+      stepsToGoal?: number;
+    }> = [];
+
+    // If no goal is set, use standard recommendations
+    if (!goalSkill || !this.graph.hasNode(goalSkill)) {
+      return availableSkills.slice(0, maxRecommendations).map(skillId => ({
+        skillId,
+        reason: 'Available to learn from your current skills',
+        priority: 'medium' as const,
+        isOnGoalPath: false
+      }));
+    }
+
+    const pathInfo = this.findOptimalPathToGoal(masteredSkills, goalSkill);
+    const skillsOnPath = this.getSkillsOnPathToGoal(masteredSkills, goalSkill);
+
+    // Prioritize skills on the path to goal
+    const pathSkills = availableSkills.filter(skillId => skillsOnPath.has(skillId));
+    const nonPathSkills = availableSkills.filter(skillId => !skillsOnPath.has(skillId));
+
+    // Add path skills with high priority
+    pathSkills.forEach(skillId => {
+      const pathIndex = pathInfo.path.indexOf(skillId);
+      const stepsToGoal = pathInfo.path.length - pathIndex;
+      
+      recommendations.push({
+        skillId,
+        reason: `Next step towards ${this.getSkillAttributes(goalSkill)?.name || 'goal'}`,
+        priority: pathIndex === 0 ? 'high' : 'medium',
+        isOnGoalPath: true,
+        stepsToGoal
+      });
+    });
+
+    // Add complementary skills with lower priority
+    nonPathSkills.forEach(skillId => {
+      const attrs = this.getSkillAttributes(skillId);
+      recommendations.push({
+        skillId,
+        reason: `Complementary ${attrs?.category || 'skill'} ability`,
+        priority: 'low',
+        isOnGoalPath: false
+      });
+    });
+
+    // Sort by priority and limit results
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    recommendations.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+      }
+      // Within same priority, prefer skills closer to goal
+      if (a.stepsToGoal && b.stepsToGoal) {
+        return a.stepsToGoal - b.stepsToGoal;
+      }
+      return 0;
+    });
+
+    return recommendations.slice(0, maxRecommendations);
+  }
+
+  /**
    * Get skills that can be learned next (only directly adjacent nodes to mastered skills)
    */
   getAvailableNextSkills(masteredSkills: string[]): string[] {

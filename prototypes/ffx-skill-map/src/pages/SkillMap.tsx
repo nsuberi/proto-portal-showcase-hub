@@ -14,6 +14,7 @@ import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
 import SkillRecommendationWidget from '../components/SkillRecommendationWidget';
+import SkillGoalWidget from '../components/SkillGoalWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -37,11 +38,12 @@ const CATEGORY_COLORS = {
   default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
 };
 
-function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }: {
+function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath }: {
   skills: any[],
   connections: any[],
   masteredSkills: string[],
-  selectedEmployeeId: string
+  selectedEmployeeId: string,
+  goalPath?: string[]
 }) {
   const sigmaContainerRef = useRef<HTMLDivElement>(null);
   const sigmaInstanceRef = useRef<Sigma | null>(null);
@@ -85,7 +87,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
           labelWeight = 'bold'; // Bold text for mastered skills
           color = data.color; // Keep original vibrant color
         } else if (data.hasEmployeeSelected && !data.isMastered) {
-          // Employee doesn't have this skill - make it translucent
+          // Employee doesn't have this skill - make it translucent (includes goal path)
           color = hexToRgba(data.color, 0.6);
           labelColor = hexToRgba('#2C3E50', 0.7); // Fade the label as well
         }
@@ -94,7 +96,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
           ...data,
           label: data.label,
           color: color,
-          // Make mastered skills bigger to ensure they stand out
+          // Make mastered skills bigger but keep goal path skills original size
           size: data.isMastered ? data.size * 1.3 : data.size,
           zIndex: data.isMastered ? 3 : (data.zIndex || 1), // Higher z-index for mastered skills
           // Keep the node type as set in the data (border for mastered, circle for others)
@@ -122,6 +124,10 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
           // On hover, make border 100% opacity
           borderColor = data.color;
           borderWidth = 3;
+        } else if (data.isOnGoalPath) {
+          // Goal path skills get black border to stand out
+          borderColor = '#000000';
+          borderWidth = 2;
         }
         
         return {
@@ -145,8 +151,9 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
   // Memoize expensive graph computations
   const memoizedNodes = useMemo(() => {
     if (!skills) return [];
-    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS);
-  }, [skills, masteredSkills]);
+    const pathSet = new Set(goalPath || []);
+    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS, pathSet);
+  }, [skills, masteredSkills, goalPath]);
 
   const memoizedEdges = useMemo(() => {
     if (!connections) return [];
@@ -226,6 +233,7 @@ const SkillMap = () => {
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
+  const [currentGoal, setCurrentGoal] = useState<{ skill: any; path: string[] } | null>(null)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -506,6 +514,7 @@ const SkillMap = () => {
         connections={connections}
         masteredSkills={masteredSkills}
         selectedEmployeeId={selectedEmployeeId}
+        goalPath={currentGoal?.path}
       />
 
       {/* Legend for node colors - with hover tooltips */}
@@ -575,11 +584,25 @@ const SkillMap = () => {
         </div>
 
 
+        {/* Skill Goal Widget */}
+        <div className="mb-8">
+          <SkillGoalWidget
+            employeeId={selectedEmployeeId}
+            employee={selectedEmployee}
+            onGoalSet={(goalSkill, path) => {
+              setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
+              // Invalidate recommendations to refresh with goal-directed ones
+              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
+            }}
+          />
+        </div>
+
         {/* Skill Recommendation Widget */}
         <div className="mb-8">
           <SkillRecommendationWidget
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
+            goalSkillId={currentGoal?.skill?.id}
             onSkillLearn={async (skill, updatedEmployee) => {
               try {
                 await enhancedNeo4jService.learnSkill(selectedEmployeeId, skill.id);

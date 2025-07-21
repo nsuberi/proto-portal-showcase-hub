@@ -24,6 +24,7 @@ import { Skill, Employee } from '../types';
 interface SkillRecommendationWidgetProps {
   employeeId: string;
   employee?: Employee;
+  goalSkillId?: string;
   onSkillLearn?: (skill: Skill, employee: Employee) => void;
 }
 
@@ -36,14 +37,15 @@ interface SkillRecommendation {
 const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
   employeeId,
   employee,
+  goalSkillId,
   onSkillLearn
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLearning, setIsLearning] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { data: recommendations, isLoading, error } = useQuery({
-    queryKey: ['skill-recommendations', employeeId],
-    queryFn: () => sharedEnhancedService.getSkillRecommendations(employeeId),
+    queryKey: ['skill-recommendations', employeeId, goalSkillId],
+    queryFn: () => sharedEnhancedService.getSkillRecommendations(employeeId, goalSkillId),
     enabled: !!employeeId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -272,7 +274,9 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
           <div className="min-w-0 flex-1">
             <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
-              <span className="truncate">Next Skills for {employee?.name}</span>
+              <span className="truncate">
+                {goalSkillId ? `Goal-Directed Skills for ${employee?.name}` : `Next Skills for ${employee?.name}`}
+              </span>
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
               <span>{recommendations.length} recommendations available</span>
