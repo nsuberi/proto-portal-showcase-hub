@@ -172,9 +172,9 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
       const updatedEmployees = await sharedEnhancedService.getAllEmployees();
       queryClient.setQueryData(['enhanced-employees'], updatedEmployees);
       
-      // Force refetch queries to refresh data immediately
-      await queryClient.refetchQueries({ queryKey: ['skill-recommendations', employeeId] });
-      await queryClient.refetchQueries({ queryKey: ['enhanced-employees'] });
+      // Use efficient invalidation instead of blocking refetch
+      queryClient.invalidateQueries({ queryKey: ['skill-recommendations', employeeId] });
+      queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
       
     } catch (error) {
       console.error('Failed to learn skill:', error);

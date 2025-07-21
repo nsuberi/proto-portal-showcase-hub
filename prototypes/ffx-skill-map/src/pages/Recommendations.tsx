@@ -53,11 +53,11 @@ const Recommendations = () => {
     try {
       await sharedEnhancedService.resetEmployeeSkills(selectedEmployeeId);
       
-      // Invalidate and refetch all queries to reflect the changes
-      await queryClient.invalidateQueries({ queryKey: ['employees'] });
-      await queryClient.invalidateQueries({ queryKey: ['employee-skills', selectedEmployeeId] });
-      await queryClient.invalidateQueries({ queryKey: ['available-skills', selectedEmployeeId] });
-      await queryClient.invalidateQueries({ queryKey: ['recommendations', selectedEmployeeId] });
+      // Use efficient non-blocking invalidation
+      queryClient.invalidateQueries({ queryKey: ['employees'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['employee-skills', selectedEmployeeId] });
+      queryClient.invalidateQueries({ queryKey: ['available-skills', selectedEmployeeId] });
+      queryClient.invalidateQueries({ queryKey: ['recommendations', selectedEmployeeId] });
       
       console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
     } catch (error) {

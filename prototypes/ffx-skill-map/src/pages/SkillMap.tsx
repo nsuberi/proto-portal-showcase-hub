@@ -255,8 +255,8 @@ const SkillMap = () => {
     try {
       await enhancedNeo4jService.resetEmployeeSkills(selectedEmployeeId);
       
-      // Invalidate and refetch all queries to reflect the changes
-      await queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
+      // Use efficient non-blocking invalidation
+      queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
       
       console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
     } catch (error) {
@@ -584,18 +584,26 @@ const SkillMap = () => {
               try {
                 await enhancedNeo4jService.learnSkill(selectedEmployeeId, skill.id);
                 
-                // Immediately update the employee cache with the result from the service
-                const updatedEmployees = await enhancedNeo4jService.getAllEmployees();
-                queryClient.setQueryData(['enhanced-employees'], updatedEmployees);
+                // Optimistically update the employee cache immediately
+                const currentEmployees = queryClient.getQueryData(['enhanced-employees']) as any[];
+                if (currentEmployees) {
+                  const optimisticEmployees = currentEmployees.map(emp => 
+                    emp.id === selectedEmployeeId 
+                      ? { ...emp, mastered_skills: [...emp.mastered_skills, skill.id] }
+                      : emp
+                  );
+                  queryClient.setQueryData(['enhanced-employees'], optimisticEmployees);
+                }
                 
-                // Force refetch all queries to update the UI immediately
-                await queryClient.refetchQueries({ queryKey: ['enhanced-employees'] });
-                await queryClient.refetchQueries({ queryKey: ['enhanced-skills'] });
-                await queryClient.refetchQueries({ queryKey: ['skill-recommendations'] });
+                // Use single invalidation to trigger efficient background refresh
+                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
+                queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
                 
                 console.log(`${updatedEmployee.name} learned ${skill.name}!`);
               } catch (error) {
                 console.error('Failed to learn skill:', error);
+                // Revert optimistic update on error
+                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
               }
             }}
           />
