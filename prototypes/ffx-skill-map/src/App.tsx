@@ -1,11 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toast'
 import Navigation from './components/Navigation'
-import Dashboard from './pages/Dashboard'
 import SkillMap from './pages/SkillMap'
-import Employees from './pages/Employees'
-import Quiz from './pages/Quiz'
-import Recommendations from './pages/Recommendations'
 import { useEffect } from 'react'
 import { sharedEnhancedService } from './services/sharedService'
 
@@ -42,11 +38,7 @@ function App() {
       <main className="container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<SkillMap />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/skill-map" element={<SkillMap />} />
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/recommendations" element={<Recommendations />} />
+          <Route path="/*" element={<SkillMap />} />
         </Routes>
       </main>
       <Toaster />

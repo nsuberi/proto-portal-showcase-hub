@@ -7,7 +7,7 @@ import { sharedEnhancedService } from '../services/sharedService'
 // Use the shared service instance to prevent multiple connections
 const enhancedNeo4jService = sharedEnhancedService
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users } from 'lucide-react'
 import Sigma from 'sigma';
 import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
@@ -431,6 +431,24 @@ const SkillMap = () => {
 
   return (
     <>
+      {/* Instructions */}
+      <div className="mb-8 bg-blue-50/50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-start gap-4">
+          <div className="bg-blue-100 rounded-full p-2 flex-shrink-0">
+            <Users className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">How to Use the Expert Sphere Grid</h3>
+            <div className="space-y-2 text-sm text-blue-800">
+              <p>1. <strong>Select an employee</strong> from the dropdown below to highlight their mastered skills on the graph</p>
+              <p>2. <strong>Explore the interactive network</strong> - each node represents a skill, with lines showing prerequisite relationships</p>
+              <p>3. <strong>View personalized recommendations</strong> - see suggested next skills based on the employee's current expertise</p>
+              <p>4. <strong>Hover over legend items</strong> to learn about different skill categories and their purposes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Employee dropdown */}
       <div className="max-w-sm mb-4">
         <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
