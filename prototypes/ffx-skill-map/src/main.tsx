@@ -10,10 +10,10 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      // Prevent unnecessary refetches
-      refetchOnMount: false,
+      staleTime: 30 * 1000, // 30 seconds - much shorter to allow updates
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      // Allow refetching when components remount
+      refetchOnMount: 'always',
       refetchInterval: false,
     },
     mutations: {

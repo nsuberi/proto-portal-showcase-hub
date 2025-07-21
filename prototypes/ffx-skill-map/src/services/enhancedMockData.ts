@@ -817,6 +817,13 @@ class EnhancedMockNeo4jService {
       this.employees[employeeIndex] = updatedEmployee;
       // Save updated employee data to localStorage
       this.saveEmployeesToStorage();
+      
+      // Trigger a custom event to notify UI components of employee data changes
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('employeeDataChanged', { 
+          detail: { employeeId, updatedEmployee } 
+        }));
+      }
     }
     
     return updatedEmployee;

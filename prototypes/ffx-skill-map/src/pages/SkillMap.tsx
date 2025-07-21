@@ -550,10 +550,14 @@ const SkillMap = () => {
               try {
                 await enhancedNeo4jService.learnSkill(selectedEmployeeId, skill.id);
                 
-                // Refresh all queries to update the UI
-                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
-                queryClient.invalidateQueries({ queryKey: ['enhanced-skills'] });
-                queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] });
+                // Immediately update the employee cache with the result from the service
+                const updatedEmployees = await enhancedNeo4jService.getAllEmployees();
+                queryClient.setQueryData(['enhanced-employees'], updatedEmployees);
+                
+                // Force refetch all queries to update the UI immediately
+                await queryClient.refetchQueries({ queryKey: ['enhanced-employees'] });
+                await queryClient.refetchQueries({ queryKey: ['enhanced-skills'] });
+                await queryClient.refetchQueries({ queryKey: ['skill-recommendations'] });
                 
                 console.log(`${updatedEmployee.name} learned ${skill.name}!`);
               } catch (error) {
