@@ -10,6 +10,14 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      // Prevent unnecessary refetches
+      refetchOnMount: false,
+      refetchInterval: false,
+    },
+    mutations: {
+      retry: 1,
     },
   },
 })
@@ -17,7 +25,13 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/prototypes/ffx-skill-map">
+      <BrowserRouter 
+        basename="/prototypes/ffx-skill-map"
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <App />
       </BrowserRouter>
     </QueryClientProvider>

@@ -7,17 +7,21 @@ import Employees from './pages/Employees'
 import Quiz from './pages/Quiz'
 import Recommendations from './pages/Recommendations'
 import { useEffect } from 'react'
-import MockNeo4jService from './services/mockData'
+import { sharedEnhancedService } from './services/sharedService'
 
-// Use mock service instead of real Neo4j for browser compatibility
-const neo4jService = new MockNeo4jService()
+// Use shared enhanced mock service with complex sphere grid data
+const neo4jService = sharedEnhancedService
 
 function App() {
   useEffect(() => {
-    // Initialize Neo4j connection
+    // Initialize Neo4j connection only once
+    let mounted = true;
+    
     const initDatabase = async () => {
       try {
-        await neo4jService.connect()
+        if (mounted) {
+          await neo4jService.connect()
+        }
       } catch (error) {
         console.error('Failed to connect to Neo4j:', error)
       }
@@ -27,6 +31,7 @@ function App() {
 
     // Cleanup on unmount
     return () => {
+      mounted = false;
       neo4jService.close()
     }
   }, [])
@@ -36,7 +41,8 @@ function App() {
       <Navigation />
       <main className="container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<SkillMap />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/skill-map" element={<SkillMap />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/quiz" element={<Quiz />} />

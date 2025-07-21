@@ -2,16 +2,38 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { neo4jService } from '../services/neo4j'
-import { useState, useRef, useEffect } from 'react'
+import { sharedEnhancedService } from '../services/sharedService'
+
+// Use the shared service instance to prevent multiple connections
+const enhancedNeo4jService = sharedEnhancedService
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Sword, Zap, Heart, Star, Crown, Filter } from 'lucide-react'
 import Sigma from 'sigma';
 import Graph from 'graphology';
-import { getGraphNodes } from './SkillMap.utils';
-import { SKILL_CATEGORY_COLORS } from '../design-system';
+import { getEnhancedGraphNodes, getEnhancedGraphEdges, getCameraPresets } from './EnhancedSkillMap.utils';
+import { SKILL_CATEGORY_COLORS, ffxSkillCategories } from '../design-system';
 
-// Use skill category colors from local design system
-const CATEGORY_COLORS = SKILL_CATEGORY_COLORS;
+// Convert HSL to hex for Sigma.js compatibility
+const hslToHex = (h: number, s: number, l: number): string => {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+// Convert design system HSL values to hex for Sigma.js
+const CATEGORY_COLORS = {
+  combat: hslToHex(0, 84.2, 60.2),     // Red: #f95454
+  magic: hslToHex(213, 94, 68),        // Blue: #429bff  
+  support: hslToHex(142, 76, 36),      // Green: #16a34a
+  special: hslToHex(263, 70, 60),      // Purple: #8b5cf6
+  advanced: hslToHex(48, 96, 53),      // Yellow: #facc15
+  default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
+};
 
 function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }: {
   skills: any[],
@@ -29,6 +51,15 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
     const graph = new Graph();
     const renderer = new Sigma(graph, sigmaContainerRef.current, {
       renderEdgeLabels: false,
+      labelRenderedSizeThreshold: 15,
+      labelDensity: 1,
+      // Performance optimizations
+      enableEdgeClickEvents: false,
+      enableEdgeWheelEvents: false,
+      enableEdgeHoverEvents: false,
+      hideEdgesOnMove: true,
+      hideLabelsOnMove: true,
+      allowInvalidContainer: false,
       nodeReducer: (node, data) => {
         // Handle transparency by converting hex to rgba when needed
         const hexToRgba = (hex, alpha) => {
@@ -39,16 +70,65 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
         };
         
         let color = data.color;
-        if (data.hasEmployeeSelected && !data.isMastered) {
+        let borderColor = data.borderColor || null;
+        let borderWidth = data.borderWidth || 0;
+        let labelSize = data.labelSize || 12;
+        
+        if (data.hasEmployeeSelected && data.isMastered) {
+          // Employee has this skill - show prominent golden border
+          borderColor = '#F39C12'; // Golden border for mastered skills
+          borderWidth = 3;
+          labelSize = 14; // Make labels bigger for mastered skills
+          color = data.color; // Keep original vibrant color
+        } else if (data.hasEmployeeSelected && !data.isMastered) {
+          // Employee doesn't have this skill - make it translucent
           color = hexToRgba(data.color, 0.7);
+          borderWidth = 0;
+          borderColor = null;
+        } else {
+          // No employee selected - use default styling
+          borderColor = null;
+          borderWidth = 0;
         }
         
         return {
           ...data,
           label: data.label,
           color: color,
-          size: data.size,
-          zIndex: data.zIndex,
+          // Make mastered skills bigger to ensure they stand out
+          size: data.isMastered ? data.size * 1.2 : data.size,
+          zIndex: data.isMastered ? 2 : (data.zIndex || 1),
+          // Ensure we're using standard Sigma.js properties
+          type: 'circle',
+          borderColor: borderColor,
+          borderWidth: borderWidth,
+          labelSize: labelSize,
+          labelColor: data.labelColor || '#2C3E50',
+          labelWeight: data.labelWeight || 'normal',
+        };
+      },
+      // Add hover effects
+      nodeHoverReducer: (node, data) => {
+        const hexToRgba = (hex, alpha) => {
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        };
+        
+        let borderColor = null;
+        let borderWidth = 0;
+        
+        if (data.hasEmployeeSelected && data.isMastered) {
+          // On hover, make border 100% opacity
+          borderColor = data.color;
+          borderWidth = 3;
+        }
+        
+        return {
+          ...data,
+          borderColor: borderColor,
+          borderWidth: borderWidth,
         };
       },
     });
@@ -63,41 +143,77 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
     };
   }, []); // Only run once on mount
   
+  // Memoize expensive graph computations
+  const memoizedNodes = useMemo(() => {
+    if (!skills) return [];
+    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS);
+  }, [skills, masteredSkills]);
+
+  const memoizedEdges = useMemo(() => {
+    if (!connections) return [];
+    return getEnhancedGraphEdges(connections);
+  }, [connections]);
+
   // Update graph data when dependencies change
   useEffect(() => {
     if (!skills || !connections || !sigmaInstanceRef.current) return;
     
     const graph = sigmaInstanceRef.current.getGraph();
     
-    // Clear existing graph
-    graph.clear();
-    
-    // Add nodes with updated data
-    const nodes = getGraphNodes(skills, masteredSkills, CATEGORY_COLORS);
-    nodes.forEach(node => {
-      graph.addNode(node.id, node);
-    });
-    
-    // Add edges
-    connections.forEach(conn => {
-      if (graph.hasNode(conn.from) && graph.hasNode(conn.to)) {
-        graph.addEdge(conn.from, conn.to);
+    // Performance optimization: batch graph operations
+    try {
+      // Clear existing graph
+      graph.clear();
+      
+      // Use memoized nodes for better performance
+      const nodes = memoizedNodes;
+      
+      // Batch add nodes for better performance
+      if (nodes.length > 0) {
+        graph.import({
+          nodes: nodes.map(node => ({ key: node.id, attributes: node })),
+          edges: []
+        });
       }
-    });
-    
-    // Refresh the rendering
-    if (sigmaInstanceRef.current.getGraph().order > 0) {
-      sigmaInstanceRef.current.refresh({
-        skipIndexation: true,
+      
+      // Add edges with enhanced styling
+      const edges = memoizedEdges;
+      edges.forEach(edge => {
+        try {
+          if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
+            graph.addEdge(edge.source, edge.target, {
+              size: edge.size || 1,
+              color: edge.color || '#95A5A6',
+              type: 'line' // Use standard edge type
+            });
+          }
+        } catch (edgeError) {
+          console.warn(`Failed to add edge ${edge.source} -> ${edge.target}:`, edgeError);
+        }
       });
+      
+      // Refresh the rendering with performance optimizations
+      if (sigmaInstanceRef.current && graph.order > 0) {
+        // Use requestAnimationFrame for smooth rendering
+        requestAnimationFrame(() => {
+          if (sigmaInstanceRef.current) {
+            sigmaInstanceRef.current.refresh();
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating graph:', error);
     }
-  }, [skills, connections, masteredSkills, selectedEmployeeId]);
+  }, [memoizedNodes, memoizedEdges, selectedEmployeeId]);
   
   return (
     <div
       ref={sigmaContainerRef}
-      className="w-full h-96 border border-border mb-4"
+      className="w-full h-[600px] border border-border/50 mb-6 rounded-lg shadow-elegant bg-gradient-to-br from-background via-card to-background/95"
       data-testid="sigma-graph"
+      style={{
+        background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(139, 69, 19, 0.03) 100%)'
+      }}
     />
   );
 }
@@ -110,47 +226,70 @@ const SkillMap = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
 
   const { data: skills, isLoading } = useQuery({
-    queryKey: ['skills'],
-    queryFn: () => neo4jService.getAllSkills(),
+    queryKey: ['enhanced-skills'],
+    queryFn: () => enhancedNeo4jService.getAllSkills(),
   })
 
   const { data: connections } = useQuery({
-    queryKey: ['connections'],
-    queryFn: () => neo4jService.getSkillConnections(),
+    queryKey: ['enhanced-connections'],
+    queryFn: () => enhancedNeo4jService.getSkillConnections(),
   })
 
   const { data: employees } = useQuery({
-    queryKey: ['employees'],
-    queryFn: () => neo4jService.getAllEmployees(),
+    queryKey: ['enhanced-employees'],
+    queryFn: () => enhancedNeo4jService.getAllEmployees(),
   })
 
   // Find selected employee's mastered skills
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
   const masteredSkills = selectedEmployee?.mastered_skills || []
 
-  if (isLoading) {
+  // Always call hooks before any early returns - Rules of Hooks
+  // Memoize filtered skills for performance
+  const filteredSkills = useMemo(() => {
+    if (!skills) return [];
+    
+    return skills.filter(skill => {
+      const matchesCategory = selectedCategory === 'all' || skill.category === selectedCategory;
+      const matchesLevel = selectedLevel === 'all' || skill.level.toString() === selectedLevel;
+      return matchesCategory && matchesLevel;
+    });
+  }, [skills, selectedCategory, selectedLevel]);
+
+  // Memoize skills grouping for performance
+  const skillsByLevel = useMemo(() => {
+    return filteredSkills.reduce((acc, skill) => {
+      if (!acc[skill.level]) {
+        acc[skill.level] = [];
+      }
+      acc[skill.level].push(skill);
+      return acc;
+    }, {} as Record<number, typeof skills>);
+  }, [filteredSkills]);
+
+  // Early returns after all hooks are called
+  if (isLoading || !skills || !connections) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading skill map...</div>
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="text-lg text-muted-foreground">Loading Expert Sphere Grid...</div>
+          <div className="text-sm text-muted-foreground mt-2">Initializing complex network structure</div>
+        </div>
       </div>
     )
   }
 
-  // Filter skills based on selection
-  const filteredSkills = skills?.filter(skill => {
-    const matchesCategory = selectedCategory === 'all' || skill.category === selectedCategory
-    const matchesLevel = selectedLevel === 'all' || skill.level.toString() === selectedLevel
-    return matchesCategory && matchesLevel
-  }) || []
-
-  // Group skills by level
-  const skillsByLevel = filteredSkills.reduce((acc, skill) => {
-    if (!acc[skill.level]) {
-      acc[skill.level] = []
-    }
-    acc[skill.level].push(skill)
-    return acc
-  }, {} as Record<number, typeof skills>)
+  if (skills.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-lg text-muted-foreground">No skills data available</div>
+          <div className="text-sm text-muted-foreground mt-2">Please check the data service connection</div>
+        </div>
+      </div>
+    )
+  }
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -186,6 +325,53 @@ const SkillMap = () => {
     }
   }
 
+  const getCategoryMasteredColors = (category: string) => {
+    switch (category) {
+      case 'combat':
+        return {
+          border: 'border-red-500',
+          bg: 'bg-red-50',
+          text: 'text-red-800',
+          check: 'text-red-600'
+        }
+      case 'magic':
+        return {
+          border: 'border-blue-500',
+          bg: 'bg-blue-50',
+          text: 'text-blue-800',
+          check: 'text-blue-600'
+        }
+      case 'support':
+        return {
+          border: 'border-green-500',
+          bg: 'bg-green-50',
+          text: 'text-green-800',
+          check: 'text-green-600'
+        }
+      case 'special':
+        return {
+          border: 'border-purple-500',
+          bg: 'bg-purple-50',
+          text: 'text-purple-800',
+          check: 'text-purple-600'
+        }
+      case 'advanced':
+        return {
+          border: 'border-yellow-500',
+          bg: 'bg-yellow-50',
+          text: 'text-yellow-800',
+          check: 'text-yellow-600'
+        }
+      default:
+        return {
+          border: 'border-gray-500',
+          bg: 'bg-gray-50',
+          text: 'text-gray-800',
+          check: 'text-gray-600'
+        }
+    }
+  }
+
   const getPrerequisites = (skillId: string) => {
     return connections?.filter(conn => conn.to === skillId).map(conn => conn.from) || []
   }
@@ -211,6 +397,34 @@ const SkillMap = () => {
           </SelectContent>
         </Select>
       </div>
+      {/* Camera Controls for Sphere Grid Exploration */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button 
+          className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-smooth"
+          onClick={() => {
+            const camera = document.querySelector('[data-testid="sigma-graph"]')?.querySelector('canvas');
+            // This would integrate with Sigma.js camera controls
+          }}
+        >
+          Overview
+        </button>
+        <button className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 border border-red-300 rounded-md transition-smooth">
+          Central Hub
+        </button>
+        <button className="px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 border border-blue-300 rounded-md transition-smooth">
+          Combat Cluster
+        </button>
+        <button className="px-3 py-1 text-xs bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-md transition-smooth">
+          Magic Cluster
+        </button>
+        <button className="px-3 py-1 text-xs bg-green-100 hover:bg-green-200 border border-green-300 rounded-md transition-smooth">
+          Support Cluster
+        </button>
+        <button className="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded-md transition-smooth">
+          Advanced Sphere
+        </button>
+      </div>
+
       {/* Sigma.js visualization container */}
       <SigmaGraph
         skills={skills}
@@ -229,19 +443,28 @@ const SkillMap = () => {
             <span className="capitalize text-sm">{cat}</span>
           </div>
         ))}
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-4 h-4 rounded-full border-2 border-yellow-500 bg-yellow-400" />
+          <span className="text-sm">Mastered Skills</span>
+        </div>
       </div>
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="text-primary">
-              Skill Map
-            </span>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+            Expert Sphere Grid
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Explore the Final Fantasy X-inspired skill grid. Skills are organized by level and category, 
-            with arrows showing prerequisites and dependencies.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,
+            identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
+            prerequisite relationships and recommended next steps for professional development.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm text-muted-foreground">
+            <span>• <strong className="text-primary">Skill Tracking</strong> for individual employees</span>
+            <span>• <strong className="text-blue-600">Smart Recommendations</strong> based on current expertise</span>
+            <span>• <strong className="text-purple-600">Learning Pathways</strong> between related skills</span>
+            <span>• <strong className="text-green-600">Team Analytics</strong> and gap identification</span>
+          </div>
         </div>
 
         {/* Filters */}
@@ -309,6 +532,7 @@ const SkillMap = () => {
                         const dependents = getDependents(skill.id)
                         const isMastered = masteredSkills.includes(skill.id)
                         const hasEmployeeSelected = selectedEmployeeId !== ''
+                        const masteredColors = getCategoryMasteredColors(skill.category)
                         
                         return (
                           <div
@@ -316,7 +540,7 @@ const SkillMap = () => {
                             className={`p-4 rounded-lg border skill-node skill-${skill.category} transition-all duration-200 ${
                               hasEmployeeSelected 
                                 ? isMastered 
-                                  ? 'border-green-500 border-2 bg-green-50 shadow-md' 
+                                  ? `${masteredColors.border} border-2 ${masteredColors.bg} shadow-md` 
                                   : 'border-gray-300 bg-gray-50 opacity-60'
                                 : 'border-gray-200 bg-white'
                             }`}
@@ -325,11 +549,11 @@ const SkillMap = () => {
                               <div className="flex items-center gap-2">
                                 {getCategoryIcon(skill.category)}
                                 <h4 className={`font-medium text-sm ${
-                                  hasEmployeeSelected && isMastered ? 'text-green-800 font-semibold' : ''
+                                  hasEmployeeSelected && isMastered ? `${masteredColors.text} font-semibold` : ''
                                 }`}>
                                   {skill.name}
                                   {hasEmployeeSelected && isMastered && (
-                                    <span className="ml-2 text-green-600">✓</span>
+                                    <span className={`ml-2 ${masteredColors.check}`}>✓</span>
                                   )}
                                 </h4>
                               </div>
@@ -411,40 +635,40 @@ const SkillMap = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
-                <Sword className="h-5 w-5 text-red-600" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-red-200 bg-red-50">
+                <Sword className="h-5 w-5" style={{ color: CATEGORY_COLORS.combat }} />
                 <div>
                   <p className="font-medium text-red-800">Combat</p>
                   <p className="text-xs text-red-600">Physical and tactical abilities</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                <Zap className="h-5 w-5 text-blue-600" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50">
+                <Zap className="h-5 w-5" style={{ color: CATEGORY_COLORS.magic }} />
                 <div>
                   <p className="font-medium text-blue-800">Magic</p>
                   <p className="text-xs text-blue-600">Elemental and arcane spells</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
-                <Heart className="h-5 w-5 text-green-600" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50">
+                <Heart className="h-5 w-5" style={{ color: CATEGORY_COLORS.support }} />
                 <div>
                   <p className="font-medium text-green-800">Support</p>
                   <p className="text-xs text-green-600">Healing and buffing abilities</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 border border-purple-200">
-                <Star className="h-5 w-5 text-purple-600" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-purple-200 bg-purple-50">
+                <Star className="h-5 w-5" style={{ color: CATEGORY_COLORS.special }} />
                 <div>
                   <p className="font-medium text-purple-800">Special</p>
                   <p className="text-xs text-purple-600">Unique utility abilities</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-                <Crown className="h-5 w-5 text-yellow-600" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-yellow-200 bg-yellow-50">
+                <Crown className="h-5 w-5" style={{ color: CATEGORY_COLORS.advanced }} />
                 <div>
                   <p className="font-medium text-yellow-800">Advanced</p>
                   <p className="text-xs text-yellow-600">High-level master abilities</p>

@@ -6,8 +6,8 @@ const Navigation = () => {
   const location = useLocation()
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: BarChart3 },
-    { path: '/skill-map', label: 'Skill Map', icon: Sword },
+    { path: '/', label: 'Skill Map', icon: Sword },
+    { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
     { path: '/employees', label: 'Employees', icon: Users },
     { path: '/quiz', label: 'Skill Quiz', icon: Brain },
     { path: '/recommendations', label: 'Recommendations', icon: Target },
