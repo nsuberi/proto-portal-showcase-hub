@@ -105,6 +105,9 @@ class EnhancedMockNeo4jService {
   private employees: Employee[] = [];
   private initialized = false;
   private graphAnalyzer: SkillGraphAnalyzer | null = null;
+  
+  // localStorage key for persisting employee data
+  private readonly STORAGE_KEY = 'ffx-skill-map-employees';
 
   constructor() {
     this.initializeData();
@@ -120,10 +123,79 @@ class EnhancedMockNeo4jService {
     // Initialize graph analyzer for recommendations
     this.graphAnalyzer = new SkillGraphAnalyzer(this.skills, this.connections);
     
-    // Create employees with expanded mastered skills
-    this.employees = this.createEnhancedEmployees();
+    // Load employees from localStorage or create new ones
+    const storedEmployees = this.loadEmployeesFromStorage();
+    if (storedEmployees) {
+      this.employees = storedEmployees;
+    } else {
+      this.employees = this.createEnhancedEmployees();
+      // Save initial employee data to localStorage
+      this.saveEmployeesToStorage();
+    }
     
     this.initialized = true;
+  }
+
+  /**
+   * Load employee data from localStorage
+   * Returns null if no data exists or if parsing fails
+   */
+  private loadEmployeesFromStorage(): Employee[] | null {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+      }
+
+      const storedData = localStorage.getItem(this.STORAGE_KEY);
+      if (!storedData) {
+        return null;
+      }
+
+      const parsedEmployees = JSON.parse(storedData) as Employee[];
+      
+      // Validate that the stored data has the expected structure
+      if (Array.isArray(parsedEmployees) && parsedEmployees.length > 0) {
+        console.log(`🔄 Loaded ${parsedEmployees.length} employees from localStorage`);
+        return parsedEmployees;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Failed to load employee data from localStorage:', error);
+      // Clear corrupted data
+      this.clearStoredEmployees();
+      return null;
+    }
+  }
+
+  /**
+   * Save employee data to localStorage
+   */
+  private saveEmployeesToStorage(): void {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+      }
+
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.employees));
+      console.log(`💾 Saved ${this.employees.length} employees to localStorage`);
+    } catch (error) {
+      console.error('Failed to save employee data to localStorage:', error);
+    }
+  }
+
+  /**
+   * Clear stored employee data from localStorage
+   */
+  private clearStoredEmployees(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(this.STORAGE_KEY);
+        console.log('🗑️ Cleared stored employee data');
+      }
+    } catch (error) {
+      console.error('Failed to clear stored employee data:', error);
+    }
   }
 
   private createSkillsFromNetworkData(): Skill[] {
@@ -743,9 +815,30 @@ class EnhancedMockNeo4jService {
     const employeeIndex = this.employees.findIndex(emp => emp.id === employeeId);
     if (employeeIndex !== -1) {
       this.employees[employeeIndex] = updatedEmployee;
+      // Save updated employee data to localStorage
+      this.saveEmployeesToStorage();
     }
     
     return updatedEmployee;
+  }
+
+  /**
+   * Reset all employee data to initial state
+   * Useful for testing or when user wants to start over
+   */
+  async resetEmployeeData(): Promise<void> {
+    this.clearStoredEmployees();
+    this.employees = this.createEnhancedEmployees();
+    this.saveEmployeesToStorage();
+    console.log('🔄 Employee data reset to initial state');
+  }
+
+  /**
+   * Get the localStorage key used for employee data
+   * Useful for debugging or manual localStorage management
+   */
+  getStorageKey(): string {
+    return this.STORAGE_KEY;
   }
 }
 

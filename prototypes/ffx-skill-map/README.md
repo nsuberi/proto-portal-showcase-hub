@@ -216,6 +216,46 @@ npm run db:reset         # Reset and reseed database
 2. Update TypeScript types in `src/types/index.ts`
 3. Add new UI components as needed
 
+## Development vs Deployed Environment Differences
+
+### Critical Behavior Differences
+This application behaves differently in development vs production due to data persistence patterns:
+
+#### **Local Development Environment:**
+- **In-Memory Persistence**: The `EnhancedMockData` service instance persists throughout the development session
+- **Hot Reloading**: Changes to employee XP and skills remain in memory between page navigations
+- **React Query Cache**: Long-lived cache (5-10 minutes) prevents unnecessary data resets
+- **Single Instance**: JavaScript state survives between component re-renders and route changes
+
+#### **Deployed/Production Environment:**
+- **Fresh Initialization**: Each page load/navigation creates a new service instance with original data
+- **No Persistence**: XP changes and skill progression are lost on page refresh or navigation
+- **Static Deployment**: AWS S3 serves static files with no server-side state management
+- **Memory Reset**: All in-memory data resets to initial values on each JavaScript execution
+
+### **Why Local Testing Can Be Unreliable:**
+```typescript
+// This works in development but fails in production:
+employee.current_xp = (employee.current_xp || 0) - skill.xp_required;
+// ✅ Persists locally (in-memory state survives)
+// ❌ Lost in production (page refresh resets to original data)
+```
+
+### **Solution Implemented:**
+- **localStorage Persistence**: Employee data now persists across browser sessions
+- **Automatic Sync**: Changes are saved/loaded transparently from browser storage
+- **Fallback Strategy**: Gracefully handles localStorage unavailability
+
+### **Testing Both Environments:**
+```bash
+# Test local behavior (persistent state)
+npm run dev
+
+# Test production-like behavior (reset on refresh)
+npm run build && npm run preview
+# Navigate between pages and refresh to verify persistence
+```
+
 ## Troubleshooting
 
 ### Neo4j Connection Issues
@@ -241,6 +281,16 @@ npm run db:seed
 - Restart the development server
 - Check browser console for errors
 - Verify all dependencies are installed
+
+### Data Persistence Issues
+```bash
+# Clear localStorage data (resets employee progress)
+# In browser console:
+localStorage.removeItem('ffx-skill-map-employees');
+
+# Or clear all localStorage:
+localStorage.clear();
+```
 
 ## Future Enhancements
 
