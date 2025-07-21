@@ -475,7 +475,7 @@ const SkillMap = () => {
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-md">
             <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" data-testid="employee-select">
                 <SelectValue placeholder="Select an employee to highlight mastered skills..." />
               </SelectTrigger>
               <SelectContent>

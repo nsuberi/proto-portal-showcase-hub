@@ -16,21 +16,16 @@ test.describe('XP Persistence Integration Tests', () => {
     // Navigate to the skill map
     await page.goto('/');
     
-    // Wait for employees to load
-    await expect(page.locator('[data-testid="employee-select"], select, .employee-selector')).toBeVisible({ timeout: 10000 });
+    // Wait for employees to load - look for the employee select dropdown
+    await expect(page.locator('[data-testid="employee-select"]')).toBeVisible({ timeout: 10000 });
     
-    // Select an employee (try multiple selectors to find the dropdown)
-    const employeeSelector = page.locator('select').first();
-    if (await employeeSelector.isVisible()) {
-      await employeeSelector.selectOption({ index: 1 }); // Select first employee
-    } else {
-      // Fallback: look for other possible employee selectors
-      const altSelector = page.locator('[data-testid="employee-select"]');
-      if (await altSelector.isVisible()) {
-        await altSelector.click();
-        await page.locator('text=Auron').click();
-      }
-    }
+    // Click the employee selector dropdown
+    await page.locator('[data-testid="employee-select"]').click();
+    
+    // Select the first available employee from the dropdown
+    const firstEmployee = page.locator('[data-radix-select-content] [data-radix-select-item]').first();
+    await expect(firstEmployee).toBeVisible({ timeout: 5000 });
+    await firstEmployee.click();
     
     // Wait for skill recommendations to load
     await expect(page.locator('text=Next Skills for')).toBeVisible({ timeout: 5000 });
@@ -86,10 +81,11 @@ test.describe('XP Persistence Integration Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait for the app to reload and select the same employee again
-    const employeeSelectorAfterRefresh = page.locator('select').first();
-    if (await employeeSelectorAfterRefresh.isVisible()) {
-      await employeeSelectorAfterRefresh.selectOption({ index: 1 });
-    }
+    await expect(page.locator('[data-testid="employee-select"]')).toBeVisible({ timeout: 10000 });
+    await page.locator('[data-testid="employee-select"]').click();
+    const firstEmployeeAfterRefresh = page.locator('[data-radix-select-content] [data-radix-select-item]').first();
+    await expect(firstEmployeeAfterRefresh).toBeVisible({ timeout: 5000 });
+    await firstEmployeeAfterRefresh.click();
     
     // Wait for skill recommendations to load again
     await expect(page.locator('text=Next Skills for')).toBeVisible({ timeout: 5000 });
@@ -170,7 +166,7 @@ test.describe('XP Persistence Integration Tests', () => {
     await page.goto('/');
     
     // App should still load without localStorage
-    await expect(page.locator('text=FFX Skill Map')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Map of Mastery')).toBeVisible({ timeout: 10000 });
     
     console.log('✅ localStorage unavailability handling test passed');
   });
