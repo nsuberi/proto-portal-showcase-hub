@@ -135,14 +135,21 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
   const handleLearnSkill = async (skill: Skill) => {
     if (!employee || !onSkillLearn) return;
     
-    const canAfford = (employee.current_xp || 0) >= skill.xp_required;
-    if (!canAfford) return;
+    // Get the most up-to-date employee data from the cache or service
+    const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+    const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
+    
+    const canAfford = (currentEmployee.current_xp || 0) >= skill.xp_required;
+    if (!canAfford) {
+      console.warn(`Insufficient XP: has ${currentEmployee.current_xp}, needs ${skill.xp_required}`);
+      return;
+    }
 
     setIsLearning(skill.id);
     
     try {
       // Call the parent handler - the service will handle XP decrementing
-      await onSkillLearn(skill, employee);
+      await onSkillLearn(skill, currentEmployee);
       
       // Get updated data from the shared service
       const updatedEmployees = await sharedEnhancedService.getAllEmployees();
@@ -252,12 +259,17 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
               <span>{recommendations.length} recommendations available</span>
-              {employee?.current_xp && (
-                <span className="flex items-center gap-1 text-blue-600">
-                  <Zap className="h-3 w-3 flex-shrink-0" />
-                  {formatXP(employee.current_xp)} XP available
-                </span>
-              )}
+              {(() => {
+                // Get the most up-to-date employee data for XP display
+                const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+                const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
+                return currentEmployee?.current_xp ? (
+                  <span className="flex items-center gap-1 text-blue-600">
+                    <Zap className="h-3 w-3 flex-shrink-0" />
+                    {formatXP(currentEmployee.current_xp)} XP available
+                  </span>
+                ) : null;
+              })()}
             </CardDescription>
           </div>
           <Button
@@ -287,8 +299,12 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
           <div className="space-y-4">
             {recommendations.map((recommendation, index) => {
             const { skill, xp_required, reason } = recommendation;
-            const canAfford = (employee?.current_xp || 0) >= xp_required;
-            const progressPercentage = getXPProgressPercentage(xp_required, employee?.current_xp);
+            // Get the most up-to-date employee data for XP checks
+            const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+            const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
+            
+            const canAfford = (currentEmployee?.current_xp || 0) >= xp_required;
+            const progressPercentage = getXPProgressPercentage(xp_required, currentEmployee?.current_xp);
             const isCurrentlyLearning = isLearning === skill.id;
 
             return (
@@ -327,7 +343,7 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                         {formatXP(xp_required)} XP
                       </span>
                     </div>
-                    {employee?.current_xp && (
+                    {currentEmployee?.current_xp && (
                       <Progress 
                         value={progressPercentage} 
                         className="w-16 h-2"
@@ -359,7 +375,7 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                         <ArrowRight className="h-3 w-3 ml-1" />
                       </>
                     ) : (
-                      `Need ${formatXP(xp_required - (employee?.current_xp || 0))} more XP`
+                      `Need ${formatXP(xp_required - (currentEmployee?.current_xp || 0))} more XP`
                     )}
                   </Button>
                 </div>
