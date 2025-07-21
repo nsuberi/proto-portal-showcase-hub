@@ -443,7 +443,8 @@ class EnhancedMockNeo4jService {
         name: 'Tidus',
         role: 'Blitzball Ace / Time Warrior',
         department: 'Combat Division',
-        mastered_skills: ['inter_1', 'scatter_7', 'tc_2', 'tc_3', 'path_2', 'tl_2', 'tl_3', 'central_5'],
+        // Clustered in TOP CENTER area - Speed/Agility focused
+        mastered_skills: ['tc_1', 'tc_2', 'tc_3', 'tc_4', 'path_2', 'inter_2', 'inter_10', 'scatter_7'],
         skill_points: 145,
         level: 28,
         stats: {
@@ -460,7 +461,8 @@ class EnhancedMockNeo4jService {
         name: 'Yuna',
         role: 'High Summoner / White Mage',
         department: 'Support Division',
-        mastered_skills: ['inter_6', 'bc_2', 'bc_3', 'path_8', 'bl_2', 'bl_3', 'bl_4', 'central_3'],
+        // Clustered in TOP RIGHT area - White Magic/Support focused
+        mastered_skills: ['tr_1', 'tr_2', 'tr_3', 'tr_4', 'tr_5', 'tr_6', 'tr_7', 'tr_8'],
         skill_points: 168,
         level: 32,
         stats: {
@@ -477,7 +479,8 @@ class EnhancedMockNeo4jService {
         name: 'Auron',
         role: 'Legendary Guardian / Weapon Master',
         department: 'Combat Division',
-        mastered_skills: ['inter_5', 'br_2', 'br_5', 'br_7', 'path_4', 'rm_3', 'rm_6', 'central_1'],
+        // Clustered in LEFT MIDDLE area - Combat/Break skills focused
+        mastered_skills: ['lm_1', 'lm_2', 'lm_3', 'lm_4', 'lm_5', 'lm_6', 'lm_7', 'lm_8'],
         skill_points: 189,
         level: 38,
         stats: {
@@ -494,7 +497,8 @@ class EnhancedMockNeo4jService {
         name: 'Lulu',
         role: 'Black Mage Virtuoso / Elemental Master',
         department: 'Magic Division',
-        mastered_skills: ['inter_8', 'lm_2', 'lm_4', 'lm_6', 'path_6', 'tr_4', 'tr_6', 'central_2'],
+        // Clustered in TOP LEFT area - Black Magic focused
+        mastered_skills: ['tl_1', 'tl_2', 'tl_3', 'tl_4', 'tl_5', 'tl_6', 'tl_7', 'tl_8'],
         skill_points: 156,
         level: 30,
         stats: {
@@ -511,7 +515,8 @@ class EnhancedMockNeo4jService {
         name: 'Wakka',
         role: 'Blitzball Captain / Ranged Specialist',
         department: 'Special Operations',
-        mastered_skills: ['inter_7', 'bl_5', 'bl_6', 'bl_8', 'path_5', 'tc_1', 'tc_4', 'central_4'],
+        // Clustered in BOTTOM LEFT area - Status/Debuff focused
+        mastered_skills: ['bl_1', 'bl_2', 'bl_3', 'bl_4', 'bl_5', 'bl_6', 'bl_7', 'bl_8'],
         skill_points: 134,
         level: 26,
         stats: {
@@ -528,7 +533,8 @@ class EnhancedMockNeo4jService {
         name: 'Kimahri',
         role: 'Ronso Warrior / Versatile Guardian',
         department: 'Multi-Division',
-        mastered_skills: ['inter_4', 'rm_2', 'rm_7', 'path_7', 'tl_5', 'tl_6', 'scatter_2', 'scatter_4'],
+        // Clustered in RIGHT MIDDLE area - Special abilities focused
+        mastered_skills: ['rm_1', 'rm_2', 'rm_3', 'rm_4', 'rm_5', 'rm_6', 'rm_7', 'rm_8'],
         skill_points: 142,
         level: 27,
         stats: {
@@ -545,7 +551,8 @@ class EnhancedMockNeo4jService {
         name: 'Rikku',
         role: 'Al Bhed Machinist / Item Specialist',
         department: 'Special Operations',
-        mastered_skills: ['scatter_1', 'scatter_3', 'scatter_5', 'inter_3', 'tr_7', 'tr_8', 'path_3', 'lm_7'],
+        // Clustered in SCATTERED area - Utility/Special skills focused
+        mastered_skills: ['scatter_1', 'scatter_2', 'scatter_3', 'scatter_4', 'scatter_5', 'scatter_6', 'scatter_7', 'scatter_8'],
         skill_points: 127,
         level: 24,
         stats: {
@@ -562,7 +569,8 @@ class EnhancedMockNeo4jService {
         name: 'Seymour',
         role: 'Maester / Dark Summoner',
         department: 'Advanced Magic',
-        mastered_skills: ['central_1', 'central_2', 'central_3', 'path_1', 'path_3', 'path_6', 'tl_1', 'tr_1'],
+        // Clustered in BOTTOM RIGHT area - Advanced Magic focused
+        mastered_skills: ['br_1', 'br_2', 'br_3', 'br_4', 'br_5', 'br_6', 'br_7', 'br_8'],
         skill_points: 245,
         level: 45,
         stats: {
