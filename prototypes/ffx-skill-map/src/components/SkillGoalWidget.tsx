@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,8 +28,13 @@ interface SkillGoalWidgetProps {
 interface GoalPath {
   path: string[];
   totalXP: number;
+  remainingXP: number;
   steps: number;
+  remainingSteps: number;
+  totalSteps: number;
+  completedSteps: number;
   skills: Skill[];
+  isCompleted: boolean;
 }
 
 const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
@@ -41,6 +46,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   const [selectedGoal, setSelectedGoal] = useState<Skill | null>(null);
   const [goalPath, setGoalPath] = useState<GoalPath | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
 
   const { data: skills } = useQuery({
     queryKey: ['enhanced-skills'],
@@ -118,13 +124,27 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       .map(skillId => skills.find(s => s.id === skillId))
       .filter(Boolean) as Skill[];
 
+    const masteredSet = new Set(employee.mastered_skills);
+    const completedSkills = pathSkills.filter(skill => masteredSet.has(skill.id));
+    const remainingSkills = pathSkills.filter(skill => !masteredSet.has(skill.id));
+    
     const totalXP = pathSkills.reduce((sum, skill) => sum + skill.xp_required, 0);
+    const remainingXP = remainingSkills.reduce((sum, skill) => sum + skill.xp_required, 0);
+    const completedSteps = completedSkills.length;
+    const totalSteps = pathSkills.length;
+    const remainingSteps = totalSteps - completedSteps;
+    const isCompleted = remainingSteps === 0;
 
     return {
       path: shortestPath,
       totalXP,
+      remainingXP,
       steps: shortestPath.length,
-      skills: pathSkills
+      remainingSteps,
+      totalSteps,
+      completedSteps,
+      skills: pathSkills,
+      isCompleted
     };
   };
 
@@ -145,10 +165,26 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   const clearGoal = () => {
     setSelectedGoal(null);
     setGoalPath(null);
+    setShowCompletionAnimation(false);
     if (onGoalSet) {
       onGoalSet(null, []);
     }
   };
+
+  // Recalculate path when employee mastered skills change
+  useEffect(() => {
+    if (selectedGoal && employee && skills) {
+      const previouslyCompleted = goalPath?.isCompleted || false;
+      const updatedPath = calculateGoalPath(selectedGoal);
+      setGoalPath(updatedPath);
+      
+      // Check if goal was just completed
+      if (!previouslyCompleted && updatedPath?.isCompleted) {
+        setShowCompletionAnimation(true);
+        setTimeout(() => setShowCompletionAnimation(false), 3000);
+      }
+    }
+  }, [employee?.mastered_skills, selectedGoal, skills]);
 
   const getCategoryIcon = (category: string) => {
     const iconClass = "h-4 w-4";
@@ -331,19 +367,19 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                   </div>
                   <div className="grid grid-cols-3 gap-4 mb-3 text-center">
                     <div>
-                      <div className="text-lg font-bold text-blue-600">{goalPath.steps}</div>
-                      <div className="text-xs text-gray-600">Steps</div>
+                      <div className="text-lg font-bold text-blue-600">{goalPath.remainingSteps}</div>
+                      <div className="text-xs text-gray-600">Remaining</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-purple-600">{formatXP(goalPath.totalXP)}</div>
-                      <div className="text-xs text-gray-600">Total XP</div>
+                      <div className="text-lg font-bold text-purple-600">{formatXP(goalPath.remainingXP)}</div>
+                      <div className="text-xs text-gray-600">XP Needed</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-600">
-                        {employee.current_xp && employee.current_xp >= goalPath.totalXP ? '✓' : 
-                         employee.current_xp ? `${Math.round((employee.current_xp / goalPath.totalXP) * 100)}%` : '?'}
+                        {goalPath.completedSteps === goalPath.totalSteps ? '✓' : 
+                         `${Math.round((goalPath.completedSteps / goalPath.totalSteps) * 100)}%`}
                       </div>
-                      <div className="text-xs text-gray-600">Progress</div>
+                      <div className="text-xs text-gray-600">Complete</div>
                     </div>
                   </div>
                   
@@ -351,21 +387,66 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
                     <div className="flex flex-wrap gap-1">
-                      {goalPath.skills.map((skill, index) => (
-                        <React.Fragment key={skill.id}>
-                          <Badge 
-                            variant="outline" 
-                            className="text-xs bg-white/50 hover:bg-white/80 transition-colors"
-                          >
-                            {skill.name}
-                          </Badge>
-                          {index < goalPath.skills.length - 1 && (
-                            <ArrowRight className="h-3 w-3 text-gray-400 self-center" />
-                          )}
-                        </React.Fragment>
-                      ))}
+                      {goalPath.skills.map((skill, index) => {
+                        const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
+                        const categoryColorClass = getCategoryColor(skill.category);
+                        return (
+                          <React.Fragment key={skill.id}>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs transition-all duration-300 ${
+                                isSkillMastered 
+                                  ? categoryColorClass
+                                  : `${categoryColorClass} opacity-40 hover:opacity-60`
+                              }`}
+                            >
+                              {isSkillMastered && <span className="mr-1">✓</span>}
+                              {skill.name}
+                            </Badge>
+                            {index < goalPath.skills.length - 1 && (
+                              <ArrowRight className={`h-3 w-3 self-center transition-all duration-300 ${
+                                isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
+                              }`} />
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Completion Animation and Next Goal Prompt */}
+                  {goalPath.isCompleted && (
+                    <div className={`mt-4 p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 transition-all duration-500 ${showCompletionAnimation ? 'animate-bounce shadow-lg' : ''}`}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white transition-transform duration-300 ${showCompletionAnimation ? 'scale-125' : ''}`}>
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-green-800">Goal Completed!</h3>
+                          <p className="text-sm text-green-600">You've mastered all skills in this path</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            clearGoal();
+                            setIsSearchExpanded(true);
+                          }}
+                          className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                        >
+                          <Target className="h-4 w-4 mr-1" />
+                          Set Next Goal
+                        </Button>
+                        <Button
+                          onClick={clearGoal}
+                          variant="outline"
+                          className="text-green-700 border-green-300 hover:bg-green-50 text-sm"
+                        >
+                          Clear Goal
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="border-t border-blue-200 pt-3 mt-3">
