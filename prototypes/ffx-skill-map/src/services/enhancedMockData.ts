@@ -753,7 +753,20 @@ class EnhancedMockNeo4jService {
     return this.skills.filter(skill => dependentIds.includes(skill.id));
   }
 
-  async getSkillRecommendations(employeeId: string): Promise<{ skill: Skill; xp_required: number; reason: string }[]> {
+  async getAvailableSkills(employeeId: string): Promise<Skill[]> {
+    if (!this.graphAnalyzer) return [];
+
+    const employee = await this.getEmployeeById(employeeId);
+    if (!employee) return [];
+
+    const availableSkillIds = this.graphAnalyzer.getAvailableNextSkills(employee.mastered_skills);
+    
+    return this.skills.filter(skill => 
+      availableSkillIds.includes(skill.id)
+    );
+  }
+
+  async getSkillRecommendations(employeeId: string): Promise<{ skill: Skill; priority: string; reason: string; prerequisites: Skill[] }[]> {
     if (!this.graphAnalyzer) return [];
 
     const employee = await this.getEmployeeById(employeeId);
@@ -766,13 +779,25 @@ class EnhancedMockNeo4jService {
         const skill = this.skills.find(s => s.id === skillId);
         if (!skill) return null;
 
+        // Get prerequisites for this skill
+        const prerequisiteSkills = this.connections
+          .filter(conn => conn.to === skillId)
+          .map(conn => this.skills.find(s => s.id === conn.from))
+          .filter((s): s is Skill => s !== undefined);
+
+        // Determine priority based on skill level and category
+        let priority = 'medium';
+        if (skill.level <= 2) priority = 'high';
+        else if (skill.level >= 4) priority = 'low';
+
         return {
           skill,
-          xp_required: skill.xp_required,
-          reason: this.generateRecommendationReason(skill, employee)
+          priority,
+          reason: this.generateRecommendationReason(skill, employee),
+          prerequisites: prerequisiteSkills
         };
       })
-      .filter((rec): rec is { skill: Skill; xp_required: number; reason: string } => rec !== null)
+      .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null)
       .slice(0, 10); // Limit to top 10 recommendations
   }
 
@@ -827,6 +852,50 @@ class EnhancedMockNeo4jService {
     }
     
     return updatedEmployee;
+  }
+
+  /**
+   * Reset skills for a specific employee to their initial starter set
+   * @param employeeId - The ID of the employee to reset
+   * @returns Updated employee data
+   */
+  async resetEmployeeSkills(employeeId: string): Promise<Employee | null> {
+    const employeeIndex = this.employees.findIndex(emp => emp.id === employeeId);
+    if (employeeIndex === -1) {
+      return null;
+    }
+
+    // Get the initial employee data to restore starter skills
+    const initialEmployees = this.createEnhancedEmployees();
+    const initialEmployee = initialEmployees.find(emp => emp.id === employeeId);
+    
+    if (!initialEmployee) {
+      return null;
+    }
+
+    // Reset the employee's skills to the initial starter set
+    this.employees[employeeIndex] = {
+      ...this.employees[employeeIndex],
+      mastered_skills: initialEmployee.mastered_skills,
+      current_xp: initialEmployee.current_xp,
+      skill_points: initialEmployee.skill_points,
+      level: initialEmployee.level,
+      stats: initialEmployee.stats
+    };
+
+    // Save updated employee data to localStorage
+    this.saveEmployeesToStorage();
+    
+    console.log(`🔄 Reset skills for employee ${employeeId} to starter set`);
+
+    // Trigger a custom event to notify UI components of employee data changes
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('employeeDataChanged', { 
+        detail: { employeeId, updatedEmployee: this.employees[employeeIndex] } 
+      }));
+    }
+
+    return this.employees[employeeIndex];
   }
 
   /**

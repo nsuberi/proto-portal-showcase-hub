@@ -7,7 +7,8 @@ import { sharedEnhancedService } from '../services/sharedService'
 // Use the shared service instance to prevent multiple connections
 const enhancedNeo4jService = sharedEnhancedService
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
 import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
@@ -224,6 +225,7 @@ const SkillMap = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
+  const [isResetting, setIsResetting] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -244,6 +246,25 @@ const SkillMap = () => {
   // Find selected employee's mastered skills
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
   const masteredSkills = selectedEmployee?.mastered_skills || []
+
+  // Reset skills for selected employee
+  const handleResetSkills = async () => {
+    if (!selectedEmployeeId) return;
+    
+    setIsResetting(true);
+    try {
+      await enhancedNeo4jService.resetEmployeeSkills(selectedEmployeeId);
+      
+      // Invalidate and refetch all queries to reflect the changes
+      await queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
+      
+      console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
+    } catch (error) {
+      console.error('Failed to reset employee skills:', error);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Always call hooks before any early returns - Rules of Hooks
   // Memoize filtered skills for performance
@@ -450,20 +471,33 @@ const SkillMap = () => {
       </div>
 
       {/* Employee dropdown */}
-      <div className="w-full max-w-md mb-4 mx-4">
-        <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select an employee to highlight mastered skills..." />
-          </SelectTrigger>
-          <SelectContent>
-            {employees?.map(emp => (
-              <SelectItem key={emp.id} value={emp.id}>
-                <span className="block sm:hidden">{emp.name}</span>
-                <span className="hidden sm:block">{emp.name} - {emp.role}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="w-full max-w-4xl mb-4 mx-4">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1 max-w-md">
+            <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an employee to highlight mastered skills..." />
+              </SelectTrigger>
+              <SelectContent>
+                {employees?.map(emp => (
+                  <SelectItem key={emp.id} value={emp.id}>
+                    <span className="block sm:hidden">{emp.name}</span>
+                    <span className="hidden sm:block">{emp.name} - {emp.role}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleResetSkills}
+            disabled={!selectedEmployeeId || isResetting}
+            className="whitespace-nowrap"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {isResetting ? 'Resetting...' : 'Reset Skills'}
+          </Button>
+        </div>
       </div>
 
       {/* Sigma.js visualization container */}

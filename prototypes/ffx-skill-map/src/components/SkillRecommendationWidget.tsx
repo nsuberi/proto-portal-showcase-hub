@@ -120,12 +120,29 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
     }
   };
 
-  const getXPProgressPercentage = (required: number, current?: number) => {
-    if (!current) return 0;
+  const getXPProgressPercentage = (required: number | undefined | null, current?: number | undefined | null) => {
+    if (!current || !required || required <= 0) {
+      if (required !== undefined && required !== null && required <= 0) {
+        console.warn(`SkillRecommendationWidget.getXPProgressPercentage: Invalid required XP value: ${required}`);
+      }
+      return 0;
+    }
+    if (typeof required !== 'number' || typeof current !== 'number') {
+      console.error('SkillRecommendationWidget.getXPProgressPercentage: Non-numeric values:', { required, current });
+      return 0;
+    }
     return Math.min((current / required) * 100, 100);
   };
 
-  const formatXP = (xp: number) => {
+  const formatXP = (xp: number | undefined | null) => {
+    if (xp == null || xp === undefined) {
+      console.warn('SkillRecommendationWidget.formatXP: Received null/undefined XP value');
+      return '0';
+    }
+    if (typeof xp !== 'number' || isNaN(xp)) {
+      console.error('SkillRecommendationWidget.formatXP: Invalid XP value:', xp);
+      return '?';
+    }
     if (xp >= 1000) {
       return `${(xp / 1000).toFixed(1)}k`;
     }
@@ -298,7 +315,18 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
         {isExpanded ? (
           <div className="space-y-4">
             {recommendations.map((recommendation, index) => {
-            const { skill, xp_required, reason } = recommendation;
+            const { skill, reason, priority } = recommendation;
+            
+            // Validate data structure and provide helpful error messages
+            if (!skill) {
+              console.error('SkillRecommendationWidget: Missing skill in recommendation:', recommendation);
+              return null;
+            }
+            
+            const xp_required = skill.xp_required;
+            if (xp_required === undefined || xp_required === null) {
+              console.warn(`SkillRecommendationWidget: Missing xp_required for skill ${skill.id} (${skill.name})`);
+            }
             // Get the most up-to-date employee data for XP checks
             const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
             const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
@@ -323,6 +351,18 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                         <Badge variant="outline" className="text-xs flex-shrink-0">
                           Level {skill.level}
                         </Badge>
+                        {priority && (
+                          <Badge 
+                            variant={priority === 'high' ? 'default' : priority === 'medium' ? 'secondary' : 'outline'}
+                            className={`text-xs flex-shrink-0 ${
+                              priority === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
+                              priority === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                              'bg-green-100 text-green-800 border-green-200'
+                            }`}
+                          >
+                            {priority}
+                          </Badge>
+                        )}
                         <Badge className={`text-xs transition-colors flex-shrink-0 hidden sm:inline-flex ${getCategoryColor(skill.category)}`}>
                           {skill.category}
                         </Badge>

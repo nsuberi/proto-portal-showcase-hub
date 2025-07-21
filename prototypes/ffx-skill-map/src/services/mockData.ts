@@ -260,6 +260,39 @@ class MockNeo4jService {
       avgLevel: stat.totalLevel / stat.totalSkills
     }));
   }
+
+  /**
+   * Reset skills for a specific employee to their initial starter set
+   * @param employeeId - The ID of the employee to reset
+   * @returns Updated employee data
+   */
+  async resetEmployeeSkills(employeeId: string): Promise<Employee | null> {
+    const employeeIndex = mockEmployees.findIndex(emp => emp.id === employeeId);
+    if (employeeIndex === -1) {
+      return null;
+    }
+
+    // Define initial/starter skills for each employee
+    const initialSkillSets: Record<string, string[]> = {
+      'emp1': ['attack', 'defend'],
+      'emp2': ['cure', 'fire'],
+      'emp3': ['haste', 'slow']
+    };
+
+    const initialSkills = initialSkillSets[employeeId] || ['attack'];
+    
+    // Reset the employee's skills to the initial starter set
+    mockEmployees[employeeIndex] = {
+      ...mockEmployees[employeeIndex],
+      mastered_skills: initialSkills,
+      quizCompleted: false,
+      quizConfidence: 0
+    };
+
+    console.log(`🔄 Reset skills for employee ${employeeId} to starter set`);
+
+    return mockEmployees[employeeIndex];
+  }
 }
 
 export default MockNeo4jService; 

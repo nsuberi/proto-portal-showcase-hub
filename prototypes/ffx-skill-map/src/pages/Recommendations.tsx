@@ -1,35 +1,37 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { neo4jService } from '../services/neo4j'
-import { Target, TrendingUp, Clock, Star, ArrowRight } from 'lucide-react'
+import { sharedEnhancedService } from '../services/sharedService'
+import { Target, TrendingUp, Clock, Star, ArrowRight, RotateCcw } from 'lucide-react'
 
 const Recommendations = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
+  const [isResetting, setIsResetting] = useState(false)
+  const queryClient = useQueryClient()
 
   const { data: employees, isLoading: employeesLoading } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => neo4jService.getAllEmployees(),
+    queryFn: () => sharedEnhancedService.getAllEmployees(),
   })
 
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
     queryKey: ['recommendations', selectedEmployeeId],
-    queryFn: () => neo4jService.getSkillRecommendations(selectedEmployeeId),
+    queryFn: () => sharedEnhancedService.getSkillRecommendations(selectedEmployeeId),
     enabled: !!selectedEmployeeId,
   })
 
   const { data: employeeSkills } = useQuery({
     queryKey: ['employee-skills', selectedEmployeeId],
-    queryFn: () => neo4jService.getEmployeeSkills(selectedEmployeeId),
+    queryFn: () => sharedEnhancedService.getEmployeeSkills(selectedEmployeeId),
     enabled: !!selectedEmployeeId,
   })
 
   const { data: availableSkills } = useQuery({
     queryKey: ['available-skills', selectedEmployeeId],
-    queryFn: () => neo4jService.getAvailableSkills(selectedEmployeeId),
+    queryFn: () => sharedEnhancedService.getAvailableSkills(selectedEmployeeId),
     enabled: !!selectedEmployeeId,
   })
 
@@ -42,6 +44,28 @@ const Recommendations = () => {
   }
 
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
+
+  // Reset skills for selected employee
+  const handleResetSkills = async () => {
+    if (!selectedEmployeeId) return;
+    
+    setIsResetting(true);
+    try {
+      await sharedEnhancedService.resetEmployeeSkills(selectedEmployeeId);
+      
+      // Invalidate and refetch all queries to reflect the changes
+      await queryClient.invalidateQueries({ queryKey: ['employees'] });
+      await queryClient.invalidateQueries({ queryKey: ['employee-skills', selectedEmployeeId] });
+      await queryClient.invalidateQueries({ queryKey: ['available-skills', selectedEmployeeId] });
+      await queryClient.invalidateQueries({ queryKey: ['recommendations', selectedEmployeeId] });
+      
+      console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
+    } catch (error) {
+      console.error('Failed to reset employee skills:', error);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -87,18 +111,31 @@ const Recommendations = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-            <SelectTrigger className="w-full md:w-96">
-              <SelectValue placeholder="Select an employee..." />
-            </SelectTrigger>
-            <SelectContent>
-              {employees?.map(employee => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name} - {employee.role} ({employee.department})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an employee..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees?.map(employee => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name} - {employee.role} ({employee.department})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleResetSkills}
+              disabled={!selectedEmployeeId || isResetting}
+              className="whitespace-nowrap"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {isResetting ? 'Resetting...' : 'Reset Skills'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
