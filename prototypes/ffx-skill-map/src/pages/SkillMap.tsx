@@ -207,7 +207,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
   return (
     <div
       ref={sigmaContainerRef}
-      className="w-full h-[600px] border border-border/50 mb-6 rounded-lg shadow-md bg-gradient-to-br from-background via-card to-background/95"
+      className="w-full h-[400px] sm:h-[500px] md:h-[600px] border border-border/50 mb-6 rounded-lg shadow-md bg-gradient-to-br from-background via-card to-background/95 mx-4"
       data-testid="sigma-graph"
       style={{
         background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(139, 69, 19, 0.03) 100%)'
@@ -432,25 +432,25 @@ const SkillMap = () => {
   return (
     <>
       {/* Instructions */}
-      <div className="mb-8 bg-blue-50/50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-start gap-4">
+      <div className="mb-6 md:mb-8 bg-blue-50/50 border border-blue-200 rounded-lg p-4 md:p-6 mx-4">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
           <div className="bg-blue-100 rounded-full p-2 flex-shrink-0">
-            <Users className="h-5 w-5 text-blue-600" />
+            <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">How to Use the Expert Sphere Grid</h3>
-            <div className="space-y-2 text-sm text-blue-800">
-              <p>1. <strong>Select an employee</strong> from the dropdown below to highlight their mastered skills on the graph</p>
-              <p>2. <strong>Explore the interactive network</strong> - each node represents a skill, with lines showing prerequisite relationships</p>
-              <p>3. <strong>View personalized recommendations</strong> - see suggested next skills based on the employee's current expertise</p>
-              <p>4. <strong>Hover over legend items</strong> to learn about different skill categories and their purposes</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base md:text-lg font-semibold text-blue-900 mb-2">How to Use the Map of Mastery</h3>
+            <div className="space-y-2 text-xs sm:text-sm text-blue-800">
+              <p>1. <strong>Select an employee</strong> from the dropdown below to highlight their mastered skills</p>
+              <p>2. <strong>Explore the interactive network</strong> - each node represents a skill with prerequisite connections</p>
+              <p>3. <strong>View personalized recommendations</strong> - see suggested next skills based on current expertise</p>
+              <p>4. <strong>Hover over legend items</strong> to learn about different skill categories</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Employee dropdown */}
-      <div className="max-w-sm mb-4">
+      <div className="w-full max-w-md mb-4 mx-4">
         <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select an employee to highlight mastered skills..." />
@@ -458,7 +458,8 @@ const SkillMap = () => {
           <SelectContent>
             {employees?.map(emp => (
               <SelectItem key={emp.id} value={emp.id}>
-                {emp.name} - {emp.role}
+                <span className="block sm:hidden">{emp.name}</span>
+                <span className="hidden sm:block">{emp.name} - {emp.role}</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -474,27 +475,27 @@ const SkillMap = () => {
       />
 
       {/* Legend for node colors - with hover tooltips */}
-      <div className="mb-8 relative">
-        <div className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-lg p-4 shadow-sm">
-          <div className="flex gap-4 justify-center flex-wrap">
+      <div className="mb-6 md:mb-8 relative mx-4">
+        <div className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-lg p-3 md:p-4 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:justify-center gap-2 md:gap-4">
             {Object.entries(CATEGORY_COLORS).filter(([k]) => k !== 'default').map(([cat, color]) => {
               const categoryInfo = getCategoryInfo(cat);
               return (
                 <div 
                   key={cat} 
-                  className="relative flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                  className="relative flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors min-w-0"
                   onMouseEnter={() => setHoveredCategory(cat)}
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
                   <span 
-                    className="inline-block w-4 h-4 rounded-full border border-border"
+                    className="inline-block w-3 h-3 md:w-4 md:h-4 rounded-full border border-border flex-shrink-0"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="capitalize text-sm">{cat}</span>
+                  <span className="capitalize text-xs md:text-sm truncate">{cat}</span>
                   
                   {/* Tooltip */}
                   {hoveredCategory === cat && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 md:w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
                       <div className="flex items-center gap-2 mb-2">
                         <span style={{ color: color }}>
                           {categoryInfo.icon}
@@ -515,8 +516,8 @@ const SkillMap = () => {
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4"
+        <div className="text-center mb-6 md:mb-8 px-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 px-2"
               style={{
                 background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
                 backgroundClip: 'text',
@@ -526,16 +527,16 @@ const SkillMap = () => {
               }}>
             Map of Mastery
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
             Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,
             identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
             prerequisite relationships and recommended next steps for professional development.
           </p>
-          <div className="flex flex-wrap justify-center gap-6 mt-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">• <strong className="text-primary">Skill Tracking</strong> for individual employees</span>
-            <span className="flex items-center gap-2">• <strong className="text-blue-600">Smart Recommendations</strong> based on current expertise</span>
-            <span className="flex items-center gap-2">• <strong className="text-purple-600">Learning Pathways</strong> between related skills</span>
-            <span className="flex items-center gap-2">• <strong className="text-green-600">Team Analytics</strong> and gap identification</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mt-6 text-xs sm:text-sm text-muted-foreground max-w-4xl mx-auto px-4">
+            <span className="flex items-center justify-center gap-2">• <strong className="text-primary">Skill Tracking</strong> for employees</span>
+            <span className="flex items-center justify-center gap-2">• <strong className="text-blue-600">Smart Recommendations</strong> based on expertise</span>
+            <span className="flex items-center justify-center gap-2">• <strong className="text-purple-600">Learning Pathways</strong> between skills</span>
+            <span className="flex items-center justify-center gap-2">• <strong className="text-green-600">Team Analytics</strong> and gaps</span>
           </div>
         </div>
 
@@ -563,17 +564,17 @@ const SkillMap = () => {
         </div>
 
         {/* Filters */}
-        <Card className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-            <CardDescription>
+        <Card className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth mx-4">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg md:text-xl">Filters</CardTitle>
+            <CardDescription className="text-sm">
               Filter skills by category and level
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -587,7 +588,7 @@ const SkillMap = () => {
               </Select>
               
               <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Filter by level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -605,36 +606,38 @@ const SkillMap = () => {
         </Card>
 
         {/* Skill Grid */}
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8 mx-4">
           {Object.keys(skillsByLevel).length > 0 ? (
             Object.entries(skillsByLevel)
               .sort(([a], [b]) => parseInt(a) - parseInt(b))
               .map(([level, levelSkills]) => (
                 <Card key={level} className="border-border/50 hover:border-primary/30 shadow-elegant transition-smooth">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          Level {level} Skills
-                          <Badge variant="outline">{levelSkills.length} skills</Badge>
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg md:text-xl">
+                          <span>Level {level} Skills</span>
+                          <Badge variant="outline" className="self-start sm:self-auto text-xs">{levelSkills.length} skills</Badge>
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-sm">
                           Skills available at level {level}
                         </CardDescription>
                       </div>
                       <button
                         onClick={() => toggleLevelExpansion(level)}
-                        className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors"
+                        className="flex items-center gap-1 px-2 md:px-3 py-1 text-xs md:text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors flex-shrink-0"
                       >
                         {expandedLevels[level] ? (
                           <>
-                            <Minimize2 className="h-4 w-4" />
-                            Hide Skills
+                            <Minimize2 className="h-3 w-3 md:h-4 md:w-4" />
+                            <span className="hidden sm:inline">Hide Skills</span>
+                            <span className="sm:hidden">Hide</span>
                           </>
                         ) : (
                           <>
-                            <Maximize2 className="h-4 w-4" />
-                            Show Skills
+                            <Maximize2 className="h-3 w-3 md:h-4 md:w-4" />
+                            <span className="hidden sm:inline">Show Skills</span>
+                            <span className="sm:hidden">Show</span>
                           </>
                         )}
                       </button>
@@ -642,7 +645,7 @@ const SkillMap = () => {
                   </CardHeader>
                   <CardContent>
                     {expandedLevels[level] ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                       {levelSkills.map(skill => {
                         const prerequisites = getPrerequisites(skill.id)
                         const dependents = getDependents(skill.id)
@@ -685,7 +688,7 @@ const SkillMap = () => {
                             <div className="space-y-2">
                               <Badge 
                                 variant="secondary" 
-                                className={`text-xs ${getCategoryColor(skill.category)}`}
+                                className={`text-xs hidden sm:inline-flex ${getCategoryColor(skill.category)}`}
                               >
                                 {skill.category}
                               </Badge>
@@ -738,9 +741,9 @@ const SkillMap = () => {
               ))
           ) : (
             <Card className="border-border/50 shadow-elegant">
-              <CardContent className="text-center py-12">
-                <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
+              <CardContent className="text-center py-8 md:py-12">
+                <Filter className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm md:text-base text-muted-foreground px-4">
                   No skills match the current filters. Try adjusting your selection.
                 </p>
               </CardContent>
@@ -750,36 +753,36 @@ const SkillMap = () => {
 
 
         {/* Statistics */}
-        <Card className="border-border/50 shadow-elegant">
-          <CardHeader>
-            <CardTitle>Skill Map Statistics</CardTitle>
+        <Card className="border-border/50 shadow-elegant mx-4">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg md:text-xl">Skill Map Statistics</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{skills?.length || 0}</div>
-                <p className="text-sm text-gray-500">Total Skills</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="text-center p-2 md:p-4">
+                <div className="text-xl md:text-2xl font-bold text-blue-600">{skills?.length || 0}</div>
+                <p className="text-xs md:text-sm text-gray-500">Total Skills</p>
               </div>
               
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+              <div className="text-center p-2 md:p-4">
+                <div className="text-xl md:text-2xl font-bold text-green-600">
                   {Math.max(...(skills?.map(s => s.level) || [0]))}
                 </div>
-                <p className="text-sm text-gray-500">Max Level</p>
+                <p className="text-xs md:text-sm text-gray-500">Max Level</p>
               </div>
               
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
+              <div className="text-center p-2 md:p-4">
+                <div className="text-xl md:text-2xl font-bold text-purple-600">
                   {connections?.length || 0}
                 </div>
-                <p className="text-sm text-gray-500">Connections</p>
+                <p className="text-xs md:text-sm text-gray-500">Connections</p>
               </div>
               
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
+              <div className="text-center p-2 md:p-4">
+                <div className="text-xl md:text-2xl font-bold text-orange-600">
                   {skills?.filter(s => s.level === 1).length || 0}
                 </div>
-                <p className="text-sm text-gray-500">Starting Skills</p>
+                <p className="text-xs md:text-sm text-gray-500">Starting Skills</p>
               </div>
             </div>
           </CardContent>

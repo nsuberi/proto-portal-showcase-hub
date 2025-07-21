@@ -245,19 +245,19 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
   }
 
   return (
-    <Card className="border-border/50 shadow-elegant">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Next Skills for {employee?.name}
+    <Card className="border-border/50 shadow-elegant mx-4">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+              <span className="truncate">Next Skills for {employee?.name}</span>
             </CardTitle>
-            <CardDescription className="flex items-center gap-4 mt-1">
-              <span>Ready to learn • {recommendations.length} recommendations available</span>
+            <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
+              <span>{recommendations.length} recommendations available</span>
               {employee?.current_xp && (
                 <span className="flex items-center gap-1 text-blue-600">
-                  <Zap className="h-3 w-3" />
+                  <Zap className="h-3 w-3 flex-shrink-0" />
                   {formatXP(employee.current_xp)} XP available
                 </span>
               )}
@@ -267,17 +267,19 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-shrink-0 text-xs md:text-sm"
           >
             {isExpanded ? (
               <>
-                <Minimize2 className="h-4 w-4" />
-                Hide Recs
+                <Minimize2 className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Hide Recs</span>
+                <span className="sm:hidden">Hide</span>
               </>
             ) : (
               <>
-                <Maximize2 className="h-4 w-4" />
-                Show Recs
+                <Maximize2 className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">Show Recs</span>
+                <span className="sm:hidden">Show</span>
               </>
             )}
           </Button>
@@ -295,34 +297,34 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
             return (
               <div
                 key={skill.id}
-                className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getCategoryBorderColor(skill.category, canAfford)}`}
+                className={`p-3 md:p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getCategoryBorderColor(skill.category, canAfford)}`}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className={`p-2 rounded-full ${getCategoryIconBg(skill.category, canAfford)}`}>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className={`p-1.5 md:p-2 rounded-full flex-shrink-0 ${getCategoryIconBg(skill.category, canAfford)}`}>
                       {getCategoryIcon(skill.category)}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-sm">{skill.name}</h4>
-                        <Badge variant="outline" className="text-xs">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-1">
+                        <h4 className="font-semibold text-sm md:text-base truncate">{skill.name}</h4>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
                           Level {skill.level}
                         </Badge>
-                        <Badge className={`text-xs transition-colors ${getCategoryColor(skill.category)}`}>
+                        <Badge className={`text-xs transition-colors flex-shrink-0 hidden sm:inline-flex ${getCategoryColor(skill.category)}`}>
                           {skill.category}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      <p className="text-xs md:text-sm text-muted-foreground mb-2 line-clamp-2">
                         {skill.description}
                       </p>
-                      <p className="text-xs text-blue-600 italic">
+                      <p className="text-xs md:text-sm text-blue-600 italic">
                         {reason}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="text-right ml-4">
-                    <div className="flex items-center gap-1 mb-1">
+                  <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />
                       <span className={`text-sm font-medium ${canAfford ? 'text-green-600' : 'text-orange-600'}`}>
                         {formatXP(xp_required)} XP
@@ -337,20 +339,15 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>#{index + 1} recommendation</span>
-                    {canAfford && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                        Ready to learn
-                      </Badge>
-                    )}
                   </div>
                   
                   <Button
                     variant={canAfford ? "default" : "secondary"}
                     size="sm"
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                     onClick={() => handleLearnSkill(skill)}
                     disabled={!canAfford || isCurrentlyLearning}
                   >
