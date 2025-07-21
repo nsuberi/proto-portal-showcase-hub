@@ -777,7 +777,7 @@ class EnhancedMockNeo4jService {
       const goalRecommendations = this.graphAnalyzer.getGoalDirectedRecommendations(
         employee.mastered_skills,
         goalSkillId,
-        8
+        20 // Allow more goal-directed recommendations for pagination
       );
       
       return goalRecommendations
@@ -827,8 +827,8 @@ class EnhancedMockNeo4jService {
           prerequisites: prerequisiteSkills
         };
       })
-      .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null)
-      .slice(0, 10); // Limit to top 10 recommendations
+      .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null);
+      // Return all recommendations - pagination will be handled in the UI
   }
 
   private generateRecommendationReason(skill: Skill, employee: Employee): string {

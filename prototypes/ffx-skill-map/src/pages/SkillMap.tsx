@@ -268,6 +268,7 @@ const SkillMap = () => {
       
       // Use efficient non-blocking invalidation
       queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
       
       console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
     } catch (error) {
@@ -690,11 +691,19 @@ const SkillMap = () => {
                       <div className="min-w-0">
                         <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg md:text-xl">
                           <span>Level {level} Skills</span>
-                          <Badge variant="outline" className="self-start sm:self-auto text-xs">{levelSkills.length} skills</Badge>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="self-start sm:self-auto text-xs">{levelSkills?.length || 0} skills</Badge>
+                            {selectedEmployeeId && levelSkills && (
+                              <Badge 
+                                variant="secondary" 
+                                className="self-start sm:self-auto text-xs bg-green-100 text-green-800 border-green-200"
+                              >
+                                {levelSkills.filter(skill => masteredSkills.includes(skill.id)).length} mastered
+                              </Badge>
+                            )}
+                          </div>
                         </CardTitle>
-                        <CardDescription className="text-sm">
-                          Skills available at level {level}
-                        </CardDescription>
+
                       </div>
                       <button
                         onClick={() => toggleLevelExpansion(level)}
@@ -831,17 +840,10 @@ const SkillMap = () => {
             <CardTitle className="text-lg md:text-xl">Skill Map Statistics</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
               <div className="text-center p-2 md:p-4">
                 <div className="text-xl md:text-2xl font-bold text-blue-600">{skills?.length || 0}</div>
                 <p className="text-xs md:text-sm text-gray-500">Total Skills</p>
-              </div>
-              
-              <div className="text-center p-2 md:p-4">
-                <div className="text-xl md:text-2xl font-bold text-green-600">
-                  {Math.max(...(skills?.map(s => s.level) || [0]))}
-                </div>
-                <p className="text-xs md:text-sm text-gray-500">Max Level</p>
               </div>
               
               <div className="text-center p-2 md:p-4">
@@ -849,13 +851,6 @@ const SkillMap = () => {
                   {connections?.length || 0}
                 </div>
                 <p className="text-xs md:text-sm text-gray-500">Connections</p>
-              </div>
-              
-              <div className="text-center p-2 md:p-4">
-                <div className="text-xl md:text-2xl font-bold text-orange-600">
-                  {skills?.filter(s => s.level === 1).length || 0}
-                </div>
-                <p className="text-xs md:text-sm text-gray-500">Starting Skills</p>
               </div>
             </div>
           </CardContent>

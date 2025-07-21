@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,9 @@ import {
   ChevronDown,
   ChevronUp,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { sharedEnhancedService } from '../services/sharedService';
 import { Skill, Employee } from '../types';
@@ -42,13 +44,29 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLearning, setIsLearning] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  
+  const ITEMS_PER_PAGE = 5;
   const { data: recommendations, isLoading, error } = useQuery({
     queryKey: ['skill-recommendations', employeeId, goalSkillId],
     queryFn: () => sharedEnhancedService.getSkillRecommendations(employeeId, goalSkillId),
     enabled: !!employeeId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Pagination calculations
+  const totalRecommendations = recommendations?.length || 0;
+  const totalPages = Math.ceil(totalRecommendations / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedRecommendations = recommendations?.slice(startIndex, endIndex) || [];
+  const showPagination = totalRecommendations > ITEMS_PER_PAGE;
+
+  // Reset pagination when recommendations change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [employeeId, goalSkillId, totalRecommendations]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -279,7 +297,12 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
               </span>
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
-              <span>{recommendations.length} recommendations available</span>
+              <span>
+                {showPagination 
+                  ? `${totalRecommendations} recommendations available (showing ${startIndex + 1}-${Math.min(endIndex, totalRecommendations)})`
+                  : `${totalRecommendations} recommendations available`
+                }
+              </span>
               {(() => {
                 // Get the most up-to-date employee data for XP display
                 const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
@@ -318,7 +341,9 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
       <CardContent>
         {isExpanded ? (
           <div className="space-y-4">
-            {recommendations.map((recommendation, index) => {
+            {paginatedRecommendations.map((recommendation, index) => {
+            // Calculate global index for display purposes
+            const globalIndex = startIndex + index;
             const { skill, reason, priority } = recommendation;
             
             // Validate data structure and provide helpful error messages
@@ -398,7 +423,7 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>#{index + 1} recommendation</span>
+                    <span>#{globalIndex + 1} recommendation</span>
                   </div>
                   
                   <Button
@@ -430,8 +455,95 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
         ) : (
           <div className="text-center py-6">
             <p className="text-muted-foreground text-sm">
-              Recs currently hidden... Click "Show Recs" to view {recommendations.length} recommendations
+              Recs currently hidden... Click "Show Recs" to view {totalRecommendations} recommendations
             </p>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {isExpanded && showPagination && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="text-xs"
+              >
+                <ChevronLeft className="h-3 w-3 mr-1" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const maxVisiblePages = 5;
+                  const pages = [];
+                  
+                  if (totalPages <= maxVisiblePages) {
+                    // Show all pages if there are few enough
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    // Show smart pagination with ellipsis
+                    const startPage = Math.max(1, currentPage - 2);
+                    const endPage = Math.min(totalPages, currentPage + 2);
+                    
+                    if (startPage > 1) {
+                      pages.push(1);
+                      if (startPage > 2) {
+                        pages.push('...');
+                      }
+                    }
+                    
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(i);
+                    }
+                    
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push('...');
+                      }
+                      pages.push(totalPages);
+                    }
+                  }
+                  
+                  return pages.map((page, index) => (
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="text-xs text-muted-foreground px-2">
+                        ...
+                      </span>
+                    ) : (
+                      <Button
+                        key={page}
+                        variant={page === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page as number)}
+                        className="text-xs w-8 h-8"
+                      >
+                        {page}
+                      </Button>
+                    )
+                  ));
+                })()}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="text-xs"
+              >
+                Next
+                <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+            
+            <div className="text-xs text-muted-foreground">
+              Page {currentPage} of {totalPages} ({totalRecommendations} total)
+            </div>
           </div>
         )}
       </CardContent>
