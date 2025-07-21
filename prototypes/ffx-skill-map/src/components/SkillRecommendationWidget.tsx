@@ -363,15 +363,41 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
             const canAfford = (currentEmployee?.current_xp || 0) >= xp_required;
             const progressPercentage = getXPProgressPercentage(xp_required, currentEmployee?.current_xp);
             const isCurrentlyLearning = isLearning === skill.id;
+            const isGoalSkill = skill.id === goalSkillId;
 
             return (
               <div
                 key={skill.id}
-                className={`p-3 md:p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${getCategoryBorderColor(skill.category, canAfford)}`}
+                className={`p-3 md:p-4 rounded-lg border transition-all duration-200 hover:shadow-md relative overflow-hidden ${
+                  isGoalSkill 
+                    ? 'bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-50 border-yellow-400 shadow-lg ring-2 ring-yellow-300/50 shadow-yellow-200/50' 
+                    : getCategoryBorderColor(skill.category, canAfford)
+                }`}
               >
+                {/* Lightning effects for goal skill */}
+                {isGoalSkill && (
+                  <>
+                    <div className="absolute top-1 right-2 animate-pulse">
+                      <Zap className="h-4 w-4 text-yellow-500 animate-bounce" style={{animationDelay: '0.1s'}} />
+                    </div>
+                    <div className="absolute bottom-1 left-2 animate-pulse" style={{animationDelay: '0.3s'}}>
+                      <Zap className="h-3 w-3 text-amber-500 animate-ping" />
+                    </div>
+                    <div className="absolute top-3 left-1/3 animate-pulse" style={{animationDelay: '0.5s'}}>
+                      <Zap className="h-3 w-3 text-yellow-600 animate-bounce" />
+                    </div>
+                    <div className="absolute bottom-2 right-1/4 animate-pulse" style={{animationDelay: '0.7s'}}>
+                      <Zap className="h-2 w-2 text-amber-600 animate-ping" />
+                    </div>
+                  </>
+                )}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className={`p-1.5 md:p-2 rounded-full flex-shrink-0 ${getCategoryIconBg(skill.category, canAfford)}`}>
+                    <div className={`p-1.5 md:p-2 rounded-full flex-shrink-0 relative z-10 ${
+                      isGoalSkill 
+                        ? 'bg-gradient-to-br from-yellow-200 to-amber-300 ring-2 ring-yellow-400/50' 
+                        : getCategoryIconBg(skill.category, canAfford)
+                    }`}>
                       {getCategoryIcon(skill.category)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -399,8 +425,10 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                       <p className="text-xs md:text-sm text-muted-foreground mb-2 line-clamp-2">
                         {skill.description}
                       </p>
-                      <p className="text-xs md:text-sm text-blue-600 italic">
-                        {reason}
+                      <p className={`text-xs md:text-sm italic font-medium ${
+                        isGoalSkill ? 'text-amber-700' : 'text-blue-600'
+                      }`}>
+                        {isGoalSkill ? 'Level up to meet your goal!' : reason}
                       </p>
                     </div>
                   </div>

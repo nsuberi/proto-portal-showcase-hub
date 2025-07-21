@@ -17,7 +17,9 @@ import {
   AlertCircle,
   Sparkles,
   Star,
-  Gem
+  Gem,
+  Zap,
+  BookOpen
 } from 'lucide-react';
 import { sharedEnhancedService } from '../services/sharedService';
 import { Skill, Employee } from '../types';
@@ -276,14 +278,19 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   }, [currentGoal, selectedGoal]);
 
   const getCategoryIcon = (category: string) => {
-    const iconClass = "h-4 w-4";
     switch (category) {
-      case 'combat': return <Target className={iconClass} />;
-      case 'magic': return <div className={iconClass}>⚡</div>;
-      case 'support': return <div className={iconClass}>❤️</div>;
-      case 'special': return <div className={iconClass}>⭐</div>;
-      case 'advanced': return <div className={iconClass}>👑</div>;
-      default: return <Target className={iconClass} />;
+      case 'combat':
+        return <Target className="h-4 w-4" />;
+      case 'magic':
+        return <Zap className="h-4 w-4" />;
+      case 'support':
+        return <CheckCircle2 className="h-4 w-4" />;
+      case 'special':
+        return <Star className="h-4 w-4" />;
+      case 'advanced':
+        return <BookOpen className="h-4 w-4" />;
+      default:
+        return <Target className="h-4 w-4" />;
     }
   };
 
