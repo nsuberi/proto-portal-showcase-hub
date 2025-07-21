@@ -29,10 +29,10 @@ describe('EnhancedMockNeo4jService XP Logic', () => {
 
       // Get an affordable skill
       const recommendations = await service.getSkillRecommendations('tidus');
-      const affordableSkill = recommendations.find(rec => initialXP >= rec.xp_required);
+      const affordableSkill = recommendations.find(rec => initialXP >= (rec.skill.xp_required || 0));
       expect(affordableSkill).toBeDefined();
 
-      const skillCost = affordableSkill!.xp_required;
+      const skillCost = affordableSkill!.skill.xp_required || 0;
       const expectedXPAfterLearning = initialXP - skillCost;
 
       // Learn the skill
@@ -79,12 +79,12 @@ describe('EnhancedMockNeo4jService XP Logic', () => {
 
       // Get an affordable skill
       const recommendations = await service.getSkillRecommendations('tidus');
-      const affordableSkill = recommendations.find(rec => initialXP >= rec.xp_required);
+      const affordableSkill = recommendations.find(rec => initialXP >= (rec.skill.xp_required || 0));
       expect(affordableSkill).toBeDefined();
 
       // Learn the skill
       await service.learnSkill('tidus', affordableSkill!.skill.id);
-      const expectedXP = initialXP - affordableSkill!.xp_required;
+      const expectedXP = initialXP - (affordableSkill!.skill.xp_required || 0);
 
       // Close and recreate service to test persistence
       await service.close();
@@ -108,14 +108,15 @@ describe('EnhancedMockNeo4jService XP Logic', () => {
 
       // Get all affordable skills
       const recommendations = await service.getSkillRecommendations('tidus');
-      const affordableSkills = recommendations.filter(rec => initialXP >= rec.xp_required);
+      const affordableSkills = recommendations.filter(rec => initialXP >= (rec.skill.xp_required || 0));
       
       let currentXP = initialXP;
       let learnedCount = 0;
 
       // Try to learn skills until we run out of XP
       for (const skillRec of affordableSkills) {
-        if (currentXP >= skillRec.xp_required) {
+        const skillCost = skillRec.skill.xp_required || 0;
+        if (currentXP >= skillCost) {
           const updatedEmployee = await service.learnSkill('tidus', skillRec.skill.id);
           currentXP = updatedEmployee.current_xp;
           learnedCount++;
@@ -153,10 +154,12 @@ describe('EnhancedMockNeo4jService XP Logic', () => {
       // Each recommendation should have the required properties
       recommendations.forEach(rec => {
         expect(rec.skill).toBeDefined();
-        expect(rec.xp_required).toBeDefined();
+        expect(rec.skill.xp_required).toBeDefined();
         expect(rec.reason).toBeDefined();
-        expect(typeof rec.xp_required).toBe('number');
-        expect(rec.xp_required).toBeGreaterThan(0);
+        expect(rec.priority).toBeDefined();
+        expect(rec.prerequisites).toBeDefined();
+        expect(typeof rec.skill.xp_required).toBe('number');
+        expect(rec.skill.xp_required).toBeGreaterThan(0);
       });
     });
   });
