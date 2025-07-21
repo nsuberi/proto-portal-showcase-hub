@@ -55,71 +55,71 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
   // Network positioning data from the complex sphere grid
   const networkPositions = {
     // Central Hub Cluster (largest central area)
-    "central_1": { x: 0.48, y: 0.52, size: 12, type: "core" },
-    "central_2": { x: 0.52, y: 0.48, size: 10, type: "major" },
-    "central_3": { x: 0.45, y: 0.55, size: 10, type: "major" },
-    "central_4": { x: 0.55, y: 0.52, size: 10, type: "major" },
-    "central_5": { x: 0.50, y: 0.45, size: 10, type: "major" },
+    "central_1": { x: 0.48, y: 0.52, size: 8, type: "core" },
+    "central_2": { x: 0.52, y: 0.48, size: 8, type: "major" },
+    "central_3": { x: 0.45, y: 0.55, size: 8, type: "major" },
+    "central_4": { x: 0.55, y: 0.52, size: 8, type: "major" },
+    "central_5": { x: 0.50, y: 0.45, size: 8, type: "major" },
     
     // Top Left Circular Cluster
     "tl_1": { x: 0.15, y: 0.18, size: 8, type: "cluster_center" },
-    "tl_2": { x: 0.12, y: 0.22, size: 6, type: "node" },
-    "tl_3": { x: 0.18, y: 0.15, size: 6, type: "node" },
-    "tl_4": { x: 0.19, y: 0.21, size: 6, type: "node" },
-    "tl_5": { x: 0.11, y: 0.16, size: 6, type: "node" },
-    "tl_6": { x: 0.16, y: 0.24, size: 6, type: "node" },
-    "tl_7": { x: 0.08, y: 0.19, size: 6, type: "node" },
-    "tl_8": { x: 0.21, y: 0.18, size: 6, type: "node" },
+    "tl_2": { x: 0.12, y: 0.22, size: 8, type: "node" },
+    "tl_3": { x: 0.18, y: 0.15, size: 8, type: "node" },
+    "tl_4": { x: 0.19, y: 0.21, size: 8, type: "node" },
+    "tl_5": { x: 0.11, y: 0.16, size: 8, type: "node" },
+    "tl_6": { x: 0.16, y: 0.24, size: 8, type: "node" },
+    "tl_7": { x: 0.08, y: 0.19, size: 8, type: "node" },
+    "tl_8": { x: 0.21, y: 0.18, size: 8, type: "node" },
     
     // Top Right Circular Cluster
     "tr_1": { x: 0.75, y: 0.25, size: 8, type: "cluster_center" },
-    "tr_2": { x: 0.72, y: 0.28, size: 6, type: "node" },
-    "tr_3": { x: 0.78, y: 0.22, size: 6, type: "node" },
-    "tr_4": { x: 0.79, y: 0.28, size: 6, type: "node" },
-    "tr_5": { x: 0.71, y: 0.22, size: 6, type: "node" },
-    "tr_6": { x: 0.76, y: 0.31, size: 6, type: "node" },
-    "tr_7": { x: 0.68, y: 0.25, size: 6, type: "node" },
-    "tr_8": { x: 0.81, y: 0.25, size: 6, type: "node" },
+    "tr_2": { x: 0.72, y: 0.28, size: 8, type: "node" },
+    "tr_3": { x: 0.78, y: 0.22, size: 8, type: "node" },
+    "tr_4": { x: 0.79, y: 0.28, size: 8, type: "node" },
+    "tr_5": { x: 0.71, y: 0.22, size: 8, type: "node" },
+    "tr_6": { x: 0.76, y: 0.31, size: 8, type: "node" },
+    "tr_7": { x: 0.68, y: 0.25, size: 8, type: "node" },
+    "tr_8": { x: 0.81, y: 0.25, size: 8, type: "node" },
     
     // Left Middle Circular Cluster
     "lm_1": { x: 0.12, y: 0.45, size: 8, type: "cluster_center" },
-    "lm_2": { x: 0.09, y: 0.48, size: 6, type: "node" },
-    "lm_3": { x: 0.15, y: 0.42, size: 6, type: "node" },
-    "lm_4": { x: 0.16, y: 0.48, size: 6, type: "node" },
-    "lm_5": { x: 0.08, y: 0.42, size: 6, type: "node" },
-    "lm_6": { x: 0.13, y: 0.51, size: 6, type: "node" },
-    "lm_7": { x: 0.05, y: 0.45, size: 6, type: "node" },
-    "lm_8": { x: 0.18, y: 0.45, size: 6, type: "node" },
+    "lm_2": { x: 0.09, y: 0.48, size: 8, type: "node" },
+    "lm_3": { x: 0.15, y: 0.42, size: 8, type: "node" },
+    "lm_4": { x: 0.16, y: 0.48, size: 8, type: "node" },
+    "lm_5": { x: 0.08, y: 0.42, size: 8, type: "node" },
+    "lm_6": { x: 0.13, y: 0.51, size: 8, type: "node" },
+    "lm_7": { x: 0.05, y: 0.45, size: 8, type: "node" },
+    "lm_8": { x: 0.18, y: 0.45, size: 8, type: "node" },
     
     // Right Middle Circular Cluster
     "rm_1": { x: 0.85, y: 0.55, size: 8, type: "cluster_center" },
-    "rm_2": { x: 0.82, y: 0.58, size: 6, type: "node" },
-    "rm_3": { x: 0.88, y: 0.52, size: 6, type: "node" },
-    "rm_4": { x: 0.89, y: 0.58, size: 6, type: "node" },
-    "rm_5": { x: 0.81, y: 0.52, size: 6, type: "node" },
-    "rm_6": { x: 0.86, y: 0.61, size: 6, type: "node" },
-    "rm_7": { x: 0.78, y: 0.55, size: 6, type: "node" },
-    "rm_8": { x: 0.91, y: 0.55, size: 6, type: "node" },
+    "rm_2": { x: 0.82, y: 0.58, size: 8, type: "node" },
+    "rm_3": { x: 0.88, y: 0.52, size: 8, type: "node" },
+    "rm_4": { x: 0.89, y: 0.58, size: 8, type: "node" },
+    "rm_5": { x: 0.81, y: 0.52, size: 8, type: "node" },
+    "rm_6": { x: 0.86, y: 0.61, size: 8, type: "node" },
+    "rm_7": { x: 0.78, y: 0.55, size: 8, type: "node" },
+    "rm_8": { x: 0.91, y: 0.55, size: 8, type: "node" },
     
     // Bottom Left Circular Cluster
     "bl_1": { x: 0.25, y: 0.78, size: 8, type: "cluster_center" },
-    "bl_2": { x: 0.22, y: 0.81, size: 6, type: "node" },
-    "bl_3": { x: 0.28, y: 0.75, size: 6, type: "node" },
-    "bl_4": { x: 0.29, y: 0.81, size: 6, type: "node" },
-    "bl_5": { x: 0.21, y: 0.75, size: 6, type: "node" },
-    "bl_6": { x: 0.26, y: 0.84, size: 6, type: "node" },
-    "bl_7": { x: 0.18, y: 0.78, size: 6, type: "node" },
-    "bl_8": { x: 0.31, y: 0.78, size: 6, type: "node" },
+    "bl_2": { x: 0.22, y: 0.81, size: 8, type: "node" },
+    "bl_3": { x: 0.28, y: 0.75, size: 8, type: "node" },
+    "bl_4": { x: 0.29, y: 0.81, size: 8, type: "node" },
+    "bl_5": { x: 0.21, y: 0.75, size: 8, type: "node" },
+    "bl_6": { x: 0.26, y: 0.84, size: 8, type: "node" },
+    "bl_7": { x: 0.18, y: 0.78, size: 8, type: "node" },
+    "bl_8": { x: 0.31, y: 0.78, size: 8, type: "node" },
     
     // Bottom Right Circular Cluster
     "br_1": { x: 0.72, y: 0.82, size: 8, type: "cluster_center" },
-    "br_2": { x: 0.69, y: 0.85, size: 6, type: "node" },
-    "br_3": { x: 0.75, y: 0.79, size: 6, type: "node" },
-    "br_4": { x: 0.76, y: 0.85, size: 6, type: "node" },
-    "br_5": { x: 0.68, y: 0.79, size: 6, type: "node" },
-    "br_6": { x: 0.73, y: 0.88, size: 6, type: "node" },
-    "br_7": { x: 0.65, y: 0.82, size: 6, type: "node" },
-    "br_8": { x: 0.78, y: 0.82, size: 6, type: "node" },
+    "br_2": { x: 0.69, y: 0.85, size: 8, type: "node" },
+    "br_3": { x: 0.75, y: 0.79, size: 8, type: "node" },
+    "br_4": { x: 0.76, y: 0.85, size: 8, type: "node" },
+    "br_5": { x: 0.68, y: 0.79, size: 8, type: "node" },
+    "br_6": { x: 0.73, y: 0.88, size: 8, type: "node" },
+    "br_7": { x: 0.65, y: 0.82, size: 8, type: "node" },
+    "br_8": { x: 0.78, y: 0.82, size: 8, type: "node" },
     
     // Pathway Connectors (Special nodes)
     "path_1": { x: 0.32, y: 0.35, size: 8, type: "pathway" },
@@ -132,38 +132,38 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
     "path_8": { x: 0.48, y: 0.38, size: 8, type: "pathway" },
     
     // Intermediate Pathway Nodes
-    "inter_1": { x: 0.22, y: 0.32, size: 5, type: "intermediate" },
-    "inter_2": { x: 0.35, y: 0.22, size: 5, type: "intermediate" },
-    "inter_3": { x: 0.65, y: 0.28, size: 5, type: "intermediate" },
-    "inter_4": { x: 0.78, y: 0.38, size: 5, type: "intermediate" },
-    "inter_5": { x: 0.82, y: 0.68, size: 5, type: "intermediate" },
-    "inter_6": { x: 0.65, y: 0.78, size: 5, type: "intermediate" },
-    "inter_7": { x: 0.35, y: 0.85, size: 5, type: "intermediate" },
-    "inter_8": { x: 0.18, y: 0.68, size: 5, type: "intermediate" },
-    "inter_9": { x: 0.15, y: 0.38, size: 5, type: "intermediate" },
-    "inter_10": { x: 0.38, y: 0.18, size: 5, type: "intermediate" },
+    "inter_1": { x: 0.22, y: 0.32, size: 8, type: "intermediate" },
+    "inter_2": { x: 0.35, y: 0.22, size: 8, type: "intermediate" },
+    "inter_3": { x: 0.65, y: 0.28, size: 8, type: "intermediate" },
+    "inter_4": { x: 0.78, y: 0.38, size: 8, type: "intermediate" },
+    "inter_5": { x: 0.82, y: 0.68, size: 8, type: "intermediate" },
+    "inter_6": { x: 0.65, y: 0.78, size: 8, type: "intermediate" },
+    "inter_7": { x: 0.35, y: 0.85, size: 8, type: "intermediate" },
+    "inter_8": { x: 0.18, y: 0.68, size: 8, type: "intermediate" },
+    "inter_9": { x: 0.15, y: 0.38, size: 8, type: "intermediate" },
+    "inter_10": { x: 0.38, y: 0.18, size: 8, type: "intermediate" },
     
     // Additional scattered nodes for complexity
-    "scatter_1": { x: 0.08, y: 0.32, size: 4, type: "scatter" },
-    "scatter_2": { x: 0.92, y: 0.38, size: 4, type: "scatter" },
-    "scatter_3": { x: 0.05, y: 0.65, size: 4, type: "scatter" },
-    "scatter_4": { x: 0.88, y: 0.72, size: 4, type: "scatter" },
-    "scatter_5": { x: 0.25, y: 0.92, size: 4, type: "scatter" },
-    "scatter_6": { x: 0.75, y: 0.08, size: 4, type: "scatter" },
-    "scatter_7": { x: 0.48, y: 0.05, size: 4, type: "scatter" },
-    "scatter_8": { x: 0.52, y: 0.95, size: 4, type: "scatter" },
+    "scatter_1": { x: 0.08, y: 0.32, size: 8, type: "scatter" },
+    "scatter_2": { x: 0.92, y: 0.38, size: 8, type: "scatter" },
+    "scatter_3": { x: 0.05, y: 0.65, size: 8, type: "scatter" },
+    "scatter_4": { x: 0.88, y: 0.72, size: 8, type: "scatter" },
+    "scatter_5": { x: 0.25, y: 0.92, size: 8, type: "scatter" },
+    "scatter_6": { x: 0.75, y: 0.08, size: 8, type: "scatter" },
+    "scatter_7": { x: 0.48, y: 0.05, size: 8, type: "scatter" },
+    "scatter_8": { x: 0.52, y: 0.95, size: 8, type: "scatter" },
     
     // Top center cluster
-    "tc_1": { x: 0.48, y: 0.15, size: 7, type: "node" },
-    "tc_2": { x: 0.52, y: 0.18, size: 6, type: "node" },
-    "tc_3": { x: 0.45, y: 0.12, size: 6, type: "node" },
-    "tc_4": { x: 0.55, y: 0.15, size: 6, type: "node" },
+    "tc_1": { x: 0.48, y: 0.15, size: 8, type: "node" },
+    "tc_2": { x: 0.52, y: 0.18, size: 8, type: "node" },
+    "tc_3": { x: 0.45, y: 0.12, size: 8, type: "node" },
+    "tc_4": { x: 0.55, y: 0.15, size: 8, type: "node" },
     
     // Bottom center cluster
-    "bc_1": { x: 0.48, y: 0.85, size: 7, type: "node" },
-    "bc_2": { x: 0.52, y: 0.82, size: 6, type: "node" },
-    "bc_3": { x: 0.45, y: 0.88, size: 6, type: "node" },
-    "bc_4": { x: 0.55, y: 0.85, size: 6, type: "node" }
+    "bc_1": { x: 0.48, y: 0.85, size: 8, type: "node" },
+    "bc_2": { x: 0.52, y: 0.82, size: 8, type: "node" },
+    "bc_3": { x: 0.45, y: 0.88, size: 8, type: "node" },
+    "bc_4": { x: 0.55, y: 0.85, size: 8, type: "node" }
   };
 
   const nodes = [];
@@ -184,25 +184,10 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
     const y = (position.y - 0.5) * scaleFactor;
     
     // Determine node visual properties based on type and category
-    let nodeSize = position.size;
     let nodeType = position.type;
     
-    // Adjust size based on node importance and type
-    if (nodeType === 'core') {
-      nodeSize = 16;
-    } else if (nodeType === 'cluster_center') {
-      nodeSize = 12;
-    } else if (nodeType === 'pathway') {
-      nodeSize = 10;
-    } else if (nodeType === 'major') {
-      nodeSize = 10;
-    } else if (nodeType === 'node') {
-      nodeSize = 8;
-    } else if (nodeType === 'intermediate') {
-      nodeSize = 6;
-    } else if (nodeType === 'scatter') {
-      nodeSize = 5;
-    }
+    // Set uniform size for all non-mastered nodes
+    const nodeSize = 8;
 
     nodes.push({
       id: skill.id,
@@ -218,14 +203,19 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
       isMastered: isMastered,
       hasEmployeeSelected: masteredSkills.length > 0,
       
+      // Set node type to 'border' for mastered skills to use NodeBorderProgram
+      type: isMastered ? 'border' : 'circle',
+      
+      // Border styling for mastered skills using @sigma/node-border
+      borderColor: isMastered ? '#000000' : (nodeType === 'core' ? '#E74C3C' : (nodeType === 'pathway' ? '#8E44AD' : '#34495E')),
+      
       // Additional properties for enhanced styling
       sphere_cost: skill.sphere_cost || 1,
       activation_cost: skill.activation_cost || 10,
       description: skill.description || 'A powerful ability',
       
-      // Visual enhancement properties
-      borderWidth: nodeType === 'core' ? 3 : (nodeType === 'cluster_center' ? 2 : 1),
-      borderColor: nodeType === 'core' ? '#E74C3C' : (nodeType === 'pathway' ? '#8E44AD' : '#34495E'),
+      // Visual enhancement properties for non-mastered nodes
+      borderWidth: !isMastered ? (nodeType === 'core' ? 3 : (nodeType === 'cluster_center' ? 2 : 1)) : undefined,
       
       // Shadow and glow effects for important nodes
       shadowSize: nodeType === 'core' ? 4 : (nodeType === 'cluster_center' ? 2 : 0),

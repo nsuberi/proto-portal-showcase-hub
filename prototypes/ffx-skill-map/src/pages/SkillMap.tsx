@@ -10,8 +10,8 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { Sword, Zap, Heart, Star, Crown, Filter } from 'lucide-react'
 import Sigma from 'sigma';
 import Graph from 'graphology';
-import { getEnhancedGraphNodes, getEnhancedGraphEdges, getCameraPresets } from './EnhancedSkillMap.utils';
-import { SKILL_CATEGORY_COLORS, ffxSkillCategories } from '../design-system';
+import { NodeBorderProgram } from '@sigma/node-border';
+import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -54,15 +54,17 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
       labelRenderedSizeThreshold: 15, // Higher threshold to hide most labels
       labelDensity: 1, // Standard label density
       // Performance optimizations
-      enableEdgeClickEvents: false,
-      enableEdgeWheelEvents: false,
-      enableEdgeHoverEvents: false,
+      enableEdgeEvents: false,
       hideEdgesOnMove: true,
       hideLabelsOnMove: true, // Re-enable hiding labels on move
       allowInvalidContainer: false,
-      nodeReducer: (node, data) => {
+      // Use NodeBorderProgram for mastered skills
+      nodeProgramClasses: {
+        border: NodeBorderProgram,
+      },
+      nodeReducer: (node: string, data: any) => {
         // Handle transparency by converting hex to rgba when needed
-        const hexToRgba = (hex, alpha) => {
+        const hexToRgba = (hex: string, alpha: number) => {
           const r = parseInt(hex.slice(1, 3), 16);
           const g = parseInt(hex.slice(3, 5), 16);
           const b = parseInt(hex.slice(5, 7), 16);
@@ -70,16 +72,12 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
         };
         
         let color = data.color;
-        let borderColor = data.borderColor || null;
-        let borderWidth = data.borderWidth || 0;
         let labelSize = data.labelSize || 12;
         let labelColor = data.labelColor || '#2C3E50';
         let labelWeight = data.labelWeight || 'normal';
         
-        // Always show outline and enhanced text for mastered skills, regardless of employee selection
+        // Enhanced styling for mastered skills
         if (data.isMastered) {
-          borderColor = '#000000'; // Black border for mastered skills
-          borderWidth = 4; // Thicker border for better visibility
           labelSize = 18; // Larger labels for mastered skills to ensure visibility
           labelColor = '#1A1A1A'; // Darker text for better contrast
           labelWeight = 'bold'; // Bold text for mastered skills
@@ -87,17 +85,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
         } else if (data.hasEmployeeSelected && !data.isMastered) {
           // Employee doesn't have this skill - make it translucent
           color = hexToRgba(data.color, 0.6);
-          borderWidth = 0;
-          borderColor = null;
           labelColor = hexToRgba('#2C3E50', 0.7); // Fade the label as well
-        } else if (data.hasEmployeeSelected) {
-          // Employee is selected but this is not their skill - keep subtle styling
-          borderWidth = 0;
-          borderColor = null;
-        } else {
-          // No employee selected - use default styling
-          borderColor = null;
-          borderWidth = 0;
         }
         
         return {
@@ -107,10 +95,8 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
           // Make mastered skills bigger to ensure they stand out
           size: data.isMastered ? data.size * 1.3 : data.size,
           zIndex: data.isMastered ? 3 : (data.zIndex || 1), // Higher z-index for mastered skills
-          // Ensure we're using standard Sigma.js properties
-          type: 'circle',
-          borderColor: borderColor,
-          borderWidth: borderWidth,
+          // Keep the node type as set in the data (border for mastered, circle for others)
+          type: data.type,
           labelSize: labelSize,
           labelColor: labelColor,
           labelWeight: labelWeight,
@@ -119,8 +105,8 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId }:
         };
       },
       // Add hover effects
-      nodeHoverReducer: (node, data) => {
-        const hexToRgba = (hex, alpha) => {
+      nodeHoverReducer: (node: string, data: any) => {
+        const hexToRgba = (hex: string, alpha: number) => {
           const r = parseInt(hex.slice(1, 3), 16);
           const g = parseInt(hex.slice(3, 5), 16);
           const b = parseInt(hex.slice(5, 7), 16);
@@ -454,10 +440,6 @@ const SkillMap = () => {
             <span className="capitalize text-sm">{cat}</span>
           </div>
         ))}
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-4 h-4 rounded-full border-2 border-yellow-500 bg-yellow-400" />
-          <span className="text-sm">Mastered Skills</span>
-        </div>
       </div>
       {/* Existing SkillMap content below */}
       <div className="space-y-6">

@@ -2348,6 +2348,7 @@ __metadata:
     "@radix-ui/react-progress": "npm:^1.1.0"
     "@radix-ui/react-select": "npm:^2.1.1"
     "@radix-ui/react-toast": "npm:^1.2.1"
+    "@sigma/node-border": "npm:^3.0.0"
     "@tailwindcss/typography": "npm:^0.5.15"
     "@tanstack/react-query": "npm:^5.56.2"
     "@testing-library/dom": "npm:^10.4.0"
@@ -3715,6 +3716,15 @@ __metadata:
   version: 4.45.1
   resolution: "@rollup/rollup-win32-x64-msvc@npm:4.45.1"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@sigma/node-border@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@sigma/node-border@npm:3.0.0"
+  peerDependencies:
+    sigma: ">=3.0.0-beta.17"
+  checksum: 10c0/aa5ae48a30699ed8947c0ae85750a4a5be7f415849b08a2e664b04a0636f9ca9cbdbdc72f14a5438016e99a1a18599222b8501e7fd8db531fbd176c3167a454d
   languageName: node
   linkType: hard
 
