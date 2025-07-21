@@ -516,8 +516,15 @@ const SkillMap = () => {
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400 bg-clip-text text-transparent">
-            Expert Sphere Grid
+          <h1 className="text-4xl md:text-5xl font-bold mb-4"
+              style={{
+                background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                color: 'transparent'
+              }}>
+            Map of Mastery
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,

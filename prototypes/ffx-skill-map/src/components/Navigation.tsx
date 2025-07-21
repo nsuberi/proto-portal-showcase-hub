@@ -13,18 +13,22 @@ const Navigation = () => {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
               <Sword className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">Expert Sphere Grid</span>
+              <span className="text-xl font-bold text-primary">
+                Final Fantasy X Skill Map for Employees
+              </span>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <a 
-              href="/"
-              className="flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <Button 
+              asChild
+              className="bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Portfolio</span>
-            </a>
+              <a href="/" className="flex items-center space-x-2">
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to Portfolio</span>
+              </a>
+            </Button>
           </div>
         </div>
 
