@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Sword, ArrowLeft } from 'lucide-react'
+import { Sword, ArrowLeft, HelpCircle } from 'lucide-react'
 
-const Navigation = () => {
+const Navigation = ({ onShowInstructions }: { onShowInstructions?: () => void }) => {
   const location = useLocation()
 
 
@@ -21,6 +21,18 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            {onShowInstructions && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onShowInstructions}
+                className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">How to Use</span>
+                <span className="sm:hidden">Help</span>
+              </Button>
+            )}
             <Button 
               asChild
               size="sm"

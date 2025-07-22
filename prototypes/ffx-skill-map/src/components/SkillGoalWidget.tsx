@@ -266,7 +266,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     }
   }, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills]);
 
-  // Sync with external currentGoal state (for reset functionality)
+  // Sync with external currentGoal state (for reset functionality and external goal setting)
   useEffect(() => {
     if (currentGoal === null && selectedGoal !== null) {
       // External goal was cleared, clear internal state
@@ -274,6 +274,20 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       setGoalPath(null);
       setShowCompletionAnimation(false);
       originalTotalStepsRef.current = null;
+    } else if (currentGoal !== null && currentGoal.id !== selectedGoal?.id) {
+      // External goal was set to a different skill, update internal state
+      setSelectedGoal(currentGoal);
+      setSearchTerm('');
+      setIsSearchExpanded(false);
+      
+      const path = calculateGoalPath(currentGoal);
+      
+      // Store original total steps for consistent progress calculation
+      if (path) {
+        originalTotalStepsRef.current = path.totalSteps;
+      }
+      
+      setGoalPath(path);
     }
   }, [currentGoal, selectedGoal]);
 

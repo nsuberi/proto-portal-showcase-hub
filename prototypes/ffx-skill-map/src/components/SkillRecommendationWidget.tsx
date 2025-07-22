@@ -337,7 +337,7 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
                 </div>
               )}
               <span className="truncate">
-                {goalSkillId ? `Goal-Directed Skills for ${employee?.name}` : `Next Skills for ${employee?.name}`}
+                {goalSkillId ? `Next Steps for ${employee?.name}` : `Next Skills for ${employee?.name}`}
               </span>
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">

@@ -2,13 +2,15 @@ import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toast'
 import Navigation from './components/Navigation'
 import SkillMap from './pages/SkillMap'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { sharedEnhancedService } from './services/sharedService'
 
 // Use shared enhanced mock service with complex sphere grid data
 const neo4jService = sharedEnhancedService
 
 function App() {
+  const [showInstructions, setShowInstructions] = useState(false)
+
   useEffect(() => {
     // Initialize Neo4j connection only once
     let mounted = true;
@@ -34,11 +36,11 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+      <Navigation onShowInstructions={() => setShowInstructions(true)} />
       <main className="container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<SkillMap />} />
-          <Route path="/*" element={<SkillMap />} />
+          <Route path="/" element={<SkillMap showInstructions={showInstructions} setShowInstructions={setShowInstructions} />} />
+          <Route path="/*" element={<SkillMap showInstructions={showInstructions} setShowInstructions={setShowInstructions} />} />
         </Routes>
       </main>
       <Toaster />

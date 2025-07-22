@@ -38,12 +38,13 @@ const CATEGORY_COLORS = {
   default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
 };
 
-function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath }: {
+function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, onNodeClick }: {
   skills: any[],
   connections: any[],
   masteredSkills: string[],
   selectedEmployeeId: string,
-  goalPath?: string[]
+  goalPath?: string[],
+  onNodeClick?: (skill: any) => void
 }) {
   const sigmaContainerRef = useRef<HTMLDivElement>(null);
   const sigmaInstanceRef = useRef<Sigma | null>(null);
@@ -140,6 +141,15 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
     
     sigmaInstanceRef.current = renderer;
     
+    // Add click handler to nodes
+    renderer.on('clickNode', (event) => {
+      const skillId = event.node;
+      const skill = skills?.find(s => s.id === skillId);
+      if (skill && onNodeClick) {
+        onNodeClick(skill);
+      }
+    });
+    
     return () => {
       if (sigmaInstanceRef.current) {
         sigmaInstanceRef.current.kill();
@@ -226,7 +236,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
 
 export { SigmaGraph };
 
-const SkillMap = () => {
+const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions: boolean, setShowInstructions: (show: boolean) => void }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
@@ -238,8 +248,9 @@ const SkillMap = () => {
     // Show tutorial on first visit
     return !localStorage.getItem('skillMapTutorialSeen')
   })
-  const [showInstructions, setShowInstructions] = useState(false)
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
+  const [selectedSkill, setSelectedSkill] = useState<any>(null)
+  const skillGoalRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -473,6 +484,29 @@ const SkillMap = () => {
     localStorage.setItem('skillMapTutorialSeen', 'true')
   }
 
+  const handleNodeClick = (skill: any) => {
+    setSelectedSkill(skill)
+  }
+
+  const handleSetGoal = () => {
+    if (selectedSkill && selectedEmployeeId) {
+      // Simply set the goal - let the SkillGoalWidget handle path calculation
+      setCurrentGoal({ skill: selectedSkill, path: [] })
+      queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false })
+      setSelectedSkill(null)
+      
+      // Scroll to the goal section after a brief delay to allow state to update
+      setTimeout(() => {
+        if (skillGoalRef.current) {
+          skillGoalRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          })
+        }
+      }, 100)
+    }
+  }
+
   return (
     <>
       {/* Tutorial Overlay */}
@@ -495,6 +529,7 @@ const SkillMap = () => {
                   <p><strong className="text-purple-600">2. Set a learning goal</strong> using the Goal Planner - choose what skill they should work toward next</p>
                   <p><strong className="text-green-600">3. Invest in recommended skills</strong> from the Next Steps section to progress toward your goal</p>
                   <p><strong className="text-orange-600">4. Track your progress</strong> on the interactive skill network as you build expertise</p>
+                  <p><strong className="text-teal-600">5. Work with your team</strong> to make magic happen - prioritize skills your teammates need help with, and lean on them to do the same for you</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -574,6 +609,72 @@ const SkillMap = () => {
                     <p className="text-gray-600">Monitor advancement on the interactive skill network</p>
                   </div>
                 </div>
+                <div className="flex gap-3">
+                  <div className="bg-teal-100 p-1 rounded-full flex-shrink-0 mt-0.5">
+                    <span className="block w-2 h-2 bg-teal-600 rounded-full"></span>
+                  </div>
+                  <div>
+                    <p><strong className="text-teal-600">Work with your team</strong></p>
+                    <p className="text-gray-600">Make magic happen - prioritize skills your teammates need help with, and lean on them to do the same for you</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skill Node Click Modal */}
+      {selectedSkill && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in duration-300">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2 rounded-full ${getCategoryColor(selectedSkill.category)}`}>
+                  {getCategoryIcon(selectedSkill.category)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-semibold text-gray-900 truncate">{selectedSkill.name}</h2>
+                  <p className="text-sm text-gray-600">Level {selectedSkill.level} • {selectedSkill.category}</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-3">{selectedSkill.description}</p>
+                
+                {selectedEmployeeId && (
+                  <div className="flex items-center gap-2 text-xs">
+                    {masteredSkills.includes(selectedSkill.id) ? (
+                      <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                        <span>Mastered by {selectedEmployee?.name}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <span>Not yet mastered by {selectedEmployee?.name}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                {selectedEmployeeId && !masteredSkills.includes(selectedSkill.id) && (
+                  <Button
+                    onClick={handleSetGoal}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Set as Goal
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedSkill(null)}
+                  className={selectedEmployeeId && !masteredSkills.includes(selectedSkill.id) ? "px-3" : "flex-1"}
+                >
+                  Close
+                </Button>
               </div>
             </div>
           </div>
@@ -582,8 +683,8 @@ const SkillMap = () => {
 
       {/* Header with Title and Intro */}
       <div className="mb-6 md:mb-8 text-center px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold flex-1"
+        <div className="mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center"
               style={{
                 background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
                 backgroundClip: 'text',
@@ -593,21 +694,9 @@ const SkillMap = () => {
               }}>
             Map of Mastery
           </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowInstructions(true)}
-            className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 flex-shrink-0"
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">How to Use</span>
-            <span className="sm:hidden">Help</span>
-          </Button>
         </div>
         <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-          Visualize employee expertise through an interactive skill network. Track what skills your team members have mastered,
-          identify skill gaps, and discover optimal learning pathways. Each node represents a skill, with connections showing
-          prerequisite relationships and recommended next steps for professional development.
+          Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
         </p>
         
         {/* Feature highlights */}
@@ -689,6 +778,7 @@ const SkillMap = () => {
         masteredSkills={masteredSkills}
         selectedEmployeeId={selectedEmployeeId}
         goalPath={currentGoal?.path}
+        onNodeClick={handleNodeClick}
       />
 
       {/* Skill Types Legend */}
@@ -737,7 +827,7 @@ const SkillMap = () => {
 
 
         {/* Skill Goal Widget */}
-        <div className="mb-8">
+        <div ref={skillGoalRef} className="mb-8">
           <SkillGoalWidget
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
