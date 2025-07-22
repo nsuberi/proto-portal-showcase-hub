@@ -41,7 +41,13 @@ export class ClaudeService {
       logger.info('Making Claude API request', { 
         url: this.apiUrl,
         hasApiKey: !!requestApiKey,
-        apiKeyPrefix: requestApiKey ? requestApiKey.substring(0, 10) + '...' : 'none'
+        apiKeyPrefix: requestApiKey ? requestApiKey.substring(0, 10) + '...' : 'none',
+        model: this.model,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': requestApiKey ? requestApiKey.substring(0, 10) + '...' : 'none',
+          'anthropic-version': '2023-06-01'
+        }
       });
       
       const response = await fetch(this.apiUrl, {
@@ -62,12 +68,19 @@ export class ClaudeService {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('Claude API request failed', { 
+          status: response.status,
+          statusText: response.statusText,
+          errorResponse: errorText.substring(0, 500)
+        });
+        
         if (response.status === 401) {
           throw new Error('Invalid Claude API key configuration');
         } else if (response.status === 429) {
           throw new Error('Claude API rate limit exceeded');
         }
-        throw new Error(`Claude API request failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Claude API request failed: ${response.status} ${response.statusText}: ${errorText.substring(0, 200)}`);
       }
 
       const responseText = await response.text();
