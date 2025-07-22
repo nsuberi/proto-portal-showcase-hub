@@ -437,26 +437,24 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                           onClick={() => handleGoalSelect(skill)}
                           className="p-3 hover:bg-gray-50 rounded-md cursor-pointer border-l-4 border-transparent hover:border-blue-400 transition-all"
                         >
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {getCategoryIcon(skill.category)}
-                              <span className="font-medium text-sm truncate">{skill.name}</span>
-                              {skill.stepsToReach !== null && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-1.5 py-0.5 font-medium"
-                                  title={`${skill.stepsToReach} step${skill.stepsToReach === 1 ? '' : 's'} to reach this skill`}
-                                >
-                                  {skill.stepsToReach === 1 ? '1 step' : `${skill.stepsToReach} steps`}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Badge variant="outline" className="text-xs">L{skill.level}</Badge>
-                              <Badge className={`text-xs ${getCategoryColor(skill.category)}`}>
-                                {skill.category}
+                          <div className="flex items-center gap-2 mb-1">
+                            {getCategoryIcon(skill.category)}
+                            <span className="font-medium text-sm flex-1">{skill.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1 flex-wrap ml-6 mb-1">
+                            {skill.stepsToReach !== null && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-1.5 py-0.5 font-medium"
+                                title={`${skill.stepsToReach} step${skill.stepsToReach === 1 ? '' : 's'} to reach this skill`}
+                              >
+                                {skill.stepsToReach === 1 ? '1 step' : `${skill.stepsToReach} steps`}
                               </Badge>
-                            </div>
+                            )}
+                            <Badge variant="outline" className="text-xs">L{skill.level}</Badge>
+                            <Badge className={`text-xs ${getCategoryColor(skill.category)}`}>
+                              {skill.category}
+                            </Badge>
                           </div>
                           <p className="text-xs text-gray-600 line-clamp-2 mb-1">
                             {skill.description}
