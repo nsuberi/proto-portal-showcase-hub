@@ -68,8 +68,7 @@ const getApiUrl = (): string => {
   
   // Check if we're on localhost or a development port
   const isLocalhost = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1' ||
-                     window.location.port === '3001';
+                     window.location.hostname === '127.0.0.1';
   
   // Use environment variable if provided (for build-time configuration)
   const envApiUrl = import.meta.env.VITE_API_URL;
@@ -79,14 +78,12 @@ const getApiUrl = (): string => {
   
   // If in development or on localhost, use local API
   if (isDevelopment || isLocalhost) {
-    return 'http://localhost:3001';
+    return 'http://localhost:3003';
   }
   
-  // For production, we'll need to inject the API Gateway URL at build time
-  // This will be replaced by the deploy script
-  return window.location.origin.includes('cloudfront') || window.location.origin.includes('amazonaws') 
-    ? 'PLACEHOLDER_API_GATEWAY_URL'  // This will be replaced by build script
-    : 'http://localhost:3001';       // Fallback to localhost
+  // For production, this placeholder will be replaced by the deploy script
+  // with the actual API Gateway URL from Terraform outputs
+  return 'PLACEHOLDER_API_GATEWAY_URL';
 };
 
 const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
