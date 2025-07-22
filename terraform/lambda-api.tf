@@ -101,7 +101,7 @@ resource "aws_cloudwatch_log_group" "ai_api_lambda_logs" {
 #   }
 # }
 
-# Lambda Function URL (simpler alternative to API Gateway)
+# Lambda Function URL (requires lambda:CreateFunctionUrlConfig permission)
 resource "aws_lambda_function_url" "ai_api" {
   function_name      = aws_lambda_function.ai_api.function_name
   authorization_type = "NONE"
@@ -115,9 +115,11 @@ resource "aws_lambda_function_url" "ai_api" {
   }
 }
 
-# Note: API Gateway and SSM Parameters commented out due to IAM permission requirements
-# For production deployment, add these permissions to the terraform-cooking-up-ideas role:
-# - apigateway:*
-# - ssm:PutParameter
-# - ssm:GetParameter
-# - ssm:DeleteParameter
+# Note: API Gateway, Lambda Function URLs, and SSM Parameters commented out due to IAM permission requirements
+# For production deployment, add the permissions from iam-permissions-needed.json to the terraform-cooking-up-ideas role
+# 
+# Current deployment creates only the Lambda function with environment variables
+# To access the API, you would need to:
+# 1. Add the IAM permissions and uncomment the Function URL resource
+# 2. Or manually create a Function URL in the AWS Console
+# 3. Or set up API Gateway with proper permissions

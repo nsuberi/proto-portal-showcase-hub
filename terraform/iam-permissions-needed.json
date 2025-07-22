@@ -51,6 +51,17 @@
         "arn:aws:ssm:*:*:parameter/production/ai-api/*",
         "arn:aws:ssm:*:*:parameter/development/ai-api/*"
       ]
+    },
+    {
+      "Sid": "LambdaFunctionURLPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunctionUrlConfig",
+        "lambda:DeleteFunctionUrlConfig",
+        "lambda:GetFunctionUrlConfig",
+        "lambda:UpdateFunctionUrlConfig"
+      ],
+      "Resource": "arn:aws:lambda:*:*:function:*"
     }
   ]
 }
