@@ -28,12 +28,14 @@ terraform apply -auto-approve
 
 # Get the deployed URLs
 AI_API_URL=$(terraform output -raw ai_api_url)
+API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)
 WEBSITE_URL=$(terraform output -raw website_url)
 S3_BUCKET=$(terraform output -raw s3_bucket_name)
 CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)
 
 echo "✅ Infrastructure deployed successfully!"
 echo "   🔗 Lambda API URL: $AI_API_URL"
+echo "   🌐 API Gateway URL: $API_GATEWAY_URL"
 echo "   🌐 Website URL: $WEBSITE_URL"
 
 # Go back to root directory
@@ -41,14 +43,22 @@ cd ..
 
 # Step 2: Build frontend with the real API URL
 echo ""
-echo "📋 Step 2: Building frontend with Lambda API URL..."
+echo "📋 Step 2: Building frontend with API Gateway URL..."
 cd prototypes/ffx-skill-map
 
 echo "📦 Installing dependencies..."
 npm ci
 
-echo "🔧 Building with API URL: $AI_API_URL"
-REACT_APP_AI_API_URL="$AI_API_URL" npm run build
+echo "🔧 Replacing placeholder with API Gateway URL: $API_GATEWAY_URL"
+# Replace the placeholder in the source code before building
+sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|$API_GATEWAY_URL|g" src/components/SecureAIAnalysisWidget.tsx
+
+echo "🔧 Building with API Gateway URL: $API_GATEWAY_URL"
+VITE_API_URL="$API_GATEWAY_URL" npm run build
+
+echo "🔧 Restoring original source file..."
+# Restore the original file with placeholder
+mv src/components/SecureAIAnalysisWidget.tsx.bak src/components/SecureAIAnalysisWidget.tsx
 
 echo "✅ Frontend built successfully!"
 
@@ -79,7 +89,8 @@ echo "🎉 Deployment completed successfully!"
 echo ""
 echo "📋 Deployment Summary:"
 echo "   🌐 Website: $WEBSITE_URL"
-echo "   🔗 AI API: $AI_API_URL" 
+echo "   🔗 AI API (Lambda): $AI_API_URL" 
+echo "   🔗 AI API (Gateway): $API_GATEWAY_URL"
 echo "   📦 S3 Bucket: $S3_BUCKET"
 echo "   ☁️  CloudFront: $CLOUDFRONT_ID"
 echo ""

@@ -61,12 +61,40 @@ interface AnalysisResponse {
   };
 }
 
+// Function to determine the appropriate API URL based on environment
+const getApiUrl = (): string => {
+  // Check if we're running in development mode (Vite's import.meta.env)
+  const isDevelopment = import.meta.env.DEV;
+  
+  // Check if we're on localhost or a development port
+  const isLocalhost = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' ||
+                     window.location.port === '3001';
+  
+  // Use environment variable if provided (for build-time configuration)
+  const envApiUrl = import.meta.env.VITE_API_URL;
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+  
+  // If in development or on localhost, use local API
+  if (isDevelopment || isLocalhost) {
+    return 'http://localhost:3001';
+  }
+  
+  // For production, we'll need to inject the API Gateway URL at build time
+  // This will be replaced by the deploy script
+  return window.location.origin.includes('cloudfront') || window.location.origin.includes('amazonaws') 
+    ? 'PLACEHOLDER_API_GATEWAY_URL'  // This will be replaced by build script
+    : 'http://localhost:3001';       // Fallback to localhost
+};
+
 const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   employeeId,
   employee,
   onGoalSelect,
   onScrollToGoals,
-  apiBaseUrl = 'https://ap02g8k7u9.execute-api.us-east-1.amazonaws.com/prod'
+  apiBaseUrl
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
@@ -74,6 +102,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const [analysisMetadata, setAnalysisMetadata] = useState<any>(null);
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [useMockData, setUseMockData] = useState(false);
   
   const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: any }>>(new Map());
 
@@ -88,24 +117,76 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   });
 
   // Use existing Lambda API as proxy to Claude
-  const API_ENDPOINT = `${apiBaseUrl}/api/v1/ai-analysis/skill-recommendations`;
+  const API_ENDPOINT = `${apiBaseUrl || getApiUrl()}/api/v1/ai-analysis/skill-recommendations`;
+
+  // Mock analysis for local testing
+  const generateMockAnalysis = async (character: any, availableSkills: any[]): Promise<{ analysis: AIAnalysis; metadata: any }> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const mockSkill1 = availableSkills[0] || {
+      id: 'mock_skill_1',
+      name: 'Advanced Combat',
+      category: 'combat',
+      description: 'Enhanced fighting techniques'
+    };
+
+    const mockSkill2 = availableSkills[1] || {
+      id: 'mock_skill_2', 
+      name: 'Magic Mastery',
+      category: 'magic',
+      description: 'Advanced magical abilities'
+    };
+
+    const analysis: AIAnalysis = {
+      currentStrengths: [
+        `Strong ${character.role.toLowerCase()} foundation`,
+        'Good progression in core skills',
+        'Balanced skill development'
+      ],
+      skillGaps: [
+        'Advanced combat techniques',
+        'Support abilities',
+        'Specialized role skills'
+      ],
+      shortTermGoals: [
+        {
+          skill: mockSkill1,
+          reasoning: `As a ${character.role}, developing advanced combat skills would complement your existing ${character.masteredSkills.join(', ')} abilities and provide immediate tactical advantages.`,
+          timeframe: 'short',
+          priority: 'high',
+          pathLength: 1
+        }
+      ],
+      longTermGoals: [
+        {
+          skill: mockSkill2,
+          reasoning: `Long-term mastery of magical abilities would open up new strategic possibilities and create powerful synergies with your current skill set.`,
+          timeframe: 'long', 
+          priority: 'medium',
+          pathLength: 3
+        }
+      ],
+      overallAssessment: `${character.name} shows excellent potential as a ${character.role}. With ${character.masteredSkills.length} mastered skills and ${character.currentXP} XP, you're well-positioned for both tactical improvements and strategic growth. Focus on complementing your existing strengths while gradually expanding into new domains.`
+    };
+
+    const metadata = {
+      analysisId: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      model: 'mock-claude-for-development',
+      processingTimeMs: 1500
+    };
+
+    return { analysis, metadata };
+  };
 
   const analyzeSkillsWithAPI = async (): Promise<{ analysis: AIAnalysis; metadata: any }> => {
     if (!employee || !skills || !allEmployees) {
       throw new Error('Missing required data for analysis');
     }
 
-    // Validate API key
-    if (!apiKey.trim()) {
-      throw new Error('Claude API key is required. Please enter your API key from Anthropic Console.');
-    }
-
-    if (!apiKey.startsWith('sk-ant-api')) {
-      throw new Error('Invalid API key format. Please enter a valid Anthropic Claude API key.');
-    }
-
     // Check cache first
-    const cacheKey = `${employeeId}-${employee.mastered_skills.join(',')}`;
+    const cacheKey = `${employeeId}-${employee.mastered_skills.join(',')}-${useMockData ? 'mock' : 'real'}`;
     const cached = analysisCache.current.get(cacheKey);
     if (cached) {
       return cached;
@@ -113,6 +194,29 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
 
     // Get skill recommendations for context
     const recommendations = await sharedEnhancedService.getSkillRecommendations(employeeId);
+
+    // Use mock data for local testing
+    if (useMockData) {
+      const result = await generateMockAnalysis({
+        name: employee.name,
+        role: employee.role,
+        currentXP: employee.current_xp || 0,
+        level: employee.level || 1,
+        masteredSkills: employee.mastered_skills
+      }, recommendations.map(rec => rec.skill));
+      
+      analysisCache.current.set(cacheKey, result);
+      return result;
+    }
+
+    // Validate API key for real API calls
+    if (!apiKey.trim()) {
+      throw new Error('Claude API key is required. Please enter your API key from Anthropic Console.');
+    }
+
+    if (!apiKey.startsWith('sk-ant-api')) {
+      throw new Error('Invalid API key format. Please enter a valid Anthropic Claude API key.');
+    }
     
     // Prepare request payload matching your Lambda API format
     const requestPayload = {
@@ -317,22 +421,40 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
           </div>
         </div>
 
+        {/* Development Mode Toggle */}
+        {import.meta.env.DEV && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="mockMode"
+                checked={useMockData}
+                onChange={(e) => setUseMockData(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="mockMode" className="text-sm text-yellow-800">
+                <strong>Development Mode:</strong> Use mock data (no API key required)
+              </label>
+            </div>
+          </div>
+        )}
+
         {/* Analysis Button */}
         <Button 
           onClick={handleAnalyze}
-          disabled={isAnalyzing || !apiKey.trim()}
+          disabled={isAnalyzing || (!useMockData && !apiKey.trim())}
           className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium disabled:opacity-50"
           size="lg"
         >
           {isAnalyzing ? (
             <>
               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-              Analyzing Skills...
+              {useMockData ? 'Generating Mock Analysis...' : 'Analyzing Skills...'}
             </>
           ) : (
             <>
               <Sparkles className="h-4 w-4 mr-2" />
-              Get AI Analysis of Next Steps
+              {useMockData ? 'Get Mock Analysis' : 'Get AI Analysis of Next Steps'}
             </>
           )}
         </Button>
