@@ -71,7 +71,6 @@ resource "aws_lambda_function" "ai_api" {
   environment {
     variables = {
       NODE_ENV           = var.environment
-      CLAUDE_API_KEY     = var.claude_api_key
       JWT_SECRET         = var.jwt_secret
       API_KEY_SALT       = var.api_key_salt
       LOG_LEVEL         = var.environment == "production" ? "info" : "debug"

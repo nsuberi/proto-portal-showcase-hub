@@ -2,28 +2,37 @@ import fetch from 'node-fetch';
 import { logger } from '../utils/logger.js';
 
 export class ClaudeService {
-  constructor() {
-    this.apiKey = process.env.CLAUDE_API_KEY;
+  constructor(apiKey = null) {
+    this.apiKey = apiKey || process.env.CLAUDE_API_KEY;
     this.apiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
     this.model = process.env.CLAUDE_MODEL || 'claude-3-sonnet-20240229';
     this.mockMode = process.env.NODE_ENV === 'development' && !this.apiKey;
     
-    if (!this.apiKey && process.env.NODE_ENV !== 'development') {
-      throw new Error('CLAUDE_API_KEY environment variable is required');
-    }
-
+    // No longer require API key at startup - it can be provided per request
     if (this.mockMode) {
-      logger.warn('Claude API key not found - running in mock mode for development');
+      logger.warn('Claude API key not provided - running in mock mode for development');
     }
   }
 
   /**
    * Analyze character skills and provide strategic recommendations
+   * @param {Object} params - Analysis parameters
+   * @param {string} params.apiKey - Claude API key for this request
+   * @param {Object} params.character - Character data
+   * @param {Array} params.availableSkills - Available skills array
+   * @param {Array} params.allSkills - All skills array
+   * @param {Object} params.context - Optional context
    */
-  async analyzeSkills({ character, availableSkills, allSkills, context = {} }) {
+  async analyzeSkills({ apiKey, character, availableSkills, allSkills, context = {} }) {
     // Return mock data in development mode without API key
-    if (this.mockMode) {
+    if (this.mockMode || !apiKey) {
       return this.getMockAnalysis(character, availableSkills);
+    }
+
+    // Use provided API key for this request
+    const requestApiKey = apiKey || this.apiKey;
+    if (!requestApiKey) {
+      throw new Error('Claude API key is required for analysis');
     }
 
     const prompt = this.buildAnalysisPrompt(character, availableSkills, allSkills, context);
@@ -33,7 +42,7 @@ export class ClaudeService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
+          'x-api-key': requestApiKey,
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
@@ -214,9 +223,11 @@ IMPORTANT:
 
   /**
    * Health check for Claude service
+   * @param {string} apiKey - Optional API key to test
    */
-  async healthCheck() {
-    if (this.mockMode) {
+  async healthCheck(apiKey = null) {
+    const testApiKey = apiKey || this.apiKey;
+    if (this.mockMode || !testApiKey) {
       return { status: 'healthy', model: 'mock-model', mode: 'development' };
     }
 
@@ -225,7 +236,7 @@ IMPORTANT:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
+          'x-api-key': testApiKey,
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({

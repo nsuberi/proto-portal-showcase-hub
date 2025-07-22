@@ -4,10 +4,17 @@ import { logger } from '../utils/logger.js';
  * Validate the skill analysis request payload
  */
 export function validateAnalysisRequest(req, res, next) {
-  const { character, availableSkills, allSkills } = req.body;
+  const { apiKey, character, availableSkills, allSkills } = req.body;
 
   // Validation errors
   const errors = [];
+
+  // Validate API key (optional for development)
+  if (apiKey && typeof apiKey !== 'string') {
+    errors.push('apiKey must be a string');
+  } else if (apiKey && !apiKey.startsWith('sk-ant-api')) {
+    errors.push('apiKey must be a valid Anthropic API key');
+  }
 
   // Validate character object
   if (!character) {

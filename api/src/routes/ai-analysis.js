@@ -14,6 +14,7 @@ const claudeService = new ClaudeService();
  * 
  * Request Body:
  * {
+ *   "apiKey": "sk-ant-api03-...", // Claude API key for this request
  *   "character": {
  *     "name": "Tidus",
  *     "role": "Guardian",
@@ -51,7 +52,7 @@ router.post('/ai-analysis/skill-recommendations',
     const startTime = Date.now();
     
     try {
-      const { character, availableSkills, allSkills, context = {} } = req.body;
+      const { apiKey, character, availableSkills, allSkills, context = {} } = req.body;
       
       logger.info('Processing AI analysis request', {
         character: character.name,
@@ -63,6 +64,7 @@ router.post('/ai-analysis/skill-recommendations',
 
       // Generate analysis using Claude
       const analysis = await claudeService.analyzeSkills({
+        apiKey,
         character,
         availableSkills,
         allSkills,
