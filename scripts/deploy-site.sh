@@ -7,7 +7,44 @@ echo "📤 Deploying website to AWS S3..."
 cd terraform
 DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
 BUCKET_NAME=$(terraform output -raw s3_bucket_name)
+API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)
 cd ..
+
+# Validate that we got the API Gateway URL
+if [ -z "$API_GATEWAY_URL" ]; then
+    echo "❌ Error: API_GATEWAY_URL is empty! Check Terraform outputs."
+    exit 1
+fi
+
+echo "🔧 Rebuilding frontend with correct API Gateway URL: $API_GATEWAY_URL"
+
+# Replace placeholder in FFX skill map and rebuild
+cd prototypes/ffx-skill-map
+
+echo "🔧 Replacing placeholder with API Gateway URL in source..."
+# Backup and replace placeholder
+cp src/components/SecureAIAnalysisWidget.tsx src/components/SecureAIAnalysisWidget.tsx.bak
+sed -i "s|PLACEHOLDER_API_GATEWAY_URL|$API_GATEWAY_URL|g" src/components/SecureAIAnalysisWidget.tsx
+
+# Verify replacement worked
+if grep -q "PLACEHOLDER_API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx; then
+    echo "❌ Error: Placeholder replacement failed!"
+    exit 1
+fi
+
+echo "✅ Placeholder replaced successfully"
+echo "🔧 Rebuilding FFX skill map with correct API URL..."
+VITE_API_URL="$API_GATEWAY_URL" npm run build
+
+# Copy rebuilt files to main dist
+echo "📋 Copying rebuilt FFX files to main dist..."
+mkdir -p ../../dist/prototypes/ffx-skill-map
+cp -r dist/* ../../dist/prototypes/ffx-skill-map/
+
+# Restore original source file  
+mv src/components/SecureAIAnalysisWidget.tsx.bak src/components/SecureAIAnalysisWidget.tsx
+
+cd ../..
 
 # Sync files to S3
 echo "🗂️ Syncing files to S3 bucket: $BUCKET_NAME"
