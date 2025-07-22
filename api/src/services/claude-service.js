@@ -64,10 +64,24 @@ export class ClaudeService {
         throw new Error(`Claude API request failed: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      logger.debug('Raw Claude API response', { responseText: responseText.substring(0, 500) });
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        logger.error('Failed to parse Claude API response as JSON', { 
+          error: parseError.message,
+          responseText: responseText.substring(0, 1000)
+        });
+        throw new Error(`Invalid JSON response from Claude API: ${parseError.message}`);
+      }
+      
       const content = data.content?.[0]?.text;
       
       if (!content) {
+        logger.error('No content in Claude API response', { data });
         throw new Error('No response content from Claude API');
       }
 
@@ -170,11 +184,23 @@ IMPORTANT:
       const jsonEnd = content.lastIndexOf('}') + 1;
       
       if (jsonStart === -1 || jsonEnd === 0) {
+        logger.error('No JSON found in Claude response', { content: content.substring(0, 500) });
         throw new Error('No valid JSON found in Claude response');
       }
       
       const jsonStr = content.slice(jsonStart, jsonEnd);
-      const aiResponse = JSON.parse(jsonStr);
+      logger.debug('Extracted JSON string', { jsonStr: jsonStr.substring(0, 500) });
+      
+      let aiResponse;
+      try {
+        aiResponse = JSON.parse(jsonStr);
+      } catch (jsonParseError) {
+        logger.error('Failed to parse extracted JSON', { 
+          error: jsonParseError.message,
+          jsonStr: jsonStr.substring(0, 1000)
+        });
+        throw new Error(`Invalid JSON in Claude response: ${jsonParseError.message}`);
+      }
 
       // Map skill names back to skill objects
       const mapSkillName = (skillName) => {
