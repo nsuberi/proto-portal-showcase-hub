@@ -271,6 +271,11 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
 
     } catch (err) {
       console.error('Claude API error:', err);
+      console.error('Error details:', {
+        message: (err as Error).message,
+        stack: (err as Error).stack,
+        apiEndpoint: API_ENDPOINT
+      });
       throw err;
     }
   };

@@ -49,7 +49,7 @@ app.use(limiter);
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 
-// Health check endpoint
+// Health check endpoint (no auth required)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',

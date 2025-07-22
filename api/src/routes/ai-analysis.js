@@ -96,7 +96,10 @@ router.post('/ai-analysis/skill-recommendations',
         error: error.message,
         character: req.body.character?.name,
         requestId: req.requestId,
-        stack: error.stack
+        stack: error.stack,
+        requestBody: JSON.stringify(req.body).substring(0, 500),
+        hasApiKey: !!req.body.apiKey,
+        apiKeyPrefix: req.body.apiKey ? req.body.apiKey.substring(0, 10) : 'none'
       });
 
       // Return appropriate error based on type
