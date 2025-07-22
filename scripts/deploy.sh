@@ -38,6 +38,12 @@ echo "   🔗 Lambda API URL: $AI_API_URL"
 echo "   🌐 API Gateway URL: $API_GATEWAY_URL"
 echo "   🌐 Website URL: $WEBSITE_URL"
 
+# Validate that we got the API Gateway URL
+if [ -z "$API_GATEWAY_URL" ]; then
+    echo "❌ Error: API_GATEWAY_URL is empty! Check Terraform outputs."
+    exit 1
+fi
+
 # Go back to root directory
 cd ..
 
@@ -50,8 +56,25 @@ echo "📦 Installing dependencies..."
 npm ci
 
 echo "🔧 Replacing placeholder with API Gateway URL: $API_GATEWAY_URL"
+# Verify placeholder exists before replacement
+if ! grep -q "PLACEHOLDER_API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx; then
+    echo "❌ Warning: PLACEHOLDER_API_GATEWAY_URL not found in SecureAIAnalysisWidget.tsx"
+fi
+
 # Replace the placeholder in the source code before building
 sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|$API_GATEWAY_URL|g" src/components/SecureAIAnalysisWidget.tsx
+
+# Verify replacement worked
+if grep -q "PLACEHOLDER_API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx; then
+    echo "❌ Error: Placeholder replacement failed!"
+    echo "🔍 Current content around line 86:"
+    sed -n '84,88p' src/components/SecureAIAnalysisWidget.tsx
+    exit 1
+else
+    echo "✅ Placeholder successfully replaced"
+    echo "🔍 New URL in file:"
+    grep -n "$API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx || echo "URL not found in expected location"
+fi
 
 echo "🔧 Building with API Gateway URL: $API_GATEWAY_URL"
 VITE_API_URL="$API_GATEWAY_URL" npm run build
