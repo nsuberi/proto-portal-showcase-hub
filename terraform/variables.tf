@@ -29,3 +29,21 @@ variable "api_key_salt" {
   sensitive   = true
   default     = ""
 }
+
+variable "claude_api_key" {
+  description = "Claude API key for AI analysis"
+  type        = string
+  sensitive   = true
+}
+
+variable "claude_api_url" {
+  description = "Claude API endpoint URL"
+  type        = string
+  default     = "https://api.anthropic.com/v1/messages"
+}
+
+variable "claude_model" {
+  description = "Claude model to use for AI analysis"
+  type        = string
+  default     = "claude-3-5-sonnet-20241022"
+}

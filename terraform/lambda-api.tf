@@ -73,6 +73,9 @@ resource "aws_lambda_function" "ai_api" {
       NODE_ENV           = var.environment
       JWT_SECRET         = var.jwt_secret
       API_KEY_SALT       = var.api_key_salt
+      CLAUDE_API_KEY     = var.claude_api_key
+      CLAUDE_API_URL     = var.claude_api_url
+      CLAUDE_MODEL       = var.claude_model
       LOG_LEVEL         = var.environment == "production" ? "info" : "debug"
       CORS_ORIGIN       = "https://${aws_cloudfront_distribution.website.domain_name}"
     }
