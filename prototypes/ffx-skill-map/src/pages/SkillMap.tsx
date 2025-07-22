@@ -15,6 +15,7 @@ import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
 import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
+import SecureAIAnalysisWidget from '../components/SecureAIAnalysisWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -870,6 +871,21 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
 
+        {/* Secure AI Analysis Widget */}
+        <div className="mb-8">
+          <SecureAIAnalysisWidget
+            employeeId={selectedEmployeeId}
+            employee={selectedEmployee}
+            onGoalSelect={(skill) => {
+              setCurrentGoal({ skill, path: [] });
+              // Invalidate recommendations to refresh with goal-directed ones
+              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
+            }}
+            onScrollToGoals={() => {
+              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          />
+        </div>
 
         {/* Skill Goal Widget */}
         <div ref={skillGoalRef} className="mb-8">

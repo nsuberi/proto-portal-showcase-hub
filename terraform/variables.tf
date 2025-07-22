@@ -14,3 +14,24 @@ variable "environment" {
   type        = string
   default     = "production"
 }
+
+# AI Analysis API Configuration
+variable "claude_api_key" {
+  description = "Claude API key for AI analysis service"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT secret for API authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "api_key_salt" {
+  description = "Salt for API key generation"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

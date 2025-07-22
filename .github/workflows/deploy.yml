@@ -74,12 +74,20 @@ jobs:
     - name: Build application
       run: ./scripts/build.sh
       
+    - name: Install API dependencies
+      run: |
+        cd api
+        npm ci --only=production
+      
     - name: Deploy infrastructure
       run: ./scripts/deploy-infrastructure.sh
       env:
         TF_VAR_bucket_name: ${{ vars.BUCKET_NAME }}
         TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
         TF_VAR_environment: ${{ vars.ENVIRONMENT || 'production' }}
+        TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
+        TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+        TF_VAR_api_key_salt: ${{ secrets.API_KEY_SALT }}
         
     - name: Deploy site
       run: ./scripts/deploy-site.sh
