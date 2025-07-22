@@ -46,11 +46,12 @@ data "archive_file" "ai_api_lambda_zip" {
   source_dir  = "../api"
   
   excludes = [
-    "node_modules",
     ".env",
-    ".env.example",
+    ".env.example", 
     "README.md",
-    "*.test.js"
+    "*.test.js",
+    "node_modules/.cache",
+    "node_modules/nodemon"
   ]
 }
 

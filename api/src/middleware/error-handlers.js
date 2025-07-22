@@ -73,10 +73,10 @@ export function errorHandler(err, req, res, next) {
     code: errorCode,
     requestId: req.requestId,
     timestamp: new Date().toISOString(),
-    // Only include stack trace in development
+    // Include error details for debugging (temporarily include in production)
+    details: err.message,
     ...(process.env.NODE_ENV === 'development' && { 
-      stack: err.stack,
-      details: err.message 
+      stack: err.stack
     })
   });
 }
