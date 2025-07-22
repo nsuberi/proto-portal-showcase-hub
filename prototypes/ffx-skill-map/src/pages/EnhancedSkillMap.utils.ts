@@ -51,7 +51,7 @@ export function getExpertSphereGraphEdges() {
   }));
 }
 
-export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], categoryColors: any, goalPathSkills?: Set<string>) {
+export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], categoryColors: any, goalPathSkills?: Set<string>, goalSkillId?: string) {
   // Network positioning data from the complex sphere grid
   const networkPositions = {
     // Central Hub Cluster (largest central area)
@@ -178,7 +178,13 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
 
     const isMastered = masteredSkills.includes(skill.id);
     const isOnGoalPath = goalPathSkills?.has(skill.id) || false;
+    const isGoalNode = goalSkillId === skill.id;
     const baseColor = categoryColors[skill.category] || categoryColors.default;
+    
+    // Debug goal node detection
+    if (isGoalNode) {
+      console.log('🎯 Goal node detected:', skill.name, 'isMastered:', isMastered);
+    }
     
     // Convert normalized coordinates (0-1) to actual pixel coordinates
     const x = (position.x - 0.5) * scaleFactor;
@@ -199,7 +205,7 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
 
     nodes.push({
       id: skill.id,
-      label: skill.name,
+      label: (isGoalNode && !isMastered) ? `Current goal: ${skill.name}` : skill.name,
       x,
       y,
       size: nodeSize,
@@ -210,6 +216,7 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
       zIndex: isMastered ? 3 : (isOnGoalPath ? 2 : (nodeType === 'core' ? 1 : 0)),
       isMastered: isMastered,
       isOnGoalPath: isOnGoalPath,
+      isGoalNode: isGoalNode,
       hasEmployeeSelected: masteredSkills.length > 0,
       
       // Set node type to 'border' for mastered skills and goal path skills to use NodeBorderProgram
@@ -223,8 +230,8 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
       activation_cost: skill.activation_cost || 10,
       description: skill.description || 'A powerful ability',
       
-      // Visual enhancement properties for non-mastered nodes (goal path gets border width 2)
-      borderWidth: !isMastered && !isOnGoalPath ? (nodeType === 'core' ? 3 : (nodeType === 'cluster_center' ? 2 : 1)) : (isOnGoalPath && !isMastered ? 2 : undefined),
+      // Visual enhancement properties - unmastered goal node gets extra thick border
+      borderWidth: (isGoalNode && !isMastered) ? (console.log('🔧 Setting goal node border width to 10 for:', skill.name), 10) : (!isMastered && !isOnGoalPath ? (nodeType === 'core' ? 3 : (nodeType === 'cluster_center' ? 2 : 1)) : (isOnGoalPath && !isMastered ? 2 : undefined)),
       
       // Shadow and glow effects for important nodes
       shadowSize: nodeType === 'core' ? 4 : (nodeType === 'cluster_center' ? 2 : 0),

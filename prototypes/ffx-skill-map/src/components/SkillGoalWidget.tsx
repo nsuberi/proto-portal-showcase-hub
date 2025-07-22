@@ -31,6 +31,7 @@ interface SkillGoalWidgetProps {
   onGoalSet?: (goalSkill: Skill | null, path: string[]) => void;
   currentGoal?: Skill | null; // External goal state to sync with
   onLearnNewSkills?: () => void;
+  onGoalCompleted?: () => void;
 }
 
 interface GoalPath {
@@ -51,7 +52,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   employee,
   onGoalSet,
   currentGoal,
-  onLearnNewSkills
+  onLearnNewSkills,
+  onGoalCompleted
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<Skill | null>(null);
@@ -260,10 +262,20 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       
       setGoalPath(updatedPath);
       
+      // Notify parent component of path update
+      if (onGoalSet && selectedGoal) {
+        onGoalSet(selectedGoal, updatedPath?.path || []);
+      }
+      
       // Check if goal was just completed
       if (!previouslyCompleted && updatedPath?.isCompleted) {
         setShowCompletionAnimation(true);
         setTimeout(() => setShowCompletionAnimation(false), 3000);
+        
+        // Notify parent component about goal completion
+        if (onGoalCompleted) {
+          onGoalCompleted();
+        }
       }
     }
   }, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills]);

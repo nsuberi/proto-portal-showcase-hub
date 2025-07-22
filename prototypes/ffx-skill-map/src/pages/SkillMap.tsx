@@ -38,12 +38,13 @@ const CATEGORY_COLORS = {
   default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
 };
 
-function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, onNodeClick }: {
+function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, goalSkillId, onNodeClick }: {
   skills: any[],
   connections: any[],
   masteredSkills: string[],
   selectedEmployeeId: string,
   goalPath?: string[],
+  goalSkillId?: string,
   onNodeClick?: (skill: any) => void
 }) {
   const sigmaContainerRef = useRef<HTMLDivElement>(null);
@@ -87,8 +88,14 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
           labelColor = '#1A1A1A'; // Darker text for better contrast
           labelWeight = 'bold'; // Bold text for mastered skills
           color = data.color; // Keep original vibrant color
+        } else if (data.isGoalNode && data.hasEmployeeSelected) {
+          // Goal node - halfway opacity between mastered (1.0) and unmastered (0.6)
+          color = hexToRgba(data.color, 0.8);
+          labelColor = '#000000'; // Solid black for maximum visibility
+          labelSize = 24; // Extra large for maximum prominence (since bold isn't supported per-node)
+          labelWeight = 'normal'; // Sigma.js doesn't support per-node bold
         } else if (data.hasEmployeeSelected && !data.isMastered) {
-          // Employee doesn't have this skill - make it translucent (includes goal path)
+          // Employee doesn't have this skill - make it translucent
           color = hexToRgba(data.color, 0.6);
           labelColor = hexToRgba('#2C3E50', 0.7); // Fade the label as well
         }
@@ -97,14 +104,16 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
           ...data,
           label: data.label,
           color: color,
-          // Make mastered skills bigger but keep goal path skills original size
-          size: data.isMastered ? data.size * 1.3 : data.size,
+          // Make mastered skills bigger, goal nodes even bigger to enhance border visibility
+          size: data.isGoalNode && !data.isMastered ? data.size * 1.5 : (data.isMastered ? data.size * 1.3 : data.size),
           zIndex: data.isMastered ? 3 : (data.zIndex || 1), // Higher z-index for mastered skills
           // Keep the node type as set in the data (border for mastered, circle for others)
           type: data.type,
           labelSize: labelSize,
           labelColor: labelColor,
-          labelWeight: labelWeight,
+          // Ensure border properties are preserved
+          borderColor: data.borderColor,
+          borderWidth: data.borderWidth,
           // Force label visibility for mastered skills
           forceLabel: data.isMastered,
         };
@@ -125,6 +134,10 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
           // On hover, make border 100% opacity
           borderColor = data.color;
           borderWidth = 3;
+        } else if (data.isGoalNode && !data.isMastered) {
+          // Unmastered goal node gets extra thick black border
+          borderColor = '#000000';
+          borderWidth = 10;
         } else if (data.isOnGoalPath) {
           // Goal path skills get black border to stand out
           borderColor = '#000000';
@@ -162,8 +175,8 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
   const memoizedNodes = useMemo(() => {
     if (!skills) return [];
     const pathSet = new Set(goalPath || []);
-    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS, pathSet);
-  }, [skills, masteredSkills, goalPath]);
+    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS, pathSet, goalSkillId);
+  }, [skills, masteredSkills, goalPath, goalSkillId]);
 
   const memoizedEdges = useMemo(() => {
     if (!connections) return [];
@@ -520,10 +533,22 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       if (skillRecommendationRef.current) {
         skillRecommendationRef.current.scrollIntoView({ 
           behavior: 'smooth', 
-          block: 'center' 
+          block: 'start' 
         })
       }
     }, 100)
+  }
+
+  const handleGoalCompleted = () => {
+    // Scroll back to the Skill Goal widget to show completion
+    setTimeout(() => {
+      if (skillGoalRef.current) {
+        skillGoalRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+      }
+    }, 500) // Delay to allow completion animation to start
   }
 
   return (
@@ -797,6 +822,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         masteredSkills={masteredSkills}
         selectedEmployeeId={selectedEmployeeId}
         goalPath={currentGoal?.path}
+        goalSkillId={currentGoal?.skill?.id}
         onNodeClick={handleNodeClick}
       />
 
@@ -857,6 +883,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
               queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
             }}
             onLearnNewSkills={handleLearnNewSkills}
+            onGoalCompleted={handleGoalCompleted}
           />
         </div>
 
