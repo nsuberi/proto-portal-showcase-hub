@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "APIGatewayPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:POST",
+        "apigateway:GET",
+        "apigateway:PUT",
+        "apigateway:PATCH",
+        "apigateway:DELETE",
+        "apigateway:CreateRestApi",
+        "apigateway:CreateResource",
+        "apigateway:CreateMethod",
+        "apigateway:CreateDeployment",
+        "apigateway:CreateStage",
+        "apigateway:UpdateRestApi",
+        "apigateway:UpdateResource",
+        "apigateway:UpdateMethod",
+        "apigateway:UpdateDeployment",
+        "apigateway:UpdateStage",
+        "apigateway:DeleteRestApi",
+        "apigateway:DeleteResource",
+        "apigateway:DeleteMethod",
+        "apigateway:DeleteDeployment",
+        "apigateway:DeleteStage",
+        "apigateway:PutIntegration",
+        "apigateway:PutIntegrationResponse",
+        "apigateway:PutMethodResponse",
+        "apigateway:TagResource",
+        "apigateway:UntagResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SSMParameterStorePermissions",
+      "Effect": "Allow", 
+      "Action": [
+        "ssm:PutParameter",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath",
+        "ssm:DeleteParameter",
+        "ssm:DescribeParameters",
+        "ssm:AddTagsToResource",
+        "ssm:RemoveTagsFromResource"
+      ],
+      "Resource": [
+        "arn:aws:ssm:*:*:parameter/*/ai-api/*",
+        "arn:aws:ssm:*:*:parameter/production/ai-api/*",
+        "arn:aws:ssm:*:*:parameter/development/ai-api/*"
+      ]
+    }
+  ]
+}

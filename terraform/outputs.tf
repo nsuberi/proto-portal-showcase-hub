@@ -16,7 +16,7 @@ output "cloudfront_distribution_id" {
 # AI Analysis API Outputs
 output "ai_api_url" {
   description = "AI Analysis API URL"
-  value       = "https://${aws_api_gateway_rest_api.ai_api_gateway.id}.execute-api.${var.aws_region}.amazonaws.com/${var.environment}"
+  value       = aws_lambda_function_url.ai_api.function_url
 }
 
 output "ai_api_function_name" {
