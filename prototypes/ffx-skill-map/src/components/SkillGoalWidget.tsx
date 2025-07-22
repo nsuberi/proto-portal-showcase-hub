@@ -85,15 +85,38 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     return skills.filter(skill => !masteredSet.has(skill.id));
   }, [skills, employee]);
 
-  // Filter skills based on search term
-  const filteredSkills = useMemo(() => {
-    if (!searchTerm) return unlearnedSkills.slice(0, 10); // Show first 10 if no search
-    return unlearnedSkills.filter(skill => 
-      skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      skill.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      skill.category.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 20); // Limit to 20 results
-  }, [unlearnedSkills, searchTerm]);
+  // Filter skills based search term and calculate step counts with performance optimizations
+  const filteredSkillsWithSteps = useMemo(() => {
+    if (!graphAnalyzer || !employee) return [];
+    
+    const baseFilteredSkills = !searchTerm 
+      ? unlearnedSkills.slice(0, 10) // Show first 10 if no search
+      : unlearnedSkills.filter(skill => 
+          skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          skill.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          skill.category.toLowerCase().includes(searchTerm.toLowerCase())
+        ).slice(0, 20); // Limit to 20 results
+
+    if (baseFilteredSkills.length === 0) return [];
+
+    // Batch calculate steps for all filtered skills - this is more performant than individual calculations
+    const skillIds = baseFilteredSkills.map(skill => skill.id);
+    const stepsMap = graphAnalyzer.batchCalculateStepsToSkills(employee.mastered_skills, skillIds);
+    
+    return baseFilteredSkills
+      .map(skill => ({
+        ...skill,
+        stepsToReach: stepsMap.get(skill.id) || null
+      }))
+      .sort((a, b) => {
+        // Sort by steps to reach (null values go to the end), then by name
+        if (a.stepsToReach === null && b.stepsToReach === null) return a.name.localeCompare(b.name);
+        if (a.stepsToReach === null) return 1;
+        if (b.stepsToReach === null) return -1;
+        if (a.stepsToReach !== b.stepsToReach) return a.stepsToReach - b.stepsToReach;
+        return a.name.localeCompare(b.name);
+      });
+  }, [unlearnedSkills, searchTerm, graphAnalyzer, employee]);
 
   // Calculate path to goal when goal is selected
   const calculateGoalPath = (goalSkill: Skill): GoalPath | null => {
@@ -406,9 +429,9 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
               {/* Search Results Dropdown */}
               {isSearchExpanded && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
-                  {filteredSkills.length > 0 ? (
+                  {filteredSkillsWithSteps.length > 0 ? (
                     <div className="p-2">
-                      {filteredSkills.map((skill) => (
+                      {filteredSkillsWithSteps.map((skill) => (
                         <div
                           key={skill.id}
                           onClick={() => handleGoalSelect(skill)}
@@ -418,6 +441,15 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               {getCategoryIcon(skill.category)}
                               <span className="font-medium text-sm truncate">{skill.name}</span>
+                              {skill.stepsToReach !== null && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs bg-blue-50 text-blue-700 border-blue-200 px-1.5 py-0.5 font-medium"
+                                  title={`${skill.stepsToReach} step${skill.stepsToReach === 1 ? '' : 's'} to reach this skill`}
+                                >
+                                  {skill.stepsToReach === 1 ? '1 step' : `${skill.stepsToReach} steps`}
+                                </Badge>
+                              )}
                             </div>
                             <div className="flex items-center gap-1 flex-shrink-0">
                               <Badge variant="outline" className="text-xs">L{skill.level}</Badge>
@@ -429,9 +461,16 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                           <p className="text-xs text-gray-600 line-clamp-2 mb-1">
                             {skill.description}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Clock className="h-3 w-3" />
-                            <span>{formatXP(skill.xp_required)} XP required</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              <span>{formatXP(skill.xp_required)} XP required</span>
+                            </div>
+                            {skill.stepsToReach === null && (
+                              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                                No path found
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}

@@ -352,8 +352,8 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
               <span>
                 {showPagination 
-                  ? `${totalRecommendations} recommendations available (showing ${startIndex + 1}-${Math.min(endIndex, totalRecommendations)})`
-                  : `${totalRecommendations} recommendations available`
+                  ? `${totalRecommendations} recommendation${totalRecommendations === 1 ? '' : 's'} available (showing ${startIndex + 1}-${Math.min(endIndex, totalRecommendations)})`
+                  : `${totalRecommendations} recommendation${totalRecommendations === 1 ? '' : 's'} available`
                 }
               </span>
               {(() => {

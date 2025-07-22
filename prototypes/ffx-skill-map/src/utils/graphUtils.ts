@@ -382,6 +382,111 @@ export class SkillGraphAnalyzer {
   getSkillUnlocks(skillId: string): string[] {
     return this.graph.hasNode(skillId) ? this.graph.outNeighbors(skillId) : [];
   }
+
+  /**
+   * Calculate steps needed to reach a skill from current mastered skills
+   * Returns null if no path exists, otherwise returns the minimum number of steps
+   */
+  calculateStepsToSkill(masteredSkills: string[], targetSkill: string): number | null {
+    if (!this.graph.hasNode(targetSkill)) return null;
+    
+    // If skill is already mastered, return 0 steps
+    if (masteredSkills.includes(targetSkill)) return 0;
+
+    const pathInfo = this.findOptimalPathToGoal(masteredSkills, targetSkill);
+    
+    if (!pathInfo.isReachable || pathInfo.path.length === 0) return null;
+    
+    // Return the number of skills in the path that are not yet mastered
+    const masteredSet = new Set(masteredSkills);
+    const stepsNeeded = pathInfo.path.filter(skillId => !masteredSet.has(skillId)).length;
+    
+    return stepsNeeded;
+  }
+
+  /**
+   * Batch calculate steps to multiple skills efficiently
+   * Uses memoization to avoid redundant path calculations
+   */
+  batchCalculateStepsToSkills(
+    masteredSkills: string[], 
+    targetSkills: string[]
+  ): Map<string, number | null> {
+    const results = new Map<string, number | null>();
+    const masteredSet = new Set(masteredSkills);
+
+    // Cache for BFS results from each mastered skill
+    const pathCache = new Map<string, Map<string, string[]>>();
+
+    for (const targetSkill of targetSkills) {
+      if (!this.graph.hasNode(targetSkill)) {
+        results.set(targetSkill, null);
+        continue;
+      }
+
+      // If skill is already mastered, return 0 steps
+      if (masteredSet.has(targetSkill)) {
+        results.set(targetSkill, 0);
+        continue;
+      }
+
+      // Find shortest path using cached results when possible
+      let shortestPath: string[] = [];
+      let shortestDistance = Infinity;
+
+      for (const masteredSkill of masteredSkills) {
+        if (!this.graph.hasNode(masteredSkill)) continue;
+
+        // Get cached paths from this mastered skill
+        let pathsFromMastered = pathCache.get(masteredSkill);
+        if (!pathsFromMastered) {
+          pathsFromMastered = new Map();
+          pathCache.set(masteredSkill, pathsFromMastered);
+        }
+
+        // Calculate path if not cached
+        let path = pathsFromMastered.get(targetSkill);
+        if (!path) {
+          path = this.findShortestPath(masteredSkill, targetSkill);
+          pathsFromMastered.set(targetSkill, path);
+        }
+
+        if (path.length > 0 && path.length < shortestDistance) {
+          shortestPath = path;
+          shortestDistance = path.length;
+        }
+      }
+
+      // If no direct path found, check available next skills
+      if (shortestPath.length === 0) {
+        const availableNext = this.getAvailableNextSkills(masteredSkills);
+        
+        if (availableNext.includes(targetSkill)) {
+          shortestPath = [targetSkill];
+          shortestDistance = 1;
+        } else {
+          // Try paths through available next skills
+          for (const nextSkill of availableNext) {
+            const pathFromNext = this.findShortestPath(nextSkill, targetSkill);
+            if (pathFromNext.length > 0 && pathFromNext.length + 1 < shortestDistance) {
+              shortestPath = [nextSkill, ...pathFromNext.slice(1)];
+              shortestDistance = pathFromNext.length + 1;
+            }
+          }
+        }
+      }
+
+      if (shortestPath.length === 0) {
+        results.set(targetSkill, null);
+      } else {
+        // Count unmastered skills in the path
+        const stepsNeeded = shortestPath.filter(skillId => !masteredSet.has(skillId)).length;
+        results.set(targetSkill, stepsNeeded);
+      }
+    }
+
+    return results;
+  }
 }
 
 /**
