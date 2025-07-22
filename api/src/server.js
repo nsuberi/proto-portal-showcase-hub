@@ -21,7 +21,7 @@ app.use(helmet({
 }));
 
 // CORS configuration
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'];
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:8082'];
 app.use(cors({
   origin: corsOrigins,
   methods: ['GET', 'POST'],

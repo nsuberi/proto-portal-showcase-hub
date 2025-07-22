@@ -5,7 +5,7 @@ export class ClaudeService {
   constructor(apiKey = null) {
     this.apiKey = apiKey || process.env.CLAUDE_API_KEY;
     this.apiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
-    this.model = process.env.CLAUDE_MODEL || 'claude-3-sonnet-20240229';
+    this.model = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022';
     this.mockMode = process.env.NODE_ENV === 'development' && !this.apiKey;
     
     // No longer require API key at startup - it can be provided per request

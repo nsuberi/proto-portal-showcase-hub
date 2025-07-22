@@ -14,7 +14,7 @@
     "dev:ffx": "cd prototypes/ffx-skill-map && npm run dev",
     "build:ffx": "cd prototypes/ffx-skill-map && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
-    "dev:all": "concurrently --names \"MAIN,FFX,PROXY\" --prefix-colors \"blue,green,yellow\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:proxy\"",
+    "dev:all": "concurrently --names \"MAIN,FFX,PROXY,API\" --prefix-colors \"blue,green,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:proxy\" \"cd api && npm run dev\"",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
     "test": "echo \"No tests configured\"",
