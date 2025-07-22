@@ -109,8 +109,8 @@ resource "aws_lambda_function_url" "ai_api" {
   cors {
     allow_credentials = false
     allow_origins     = ["https://${aws_cloudfront_distribution.website.domain_name}"]
-    allow_methods     = ["GET", "POST", "OPTIONS"]
-    allow_headers     = ["Content-Type", "X-API-Key", "Authorization"]
+    allow_methods     = ["*"]
+    allow_headers     = ["date", "keep-alive", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-port", "x-amzn-trace-id", "content-type", "x-api-key", "authorization"]
     max_age          = 86400
   }
 }
