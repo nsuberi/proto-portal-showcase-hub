@@ -15,6 +15,12 @@ export function authMiddleware(req, res, next) {
     return next();
   }
 
+  // Skip auth for AI analysis endpoints that use client-provided API keys
+  if (req.path.includes('/ai-analysis/')) {
+    logger.info('Skipping auth for AI analysis endpoint (client provides API keys)', { requestId: req.requestId });
+    return next();
+  }
+
   const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
   
   if (!apiKey) {
