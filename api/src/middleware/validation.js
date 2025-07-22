@@ -40,6 +40,14 @@ export function validateAnalysisRequest(req, res, next) {
     }
   }
 
+  // Define allowed skill categories for both FFX and Tech org
+  const allowedCategories = [
+    // FFX categories
+    'combat', 'magic', 'support', 'special', 'advanced', 'default',
+    // Tech organization categories  
+    'engineering', 'platform', 'product', 'communication', 'process', 'leadership'
+  ];
+
   // Validate skills arrays
   if (!Array.isArray(availableSkills)) {
     errors.push('availableSkills must be an array');
@@ -50,6 +58,8 @@ export function validateAnalysisRequest(req, res, next) {
     availableSkills.forEach((skill, index) => {
       if (!skill.id || !skill.name || !skill.category) {
         errors.push(`availableSkills[${index}] must have id, name, and category`);
+      } else if (!allowedCategories.includes(skill.category)) {
+        errors.push(`availableSkills[${index}].category must be one of: ${allowedCategories.join(', ')}`);
       }
     });
   }

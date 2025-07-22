@@ -34,6 +34,8 @@ interface SecureAIAnalysisWidgetProps {
   onGoalSelect?: (skill: Skill) => void;
   onScrollToGoals?: () => void;
   apiBaseUrl?: string; // Allow configurable API URL
+  service?: any; // Service to use for skills data (defaults to sharedEnhancedService)
+  dataSource?: string; // Data source for query keys (defaults to 'enhanced')
 }
 
 interface AIGoalRecommendation {
@@ -92,7 +94,9 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   employee,
   onGoalSelect,
   onScrollToGoals,
-  apiBaseUrl
+  apiBaseUrl,
+  service = sharedEnhancedService, // Default to sharedEnhancedService for backward compatibility
+  dataSource = 'enhanced' // Default to 'enhanced' for backward compatibility
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
@@ -106,13 +110,13 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: any }>>(new Map());
 
   const { data: skills } = useQuery({
-    queryKey: ['enhanced-skills'],
-    queryFn: () => sharedEnhancedService.getAllSkills(),
+    queryKey: [`${dataSource}-skills`],
+    queryFn: () => service.getAllSkills(),
   });
 
   const { data: allEmployees } = useQuery({
-    queryKey: ['enhanced-employees'],
-    queryFn: () => sharedEnhancedService.getAllEmployees(),
+    queryKey: [`${dataSource}-employees`],
+    queryFn: () => service.getAllEmployees(),
   });
 
   // Use existing Lambda API as proxy to Claude
@@ -192,7 +196,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
     }
 
     // Get skill recommendations for context
-    const recommendations = await sharedEnhancedService.getSkillRecommendations(employeeId);
+    const recommendations = await service.getSkillRecommendations(employeeId);
 
     // Use mock data for local testing
     if (useMockData) {
@@ -322,22 +326,38 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat': return <Target className="h-4 w-4" />;
       case 'magic': return <Zap className="h-4 w-4" />;
       case 'support': return <CheckCircle2 className="h-4 w-4" />;
       case 'special': return <Star className="h-4 w-4" />;
       case 'advanced': return <BookOpen className="h-4 w-4" />;
+      // Tech categories
+      case 'engineering': return <Zap className="h-4 w-4" />;
+      case 'platform': return <Target className="h-4 w-4" />;
+      case 'product': return <Star className="h-4 w-4" />;
+      case 'communication': return <BookOpen className="h-4 w-4" />;
+      case 'process': return <Clock className="h-4 w-4" />;
+      case 'leadership': return <TrendingUp className="h-4 w-4" />;
       default: return <Target className="h-4 w-4" />;
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat': return 'bg-red-100 text-red-800 border-red-300';
       case 'magic': return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'support': return 'bg-green-100 text-green-800 border-green-300';
       case 'special': return 'bg-purple-100 text-purple-800 border-purple-300';
       case 'advanced': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      // Tech categories
+      case 'engineering': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'platform': return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'product': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'communication': return 'bg-teal-100 text-teal-800 border-teal-300';
+      case 'process': return 'bg-pink-100 text-pink-800 border-pink-300';
+      case 'leadership': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };

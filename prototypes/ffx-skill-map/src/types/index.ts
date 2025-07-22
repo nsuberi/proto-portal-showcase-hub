@@ -3,7 +3,8 @@ export interface Skill {
   name: string;
   description: string;
   level: number;
-  category: 'combat' | 'magic' | 'support' | 'special' | 'advanced';
+  category: 'combat' | 'magic' | 'support' | 'special' | 'advanced' | 'default' | 
+           'engineering' | 'platform' | 'product' | 'communication' | 'process' | 'leadership';
   xp_required: number;
   prerequisites?: string[];
   sphere_cost?: number;

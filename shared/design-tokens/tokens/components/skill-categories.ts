@@ -4,6 +4,7 @@
  */
 
 export interface SkillCategoryTokens {
+  // FFX skill categories
   combat: {
     bg: string;
     border: string;
@@ -35,6 +36,43 @@ export interface SkillCategoryTokens {
     solid: string;
   };
   default: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  // Tech organization categories
+  engineering: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  platform: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  product: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  communication: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  process: {
+    bg: string;
+    border: string;
+    text: string;
+    solid: string;
+  };
+  leadership: {
     bg: string;
     border: string;
     text: string;
@@ -78,5 +116,42 @@ export const skillCategoryTokens: SkillCategoryTokens = {
     border: "hsl(var(--border))", // Use semantic border
     text: "hsl(var(--muted-foreground))", // Use semantic muted text
     solid: "hsl(var(--muted-foreground))", // Use semantic muted color
+  },
+  // Tech organization categories
+  engineering: {
+    bg: "hsl(210, 40%, 95%)",    // Light blue-gray background
+    border: "hsl(210, 40%, 80%)", // Blue-gray border
+    text: "hsl(210, 40%, 25%)",  // Dark blue-gray text
+    solid: "hsl(210, 40%, 50%)", // Blue-gray solid
+  },
+  platform: {
+    bg: "hsl(280, 50%, 95%)",    // Light purple background
+    border: "hsl(280, 50%, 80%)", // Purple border
+    text: "hsl(280, 50%, 25%)",  // Dark purple text
+    solid: "hsl(280, 50%, 50%)", // Purple solid
+  },
+  product: {
+    bg: "hsl(45, 80%, 95%)",     // Light orange background
+    border: "hsl(45, 80%, 80%)",  // Orange border
+    text: "hsl(45, 80%, 25%)",   // Dark orange text
+    solid: "hsl(45, 80%, 50%)",  // Orange solid
+  },
+  communication: {
+    bg: "hsl(150, 60%, 95%)",    // Light teal background
+    border: "hsl(150, 60%, 80%)", // Teal border
+    text: "hsl(150, 60%, 25%)",  // Dark teal text
+    solid: "hsl(150, 60%, 50%)", // Teal solid
+  },
+  process: {
+    bg: "hsl(300, 30%, 95%)",    // Light mauve background
+    border: "hsl(300, 30%, 80%)", // Mauve border
+    text: "hsl(300, 30%, 25%)",  // Dark mauve text
+    solid: "hsl(300, 30%, 50%)", // Mauve solid
+  },
+  leadership: {
+    bg: "hsl(25, 70%, 95%)",     // Light coral background
+    border: "hsl(25, 70%, 80%)",  // Coral border
+    text: "hsl(25, 70%, 25%)",   // Dark coral text
+    solid: "hsl(25, 70%, 50%)",  // Coral solid
   },
 };

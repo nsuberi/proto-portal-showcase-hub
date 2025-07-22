@@ -32,6 +32,8 @@ interface SkillGoalWidgetProps {
   currentGoal?: Skill | null; // External goal state to sync with
   onLearnNewSkills?: () => void;
   onGoalCompleted?: () => void;
+  service?: any; // Service to use for skills data (defaults to sharedEnhancedService)
+  dataSource?: string; // Data source for query keys (defaults to 'enhanced')
 }
 
 interface GoalPath {
@@ -53,7 +55,9 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   onGoalSet,
   currentGoal,
   onLearnNewSkills,
-  onGoalCompleted
+  onGoalCompleted,
+  service = sharedEnhancedService, // Default to sharedEnhancedService for backward compatibility
+  dataSource = 'enhanced' // Default to 'enhanced' for backward compatibility
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<Skill | null>(null);
@@ -63,13 +67,13 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   const originalTotalStepsRef = useRef<number | null>(null);
 
   const { data: skills } = useQuery({
-    queryKey: ['enhanced-skills'],
-    queryFn: () => sharedEnhancedService.getAllSkills(),
+    queryKey: [`${dataSource}-skills`],
+    queryFn: () => service.getAllSkills(),
   });
 
   const { data: connections } = useQuery({
-    queryKey: ['enhanced-connections'],
-    queryFn: () => sharedEnhancedService.getSkillConnections(),
+    queryKey: [`${dataSource}-connections`],
+    queryFn: () => service.getSkillConnections(),
   });
 
   // Create graph analyzer
@@ -330,6 +334,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat':
         return <Target className="h-4 w-4" />;
       case 'magic':
@@ -340,6 +345,19 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         return <Star className="h-4 w-4" />;
       case 'advanced':
         return <BookOpen className="h-4 w-4" />;
+      // Tech categories
+      case 'engineering':
+        return <Zap className="h-4 w-4" />;
+      case 'platform':
+        return <Target className="h-4 w-4" />;
+      case 'product':
+        return <Star className="h-4 w-4" />;
+      case 'communication':
+        return <BookOpen className="h-4 w-4" />;
+      case 'process':
+        return <Clock className="h-4 w-4" />;
+      case 'leadership':
+        return <Gem className="h-4 w-4" />;
       default:
         return <Target className="h-4 w-4" />;
     }
@@ -347,11 +365,19 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat': return 'bg-red-100 text-red-800 border-red-300';
       case 'magic': return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'support': return 'bg-green-100 text-green-800 border-green-300';
       case 'special': return 'bg-purple-100 text-purple-800 border-purple-300';
       case 'advanced': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      // Tech categories
+      case 'engineering': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'platform': return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'product': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'communication': return 'bg-teal-100 text-teal-800 border-teal-300';
+      case 'process': return 'bg-pink-100 text-pink-800 border-pink-300';
+      case 'leadership': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };

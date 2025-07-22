@@ -28,6 +28,8 @@ interface SkillRecommendationWidgetProps {
   employee?: Employee;
   goalSkillId?: string;
   onSkillLearn?: (skill: Skill, employee: Employee) => void;
+  service?: any; // Service to use for recommendations (defaults to sharedEnhancedService)
+  dataSource?: string; // Data source for query keys (defaults to 'enhanced')
 }
 
 interface SkillRecommendation {
@@ -44,7 +46,9 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
   employeeId,
   employee,
   goalSkillId,
-  onSkillLearn
+  onSkillLearn,
+  service = sharedEnhancedService, // Default to sharedEnhancedService for backward compatibility
+  dataSource = 'enhanced' // Default to 'enhanced' for backward compatibility
 }, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLearning, setIsLearning] = useState<string | null>(null);
@@ -53,8 +57,8 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
   
   const ITEMS_PER_PAGE = 5;
   const { data: recommendations, isLoading, error } = useQuery({
-    queryKey: ['skill-recommendations', employeeId, goalSkillId],
-    queryFn: () => sharedEnhancedService.getSkillRecommendations(employeeId, goalSkillId),
+    queryKey: ['skill-recommendations', employeeId, goalSkillId, service?.constructor?.name || 'default'],
+    queryFn: () => service.getSkillRecommendations(employeeId, goalSkillId),
     enabled: !!employeeId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -79,6 +83,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat':
         return <Target className="h-4 w-4" />;
       case 'magic':
@@ -89,6 +94,19 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
         return <Star className="h-4 w-4" />;
       case 'advanced':
         return <BookOpen className="h-4 w-4" />;
+      // Tech categories
+      case 'engineering':
+        return <Zap className="h-4 w-4" />;
+      case 'platform':
+        return <Target className="h-4 w-4" />;
+      case 'product':
+        return <Star className="h-4 w-4" />;
+      case 'communication':
+        return <BookOpen className="h-4 w-4" />;
+      case 'process':
+        return <Clock className="h-4 w-4" />;
+      case 'leadership':
+        return <TrendingUp className="h-4 w-4" />;
       default:
         return <Target className="h-4 w-4" />;
     }
@@ -96,6 +114,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // FFX categories
       case 'combat':
         return 'bg-red-100 text-red-800 border-red-300 hover:bg-red-300';
       case 'magic':
@@ -106,6 +125,19 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
         return 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-300';
       case 'advanced':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-300';
+      // Tech categories
+      case 'engineering':
+        return 'bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-300';
+      case 'platform':
+        return 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-300';
+      case 'product':
+        return 'bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-300';
+      case 'communication':
+        return 'bg-teal-100 text-teal-800 border-teal-300 hover:bg-teal-300';
+      case 'process':
+        return 'bg-pink-100 text-pink-800 border-pink-300 hover:bg-pink-300';
+      case 'leadership':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-300';
     }
@@ -115,6 +147,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
     if (!canAfford) return 'border-gray-200 bg-gray-50/50';
     
     switch (category) {
+      // FFX categories
       case 'combat':
         return 'border-red-200 bg-red-50/50 hover:bg-red-100 hover:border-red-300';
       case 'magic':
@@ -125,6 +158,19 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
         return 'border-purple-200 bg-purple-50/50 hover:bg-purple-100 hover:border-purple-300';
       case 'advanced':
         return 'border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100 hover:border-yellow-300';
+      // Tech categories
+      case 'engineering':
+        return 'border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300';
+      case 'platform':
+        return 'border-purple-200 bg-purple-50/50 hover:bg-purple-100 hover:border-purple-300';
+      case 'product':
+        return 'border-orange-200 bg-orange-50/50 hover:bg-orange-100 hover:border-orange-300';
+      case 'communication':
+        return 'border-teal-200 bg-teal-50/50 hover:bg-teal-100 hover:border-teal-300';
+      case 'process':
+        return 'border-pink-200 bg-pink-50/50 hover:bg-pink-100 hover:border-pink-300';
+      case 'leadership':
+        return 'border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100 hover:border-yellow-300';
       default:
         return 'border-gray-200 bg-gray-50/50 hover:bg-gray-100 hover:border-gray-300';
     }
@@ -134,6 +180,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
     if (!canAfford) return 'bg-gray-100';
     
     switch (category) {
+      // FFX categories
       case 'combat':
         return 'bg-red-100';
       case 'magic':
@@ -143,6 +190,19 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
       case 'special':
         return 'bg-purple-100';
       case 'advanced':
+        return 'bg-yellow-100';
+      // Tech categories
+      case 'engineering':
+        return 'bg-blue-100';
+      case 'platform':
+        return 'bg-purple-100';
+      case 'product':
+        return 'bg-orange-100';
+      case 'communication':
+        return 'bg-teal-100';
+      case 'process':
+        return 'bg-pink-100';
+      case 'leadership':
         return 'bg-yellow-100';
       default:
         return 'bg-gray-100';
@@ -182,7 +242,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
     if (!employee || !onSkillLearn) return;
     
     // Get the most up-to-date employee data from the cache or service
-    const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+    const currentEmployeeData = queryClient.getQueryData([`${dataSource}-employees`]) as Employee[] | undefined;
     const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
     
     const canAfford = (currentEmployee.current_xp || 0) >= skill.xp_required;
@@ -197,13 +257,13 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
       // Call the parent handler - the service will handle XP decrementing
       await onSkillLearn(skill, currentEmployee);
       
-      // Get updated data from the shared service
-      const updatedEmployees = await sharedEnhancedService.getAllEmployees();
-      queryClient.setQueryData(['enhanced-employees'], updatedEmployees);
+      // Get updated data from the current service
+      const updatedEmployees = await service.getAllEmployees();
+      queryClient.setQueryData([`${dataSource}-employees`], updatedEmployees);
       
       // Use efficient invalidation instead of blocking refetch
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations', employeeId] });
-      queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
+      queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
       
     } catch (error) {
       console.error('Failed to learn skill:', error);
@@ -358,7 +418,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
               </span>
               {(() => {
                 // Get the most up-to-date employee data for XP display
-                const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+                const currentEmployeeData = queryClient.getQueryData([`${dataSource}-employees`]) as Employee[] | undefined;
                 const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
                 return currentEmployee?.current_xp ? (
                   <span className="flex items-center gap-1 text-blue-600">
@@ -410,7 +470,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
               console.warn(`SkillRecommendationWidget: Missing xp_required for skill ${skill.id} (${skill.name})`);
             }
             // Get the most up-to-date employee data for XP checks
-            const currentEmployeeData = queryClient.getQueryData(['enhanced-employees']) as Employee[] | undefined;
+            const currentEmployeeData = queryClient.getQueryData([`${dataSource}-employees`]) as Employee[] | undefined;
             const currentEmployee = currentEmployeeData?.find(emp => emp.id === employeeId) || employee;
             
             const canAfford = (currentEmployee?.current_xp || 0) >= xp_required;

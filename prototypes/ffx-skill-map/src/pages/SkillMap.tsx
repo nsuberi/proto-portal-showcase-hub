@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { sharedEnhancedService } from '../services/sharedService'
+import TechSkillsService from '../services/techSkillsData'
 
-// Use the shared service instance to prevent multiple connections
-const enhancedNeo4jService = sharedEnhancedService
+// Create instances of both services
+const ffxSkillService = sharedEnhancedService
+const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3 } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
 import Graph from 'graphology';
@@ -30,7 +32,7 @@ const hslToHex = (h: number, s: number, l: number): string => {
 };
 
 // Convert design system HSL values to hex for Sigma.js
-const CATEGORY_COLORS = {
+const FFX_CATEGORY_COLORS = {
   combat: hslToHex(0, 84.2, 60.2),     // Red: #f95454
   magic: hslToHex(213, 94, 68),        // Blue: #429bff  
   support: hslToHex(142, 76, 36),      // Green: #16a34a
@@ -39,14 +41,25 @@ const CATEGORY_COLORS = {
   default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
 };
 
-function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, goalSkillId, onNodeClick }: {
+const TECH_CATEGORY_COLORS = {
+  engineering: hslToHex(213, 94, 68),   // Blue: #429bff
+  platform: hslToHex(142, 76, 36),     // Green: #16a34a
+  product: hslToHex(263, 70, 60),      // Purple: #8b5cf6
+  communication: hslToHex(35, 91, 55), // Orange: #f97316
+  process: hslToHex(193, 95, 68),      // Cyan: #22d3ee
+  leadership: hslToHex(48, 96, 53),    // Yellow: #facc15
+  default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
+};
+
+function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, goalSkillId, onNodeClick, categoryColors }: {
   skills: any[],
   connections: any[],
   masteredSkills: string[],
   selectedEmployeeId: string,
   goalPath?: string[],
   goalSkillId?: string,
-  onNodeClick?: (skill: any) => void
+  onNodeClick?: (skill: any) => void,
+  categoryColors: Record<string, string>
 }) {
   const sigmaContainerRef = useRef<HTMLDivElement>(null);
   const sigmaInstanceRef = useRef<Sigma | null>(null);
@@ -176,8 +189,8 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
   const memoizedNodes = useMemo(() => {
     if (!skills) return [];
     const pathSet = new Set(goalPath || []);
-    return getEnhancedGraphNodes(skills, masteredSkills, CATEGORY_COLORS, pathSet, goalSkillId);
-  }, [skills, masteredSkills, goalPath, goalSkillId]);
+    return getEnhancedGraphNodes(skills, masteredSkills, categoryColors, pathSet, goalSkillId);
+  }, [skills, masteredSkills, goalPath, goalSkillId, categoryColors]);
 
   const memoizedEdges = useMemo(() => {
     if (!connections) return [];
@@ -264,24 +277,34 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   })
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState<any>(null)
+  const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
   const skillGoalRef = useRef<HTMLDivElement>(null)
   const skillRecommendationRef = useRef<HTMLDivElement>(null)
   const skillRecommendationWidgetRef = useRef<SkillRecommendationWidgetRef>(null)
   const queryClient = useQueryClient()
 
+  // Get the current service and colors based on data source selection
+  const currentService = dataSource === 'ffx' ? ffxSkillService : techSkillService
+  const CATEGORY_COLORS = dataSource === 'ffx' ? FFX_CATEGORY_COLORS : TECH_CATEGORY_COLORS
+
+  // Reset category filter when switching data sources
+  useEffect(() => {
+    setSelectedCategory('all')
+  }, [dataSource])
+
   const { data: skills, isLoading } = useQuery({
-    queryKey: ['enhanced-skills'],
-    queryFn: () => enhancedNeo4jService.getAllSkills(),
+    queryKey: [`${dataSource}-skills`],
+    queryFn: () => currentService.getAllSkills(),
   })
 
   const { data: connections } = useQuery({
-    queryKey: ['enhanced-connections'],
-    queryFn: () => enhancedNeo4jService.getSkillConnections(),
+    queryKey: [`${dataSource}-connections`],
+    queryFn: () => currentService.getSkillConnections(),
   })
 
   const { data: employees } = useQuery({
-    queryKey: ['enhanced-employees'],
-    queryFn: () => enhancedNeo4jService.getAllEmployees(),
+    queryKey: [`${dataSource}-employees`],
+    queryFn: () => currentService.getAllEmployees(),
   })
 
   // Find selected employee's mastered skills
@@ -294,13 +317,13 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     
     setIsResetting(true);
     try {
-      await enhancedNeo4jService.resetEmployeeSkills(selectedEmployeeId);
+      await currentService.resetEmployeeSkills(selectedEmployeeId);
       
       // Clear the current goal when skills are reset
       setCurrentGoal(null);
       
-      // Use efficient non-blocking invalidation
-      queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
+      // Use efficient non-blocking invalidation with current data source
+      queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
       
       console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
@@ -359,83 +382,175 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   }
 
   const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'combat':
-        return <Sword className="h-4 w-4" />
-      case 'magic':
-        return <Zap className="h-4 w-4" />
-      case 'support':
-        return <Heart className="h-4 w-4" />
-      case 'special':
-        return <Star className="h-4 w-4" />
-      case 'advanced':
-        return <Crown className="h-4 w-4" />
-      default:
-        return <Sword className="h-4 w-4" />
+    if (dataSource === 'ffx') {
+      switch (category) {
+        case 'combat':
+          return <Sword className="h-4 w-4" />
+        case 'magic':
+          return <Zap className="h-4 w-4" />
+        case 'support':
+          return <Heart className="h-4 w-4" />
+        case 'special':
+          return <Star className="h-4 w-4" />
+        case 'advanced':
+          return <Crown className="h-4 w-4" />
+        default:
+          return <Sword className="h-4 w-4" />
+      }
+    } else {
+      switch (category) {
+        case 'engineering':
+          return <Code className="h-4 w-4" />
+        case 'platform':
+          return <Settings className="h-4 w-4" />
+        case 'product':
+          return <Star className="h-4 w-4" />
+        case 'communication':
+          return <Users className="h-4 w-4" />
+        case 'process':
+          return <Filter className="h-4 w-4" />
+        case 'leadership':
+          return <Crown className="h-4 w-4" />
+        default:
+          return <Code className="h-4 w-4" />
+      }
     }
   }
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'combat':
-        return 'bg-red-100 text-red-800 border-red-300'
-      case 'magic':
-        return 'bg-blue-100 text-blue-800 border-blue-300'
-      case 'support':
-        return 'bg-green-100 text-green-800 border-green-300'
-      case 'special':
-        return 'bg-purple-100 text-purple-800 border-purple-300'
-      case 'advanced':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300'
+    if (dataSource === 'ffx') {
+      switch (category) {
+        case 'combat':
+          return 'bg-red-100 text-red-800 border-red-300'
+        case 'magic':
+          return 'bg-blue-100 text-blue-800 border-blue-300'
+        case 'support':
+          return 'bg-green-100 text-green-800 border-green-300'
+        case 'special':
+          return 'bg-purple-100 text-purple-800 border-purple-300'
+        case 'advanced':
+          return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        default:
+          return 'bg-gray-100 text-gray-800 border-gray-300'
+      }
+    } else {
+      switch (category) {
+        case 'engineering':
+          return 'bg-blue-100 text-blue-800 border-blue-300'
+        case 'platform':
+          return 'bg-green-100 text-green-800 border-green-300'
+        case 'product':
+          return 'bg-purple-100 text-purple-800 border-purple-300'
+        case 'communication':
+          return 'bg-orange-100 text-orange-800 border-orange-300'
+        case 'process':
+          return 'bg-cyan-100 text-cyan-800 border-cyan-300'
+        case 'leadership':
+          return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        default:
+          return 'bg-gray-100 text-gray-800 border-gray-300'
+      }
     }
   }
 
   const getCategoryMasteredColors = (category: string) => {
-    switch (category) {
-      case 'combat':
-        return {
-          border: 'border-red-500',
-          bg: 'bg-red-50',
-          text: 'text-red-800',
-          check: 'text-red-600'
-        }
-      case 'magic':
-        return {
-          border: 'border-blue-500',
-          bg: 'bg-blue-50',
-          text: 'text-blue-800',
-          check: 'text-blue-600'
-        }
-      case 'support':
-        return {
-          border: 'border-green-500',
-          bg: 'bg-green-50',
-          text: 'text-green-800',
-          check: 'text-green-600'
-        }
-      case 'special':
-        return {
-          border: 'border-purple-500',
-          bg: 'bg-purple-50',
-          text: 'text-purple-800',
-          check: 'text-purple-600'
-        }
-      case 'advanced':
-        return {
-          border: 'border-yellow-500',
-          bg: 'bg-yellow-50',
-          text: 'text-yellow-800',
-          check: 'text-yellow-600'
-        }
-      default:
-        return {
-          border: 'border-gray-500',
-          bg: 'bg-gray-50',
-          text: 'text-gray-800',
-          check: 'text-gray-600'
-        }
+    if (dataSource === 'ffx') {
+      switch (category) {
+        case 'combat':
+          return {
+            border: 'border-red-500',
+            bg: 'bg-red-50',
+            text: 'text-red-800',
+            check: 'text-red-600'
+          }
+        case 'magic':
+          return {
+            border: 'border-blue-500',
+            bg: 'bg-blue-50',
+            text: 'text-blue-800',
+            check: 'text-blue-600'
+          }
+        case 'support':
+          return {
+            border: 'border-green-500',
+            bg: 'bg-green-50',
+            text: 'text-green-800',
+            check: 'text-green-600'
+          }
+        case 'special':
+          return {
+            border: 'border-purple-500',
+            bg: 'bg-purple-50',
+            text: 'text-purple-800',
+            check: 'text-purple-600'
+          }
+        case 'advanced':
+          return {
+            border: 'border-yellow-500',
+            bg: 'bg-yellow-50',
+            text: 'text-yellow-800',
+            check: 'text-yellow-600'
+          }
+        default:
+          return {
+            border: 'border-gray-500',
+            bg: 'bg-gray-50',
+            text: 'text-gray-800',
+            check: 'text-gray-600'
+          }
+      }
+    } else {
+      switch (category) {
+        case 'engineering':
+          return {
+            border: 'border-blue-500',
+            bg: 'bg-blue-50',
+            text: 'text-blue-800',
+            check: 'text-blue-600'
+          }
+        case 'platform':
+          return {
+            border: 'border-green-500',
+            bg: 'bg-green-50',
+            text: 'text-green-800',
+            check: 'text-green-600'
+          }
+        case 'product':
+          return {
+            border: 'border-purple-500',
+            bg: 'bg-purple-50',
+            text: 'text-purple-800',
+            check: 'text-purple-600'
+          }
+        case 'communication':
+          return {
+            border: 'border-orange-500',
+            bg: 'bg-orange-50',
+            text: 'text-orange-800',
+            check: 'text-orange-600'
+          }
+        case 'process':
+          return {
+            border: 'border-cyan-500',
+            bg: 'bg-cyan-50',
+            text: 'text-cyan-800',
+            check: 'text-cyan-600'
+          }
+        case 'leadership':
+          return {
+            border: 'border-yellow-500',
+            bg: 'bg-yellow-50',
+            text: 'text-yellow-800',
+            check: 'text-yellow-600'
+          }
+        default:
+          return {
+            border: 'border-gray-500',
+            bg: 'bg-gray-50',
+            text: 'text-gray-800',
+            check: 'text-gray-600'
+          }
+      }
     }
   }
 
@@ -455,43 +570,90 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   }
 
   const getCategoryInfo = (category: string) => {
-    switch (category) {
-      case 'combat':
-        return {
-          icon: <Sword className="h-5 w-5" />,
-          title: 'Combat',
-          description: 'Physical and tactical abilities for direct confrontation and battlefield strategy.'
-        }
-      case 'magic':
-        return {
-          icon: <Zap className="h-5 w-5" />,
-          title: 'Magic',
-          description: 'Elemental and arcane spells for damage and utility.'
-        }
-      case 'support':
-        return {
-          icon: <Heart className="h-5 w-5" />,
-          title: 'Support',
-          description: 'Healing and buffing abilities to aid allies.'
-        }
-      case 'special':
-        return {
-          icon: <Star className="h-5 w-5" />,
-          title: 'Special',
-          description: 'Unique utility abilities with specialized effects.'
-        }
-      case 'advanced':
-        return {
-          icon: <Crown className="h-5 w-5" />,
-          title: 'Advanced',
-          description: 'High-level master abilities requiring significant expertise.'
-        }
-      default:
-        return {
-          icon: <Sword className="h-5 w-5" />,
-          title: 'Unknown',
-          description: 'Category information not available.'
-        }
+    if (dataSource === 'ffx') {
+      switch (category) {
+        case 'combat':
+          return {
+            icon: <Sword className="h-5 w-5" />,
+            title: 'Combat',
+            description: 'Physical and tactical abilities for direct confrontation and battlefield strategy.'
+          }
+        case 'magic':
+          return {
+            icon: <Zap className="h-5 w-5" />,
+            title: 'Magic',
+            description: 'Elemental and arcane spells for damage and utility.'
+          }
+        case 'support':
+          return {
+            icon: <Heart className="h-5 w-5" />,
+            title: 'Support',
+            description: 'Healing and buffing abilities to aid allies.'
+          }
+        case 'special':
+          return {
+            icon: <Star className="h-5 w-5" />,
+            title: 'Special',
+            description: 'Unique utility abilities with specialized effects.'
+          }
+        case 'advanced':
+          return {
+            icon: <Crown className="h-5 w-5" />,
+            title: 'Advanced',
+            description: 'High-level master abilities requiring significant expertise.'
+          }
+        default:
+          return {
+            icon: <Sword className="h-5 w-5" />,
+            title: 'Unknown',
+            description: 'Category information not available.'
+          }
+      }
+    } else {
+      switch (category) {
+        case 'engineering':
+          return {
+            icon: <Code className="h-5 w-5" />,
+            title: 'Engineering',
+            description: 'Technical implementation skills including coding, system design, and architecture.'
+          }
+        case 'platform':
+          return {
+            icon: <Settings className="h-5 w-5" />,
+            title: 'Platform',
+            description: 'DevOps, infrastructure, and deployment automation skills.'
+          }
+        case 'product':
+          return {
+            icon: <Star className="h-5 w-5" />,
+            title: 'Product',
+            description: 'Product management, user research, and business strategy skills.'
+          }
+        case 'communication':
+          return {
+            icon: <Users className="h-5 w-5" />,
+            title: 'Communication',
+            description: 'Interpersonal skills, collaboration, and stakeholder management.'
+          }
+        case 'process':
+          return {
+            icon: <Filter className="h-5 w-5" />,
+            title: 'Process',
+            description: 'Project management, agile methodologies, and organizational skills.'
+          }
+        case 'leadership':
+          return {
+            icon: <Crown className="h-5 w-5" />,
+            title: 'Leadership',
+            description: 'Executive presence, strategic thinking, and organizational leadership.'
+          }
+        default:
+          return {
+            icon: <Code className="h-5 w-5" />,
+            title: 'Unknown',
+            description: 'Category information not available.'
+          }
+      }
     }
   }
 
@@ -744,6 +906,45 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
         </p>
         
+        {/* Data Source Toggle */}
+        <div className="mt-4 mb-6">
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-sm text-muted-foreground">Skill Set:</span>
+            <div className="flex items-center border border-border rounded-lg p-1 bg-background">
+              <button
+                onClick={() => {
+                  setDataSource('tech')
+                  setSelectedEmployeeId('')
+                  setCurrentGoal(null)
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                  dataSource === 'tech'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                <Code className="h-4 w-4" />
+                <span>Tech Organization</span>
+              </button>
+              <button
+                onClick={() => {
+                  setDataSource('ffx')
+                  setSelectedEmployeeId('')
+                  setCurrentGoal(null)
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                  dataSource === 'ffx'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                <Sword className="h-4 w-4" />
+                <span>Final Fantasy X</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
         {/* Feature highlights */}
         <div className="mt-6">
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-xs sm:text-sm">
@@ -825,6 +1026,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         goalPath={currentGoal?.path}
         goalSkillId={currentGoal?.skill?.id}
         onNodeClick={handleNodeClick}
+        categoryColors={CATEGORY_COLORS}
       />
 
       {/* Skill Types Legend */}
@@ -876,6 +1078,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           <SecureAIAnalysisWidget
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
+            service={currentService}
+            dataSource={dataSource}
             onGoalSelect={(skill) => {
               setCurrentGoal({ skill, path: [] });
               // Invalidate recommendations to refresh with goal-directed ones
@@ -893,6 +1097,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
             currentGoal={currentGoal?.skill || null}
+            service={currentService}
+            dataSource={dataSource}
             onGoalSet={(goalSkill, path) => {
               setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
               // Invalidate recommendations to refresh with goal-directed ones
@@ -910,30 +1116,32 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
             goalSkillId={currentGoal?.skill?.id}
+            service={currentService}
+            dataSource={dataSource}
             onSkillLearn={async (skill, updatedEmployee) => {
               try {
-                await enhancedNeo4jService.learnSkill(selectedEmployeeId, skill.id);
+                await currentService.learnSkill(selectedEmployeeId, skill.id);
                 
                 // Optimistically update the employee cache immediately
-                const currentEmployees = queryClient.getQueryData(['enhanced-employees']) as any[];
+                const currentEmployees = queryClient.getQueryData([`${dataSource}-employees`]) as any[];
                 if (currentEmployees) {
                   const optimisticEmployees = currentEmployees.map(emp => 
                     emp.id === selectedEmployeeId 
                       ? { ...emp, mastered_skills: [...emp.mastered_skills, skill.id] }
                       : emp
                   );
-                  queryClient.setQueryData(['enhanced-employees'], optimisticEmployees);
+                  queryClient.setQueryData([`${dataSource}-employees`], optimisticEmployees);
                 }
                 
                 // Use single invalidation to trigger efficient background refresh
-                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'], exact: false });
+                queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
                 queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
                 
                 console.log(`${updatedEmployee.name} learned ${skill.name}!`);
               } catch (error) {
                 console.error('Failed to learn skill:', error);
                 // Revert optimistic update on error
-                queryClient.invalidateQueries({ queryKey: ['enhanced-employees'] });
+                queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`] });
               }
             }}
           />
@@ -1116,11 +1324,24 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Categories</SelectItem>
-                        <SelectItem value="combat">Combat</SelectItem>
-                        <SelectItem value="magic">Magic</SelectItem>
-                        <SelectItem value="support">Support</SelectItem>
-                        <SelectItem value="special">Special</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
+                        {dataSource === 'ffx' ? (
+                          <>
+                            <SelectItem value="combat">Combat</SelectItem>
+                            <SelectItem value="magic">Magic</SelectItem>
+                            <SelectItem value="support">Support</SelectItem>
+                            <SelectItem value="special">Special</SelectItem>
+                            <SelectItem value="advanced">Advanced</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="engineering">Engineering</SelectItem>
+                            <SelectItem value="platform">Platform</SelectItem>
+                            <SelectItem value="product">Product</SelectItem>
+                            <SelectItem value="communication">Communication</SelectItem>
+                            <SelectItem value="process">Process</SelectItem>
+                            <SelectItem value="leadership">Leadership</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     
