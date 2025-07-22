@@ -24,8 +24,8 @@ export class ClaudeService {
    * @param {Object} params.context - Optional context
    */
   async analyzeSkills({ apiKey, character, availableSkills, allSkills, context = {} }) {
-    // Return mock data in development mode without API key
-    if (this.mockMode || !apiKey) {
+    // Return mock data in development mode without API key or with "mock" key
+    if (this.mockMode || !apiKey || apiKey === 'mock') {
       return this.getMockAnalysis(character, availableSkills);
     }
 
@@ -134,6 +134,10 @@ export class ClaudeService {
     const goalContext = context.goalSkill 
       ? `\nCURRENT GOAL: The character is working toward "${context.goalSkill}" - prioritize recommendations that support this goal.`
       : '';
+    
+    const additionalContext = context.additionalContext 
+      ? `\nADDITIONAL CONTEXT: The user mentioned they hope to grow in these areas: "${context.additionalContext}"`
+      : '';
 
     return `
 Analyze this RPG character's skill progression and provide strategic recommendations:
@@ -141,7 +145,7 @@ Analyze this RPG character's skill progression and provide strategic recommendat
 CHARACTER: ${character.name}
 ROLE: ${character.role}
 CURRENT XP: ${character.currentXP || 0}
-LEVEL: ${character.level || 1}${goalContext}
+LEVEL: ${character.level || 1}${goalContext}${additionalContext}
 
 MASTERED SKILLS (${masteredSkills.length}):
 ${masteredSkills.map(skill => 
@@ -183,12 +187,15 @@ Please provide a JSON response with this exact structure:
   "overallAssessment": "Strategic analysis of character's current build and recommended progression path"
 }
 
-IMPORTANT: 
+IMPORTANT GUIDELINES:
 - Use exact skill names that match the provided skill lists
-- Provide 2-3 short-term goals (skills that can be learned soon)
-- Provide 2-3 long-term goals (powerful skills worth working toward)
+- DO NOT recommend any skills that are already in the MASTERED SKILLS list
+- Short-term goals: Skills that are 3 steps or fewer away (pathLength ≤ 3)
+- Long-term goals: Skills that are more than 3 steps away (pathLength > 3)
+- Provide 2-3 short-term goals and 2-3 long-term goals
 - Focus on strategic skill synergies and character build optimization
-- Consider the character's current XP when making recommendations
+- Consider the character's current XP and any additional context provided
+- If additional context is provided, tailor recommendations to match those growth areas
 - Only return valid JSON - no additional text before or after
 `;
   }
@@ -326,17 +333,17 @@ IMPORTANT:
           ],
           shortTermGoals: mockSkills.slice(0, 2).map(skill => ({
             skill,
-            reasoning: `${skill.name} would enhance your current ${skill.category} abilities and provide good XP efficiency.`,
+            reasoning: `${skill.name} would enhance your current ${skill.category} abilities and provide good XP efficiency. This skill is accessible within 3 steps of your current build.`,
             timeframe: 'short',
             priority: 'high',
             pathLength: Math.floor(Math.random() * 3) + 1
           })),
           longTermGoals: mockSkills.slice(2, 4).map(skill => ({
             skill,
-            reasoning: `${skill.name} is a powerful ${skill.category} skill that would significantly expand your tactical options.`,
+            reasoning: `${skill.name} is a powerful ${skill.category} skill that would significantly expand your tactical options. This represents a longer-term investment requiring more than 3 skill steps.`,
             timeframe: 'long', 
             priority: 'medium',
-            pathLength: Math.floor(Math.random() * 5) + 5
+            pathLength: Math.floor(Math.random() * 5) + 4
           })),
           overallAssessment: `${character.name} shows excellent potential as a ${character.role}. Focus on building core ${this.getRandomCategory(mockSkills)} abilities while maintaining balanced growth across all skill categories. Your current XP of ${character.currentXP} gives you good flexibility in skill choices.`
         };

@@ -12,8 +12,11 @@ export function validateAnalysisRequest(req, res, next) {
   // Validate API key (optional for development)
   if (apiKey && typeof apiKey !== 'string') {
     errors.push('apiKey must be a string');
-  } else if (apiKey && !apiKey.startsWith('sk-ant-api')) {
+  } else if (apiKey && process.env.NODE_ENV === 'production' && !apiKey.startsWith('sk-ant-api')) {
     errors.push('apiKey must be a valid Anthropic API key');
+  } else if (apiKey && process.env.NODE_ENV !== 'production' && apiKey !== 'mock' && !apiKey.startsWith('sk-ant-api')) {
+    // In development, allow "mock" or valid API keys
+    errors.push('apiKey must be "mock" or a valid Anthropic API key in development');
   }
 
   // Validate character object

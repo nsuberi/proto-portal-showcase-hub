@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Brain, 
   CheckCircle2, 
@@ -100,6 +101,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [useMockData, setUseMockData] = useState(false);
+  const [additionalContext, setAdditionalContext] = useState('');
   
   const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: any }>>(new Map());
 
@@ -183,7 +185,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
     }
 
     // Check cache first
-    const cacheKey = `${employeeId}-${employee.mastered_skills.join(',')}-${useMockData ? 'mock' : 'real'}`;
+    const cacheKey = `${employeeId}-${employee.mastered_skills.join(',')}-${useMockData ? 'mock' : 'real'}-${additionalContext}`;
     const cached = analysisCache.current.get(cacheKey);
     if (cached) {
       return cached;
@@ -206,18 +208,24 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
       return result;
     }
 
+    // In development mode, allow using server's mock mode without an API key
+    let requestApiKey = apiKey.trim();
+    if (!requestApiKey && import.meta.env.DEV) {
+      requestApiKey = 'mock'; // Use server's mock mode
+    }
+    
     // Validate API key for real API calls
-    if (!apiKey.trim()) {
+    if (!requestApiKey) {
       throw new Error('Claude API key is required. Please enter your API key from Anthropic Console.');
     }
 
-    if (!apiKey.startsWith('sk-ant-api')) {
+    if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
       throw new Error('Invalid API key format. Please enter a valid Anthropic Claude API key.');
     }
     
     // Prepare request payload matching your Lambda API format
     const requestPayload = {
-      apiKey: apiKey, // User-provided Claude API key
+      apiKey: requestApiKey, // User-provided Claude API key or 'mock'
       character: {
         name: employee.name,
         role: employee.role,
@@ -228,7 +236,11 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
       availableSkills: recommendations.map(rec => rec.skill),
       allSkills: skills,
       context: {
-        // Add any additional context here
+        additionalContext: additionalContext || '',
+        goalDefinitions: {
+          shortTerm: 'Skills that can be achieved in 3 steps or fewer',
+          longTerm: 'Skills that require more than 3 steps to achieve'
+        }
       }
     };
 
@@ -364,14 +376,16 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   return (
     <Card className="border-border/50 shadow-elegant mx-2 sm:mx-4 max-w-full">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-base sm:text-lg">
-          <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+        <CardTitle className="flex items-center gap-3 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-700 via-blue-700 to-purple-700 bg-clip-text text-transparent">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
+            <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          </div>
           {employee.images?.face && (
-            <div className="relative">
+            <div className="relative ring-2 ring-purple-200 rounded-lg overflow-hidden">
               <img 
                 src={employee.images.face} 
                 alt={employee.name}
-                className="w-10 h-12 sm:w-12 sm:h-16 object-cover rounded-lg shadow-sm flex-shrink-0 max-w-full"
+                className="w-12 h-14 sm:w-14 sm:h-18 object-cover shadow-sm flex-shrink-0 max-w-full"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -379,14 +393,38 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
               />
             </div>
           )}
-          <span className="truncate">AI Analysis for {employee.name}</span>
+          <span className="truncate">✨ AI Career Path Analysis</span>
         </CardTitle>
-        <CardDescription className="text-sm flex items-center gap-2">
-          <Key className="h-3 w-3 text-blue-600" />
-          Enter your Claude API key for personalized analysis
+        <CardDescription className="text-sm text-purple-700 font-medium">
+          Get intelligent, personalized recommendations for {employee.name}'s next skill goals
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 max-w-full">
+        {/* Additional Context Input */}
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-5 space-y-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <Label htmlFor="growth-context" className="text-base font-semibold text-purple-800 mb-2 block">
+                What areas do you hope to grow in?
+              </Label>
+              <p className="text-sm text-purple-700 mb-3">
+                Share your career aspirations, interests, or specific areas you'd like to develop to get more personalized recommendations.
+              </p>
+              <textarea
+                id="growth-context"
+                placeholder="e.g., I want to become a stronger leader, develop magical abilities, focus on team support skills..."
+                value={additionalContext}
+                onChange={(e) => setAdditionalContext(e.target.value)}
+                className="w-full min-h-[80px] text-sm p-3 border border-purple-200 rounded-lg focus:border-purple-400 focus:ring-2 focus:ring-purple-400 focus:ring-opacity-50 resize-none bg-white"
+                rows={3}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* API Key Input */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
           <div className="flex items-start gap-3">
@@ -444,19 +482,24 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
         {/* Analysis Button */}
         <Button 
           onClick={handleAnalyze}
-          disabled={isAnalyzing || (!useMockData && !apiKey.trim())}
-          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium disabled:opacity-50"
+          disabled={isAnalyzing || (!useMockData && !apiKey.trim() && !import.meta.env.DEV)}
+          className="w-full bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white font-bold text-lg py-6 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none"
           size="lg"
         >
           {isAnalyzing ? (
             <>
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-              {useMockData ? 'Generating Mock Analysis...' : 'Analyzing Skills...'}
+              <div className="animate-spin h-5 w-5 border-3 border-white border-t-transparent rounded-full mr-3" />
+              <span className="animate-pulse">{useMockData ? 'Generating Mock Analysis...' : 'Analyzing Career Path...'}</span>
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              {useMockData ? 'Get Mock Analysis' : 'Get AI Analysis of Next Steps'}
+              <Sparkles className="h-5 w-5 mr-3 animate-pulse" />
+              <span>
+                {useMockData 
+                  ? 'Get Mock Analysis' 
+                  : (apiKey.trim() ? '✨ Analyze My Career Path' : '✨ Get AI Analysis (Server Mock)')
+                }
+              </span>
             </>
           )}
         </Button>
@@ -489,20 +532,24 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
             )}
 
             {/* Overall Assessment */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Overall Assessment
+            <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 border-2 border-blue-300 rounded-xl p-6 shadow-md">
+              <h3 className="font-bold text-lg text-blue-900 mb-3 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                🎯 Career Path Assessment
               </h3>
-              <p className="text-sm text-blue-700">{analysis.overallAssessment}</p>
+              <p className="text-base text-blue-800 leading-relaxed font-medium">{analysis.overallAssessment}</p>
             </div>
 
             {/* Current Strengths */}
             {analysis.currentStrengths.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-green-700 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Current Strengths
+                <h4 className="font-bold text-lg text-green-800 flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-green-100">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  </div>
+                  💪 Current Strengths
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.currentStrengths.map((strength, index) => (
@@ -517,9 +564,11 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
             {/* Skill Gaps */}
             {analysis.skillGaps.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-orange-700 flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Areas for Growth
+                <h4 className="font-bold text-lg text-orange-800 flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-orange-100">
+                    <Target className="h-5 w-5 text-orange-600" />
+                  </div>
+                  🎯 Areas for Growth
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.skillGaps.map((gap, index) => (
@@ -534,9 +583,14 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
             {/* Short Term Goals */}
             {analysis.shortTermGoals.length > 0 && (
               <div className="space-y-3">
-                <h4 className="font-medium text-blue-700 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Recommended Short-Term Goals
+                <h4 className="font-bold text-lg text-blue-800 flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-blue-100">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  🚀 Recommended Short-Term Goals
+                  <Badge variant="outline" className="ml-2 text-xs bg-blue-50 text-blue-700 border-blue-300">
+                    3 steps or less
+                  </Badge>
                 </h4>
                 <div className="space-y-2">
                   {analysis.shortTermGoals.map((goal, index) => (
@@ -577,9 +631,14 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
             {/* Long Term Goals */}
             {analysis.longTermGoals.length > 0 && (
               <div className="space-y-3">
-                <h4 className="font-medium text-purple-700 flex items-center gap-2">
-                  <Gem className="h-4 w-4" />
-                  Recommended Long-Term Goals
+                <h4 className="font-bold text-lg text-purple-800 flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-purple-100">
+                    <Gem className="h-5 w-5 text-purple-600" />
+                  </div>
+                  🌟 Recommended Long-Term Goals
+                  <Badge variant="outline" className="ml-2 text-xs bg-purple-50 text-purple-700 border-purple-300">
+                    more than 3 steps
+                  </Badge>
                 </h4>
                 <div className="space-y-2">
                   {analysis.longTermGoals.map((goal, index) => (
