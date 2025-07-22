@@ -38,6 +38,12 @@ export class ClaudeService {
     const prompt = this.buildAnalysisPrompt(character, availableSkills, allSkills, context);
     
     try {
+      logger.info('Making Claude API request', { 
+        url: this.apiUrl,
+        hasApiKey: !!requestApiKey,
+        apiKeyPrefix: requestApiKey ? requestApiKey.substring(0, 10) + '...' : 'none'
+      });
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
