@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,12 +36,16 @@ interface SkillRecommendation {
   reason: string;
 }
 
-const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
+export interface SkillRecommendationWidgetRef {
+  expand: () => void;
+}
+
+const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, SkillRecommendationWidgetProps>(({
   employeeId,
   employee,
   goalSkillId,
   onSkillLearn
-}) => {
+}, ref) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLearning, setIsLearning] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +71,11 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [employeeId, goalSkillId, totalRecommendations]);
+
+  // Expose expand function to parent via ref
+  useImperativeHandle(ref, () => ({
+    expand: () => setIsExpanded(true)
+  }));
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -621,6 +630,8 @@ const SkillRecommendationWidget: React.FC<SkillRecommendationWidgetProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+SkillRecommendationWidget.displayName = 'SkillRecommendationWidget';
 
 export default SkillRecommendationWidget;

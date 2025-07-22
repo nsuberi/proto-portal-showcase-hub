@@ -13,7 +13,7 @@ import Sigma from 'sigma';
 import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
-import SkillRecommendationWidget from '../components/SkillRecommendationWidget';
+import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
@@ -251,6 +251,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState<any>(null)
   const skillGoalRef = useRef<HTMLDivElement>(null)
+  const skillRecommendationRef = useRef<HTMLDivElement>(null)
+  const skillRecommendationWidgetRef = useRef<SkillRecommendationWidgetRef>(null)
   const queryClient = useQueryClient()
 
   const { data: skills, isLoading } = useQuery({
@@ -505,6 +507,23 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         }
       }, 100)
     }
+  }
+
+  const handleLearnNewSkills = () => {
+    // Expand the recommendations widget directly
+    if (skillRecommendationWidgetRef.current) {
+      skillRecommendationWidgetRef.current.expand()
+    }
+    
+    // Scroll to the recommendations section
+    setTimeout(() => {
+      if (skillRecommendationRef.current) {
+        skillRecommendationRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        })
+      }
+    }, 100)
   }
 
   return (
@@ -837,12 +856,14 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
               // Invalidate recommendations to refresh with goal-directed ones
               queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
             }}
+            onLearnNewSkills={handleLearnNewSkills}
           />
         </div>
 
         {/* Skill Recommendation Widget */}
-        <div className="mb-8">
+        <div ref={skillRecommendationRef} className="mb-8">
           <SkillRecommendationWidget
+            ref={skillRecommendationWidgetRef}
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
             goalSkillId={currentGoal?.skill?.id}

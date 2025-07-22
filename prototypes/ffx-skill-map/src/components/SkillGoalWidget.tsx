@@ -30,6 +30,7 @@ interface SkillGoalWidgetProps {
   employee?: Employee;
   onGoalSet?: (goalSkill: Skill | null, path: string[]) => void;
   currentGoal?: Skill | null; // External goal state to sync with
+  onLearnNewSkills?: () => void;
 }
 
 interface GoalPath {
@@ -49,7 +50,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   employeeId,
   employee,
   onGoalSet,
-  currentGoal
+  currentGoal,
+  onLearnNewSkills
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<Skill | null>(null);
@@ -518,33 +520,46 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
                   
                   {/* Path Steps */}
                   {!goalPath.isCompleted && (
-                    <div className="space-y-2">
+                    <div className="space-y-3 mt-3">
                       <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Recommended path:</p>
-                      <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
-                        {goalPath.skills.map((skill, index) => {
-                          const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
-                          const categoryColorClass = getCategoryColor(skill.category);
-                          return (
-                            <React.Fragment key={skill.id}>
-                              <Badge 
-                                variant="outline" 
-                                className={`text-xs transition-all duration-300 ${
-                                  isSkillMastered 
-                                    ? categoryColorClass
-                                    : `${categoryColorClass} opacity-40 hover:opacity-60`
-                                }`}
-                              >
-                                {isSkillMastered && <span className="mr-1">✓</span>}
-                                <span className="truncate max-w-[120px] sm:max-w-none">{skill.name}</span>
-                              </Badge>
-                              {index < goalPath.skills.length - 1 && (
-                                <ArrowRight className={`h-3 w-3 flex-shrink-0 transition-all duration-300 ${
-                                  isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
-                                }`} />
-                              )}
-                            </React.Fragment>
-                          );
-                        })}
+                      <div className="flex flex-wrap gap-1 sm:gap-2 items-center justify-between">
+                        <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
+                          {goalPath.skills.map((skill, index) => {
+                            const isSkillMastered = employee?.mastered_skills?.includes(skill.id) || false;
+                            const categoryColorClass = getCategoryColor(skill.category);
+                            return (
+                              <React.Fragment key={skill.id}>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs transition-all duration-300 ${
+                                    isSkillMastered 
+                                      ? categoryColorClass
+                                      : `${categoryColorClass} opacity-40 hover:opacity-60`
+                                  }`}
+                                >
+                                  {isSkillMastered && <span className="mr-1">✓</span>}
+                                  <span className="truncate max-w-[120px] sm:max-w-none">{skill.name}</span>
+                                </Badge>
+                                {index < goalPath.skills.length - 1 && (
+                                  <ArrowRight className={`h-3 w-3 flex-shrink-0 transition-all duration-300 ${
+                                    isSkillMastered ? 'text-current opacity-100' : 'text-gray-400 opacity-60'
+                                  }`} />
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                        {/* Learn New Skills Button - right justified */}
+                        {onLearnNewSkills && (
+                          <Button
+                            onClick={onLearnNewSkills}
+                            size="sm"
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-xs px-2 py-1 h-6"
+                          >
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            Learn New Skills
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
