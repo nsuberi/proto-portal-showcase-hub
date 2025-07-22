@@ -62,9 +62,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   employee,
   onGoalSelect,
   onScrollToGoals,
-  apiBaseUrl = process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3003' 
-    : process.env.REACT_APP_AI_API_URL || 'https://api.your-domain.com'
+  apiBaseUrl = process.env.REACT_APP_AI_API_URL || 'http://localhost:3003'
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
