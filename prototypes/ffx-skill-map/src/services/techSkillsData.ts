@@ -3,7 +3,7 @@
 // Maps to existing network structure with meaningful professional development paths
 
 import { Skill, Employee, SkillConnection } from '../types';
-import { SkillGraphAnalyzer, calculateSkillXP, expandMasteredSkills } from '../utils/graphUtils';
+import { SkillGraphAnalyzer, calculateSkillXP } from '../utils/graphUtils';
 
 // Technology skill names organized by cluster and category
 const techSkillNames = {
@@ -768,14 +768,6 @@ class TechSkillsService {
       }
     ];
 
-    // Expand mastered skills using graph analysis
-    if (this.graphAnalyzer) {
-      return techEmployees.map(employee => ({
-        ...employee,
-        mastered_skills: expandMasteredSkills(employee, this.graphAnalyzer!, 3)
-      }));
-    }
-
     return techEmployees;
   }
 
@@ -863,8 +855,15 @@ class TechSkillsService {
     const employee = await this.getEmployeeById(employeeId);
     if (!employee) return [];
 
+    // Debug: Log the current service's employee mastered skills
+    console.log('🔧 TechSkillsService - Employee mastered skills:', employee?.mastered_skills);
+
+
     // Use goal-directed recommendations if goal is provided
     if (goalSkillId) {
+      // Use the current service's employee data for goal recommendations
+      if (!employee) return [];
+      
       const goalRecommendations = this.graphAnalyzer.getGoalDirectedRecommendations(
         employee.mastered_skills,
         goalSkillId,
@@ -888,10 +887,14 @@ class TechSkillsService {
             prerequisites: prerequisiteSkills
           };
         })
-        .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null);
+        .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null)
+        .filter(rec => {
+          // Safety check: never recommend mastered skills
+          return !employee.mastered_skills.includes(rec.skill.id);
+        });
     }
 
-    // Standard recommendations
+    // Standard recommendations - use the current service's employee data
     const availableSkills = this.graphAnalyzer.getAvailableNextSkills(employee.mastered_skills);
     
     return availableSkills
@@ -915,7 +918,11 @@ class TechSkillsService {
           prerequisites: prerequisiteSkills
         };
       })
-      .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null);
+      .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null)
+      .filter(rec => {
+        // Safety check: never recommend mastered skills
+        return !employee.mastered_skills.includes(rec.skill.id);
+      });
   }
 
   private generateTechRecommendationReason(skill: Skill, employee: Employee): string {

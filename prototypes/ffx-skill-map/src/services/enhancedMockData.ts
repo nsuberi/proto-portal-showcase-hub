@@ -2,7 +2,7 @@
 // Based on Expert Sphere Grid network data with FFX-inspired skill names and categories
 
 import { Skill, Employee, SkillConnection } from '../types';
-import { SkillGraphAnalyzer, calculateSkillXP, expandMasteredSkills } from '../utils/graphUtils';
+import { SkillGraphAnalyzer, calculateSkillXP } from '../utils/graphUtils';
 
 // FFX-inspired skill names organized by node type and category
 const skillNames = {
@@ -732,14 +732,6 @@ class EnhancedMockNeo4jService {
       }
     ];
 
-    // Expand mastered skills using graph analysis
-    if (this.graphAnalyzer) {
-      return baseEmployees.map(employee => ({
-        ...employee,
-        mastered_skills: expandMasteredSkills(employee, this.graphAnalyzer!, 3)
-      }));
-    }
-
     return baseEmployees;
   }
 
@@ -830,8 +822,12 @@ class EnhancedMockNeo4jService {
 
     // Use goal-directed recommendations if goal is provided
     if (goalSkillId) {
+      // Use the current service's employee data for goal recommendations  
+      const currentEmployee = this.employees.find(emp => emp.id === employeeId);
+      if (!currentEmployee) return [];
+      
       const goalRecommendations = this.graphAnalyzer.getGoalDirectedRecommendations(
-        employee.mastered_skills,
+        currentEmployee.mastered_skills,
         goalSkillId,
         20 // Allow more goal-directed recommendations for pagination
       );
@@ -854,11 +850,18 @@ class EnhancedMockNeo4jService {
             prerequisites: prerequisiteSkills
           };
         })
-        .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null);
+        .filter((rec): rec is { skill: Skill; priority: string; reason: string; prerequisites: Skill[] } => rec !== null)
+        .filter(rec => {
+          // Safety check: never recommend mastered skills using the current service's employee data
+          const currentEmployee = this.employees.find(emp => emp.id === employeeId);
+          return currentEmployee ? !currentEmployee.mastered_skills.includes(rec.skill.id) : true;
+        });
     }
 
-    // Fallback to standard recommendations
-    const availableSkills = this.graphAnalyzer.getAvailableNextSkills(employee.mastered_skills);
+    // Fallback to standard recommendations - use the current service's employee data
+    const currentEmployee = this.employees.find(emp => emp.id === employeeId);
+    if (!currentEmployee) return [];
+    const availableSkills = this.graphAnalyzer.getAvailableNextSkills(currentEmployee.mastered_skills);
     
     return availableSkills
       .map(skillId => {
@@ -879,7 +882,7 @@ class EnhancedMockNeo4jService {
         return {
           skill,
           priority,
-          reason: this.generateRecommendationReason(skill, employee),
+          reason: this.generateRecommendationReason(skill, currentEmployee),
           prerequisites: prerequisiteSkills
         };
       })

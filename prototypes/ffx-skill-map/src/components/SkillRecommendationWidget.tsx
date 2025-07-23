@@ -262,7 +262,8 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
       queryClient.setQueryData([`${dataSource}-employees`], updatedEmployees);
       
       // Use efficient invalidation instead of blocking refetch
-      queryClient.invalidateQueries({ queryKey: ['skill-recommendations', employeeId] });
+      // Invalidate all skill-recommendations for this employee (with any goal/service combination)
+      queryClient.invalidateQueries({ queryKey: ['skill-recommendations', employeeId], exact: false });
       queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
       
     } catch (error) {
@@ -438,13 +439,13 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
             {isExpanded ? (
               <>
                 <Minimize2 className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Hide Recs</span>
+                <span className="hidden sm:inline">Hide Skills</span>
                 <span className="sm:hidden">Hide</span>
               </>
             ) : (
               <>
                 <Maximize2 className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">Show Recs</span>
+                <span className="hidden sm:inline">Show Skills</span>
                 <span className="sm:hidden">Show</span>
               </>
             )}
@@ -596,7 +597,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
         ) : (
           <div className="text-center py-6">
             <p className="text-muted-foreground text-sm">
-              Recs currently hidden... Click "Show Recs" to view {totalRecommendations} recommendations
+              Skills currently hidden... Click "Show Skills" to view {totalRecommendations} recommendations
             </p>
           </div>
         )}

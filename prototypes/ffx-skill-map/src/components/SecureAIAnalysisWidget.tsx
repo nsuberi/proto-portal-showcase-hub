@@ -23,7 +23,9 @@ import {
   Server,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { sharedEnhancedService } from '../services/sharedService';
 import { Skill, Employee } from '../types';
@@ -106,6 +108,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const [showApiKey, setShowApiKey] = useState(false);
   const [useMockData, setUseMockData] = useState(false);
   const [additionalContext, setAdditionalContext] = useState('');
+  const [isWidgetVisible, setIsWidgetVisible] = useState(false);
   
   const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: any }>>(new Map());
 
@@ -394,18 +397,19 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   }
 
   return (
-    <Card className="border-border/50 shadow-elegant mx-2 sm:mx-4 max-w-full">
+    <Card className={`border-border/50 shadow-elegant mx-2 sm:mx-4 max-w-full bg-gradient-to-br from-purple-100/70 via-blue-100/70 to-pink-100/70 ${!isWidgetVisible ? 'min-h-[200px]' : ''}`}>
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-700 via-blue-700 to-purple-700 bg-clip-text text-transparent">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
-            <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        <CardTitle className="flex items-center justify-between w-full gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-purple-700 via-blue-700 to-purple-700 bg-clip-text text-transparent flex-1 min-w-0">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg flex-shrink-0">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
           </div>
           {employee.images?.face && (
-            <div className="relative ring-2 ring-purple-200 rounded-lg overflow-hidden">
+            <div className="relative ring-2 ring-purple-200 rounded-lg overflow-hidden flex-shrink-0">
               <img 
                 src={employee.images.face} 
                 alt={employee.name}
-                className="w-12 h-14 sm:w-14 sm:h-18 object-cover shadow-sm flex-shrink-0 max-w-full"
+                className="w-10 h-12 sm:w-12 sm:h-14 md:w-14 md:h-18 object-cover shadow-sm"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -413,13 +417,23 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
               />
             </div>
           )}
-          <span className="truncate">✨ AI Career Path Analysis</span>
+            <span className="truncate min-w-0">✨ AI Career Path Analysis</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsWidgetVisible(!isWidgetVisible)}
+            className="flex-shrink-0 px-2 sm:px-3 py-1 hover:bg-purple-100 text-xs sm:text-sm font-medium whitespace-nowrap"
+          >
+            {isWidgetVisible ? 'Hide' : 'Show'}
+          </Button>
         </CardTitle>
         <CardDescription className="text-sm text-purple-700 font-medium">
           Get intelligent, personalized recommendations for {employee.name}'s next skill goals
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 max-w-full">
+      {isWidgetVisible && (
+        <CardContent className="space-y-4 max-w-full">
         {/* Additional Context Input */}
         <div className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-5 space-y-4 shadow-sm">
           <div className="flex items-start gap-3">
@@ -517,7 +531,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
               <span>
                 {useMockData 
                   ? 'Get Mock Analysis' 
-                  : (apiKey.trim() ? '✨ Analyze My Career Path' : '✨ Get AI Analysis (Server Mock)')
+                  : (apiKey.trim() ? '✨ Analyze My Career Path' : '✨ Get AI Analysis')
                 }
               </span>
             </>
@@ -697,7 +711,8 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
             )}
           </div>
         )}
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 };

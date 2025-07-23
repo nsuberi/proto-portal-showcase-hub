@@ -168,15 +168,6 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
     
     sigmaInstanceRef.current = renderer;
     
-    // Add click handler to nodes
-    renderer.on('clickNode', (event) => {
-      const skillId = event.node;
-      const skill = skills?.find(s => s.id === skillId);
-      if (skill && onNodeClick) {
-        onNodeClick(skill);
-      }
-    });
-    
     return () => {
       if (sigmaInstanceRef.current) {
         sigmaInstanceRef.current.kill();
@@ -184,6 +175,25 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
       }
     };
   }, []); // Only run once on mount
+  
+  // Update click handler when skills or onNodeClick changes
+  useEffect(() => {
+    if (!sigmaInstanceRef.current) return;
+    
+    const renderer = sigmaInstanceRef.current;
+    
+    // Remove all existing click listeners to avoid duplicates
+    renderer.removeAllListeners('clickNode');
+    
+    // Add fresh click handler with current skills and onNodeClick
+    renderer.on('clickNode', (event) => {
+      const skillId = event.node;
+      const skill = skills?.find(s => s.id === skillId);
+      if (skill && onNodeClick) {
+        onNodeClick(skill);
+      }
+    });
+  }, [skills, onNodeClick]); // Update when skills or onNodeClick changes
   
   // Memoize expensive graph computations
   const memoizedNodes = useMemo(() => {
@@ -252,7 +262,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
   return (
     <div
       ref={sigmaContainerRef}
-      className="w-full h-[400px] sm:h-[500px] md:h-[600px] border border-border/50 mb-6 rounded-lg shadow-md bg-gradient-to-br from-background via-card to-background/95 mx-4"
+      className="w-full h-[400px] sm:h-[500px] md:h-[600px] border border-border/50 mb-6 rounded-lg shadow-md bg-gradient-to-br from-background via-card to-background/95 mx-2 sm:mx-4"
       data-testid="sigma-graph"
       style={{
         background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(139, 69, 19, 0.03) 100%)'
@@ -916,6 +926,12 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   setDataSource('tech')
                   setSelectedEmployeeId('')
                   setCurrentGoal(null)
+                  setSelectedSkill(null)
+                  // Invalidate all cached data when switching datasets
+                  queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
+                  queryClient.invalidateQueries({ queryKey: ['ffx-connections'] })
+                  queryClient.invalidateQueries({ queryKey: ['ffx-employees'] })
+                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
                 }}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
                   dataSource === 'tech'
@@ -931,6 +947,12 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   setDataSource('ffx')
                   setSelectedEmployeeId('')
                   setCurrentGoal(null)
+                  setSelectedSkill(null)
+                  // Invalidate all cached data when switching datasets
+                  queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
+                  queryClient.invalidateQueries({ queryKey: ['tech-connections'] })
+                  queryClient.invalidateQueries({ queryKey: ['tech-employees'] })
+                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
                 }}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
                   dataSource === 'ffx'
@@ -1018,16 +1040,18 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       </div>
 
       {/* Sigma.js visualization container */}
-      <SigmaGraph
-        skills={skills}
-        connections={connections}
-        masteredSkills={masteredSkills}
-        selectedEmployeeId={selectedEmployeeId}
-        goalPath={currentGoal?.path}
-        goalSkillId={currentGoal?.skill?.id}
-        onNodeClick={handleNodeClick}
-        categoryColors={CATEGORY_COLORS}
-      />
+      <div className="mb-8">
+        <SigmaGraph
+          skills={skills}
+          connections={connections}
+          masteredSkills={masteredSkills}
+          selectedEmployeeId={selectedEmployeeId}
+          goalPath={currentGoal?.path}
+          goalSkillId={currentGoal?.skill?.id}
+          onNodeClick={handleNodeClick}
+          categoryColors={CATEGORY_COLORS}
+        />
+      </div>
 
       {/* Skill Types Legend */}
       <div className="mb-6 md:mb-8 relative mx-4">

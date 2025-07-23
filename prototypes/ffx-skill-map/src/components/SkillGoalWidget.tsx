@@ -321,16 +321,23 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       setSearchTerm('');
       setIsSearchExpanded(false);
       
-      const path = calculateGoalPath(currentGoal);
-      
-      // Store original total steps for consistent progress calculation
-      if (path) {
-        originalTotalStepsRef.current = path.totalSteps;
+      // Only calculate path if we have the correct data loaded
+      if (graphAnalyzer && employee && skills) {
+        const path = calculateGoalPath(currentGoal);
+        
+        // Store original total steps for consistent progress calculation
+        if (path) {
+          originalTotalStepsRef.current = path.totalSteps;
+        }
+        
+        setGoalPath(path);
+      } else {
+        // Clear path if we don't have data yet - it will recalculate when dependencies update
+        setGoalPath(null);
+        originalTotalStepsRef.current = null;
       }
-      
-      setGoalPath(path);
     }
-  }, [currentGoal, selectedGoal]);
+  }, [currentGoal, selectedGoal, graphAnalyzer, employee, skills]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
