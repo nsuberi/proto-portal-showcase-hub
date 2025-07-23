@@ -19,6 +19,7 @@ import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../comp
 import SkillGoalWidget from '../components/SkillGoalWidget';
 import SecureAIAnalysisWidget from '../components/SecureAIAnalysisWidget';
 import AITeamPathWidget from '../components/AITeamPathWidget';
+import JustInTimeWidget from '../components/JustInTimeWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -1094,6 +1095,16 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           </div>
         </div>
       </div>
+
+      {/* Just-in-Time Learning Widget */}
+      {selectedEmployee && (
+        <JustInTimeWidget
+          employeeId={selectedEmployeeId}
+          employee={selectedEmployee}
+          currentGoal={currentGoal}
+          dataSource={dataSource}
+        />
+      )}
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
