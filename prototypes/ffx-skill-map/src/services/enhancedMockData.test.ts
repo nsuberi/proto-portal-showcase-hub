@@ -191,7 +191,7 @@ describe('EnhancedMockNeo4jService XP Logic', () => {
       const employees = await service.getAllEmployees();
       const storageKey = service.getStorageKey();
       
-      expect(storageKey).toBe('ffx-skill-map-employees');
+      expect(storageKey).toBe('ffx-skill-map-employees-v2');
       
       // The employees should have been automatically saved
       const savedData = window.localStorage.getItem(storageKey);

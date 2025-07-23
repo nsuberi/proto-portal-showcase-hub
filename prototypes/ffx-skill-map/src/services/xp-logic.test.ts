@@ -136,6 +136,8 @@ describe('XP Decrementing Logic', () => {
     it('should handle localStorage errors gracefully', () => {
       // Simulate localStorage error
       const originalSetItem = mockLocalStorage.setItem;
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
       mockLocalStorage.setItem = jest.fn(() => {
         throw new Error('localStorage quota exceeded');
       });
@@ -150,8 +152,12 @@ describe('XP Decrementing Logic', () => {
         }
       }).not.toThrow();
 
-      // Restore original method
+      // Verify console.warn was called
+      expect(consoleWarnSpy).toHaveBeenCalledWith('localStorage save failed:', expect.any(Error));
+
+      // Restore original methods
       mockLocalStorage.setItem = originalSetItem;
+      consoleWarnSpy.mockRestore();
     });
   });
 
