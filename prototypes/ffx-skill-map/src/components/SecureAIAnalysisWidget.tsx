@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { sharedEnhancedService } from '../services/sharedService';
 import { Skill, Employee } from '../types';
+import { getSystemPrompt } from '../lib/systemPrompts';
 
 interface SecureAIAnalysisWidgetProps {
   employeeId: string;
@@ -36,7 +37,11 @@ interface SecureAIAnalysisWidgetProps {
   onGoalSelect?: (skill: Skill) => void;
   onScrollToGoals?: () => void;
   apiBaseUrl?: string; // Allow configurable API URL
-  service?: any; // Service to use for skills data (defaults to sharedEnhancedService)
+  service?: {
+    getAllSkills: () => Promise<Skill[]>;
+    getAllEmployees: () => Promise<Employee[]>;
+    getSkillRecommendations: (employeeId: string) => Promise<{ skill: Skill }[]>;
+  }; // Service to use for skills data (defaults to sharedEnhancedService)
   dataSource?: string; // Data source for query keys (defaults to 'enhanced')
 }
 
@@ -103,14 +108,14 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [analysisMetadata, setAnalysisMetadata] = useState<any>(null);
+  const [analysisMetadata, setAnalysisMetadata] = useState<AnalysisResponse['metadata'] | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [useMockData, setUseMockData] = useState(false);
   const [additionalContext, setAdditionalContext] = useState('');
   const [isWidgetVisible, setIsWidgetVisible] = useState(false);
   
-  const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: any }>>(new Map());
+  const analysisCache = useRef<Map<string, { analysis: AIAnalysis; metadata: AnalysisResponse['metadata'] }>>(new Map());
 
   const { data: skills } = useQuery({
     queryKey: [`${dataSource}-skills`],
@@ -126,7 +131,16 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
   const API_ENDPOINT = `${apiBaseUrl || getApiUrl()}/api/v1/ai-analysis/skill-recommendations`;
 
   // Mock analysis for local testing
-  const generateMockAnalysis = async (character: any, availableSkills: any[]): Promise<{ analysis: AIAnalysis; metadata: any }> => {
+  const generateMockAnalysis = async (
+    character: {
+      name: string;
+      role: string;
+      currentXP: number;
+      level: number;
+      masteredSkills: string[];
+    }, 
+    availableSkills: Skill[]
+  ): Promise<{ analysis: AIAnalysis; metadata: AnalysisResponse['metadata'] }> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -186,7 +200,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
     return { analysis, metadata };
   };
 
-  const analyzeSkillsWithAPI = async (): Promise<{ analysis: AIAnalysis; metadata: any }> => {
+  const analyzeSkillsWithAPI = async (): Promise<{ analysis: AIAnalysis; metadata: AnalysisResponse['metadata'] }> => {
     if (!employee || !skills || !allEmployees) {
       throw new Error('Missing required data for analysis');
     }
@@ -233,6 +247,7 @@ const SecureAIAnalysisWidget: React.FC<SecureAIAnalysisWidgetProps> = ({
     // Prepare request payload matching your Lambda API format
     const requestPayload = {
       apiKey: requestApiKey, // User-provided Claude API key or 'mock'
+      systemPrompt: getSystemPrompt('CAREER_PATH'), // Use centralized career path analysis prompt
       character: {
         name: employee.name,
         role: employee.role,

@@ -18,6 +18,7 @@ import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap
 import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
 import SecureAIAnalysisWidget from '../components/SecureAIAnalysisWidget';
+import AITeamPathWidget from '../components/AITeamPathWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -1167,6 +1168,24 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 // Revert optimistic update on error
                 queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`] });
               }
+            }}
+          />
+        </div>
+
+        {/* AI Team Path Analysis Widget */}
+        <div className="mb-8">
+          <AITeamPathWidget
+            employeeId={selectedEmployeeId}
+            employee={selectedEmployee}
+            service={currentService}
+            dataSource={dataSource}
+            onGoalSelect={(skill) => {
+              setCurrentGoal({ skill, path: [] });
+              // Invalidate recommendations to refresh with goal-directed ones
+              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
+            }}
+            onScrollToGoals={() => {
+              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
           />
         </div>
