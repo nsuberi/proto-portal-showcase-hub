@@ -111,8 +111,8 @@ class TechSkillsService {
   private initialized = false;
   private graphAnalyzer: SkillGraphAnalyzer | null = null;
   
-  // localStorage key for persisting employee data
-  private readonly STORAGE_KEY = 'tech-skill-map-employees';
+  // localStorage key for persisting employee data - updated to force cache refresh
+  private readonly STORAGE_KEY = 'tech-skill-map-employees-v2';
 
   constructor() {
     this.initializeData();
@@ -131,12 +131,15 @@ class TechSkillsService {
     // Load employees from localStorage or create new ones
     const storedEmployees = this.loadEmployeesFromStorage();
     if (storedEmployees && this.isValidEmployeeData(storedEmployees)) {
+      console.log('✅ TECH: Using stored employee data');
       this.employees = storedEmployees;
     } else {
-      console.log('🔄 Creating fresh tech organization employee data');
+      console.log('🔄 TECH: Creating fresh tech organization employee data');
+      console.log('🔄 TECH: Stored data valid?', storedEmployees ? this.isValidEmployeeData(storedEmployees) : 'No stored data');
       this.employees = this.createTechEmployees();
       // Save initial employee data to localStorage
       this.saveEmployeesToStorage();
+      console.log('💾 TECH: Saved fresh employee data. First employee image:', this.employees[0]?.images?.face);
     }
     
     this.initialized = true;
@@ -585,7 +588,7 @@ class TechSkillsService {
         skill_points: 165,
         level: 32,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-sarah.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -609,7 +612,7 @@ class TechSkillsService {
         skill_points: 156,
         level: 30,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-marcus.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -633,7 +636,7 @@ class TechSkillsService {
         skill_points: 182,
         level: 35,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-priya.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -657,7 +660,7 @@ class TechSkillsService {
         skill_points: 174,
         level: 33,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-james.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -681,7 +684,7 @@ class TechSkillsService {
         skill_points: 142,
         level: 28,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-alexandra.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -705,7 +708,7 @@ class TechSkillsService {
         skill_points: 198,
         level: 38,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-david.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -729,7 +732,7 @@ class TechSkillsService {
         skill_points: 134,
         level: 26,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-lisa.jpg',
           full_body: '',
           hi_res: ''
         },
@@ -753,7 +756,7 @@ class TechSkillsService {
         skill_points: 275,
         level: 45,
         images: {
-          face: '',
+          face: '/prototypes/ffx-skill-map/images/characters/tech_org/faces/tech-robert.jpg',
           full_body: '',
           hi_res: ''
         },
