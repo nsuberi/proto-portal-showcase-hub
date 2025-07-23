@@ -118,6 +118,103 @@ export class ClaudeService {
   }
 
   /**
+   * Analyze just-in-time learning request
+   * @param {Object} params - Analysis parameters
+   * @param {string} params.apiKey - Claude API key for this request
+   * @param {Object} params.character - Character data
+   * @param {Array} params.allSkills - All skills array
+   * @param {Array} params.teammates - All teammates data
+   * @param {string} params.widgetSystemPrompt - Hidden system prompt
+   * @param {string} params.userSystemPrompt - User's system prompt
+   * @param {string} params.justInTimeQuestion - User's question
+   */
+  async analyzeJustInTimeRequest({ apiKey, character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion }) {
+    // Return mock data in development mode without API key or with "mock" key
+    if (this.mockMode || !apiKey || apiKey === 'mock') {
+      return this.getMockJustInTimeResponse(character, justInTimeQuestion);
+    }
+
+    // Use provided API key for this request
+    const requestApiKey = apiKey || this.apiKey;
+    if (!requestApiKey) {
+      throw new Error('Claude API key is required for just-in-time analysis');
+    }
+
+    const prompt = this.buildJustInTimePrompt(character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion);
+    
+    try {
+      logger.info('Making Claude API request for just-in-time learning', { 
+        url: this.apiUrl,
+        hasApiKey: !!requestApiKey,
+        apiKeyPrefix: requestApiKey ? requestApiKey.substring(0, 10) + '...' : 'none',
+        model: this.model
+      });
+
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': requestApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          max_tokens: 2000,
+          temperature: 0.7,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error('Claude API request failed for just-in-time', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText.substring(0, 500)
+        });
+        
+        if (response.status === 401) {
+          throw new Error('Invalid Claude API key configuration');
+        } else if (response.status === 429) {
+          throw new Error('Claude API rate limit exceeded');
+        }
+        throw new Error(`Claude API request failed: ${response.status} ${response.statusText}: ${errorText.substring(0, 200)}`);
+      }
+
+      const responseText = await response.text();
+      logger.debug('Raw Claude API response for just-in-time', { responseText: responseText.substring(0, 500) });
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        logger.error('Failed to parse Claude API response as JSON for just-in-time', { 
+          error: parseError.message,
+          responseText: responseText.substring(0, 1000)
+        });
+        throw new Error('Invalid response format from Claude API');
+      }
+
+      if (!data.content || !data.content[0] || !data.content[0].text) {
+        throw new Error('Unexpected response structure from Claude API');
+      }
+
+      const content = data.content[0].text;
+      return { response: content };
+
+    } catch (error) {
+      logger.error('Error in just-in-time analysis', { 
+        error: error.message,
+        stack: error.stack 
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Build the analysis prompt for Claude
    */
   buildAnalysisPrompt(character, availableSkills, allSkills, context) {
@@ -356,5 +453,70 @@ IMPORTANT GUIDELINES:
   getRandomCategory(skills) {
     const categories = [...new Set(skills.map(s => s.category))];
     return categories[Math.floor(Math.random() * categories.length)] || 'general';
+  }
+
+  /**
+   * Build the just-in-time learning prompt for Claude
+   */
+  buildJustInTimePrompt(character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion) {
+    const masteredSkills = allSkills.filter(skill => 
+      character.masteredSkills.includes(skill.id)
+    );
+
+    const teammateKnowledge = teammates.map(teammate => {
+      const teammateSkills = allSkills.filter(skill => 
+        teammate.mastered_skills && teammate.mastered_skills.includes(skill.id)
+      );
+      return {
+        name: teammate.name,
+        role: teammate.role,
+        expertise: teammateSkills.map(skill => skill.name)
+      };
+    });
+
+    return `${widgetSystemPrompt}
+
+USER SYSTEM PROMPT:
+${userSystemPrompt}
+
+LEARNABLE SKILLS DATABASE:
+${allSkills.map(skill => `- ${skill.name}: ${skill.description} (Category: ${skill.category})`).join('\n')}
+
+TEAMMATE EXPERTISE:
+${teammateKnowledge.map(teammate => 
+  `${teammate.name} (${teammate.role}): Expert in ${teammate.expertise.join(', ')}`
+).join('\n')}
+
+JUST-IN-TIME QUESTION:
+${justInTimeQuestion}
+
+Please provide recommendations in the following format:
+• **Key piece of knowledge that can help you advance:** [Specific knowledge or skill insight]
+• **Key person(s) to talk to who are expert in that knowledge:** [Teammate name(s) and why they're the right person]
+• **How your just-in-time question relates to your current goal:** [Connection between the question and their learning objectives]
+
+Focus on actionable insights that bridge known knowledge with new concepts, emphasizing practical applications and immediate next steps.`;
+  }
+
+  /**
+   * Generate mock just-in-time response for development/testing
+   */
+  getMockJustInTimeResponse(character, justInTimeQuestion) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const response = `**Key piece of knowledge that can help you advance:**
+Understanding the fundamentals of ${character.role.toLowerCase()} strategy and how it connects to advanced techniques. This knowledge will help you make more informed decisions about skill progression and tactical applications.
+
+**Key person(s) to talk to who are expert in that knowledge:**
+Based on the team expertise, I recommend speaking with senior team members who have mastered complementary skills. They can provide practical insights and real-world applications that aren't covered in basic training materials.
+
+**How your just-in-time question relates to your current goal:**
+Your question "${justInTimeQuestion}" directly relates to bridging your current ${character.role.toLowerCase()} foundation with more advanced concepts. This aligns with your learning objectives by focusing on practical application rather than theoretical knowledge alone.
+
+The key is to focus on incremental skill building while maintaining your core strengths. Consider practicing with scenarios that combine your existing knowledge with new challenges to accelerate your learning curve.`;
+
+        resolve({ response });
+      }, 1000);
+    });
   }
 }

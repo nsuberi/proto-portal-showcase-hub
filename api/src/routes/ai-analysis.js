@@ -151,4 +151,100 @@ router.get('/ai-analysis/health', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/v1/ai-analysis/just-in-time
+ * 
+ * Analyze just-in-time learning requests with system prompts and teammate expertise
+ */
+router.post('/ai-analysis/just-in-time',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { 
+        apiKey, 
+        character, 
+        allSkills, 
+        teammates, 
+        widgetSystemPrompt, 
+        userSystemPrompt, 
+        justInTimeQuestion 
+      } = req.body;
+
+      // Validate required fields
+      if (!character || !allSkills || !teammates || !widgetSystemPrompt || !userSystemPrompt || !justInTimeQuestion) {
+        return res.status(400).json({
+          error: 'Missing required fields: character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion',
+          timestamp: new Date().toISOString(),
+          requestId: req.requestId
+        });
+      }
+
+      // Validate character structure
+      if (!character.name || !character.role || !Array.isArray(character.masteredSkills)) {
+        return res.status(400).json({
+          error: 'Invalid character structure: name, role, and masteredSkills array are required',
+          timestamp: new Date().toISOString(),
+          requestId: req.requestId
+        });
+      }
+
+      logger.info('Processing just-in-time learning request', {
+        character: character.name,
+        role: character.role,
+        skillsCount: allSkills.length,
+        teammatesCount: teammates.length,
+        questionLength: justInTimeQuestion.length,
+        requestId: req.requestId
+      });
+
+      const startTime = Date.now();
+      const response = await claudeService.analyzeJustInTimeRequest({
+        apiKey,
+        character,
+        allSkills,
+        teammates,
+        widgetSystemPrompt,
+        userSystemPrompt,
+        justInTimeQuestion
+      });
+
+      const processingTime = Date.now() - startTime;
+
+      logger.info('Just-in-time analysis completed', {
+        processingTimeMs: processingTime,
+        character: character.name,
+        requestId: req.requestId
+      });
+
+      res.status(200).json({
+        ...response,
+        metadata: {
+          analysisId: req.requestId,
+          timestamp: new Date().toISOString(),
+          model: claudeService.model,
+          processingTimeMs: processingTime
+        }
+      });
+
+    } catch (error) {
+      logger.error('Just-in-time analysis failed', {
+        error: error.message,
+        stack: error.stack,
+        requestId: req.requestId
+      });
+
+      // Return appropriate error status
+      const status = error.message.includes('API key') ? 401 : 
+                   error.message.includes('rate limit') ? 429 : 
+                   500;
+
+      res.status(status).json({
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        requestId: req.requestId
+      });
+    }
+  }
+);
+
 export { router as aiAnalysisRoutes };
