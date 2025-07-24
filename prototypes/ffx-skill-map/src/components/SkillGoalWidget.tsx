@@ -65,6 +65,9 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const originalTotalStepsRef = useRef<number | null>(null);
+  const previousEmployeeIdRef = useRef<string | null>(null);
+  const isEmployeeChangeInProgressRef = useRef<boolean>(false);
+  const [forceExternalSync, setForceExternalSync] = useState<number>(0);
 
   const { data: skills } = useQuery({
     queryKey: [`${dataSource}-skills`],
@@ -256,14 +259,6 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   // Recalculate path when employee mastered skills change
   useEffect(() => {
-    console.log('🔄 Goal recalculation effect triggered:', {
-      hasSelectedGoal: !!selectedGoal,
-      hasEmployee: !!employee,
-      hasSkills: !!skills,
-      originalTotalSteps: originalTotalStepsRef.current,
-      masteredSkills: employee?.mastered_skills?.length || 0
-    });
-    
     if (selectedGoal && employee && skills && originalTotalStepsRef.current !== null) {
       const previouslyCompleted = goalPath?.isCompleted || false;
       const updatedPath = calculateGoalPath(selectedGoal);
@@ -291,6 +286,16 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       
       // Notify parent component of path update
       if (onGoalSet && selectedGoal) {
+        console.log('🚨 SkillGoalWidget calling onGoalSet from useEffect:', {
+          employeeId,
+          employeeName: employee?.name || 'none',
+          selectedGoalName: selectedGoal.name,
+          selectedGoalId: selectedGoal.id,
+          pathLength: updatedPath?.path?.length || 0,
+          reason: 'path recalculation in useEffect',
+          previousEmployeeId: previousEmployeeIdRef.current,
+          hasSelectedGoal: !!selectedGoal
+        });
         onGoalSet(selectedGoal, updatedPath?.path || []);
       }
       
@@ -307,8 +312,39 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     }
   }, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills]);
 
+  // Reset state when employee changes to prevent goal contamination
+  // CRITICAL: Clear selectedGoal to prevent carrying over goals between employees
+  useEffect(() => {
+    const hasEmployeeChanged = previousEmployeeIdRef.current !== null && previousEmployeeIdRef.current !== employeeId;
+    
+    if (hasEmployeeChanged) {
+      isEmployeeChangeInProgressRef.current = true;
+      setSelectedGoal(null);
+      setGoalPath(null);
+      setShowCompletionAnimation(false);
+      originalTotalStepsRef.current = null;
+      
+      // Clear the flag after a brief delay to allow other useEffects to see it
+      // Use a longer delay to ensure all useEffects in this render cycle complete
+      setTimeout(() => {
+        isEmployeeChangeInProgressRef.current = false;
+        // Force external sync to re-evaluate after employee change is complete
+        setForceExternalSync(prev => prev + 1);
+      }, 10);
+    }
+    
+    // Update the reference for next time
+    previousEmployeeIdRef.current = employeeId;
+  }, [employeeId]);
+
   // Sync with external currentGoal state (for reset functionality and external goal setting)
   useEffect(() => {
+    // CRITICAL: Only sync external goal if this is a legitimate change, not contamination
+    // During employee change, currentGoal might contain stale data from previous employee
+    if (isEmployeeChangeInProgressRef.current) {
+      return;
+    }
+    
     if (currentGoal === null && selectedGoal !== null) {
       // External goal was cleared, clear internal state
       setSelectedGoal(null);
@@ -337,7 +373,7 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         originalTotalStepsRef.current = null;
       }
     }
-  }, [currentGoal, selectedGoal, graphAnalyzer, employee, skills]);
+  }, [currentGoal, selectedGoal, graphAnalyzer, employee, skills, employeeId, forceExternalSync]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {

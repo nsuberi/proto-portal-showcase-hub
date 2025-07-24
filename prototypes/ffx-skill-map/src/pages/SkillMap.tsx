@@ -8,7 +8,7 @@ import TechSkillsService from '../services/techSkillsData'
 // Create instances of both services
 const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
@@ -282,11 +282,28 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
-  const [currentGoal, setCurrentGoal] = useState<{ skill: any; path: string[] } | null>(null)
+  const [characterGoals, setCharacterGoals] = useState<Record<string, { skill: any; path: string[] } | null>>({})
   const [showTutorial, setShowTutorial] = useState(() => {
     // Show tutorial on first visit
     return !localStorage.getItem('skillMapTutorialSeen')
   })
+
+  // Compute current goal as derived state - automatically syncs with selectedEmployeeId
+  const currentGoal = selectedEmployeeId ? (characterGoals[selectedEmployeeId] || null) : null;
+  
+  // Helper to set current character's goal
+  const setCurrentGoal = (goal: { skill: any; path: string[] } | null) => {
+    if (!selectedEmployeeId) return;
+    setCharacterGoals(prev => ({
+      ...prev,
+      [selectedEmployeeId]: goal
+    }));
+  };
+
+  // Callback function to get current goal - stable reference for JustInTimeWidget
+  const getCurrentGoal = useCallback(() => {
+    return selectedEmployeeId ? (characterGoals[selectedEmployeeId] || null) : null;
+  }, [selectedEmployeeId, characterGoals[selectedEmployeeId]]);
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState<any>(null)
   const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
@@ -927,7 +944,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 onClick={() => {
                   setDataSource('tech')
                   setSelectedEmployeeId('')
-                  setCurrentGoal(null)
+                  setCharacterGoals({}) // Clear all character goals when switching data sources
                   setSelectedSkill(null)
                   // Invalidate all cached data when switching datasets
                   queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
@@ -948,7 +965,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 onClick={() => {
                   setDataSource('ffx')
                   setSelectedEmployeeId('')
-                  setCurrentGoal(null)
+                  setCharacterGoals({}) // Clear all character goals when switching data sources
                   setSelectedSkill(null)
                   // Invalidate all cached data when switching datasets
                   queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
@@ -1101,8 +1118,9 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         <JustInTimeWidget
           employeeId={selectedEmployeeId}
           employee={selectedEmployee}
-          currentGoal={currentGoal}
+          getCurrentGoal={getCurrentGoal}
           dataSource={dataSource}
+          service={currentService}
         />
       )}
 
@@ -1135,11 +1153,18 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             currentGoal={currentGoal?.skill || null}
             service={currentService}
             dataSource={dataSource}
-            onGoalSet={(goalSkill, path) => {
-              setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
+            onGoalSet={((capturedEmployeeId) => (goalSkill, path) => {
+              // CRITICAL: Use captured employee ID to prevent goal contamination during transitions
+              // This closure captures the employee ID at render time, not at call time
+              if (capturedEmployeeId) {
+                setCharacterGoals(prev => ({
+                  ...prev,
+                  [capturedEmployeeId]: goalSkill ? { skill: goalSkill, path } : null
+                }));
+              }
               // Invalidate recommendations to refresh with goal-directed ones
               queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
+            })(selectedEmployeeId)}
             onLearnNewSkills={handleLearnNewSkills}
             onGoalCompleted={handleGoalCompleted}
           />
