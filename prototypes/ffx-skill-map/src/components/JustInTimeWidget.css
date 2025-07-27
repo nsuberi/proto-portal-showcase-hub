@@ -1,0 +1,80 @@
+/* Custom styles for React Quill in JustInTimeWidget */
+.ql-toolbar {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #d1fae5 !important;
+  background: #f0fdf4 !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.ql-container {
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-top: none !important;
+  font-size: 0.875rem !important;
+  border-radius: 0 0 0.5rem 0.5rem !important;
+}
+
+.ql-editor {
+  min-height: 80px !important;
+  padding: 0.75rem !important;
+  color: #166534 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.ql-editor.ql-blank::before {
+  color: #9ca3af !important;
+  font-style: normal !important;
+}
+
+/* Toolbar button styling */
+.ql-toolbar .ql-formats button {
+  color: #166534 !important;
+}
+
+.ql-toolbar .ql-formats button:hover {
+  color: #15803d !important;
+  background: #dcfce7 !important;
+}
+
+.ql-toolbar .ql-formats button.ql-active {
+  color: #15803d !important;
+  background: #bbf7d0 !important;
+}
+
+/* Color picker styling */
+.ql-toolbar .ql-color .ql-picker-label,
+.ql-toolbar .ql-background .ql-picker-label {
+  border-color: #166534 !important;
+}
+
+.ql-toolbar .ql-color .ql-picker-label:hover,
+.ql-toolbar .ql-background .ql-picker-label:hover {
+  color: #15803d !important;
+}
+
+/* Header dropdown styling */
+.ql-toolbar .ql-header .ql-picker-label {
+  color: #166534 !important;
+}
+
+.ql-toolbar .ql-header .ql-picker-label:hover {
+  color: #15803d !important;
+}
+
+/* Focus styles */
+.ql-editor:focus {
+  outline: none !important;
+}
+
+/* Custom height for system prompt editor */
+.system-prompt-editor .ql-editor {
+  min-height: 120px !important;
+}
+
+/* Custom height for question editor */
+.question-editor .ql-editor {
+  min-height: 80px !important;
+}

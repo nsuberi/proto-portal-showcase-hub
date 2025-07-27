@@ -204,3 +204,110 @@ To verify dataset switching works correctly:
 4. Repeat rapidly to test race conditions
 
 Expected behavior: Goal cards always show skills from currently selected dataset, regardless of switching frequency.
+
+## Critical Data Flow Issue: JustInTimeWidget Service Bypass
+
+### Problem Identified
+The JustInTimeWidget violates the established service architecture by directly importing and creating service instances instead of using the centralized service pattern. This causes goal state inconsistencies between characters.
+
+### Architecture Violation
+**Standard Pattern (SkillGoalWidget, SkillRecommendationWidget):**
+```typescript
+// Receives service as prop from parent
+interface WidgetProps {
+  service: SkillService;  // Centrally managed service instance
+  dataSource: 'ffx' | 'tech';
+}
+
+// Uses consistent query pattern
+const { data: skills } = useQuery([`${dataSource}-skills`])
+```
+
+**Anti-Pattern (JustInTimeWidget):**
+```typescript
+// Direct service import - bypasses service consistency
+const { data: allSkills = [] } = useQuery({
+  queryKey: [`${dataSource}-skills`],
+  queryFn: async () => {
+    if (dataSource === 'ffx') {
+      const { sharedEnhancedService } = await import('../services/sharedService');
+      return await sharedEnhancedService.getAllSkills();
+    } else {
+      const { default: TechSkillsService } = await import('../services/techSkillsData');
+      const service = new TechSkillsService();  // NEW INSTANCE!
+      return await service.getAllSkills();
+    }
+  }
+});
+```
+
+### Root Cause of Goal Persistence Bug
+1. **Service Instance Mismatch**: JustInTimeWidget creates its own service instances that may not be synchronized with the main application's service
+2. **Cache Key Collision**: Multiple widgets using same query keys but different service instances
+3. **Timing Race Condition**: useEffect processes `currentGoal` before consistent skills data loads
+4. **State Leak**: Goal objects reference skills from one dataset but get processed with skills from another
+
+### Symptoms
+- Character A sets Goal X → Switch to Character B → Character B shows Goal X (wrong)
+- Goal skill names appear correct but underlying skill objects are from wrong dataset
+- Skills data loaded by JustInTimeWidget may be from different cache than goal-setting components
+
+### Required Fix
+1. **Service Prop Pattern**: Pass `service` as prop like other widgets
+2. **Consistent Query Usage**: Use same query pattern as documented components
+3. **Dependency Validation**: Ensure all data dependencies are from same service instance
+4. **Cache Consistency**: Use centralized service for all skill data access
+
+### Component Refactor Priority
+- **COMPLETED**: Fix JustInTimeWidget service pattern ✅
+- **COMPLETED**: Add service consistency validation ✅
+- **COMPLETED**: Add debug logging for service instance tracking ✅
+
+## RESOLUTION: SkillGoalWidget State Contamination Bug Fixed
+
+### Final Root Cause
+The issue was **NOT** in the JustInTimeWidget service pattern (though that was also fixed). The real problem was in the **SkillGoalWidget component**:
+
+**The Bug:**
+```typescript
+// SkillGoalWidget useEffect dependency array was missing employeeId
+useEffect(() => {
+  if (selectedGoal && employee && skills && originalTotalStepsRef.current !== null) {
+    // This would trigger for new employees using old originalTotalStepsRef value
+    const updatedPath = calculateGoalPath(selectedGoal);
+    // Goal gets automatically set for wrong employee!
+  }
+}, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills]); // Missing employeeId!
+```
+
+**What Happened:**
+1. Sarah Kim sets goal "CI/CD Pipeline" → `originalTotalStepsRef.current = 4`
+2. User switches to Marcus Rodriguez → `selectedGoal` becomes `null` (correct)
+3. BUT `originalTotalStepsRef.current` still equals `4` (wrong!)
+4. SkillGoalWidget useEffect doesn't reset because `employeeId` not in dependencies
+5. When Marcus data loads, condition `originalTotalStepsRef.current !== null` is true
+6. Goal calculation triggers and automatically sets same goal for Marcus
+
+**The Fix:**
+```typescript
+// Added employeeId to dependency array
+}, [JSON.stringify(employee?.mastered_skills), selectedGoal, skills, employeeId]);
+
+// Added separate useEffect to reset ref when employee changes
+useEffect(() => {
+  originalTotalStepsRef.current = null;
+}, [employeeId]);
+```
+
+### Lessons Learned
+1. **useEffect Dependencies**: Always include ALL state that affects the effect
+2. **Ref Persistence**: useRef values persist across renders and need explicit reset
+3. **Character-Specific State**: Employee-scoped state requires employee ID in dependencies
+4. **Debug-First Approach**: Comprehensive logging revealed the exact issue location
+
+### Testing Verification
+The fix ensures:
+- Each employee maintains their own independent goal
+- No goal contamination when switching employees  
+- `originalTotalStepsRef` resets properly for each employee
+- Character-specific goals work correctly in JustInTimeWidget

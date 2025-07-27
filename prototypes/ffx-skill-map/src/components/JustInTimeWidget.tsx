@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import './JustInTimeWidget.css';
 import { ChevronDown, ChevronUp, Clock, Key, Eye, EyeOff, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Employee, Skill } from '../types';
@@ -10,15 +13,36 @@ import { Label } from '@/components/ui/label';
 interface JustInTimeWidgetProps {
   employeeId: string;
   employee: Employee;
-  currentGoal?: { skill: Skill; path: string[] } | null;
+  getCurrentGoal?: () => { skill: Skill; path: string[] } | null;
   dataSource: 'ffx' | 'tech';
+  service: any; // SkillService instance
 }
+
+// React Quill configuration
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['blockquote', 'code-block'],
+    ['link'],
+    ['clean']
+  ],
+};
+
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike',
+  'color', 'background', 'list', 'bullet',
+  'blockquote', 'code-block', 'link'
+];
 
 const JustInTimeWidget: React.FC<JustInTimeWidgetProps> = ({
   employeeId,
   employee,
-  currentGoal,
-  dataSource
+  getCurrentGoal,
+  dataSource,
+  service
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -30,33 +54,15 @@ const JustInTimeWidget: React.FC<JustInTimeWidgetProps> = ({
   const [response, setResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all skills and teammates for the analysis
+  // Fetch all skills and teammates for the analysis using consistent service pattern
   const { data: allSkills = [] } = useQuery({
     queryKey: [`${dataSource}-skills`],
-    queryFn: async () => {
-      if (dataSource === 'ffx') {
-        const { sharedEnhancedService } = await import('../services/sharedService');
-        return await sharedEnhancedService.getAllSkills();
-      } else {
-        const { default: TechSkillsService } = await import('../services/techSkillsData');
-        const service = new TechSkillsService();
-        return await service.getAllSkills();
-      }
-    }
+    queryFn: () => service.getAllSkills(),
   });
 
   const { data: teammates = [] } = useQuery({
     queryKey: [`${dataSource}-employees`],
-    queryFn: async () => {
-      if (dataSource === 'ffx') {
-        const { sharedEnhancedService } = await import('../services/sharedService');
-        return await sharedEnhancedService.getAllEmployees();
-      } else {
-        const { default: TechSkillsService } = await import('../services/techSkillsData');
-        const service = new TechSkillsService();
-        return await service.getAllEmployees();
-      }
-    }
+    queryFn: () => service.getAllEmployees(),
   });
 
   // Widget system prompt (hidden from user)
@@ -65,6 +71,9 @@ const JustInTimeWidget: React.FC<JustInTimeWidgetProps> = ({
   // Generate default user system prompt based on employee data and current goal
   useEffect(() => {
     if (!employee || !allSkills.length) return;
+    
+    // Get current goal using callback to avoid object reference issues
+    const currentGoal = getCurrentGoal?.() || null;
 
     // Convert skill IDs to skill names
     const masteredSkillNames = employee.mastered_skills?.length > 0 
@@ -89,12 +98,28 @@ const JustInTimeWidget: React.FC<JustInTimeWidgetProps> = ({
 
 Your current mastered skills include: ${masteredSkillNames}${goalContext}`;
 
+    // Always reset the system prompt when employee changes (by including employeeId in dependency)
+    // Convert plain text to HTML for rich text editor by replacing newlines with <br> tags
+    const htmlPrompt = defaultPrompt.replace(/\n/g, '<br>');
+    
     if (!savedUserSystemPrompt) {
-      setUserSystemPrompt(defaultPrompt);
+      setUserSystemPrompt(htmlPrompt);
     } else {
       setUserSystemPrompt(savedUserSystemPrompt);
     }
-  }, [employee, currentGoal, savedUserSystemPrompt, allSkills]);
+    
+    // Clear the saved prompt when employee changes to ensure fresh start
+    if (savedUserSystemPrompt) {
+      setSavedUserSystemPrompt('');
+    }
+  }, [employee.id, employeeId, allSkills, getCurrentGoal]); // Now depends on the callback function, which has stable reference
+
+  // Clear the question when employee changes
+  useEffect(() => {
+    setJustInTimeQuestion('');
+    setResponse('');
+    setError(null);
+  }, [employee.id, employeeId]);
 
   const handleSaveUserSystemPrompt = () => {
     setSavedUserSystemPrompt(userSystemPrompt);
@@ -117,8 +142,18 @@ Your current mastered skills include: ${masteredSkillNames}${goalContext}`;
     return 'PLACEHOLDER_API_GATEWAY_URL';
   };
 
+  // Helper function to convert HTML to plain text for API calls
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
   const handleSubmit = async () => {
-    if (!justInTimeQuestion.trim() || !userSystemPrompt.trim()) {
+    const plainUserSystemPrompt = stripHtml(userSystemPrompt).trim();
+    const plainJustInTimeQuestion = stripHtml(justInTimeQuestion).trim();
+    
+    if (!plainJustInTimeQuestion || !plainUserSystemPrompt) {
       setError('Both User System Prompt and Just-in-Time Question are required.');
       return;
     }
@@ -155,8 +190,8 @@ Your current mastered skills include: ${masteredSkillNames}${goalContext}`;
         allSkills: allSkills,
         teammates: teammates.filter(t => t.id !== employee.id), // Exclude current employee
         widgetSystemPrompt: widgetSystemPrompt,
-        userSystemPrompt: userSystemPrompt,
-        justInTimeQuestion: justInTimeQuestion
+        userSystemPrompt: plainUserSystemPrompt,
+        justInTimeQuestion: plainJustInTimeQuestion
       };
 
       const apiUrl = getApiUrl();
@@ -244,6 +279,51 @@ Your current mastered skills include: ${masteredSkillNames}${goalContext}`;
             </p>
           </div>
 
+          {/* User System Prompt Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold text-green-800">
+                System Prompt (Your Current Knowledge Context)
+              </Label>
+              <Button
+                onClick={handleSaveUserSystemPrompt}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-xs"
+              >
+                <Save className="h-3 w-3" />
+                Save Changes
+              </Button>
+            </div>
+            <div className="border-2 border-green-200 rounded-lg focus-within:border-green-400 transition-colors duration-200 bg-white/90 system-prompt-editor">
+              <ReactQuill
+                theme="snow"
+                value={userSystemPrompt}
+                onChange={setUserSystemPrompt}
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Describe your current knowledge, skills, and context..."
+              />
+            </div>
+          </div>
+
+          {/* Just-in-Time Question Section */}
+          <div className="space-y-2">
+            <Label className="block text-sm font-semibold text-green-800">
+              Just-in-Time Question
+            </Label>
+            <div className="border-2 border-green-200 rounded-lg focus-within:border-green-400 transition-colors duration-200 bg-white/90 question-editor">
+              <ReactQuill
+                theme="snow"
+                value={justInTimeQuestion}
+                onChange={setJustInTimeQuestion}
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="What specific knowledge or insight do you need right now?"
+              />
+            </div>
+          </div>
+
           {/* API Key Section */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
@@ -280,49 +360,10 @@ Your current mastered skills include: ${masteredSkillNames}${goalContext}`;
             </div>
           </div>
 
-          {/* User System Prompt Section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold text-green-800">
-                System Prompt (Your Current Knowledge Context)
-              </Label>
-              <Button
-                onClick={handleSaveUserSystemPrompt}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-xs"
-              >
-                <Save className="h-3 w-3" />
-                Save Changes
-              </Button>
-            </div>
-            <textarea
-              value={userSystemPrompt}
-              onChange={(e) => setUserSystemPrompt(e.target.value)}
-              className="w-full p-3 border-2 border-green-200 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-colors duration-200 bg-white/90 text-sm"
-              rows={6}
-              placeholder="Describe your current knowledge, skills, and context..."
-            />
-          </div>
-
-          {/* Just-in-Time Question Section */}
-          <div className="space-y-2">
-            <Label className="block text-sm font-semibold text-green-800">
-              Just-in-Time Question
-            </Label>
-            <textarea
-              value={justInTimeQuestion}
-              onChange={(e) => setJustInTimeQuestion(e.target.value)}
-              className="w-full p-3 border-2 border-green-200 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-colors duration-200 bg-white/90 text-sm"
-              rows={3}
-              placeholder="What specific knowledge or insight do you need right now?"
-            />
-          </div>
-
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !justInTimeQuestion.trim() || !userSystemPrompt.trim()}
+            disabled={isLoading || !stripHtml(justInTimeQuestion).trim() || !stripHtml(userSystemPrompt).trim()}
             className="w-full p-3 bg-gradient-to-r from-green-600 via-purple-600 to-green-600 text-white hover:from-green-700 hover:via-purple-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md font-medium"
           >
             {isLoading ? (
