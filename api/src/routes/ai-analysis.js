@@ -247,4 +247,169 @@ router.post('/ai-analysis/just-in-time',
   }
 );
 
+/**
+ * POST /api/v1/ai-analysis/home-lending-assessment
+ * 
+ * Analyzes user's spoken or written understanding of home lending terms
+ * 
+ * Request Body:
+ * {
+ *   "apiKey": "sk-ant-api03-...", // Claude API key for this request
+ *   "userResponse": "user's explanation",
+ *   "targetTerm": "Credit Score",
+ *   "officialDefinition": "A numerical representation of creditworthiness...",
+ *   "examples": ["FICO score of 740", "VantageScore of 680"],
+ *   "context": {
+ *     "learningModule": "basic-terms",
+ *     "difficultyLevel": "beginner"
+ *   }
+ * }
+ * 
+ * Response:
+ * {
+ *   "assessment": {
+ *     "similarities": ["You correctly mentioned...", "Your explanation includes..."],
+ *     "differences": ["Consider including...", "The definition also mentions..."],
+ *     "feedback": "Great work! You demonstrate solid understanding...",
+ *     "comprehensionLevel": "good",
+ *     "suggestions": ["Review the official definition...", "Practice explaining..."]
+ *   },
+ *   "metadata": {
+ *     "assessmentId": "...",
+ *     "timestamp": "...",
+ *     "model": "claude-3-5-sonnet-20241022",
+ *     "processingTimeMs": 1200
+ *   }
+ * }
+ */
+router.post('/ai-analysis/home-lending-assessment', 
+  authMiddleware,
+  async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+      const { 
+        apiKey, 
+        userResponse, 
+        targetTerm, 
+        officialDefinition, 
+        examples = [], 
+        context = {} 
+      } = req.body;
+      
+      // Validate required fields
+      if (!userResponse || !targetTerm || !officialDefinition) {
+        return res.status(400).json({
+          error: 'Missing required fields: userResponse, targetTerm, officialDefinition',
+          code: 'MISSING_REQUIRED_FIELDS',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Validate field lengths
+      if (userResponse.length > 2000) {
+        return res.status(400).json({
+          error: 'User response is too long (max 2000 characters)',
+          code: 'RESPONSE_TOO_LONG',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      if (targetTerm.length > 200) {
+        return res.status(400).json({
+          error: 'Target term is too long (max 200 characters)',
+          code: 'TERM_TOO_LONG',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      if (officialDefinition.length > 1000) {
+        return res.status(400).json({
+          error: 'Official definition is too long (max 1000 characters)',
+          code: 'DEFINITION_TOO_LONG',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      logger.info('Processing home lending assessment request', {
+        targetTerm,
+        userResponseLength: userResponse.length,
+        hasExamples: examples.length > 0,
+        learningModule: context.learningModule,
+        difficultyLevel: context.difficultyLevel,
+        requestId: req.requestId
+      });
+
+      // Generate assessment using Claude
+      const assessment = await claudeService.assessHomeLendingUnderstanding({
+        apiKey,
+        userResponse,
+        targetTerm,
+        officialDefinition,
+        examples,
+        context
+      });
+
+      const processingTime = Date.now() - startTime;
+
+      logger.info('Home lending assessment completed', {
+        targetTerm,
+        comprehensionLevel: assessment.comprehensionLevel,
+        processingTimeMs: processingTime,
+        requestId: req.requestId
+      });
+
+      res.status(200).json({
+        assessment,
+        metadata: {
+          assessmentId: req.requestId,
+          timestamp: new Date().toISOString(),
+          model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
+          processingTimeMs: processingTime
+        }
+      });
+
+    } catch (error) {
+      logger.error('Home lending assessment failed', {
+        error: error.message,
+        targetTerm: req.body.targetTerm,
+        requestId: req.requestId,
+        stack: error.stack,
+        hasApiKey: !!req.body.apiKey,
+        apiKeyPrefix: req.body.apiKey ? req.body.apiKey.substring(0, 10) : 'none'
+      });
+
+      // Return appropriate error based on type
+      if (error.message.includes('API key')) {
+        return res.status(503).json({
+          error: 'AI service temporarily unavailable',
+          code: 'AI_SERVICE_ERROR',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (error.message.includes('rate limit')) {
+        return res.status(429).json({
+          error: 'AI service rate limit exceeded, please try again later',
+          code: 'RATE_LIMIT_EXCEEDED',
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.status(500).json({
+        error: 'Internal server error during assessment',
+        code: 'ASSESSMENT_ERROR',
+        requestId: req.requestId,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+);
+
 export { router as aiAnalysisRoutes };

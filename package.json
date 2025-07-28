@@ -13,8 +13,10 @@
     "preview": "vite preview",
     "dev:ffx": "cd prototypes/ffx-skill-map && npm run dev",
     "build:ffx": "cd prototypes/ffx-skill-map && npm run build",
+    "dev:home-lending": "cd prototypes/home-lending-learning && npm run dev",
+    "build:home-lending": "cd prototypes/home-lending-learning && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
-    "dev:all": "concurrently --names \"MAIN,FFX,PROXY,API\" --prefix-colors \"blue,green,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:proxy\" \"cd api && npm run dev\"",
+    "dev:all": "concurrently --names \"MAIN,FFX,HOME,PROXY,API\" --prefix-colors \"blue,green,cyan,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:proxy\" \"cd api && npm run dev\"",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
     "test": "echo \"No tests configured\"",
@@ -57,6 +59,10 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
+    "graphology": "^0.26.0",
+    "graphology-layout": "^0.6.1",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-types": "^0.24.8",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
@@ -67,6 +73,7 @@
     "react-resizable-panels": "^2.1.3",
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
+    "sigma": "^3.0.2",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
@@ -97,6 +104,7 @@
   },
   "workspaces": [
     "prototypes/ffx-skill-map",
+    "prototypes/home-lending-learning",
     "shared/design-tokens"
   ],
   "packageManager": "yarn@4.9.2"

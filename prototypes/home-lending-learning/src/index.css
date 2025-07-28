@@ -1,0 +1,111 @@
+@import "@proto-portal/design-tokens/css/tokens.css";
+@import "@proto-portal/design-tokens/css/utilities.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Custom color scheme based on provided inspiration */
+    --background: 25 44% 96%; /* #F9F3EF light cream */
+    --foreground: 207 51% 22%; /* #1B3C53 dark blue */
+    --card: 0 0% 100%;
+    --card-foreground: 207 51% 22%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 207 51% 22%;
+    --primary: 207 51% 22%; /* #1B3C53 dark blue */
+    --primary-foreground: 25 44% 96%;
+    --secondary: 212 31% 39%; /* #456882 medium blue */
+    --secondary-foreground: 25 44% 96%;
+    --muted: 25 19% 77%; /* #D2C1B6 warm beige */
+    --muted-foreground: 207 51% 22%;
+    --accent: 212 31% 39%; /* #456882 medium blue */
+    --accent-foreground: 25 44% 96%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 25 44% 96%;
+    --border: 25 19% 85%; /* Lighter version of beige */
+    --input: 25 19% 85%;
+    --ring: 207 51% 22%;
+    --radius: 0.5rem;
+    --chart-1: 207 51% 22%; /* #1B3C53 */
+    --chart-2: 212 31% 39%; /* #456882 */
+    --chart-3: 25 19% 77%; /* #D2C1B6 */
+    --chart-4: 25 44% 96%; /* #F9F3EF */
+    --chart-5: 207 51% 30%; /* Slightly lighter dark blue */
+  }
+
+  .dark {
+    --background: 207 51% 22%;
+    --foreground: 25 44% 96%;
+    --card: 207 51% 22%;
+    --card-foreground: 25 44% 96%;
+    --popover: 207 51% 22%;
+    --popover-foreground: 25 44% 96%;
+    --primary: 212 31% 39%;
+    --primary-foreground: 25 44% 96%;
+    --secondary: 25 19% 77%;
+    --secondary-foreground: 207 51% 22%;
+    --muted: 212 31% 30%;
+    --muted-foreground: 25 19% 77%;
+    --accent: 25 19% 77%;
+    --accent-foreground: 207 51% 22%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 25 44% 96%;
+    --border: 212 31% 30%;
+    --input: 212 31% 30%;
+    --ring: 212 31% 39%;
+  }
+}
+
+@layer components {
+  /* Custom styles for home lending learning */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Ensure responsive design for widgets */
+@layer utilities {
+  .max-vw-100 {
+    max-width: 100vw;
+  }
+  
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+  
+  .text-mobile-safe {
+    @apply text-sm sm:text-base;
+  }
+  
+  .btn-mobile {
+    @apply w-full sm:w-auto px-4 py-2 text-sm;
+  }
+  
+  .btn-group-mobile {
+    @apply flex flex-col sm:flex-row gap-2;
+  }
+  
+  .mobile-section {
+    @apply py-12 sm:py-16 lg:py-20 px-4 sm:px-6;
+  }
+  
+  .mobile-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-icon {
+    @apply w-4 h-4 sm:w-5 sm:h-5;
+  }
+}

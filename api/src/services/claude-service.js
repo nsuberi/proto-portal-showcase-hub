@@ -519,4 +519,319 @@ The key is to focus on incremental skill building while maintaining your core st
       }, 1000);
     });
   }
+
+  /**
+   * Assess user's understanding of home lending terms
+   * @param {Object} params - Assessment parameters
+   * @param {string} params.apiKey - Claude API key for this request
+   * @param {string} params.userResponse - User's explanation
+   * @param {string} params.targetTerm - The term being assessed
+   * @param {string} params.officialDefinition - Official definition of the term
+   * @param {Array} params.examples - Examples of the term
+   * @param {Object} params.context - Optional context (learning module, difficulty level)
+   */
+  async assessHomeLendingUnderstanding({ 
+    apiKey, 
+    userResponse, 
+    targetTerm, 
+    officialDefinition, 
+    examples = [], 
+    context = {} 
+  }) {
+    // Return mock data in development mode without API key or with "mock" key
+    if (this.mockMode || !apiKey || apiKey === 'mock') {
+      return this.getMockHomeLendingAssessment(userResponse, targetTerm);
+    }
+
+    // Use provided API key for this request
+    const requestApiKey = apiKey || this.apiKey;
+    if (!requestApiKey) {
+      throw new Error('Claude API key is required for assessment');
+    }
+
+    // Validate API key format
+    if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
+      throw new Error('Invalid API key format. Please provide a valid Claude API key.');
+    }
+
+    const prompt = this.buildHomeLendingAssessmentPrompt(
+      userResponse, 
+      targetTerm, 
+      officialDefinition, 
+      examples, 
+      context
+    );
+    
+    try {
+      logger.info('Making Claude API request for home lending assessment', { 
+        targetTerm,
+        userResponseLength: userResponse.length,
+        hasExamples: examples.length > 0,
+        model: this.model
+      });
+
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': requestApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          max_tokens: 1500,
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        logger.error('Claude API error for home lending assessment', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          targetTerm
+        });
+
+        if (response.status === 401) {
+          throw new Error('Invalid API key provided');
+        } else if (response.status === 429) {
+          throw new Error('Claude API rate limit exceeded');
+        } else {
+          throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      const data = await response.json();
+      const content = data.content?.[0]?.text;
+
+      if (!content) {
+        logger.error('No content in Claude response for home lending assessment', { data, targetTerm });
+        throw new Error('Invalid response format from Claude API');
+      }
+
+      // Parse the structured response
+      const assessment = this.parseHomeLendingAssessmentResponse(content, targetTerm);
+      
+      logger.info('Home lending assessment completed successfully', {
+        targetTerm,
+        comprehensionLevel: assessment.comprehensionLevel,
+        similaritiesCount: assessment.similarities.length,
+        differencesCount: assessment.differences.length,
+        suggestionsCount: assessment.suggestions.length
+      });
+
+      return assessment;
+
+    } catch (error) {
+      logger.error('Claude API call failed for home lending assessment', {
+        error: error.message,
+        targetTerm,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Build prompt for home lending understanding assessment
+   */
+  buildHomeLendingAssessmentPrompt(userResponse, targetTerm, officialDefinition, examples, context) {
+    const examplesSection = examples.length > 0 ? 
+      `\n\n**Official Examples:** ${examples.join(', ')}` : '';
+    
+    const contextSection = context.learningModule || context.difficultyLevel ? 
+      `\n\n**Learning Context:** Module: ${context.learningModule || 'N/A'}, Difficulty: ${context.difficultyLevel || 'N/A'}` : '';
+
+    return `You are an expert in home lending and mortgage terminology with extensive experience in financial education. Your role is to assess a learner's understanding of mortgage concepts by comparing their explanation to official definitions.
+
+**Assessment Task:**
+Analyze the learner's explanation of "${targetTerm}" and provide a comprehensive comparison with the official definition.
+
+**Target Term:** ${targetTerm}
+
+**Official Definition:** ${officialDefinition}${examplesSection}
+
+**Learner's Explanation:** "${userResponse}"${contextSection}
+
+**Instructions:**
+Please provide a detailed assessment in the following JSON format. Be encouraging while being thorough in your analysis:
+
+{
+  "similarities": [
+    "List what the learner got correct or mentioned that aligns with the official definition",
+    "Include specific concepts they understood well",
+    "Acknowledge accurate terminology they used"
+  ],
+  "differences": [
+    "Identify key aspects missing from the learner's explanation",
+    "Note any misconceptions or inaccuracies",
+    "Highlight important official definition elements they didn't mention"
+  ],
+  "feedback": "A constructive overall assessment of their understanding with encouragement and specific observations about their explanation quality",
+  "comprehensionLevel": "excellent|good|partial|needs-improvement",
+  "suggestions": [
+    "Specific recommendations for improving their understanding",
+    "Study strategies or resources to address gaps",
+    "Practice activities to reinforce learning"
+  ]
+}
+
+**Assessment Criteria:**
+- **Excellent**: Demonstrates thorough understanding with accurate terminology and comprehensive coverage
+- **Good**: Shows solid grasp with minor gaps or areas for refinement  
+- **Partial**: Understands basics but missing significant components or has some misconceptions
+- **Needs-improvement**: Limited understanding with major gaps or misconceptions
+
+Focus on helping the learner build knowledge progressively. Be specific about what they did well and provide actionable guidance for improvement.`;
+  }
+
+  /**
+   * Parse Claude's response for home lending assessment
+   */
+  parseHomeLendingAssessmentResponse(content, targetTerm) {
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        logger.warn('No JSON found in Claude response for home lending assessment', { content, targetTerm });
+        return this.parseHomeLendingAssessmentFallback(content, targetTerm);
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Validate required fields
+      const requiredFields = ['similarities', 'differences', 'feedback', 'comprehensionLevel', 'suggestions'];
+      const missingFields = requiredFields.filter(field => !parsed[field]);
+      
+      if (missingFields.length > 0) {
+        logger.warn('Missing fields in parsed assessment response', { 
+          missingFields, 
+          targetTerm,
+          parsedKeys: Object.keys(parsed)
+        });
+        return this.parseHomeLendingAssessmentFallback(content, targetTerm);
+      }
+
+      // Ensure arrays are actually arrays
+      ['similarities', 'differences', 'suggestions'].forEach(field => {
+        if (!Array.isArray(parsed[field])) {
+          parsed[field] = Array.isArray(parsed[field]) ? parsed[field] : [parsed[field]].filter(Boolean);
+        }
+      });
+
+      // Validate comprehension level
+      const validLevels = ['excellent', 'good', 'partial', 'needs-improvement'];
+      if (!validLevels.includes(parsed.comprehensionLevel)) {
+        logger.warn('Invalid comprehension level in assessment', { 
+          level: parsed.comprehensionLevel, 
+          targetTerm 
+        });
+        parsed.comprehensionLevel = 'partial'; // Default fallback
+      }
+
+      return parsed;
+
+    } catch (error) {
+      logger.error('Failed to parse Claude response for home lending assessment', {
+        error: error.message,
+        content: content.substring(0, 500),
+        targetTerm
+      });
+      return this.parseHomeLendingAssessmentFallback(content, targetTerm);
+    }
+  }
+
+  /**
+   * Fallback parser for home lending assessment when JSON parsing fails
+   */
+  parseHomeLendingAssessmentFallback(content, targetTerm) {
+    logger.info('Using fallback parser for home lending assessment', { targetTerm });
+    
+    // Extract key information using text patterns
+    const similarities = this.extractListFromText(content, /similarities?[:\-\s]*\n?(.*?)(?=differences?|feedback|$)/is);
+    const differences = this.extractListFromText(content, /differences?[:\-\s]*\n?(.*?)(?=feedback|suggestions?|$)/is);
+    const suggestions = this.extractListFromText(content, /suggestions?[:\-\s]*\n?(.*?)$/is);
+    
+    // Extract feedback
+    const feedbackMatch = content.match(/feedback[:\-\s]*\n?(.*?)(?=comprehension|suggestions?|$)/is);
+    const feedback = feedbackMatch ? feedbackMatch[1].trim() : 
+      'Thank you for your response. Please review the official definition for better understanding.';
+    
+    // Determine comprehension level based on content
+    let comprehensionLevel = 'partial';
+    if (content.toLowerCase().includes('excellent') || content.toLowerCase().includes('outstanding')) {
+      comprehensionLevel = 'excellent';
+    } else if (content.toLowerCase().includes('good') || content.toLowerCase().includes('solid')) {
+      comprehensionLevel = 'good';
+    } else if (content.toLowerCase().includes('needs improvement') || content.toLowerCase().includes('limited')) {
+      comprehensionLevel = 'needs-improvement';
+    }
+
+    return {
+      similarities: similarities.length > 0 ? similarities : ['You engaged with the learning process'],
+      differences: differences.length > 0 ? differences : ['Consider reviewing the official definition'],  
+      feedback,
+      comprehensionLevel,
+      suggestions: suggestions.length > 0 ? suggestions : ['Review the official definition and practice explaining it in your own words']
+    };
+  }
+
+  /**
+   * Extract list items from text using regex patterns
+   */
+  extractListFromText(text, pattern) {
+    const match = text.match(pattern);
+    if (!match) return [];
+    
+    const listText = match[1];
+    return listText
+      .split(/\n|•|\*|\d+\.|-/)
+      .map(item => item.trim())
+      .filter(item => item.length > 0 && item !== '-' && item !== '•' && item !== '*')
+      .slice(0, 5); // Limit to 5 items max
+  }
+
+  /**
+   * Mock home lending assessment for development
+   */
+  getMockHomeLendingAssessment(userResponse, targetTerm) {
+    const mockResponses = {
+      'credit-score': {
+        similarities: [
+          'You correctly identified that credit scores are numerical representations',
+          'You mentioned that they are used by lenders to assess risk',
+          'Your explanation shows understanding of the scoring concept'
+        ],
+        differences: [
+          'Consider including the typical score range (300-850)',
+          'The definition also mentions specific scoring models like FICO',
+          'Payment history as a key factor could be emphasized'
+        ],
+        feedback: 'Good foundation! You understand the basic concept but could benefit from more specific details about score ranges and factors.',
+        comprehensionLevel: 'good',
+        suggestions: [
+          'Review the typical credit score ranges and what they mean',
+          'Study the key factors that influence credit scores',
+          'Practice explaining how credit scores are calculated'
+        ]
+      }
+    };
+
+    // Find matching mock response or use default
+    const termKey = targetTerm.toLowerCase().replace(/\s+/g, '-');
+    const mockResponse = mockResponses[termKey] || {
+      similarities: ['You provided a thoughtful explanation showing engagement with the topic'],
+      differences: ['Consider incorporating more technical terminology from the official definition'],
+      feedback: 'Thank you for your explanation. With more study of the specific terminology, you\'ll develop stronger mastery.',
+      comprehensionLevel: 'partial',
+      suggestions: ['Review the official definition carefully', 'Practice explaining the concept to someone else']
+    };
+
+    logger.info('Returning mock home lending assessment', { targetTerm, comprehensionLevel: mockResponse.comprehensionLevel });
+    return mockResponse;
+  }
 }

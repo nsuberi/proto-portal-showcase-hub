@@ -13,6 +13,14 @@ const Portfolio = () => {
       tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"],
       status: "Live Demo Available",
     },
+    {
+      title: "Home Lending Learning Platform",
+      description:
+        "Master the complex world of home lending through interactive learning. Features process flow maps, glossary browser, and knowledge testing cards to help innovators understand mortgage industry fundamentals.",
+      link: "/prototypes/home-lending-learning/",
+      tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
+      status: "Live Demo Available",
+    },
   ];
 
   const prototypeIdeas = [

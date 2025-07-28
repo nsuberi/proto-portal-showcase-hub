@@ -24,7 +24,7 @@ app.use(helmet({
 }));
 
 // CORS configuration
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:8082'];
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8082'];
 app.use(cors({
   origin: corsOrigins,
   methods: ['GET', 'POST'],
@@ -32,7 +32,7 @@ app.use(cors({
   credentials: false // No cookies needed
 }));
 
-// Rate limiting
+// Rate limiting with trust proxy handling
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
@@ -42,6 +42,23 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Handle trust proxy by using the leftmost IP in X-Forwarded-For
+  keyGenerator: (req) => {
+    // In development, use a fixed key to effectively disable rate limiting
+    if (process.env.NODE_ENV === 'development') {
+      return 'development';
+    }
+    // Use the leftmost (original client) IP from X-Forwarded-For header
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip;
+  },
+  skip: (req) => {
+    // Skip rate limiting in development
+    return process.env.NODE_ENV === 'development';
+  }
 });
 
 app.use(limiter);
