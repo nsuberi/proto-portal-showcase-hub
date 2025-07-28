@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Badge } from './components/ui/badge';
@@ -57,9 +57,49 @@ function App() {
   const [isAssessing, setIsAssessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [cursorPosition, setCursorPosition] = useState<number>(0);
+  const [baseText, setBaseText] = useState('');
+  const processedTranscriptRef = useRef<string>('');
   
   // Voice recording hook
   const voiceRecording = useVoiceRecording(selectedLanguage);
+  
+  // Handle voice recording state changes
+  useEffect(() => {
+    if (!voiceRecording.isIOS && !voiceRecording.isRecording && voiceRecording.finalTranscript && 
+        voiceRecording.finalTranscript !== processedTranscriptRef.current) {
+      // When recording stops and we have final transcript, insert it at cursor position
+      const finalText = baseText.substring(0, cursorPosition) + voiceRecording.finalTranscript + baseText.substring(cursorPosition);
+      setUserAnswer(finalText);
+      setBaseText('');
+      setCursorPosition(0);
+      processedTranscriptRef.current = voiceRecording.finalTranscript;
+      
+      // Reset voice recording
+      setTimeout(() => {
+        voiceRecording.resetRecording();
+        processedTranscriptRef.current = '';
+      }, 100);
+    }
+  }, [voiceRecording.isRecording, voiceRecording.isIOS, voiceRecording.finalTranscript, voiceRecording, baseText, cursorPosition]);
+
+  const handleStartRecording = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const cursorPos = textarea.selectionStart;
+      setCursorPosition(cursorPos);
+      setBaseText(userAnswer);
+      processedTranscriptRef.current = '';
+    }
+    voiceRecording.startRecording();
+  };
+
+  // Compute display text for the textarea
+  const displayText = voiceRecording.isRecording 
+    ? baseText.substring(0, cursorPosition) + voiceRecording.transcript + baseText.substring(cursorPosition)
+    : userAnswer;
+
   
   const [userProfile, setUserProfile] = useState<UserProfile>({
     id: 'demo-user',
@@ -124,7 +164,7 @@ function App() {
   const handleSubmitAnswer = async () => {
     if (!currentStudyCard) return;
     
-    const responseText = userAnswer.trim() || voiceRecording.transcript.trim();
+    const responseText = userAnswer.trim();
     if (!responseText) return;
     
     if (!apiKey.trim()) {
@@ -440,57 +480,74 @@ function App() {
               {/* Voice Recording Interface */}
               {voiceRecording.isSupported ? (
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-secondary/5 rounded-lg border border-secondary/20">
-                    <div className="flex items-center gap-2">
-                      {voiceRecording.isRecording ? (
-                        <div className="flex items-center gap-2 text-red-600">
-                          <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-                          <span className="text-sm font-medium">Recording...</span>
+                  {voiceRecording.isIOS ? (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-800 mb-2">Voice Input on iOS</p>
+                          <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                            <li>Tap the answer text field above</li>
+                            <li>Tap the microphone button on your keyboard</li>
+                            <li>Speak your answer</li>
+                            <li>Tap "Done" when finished</li>
+                          </ol>
                         </div>
-                      ) : (
-                        <Mic className="w-5 h-5 text-primary" />
-                      )}
+                      </div>
                     </div>
-                    
-                    <div className="flex gap-2 flex-1">
-                      {!voiceRecording.isRecording && !voiceRecording.isProcessing && (
-                        <Button
-                          onClick={voiceRecording.startRecording}
-                          size="sm"
-                          className="flex items-center gap-2"
-                        >
-                          <Mic className="w-4 h-4" />
-                          Start Recording
-                        </Button>
-                      )}
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-secondary/5 rounded-lg border border-secondary/20">
+                      <div className="flex items-center gap-2">
+                        {voiceRecording.isRecording ? (
+                          <div className="flex items-center gap-2 text-red-600">
+                            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium">Recording...</span>
+                          </div>
+                        ) : (
+                          <Mic className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
                       
-                      {voiceRecording.isRecording && (
-                        <Button
-                          onClick={voiceRecording.stopRecording}
-                          size="sm"
-                          variant="destructive"
-                          className="flex items-center gap-2"
-                        >
-                          <Square className="w-4 h-4" />
-                          Stop Recording
-                        </Button>
-                      )}
-                      
-                      {(voiceRecording.transcript || voiceRecording.audioBlob) && !voiceRecording.isRecording && (
-                        <Button
-                          onClick={voiceRecording.resetRecording}
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Reset
-                        </Button>
-                      )}
+                      <div className="flex gap-2 flex-1">
+                        {!voiceRecording.isRecording && !voiceRecording.isProcessing && (
+                          <Button
+                            onClick={handleStartRecording}
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <Mic className="w-4 h-4" />
+                            Start Recording
+                          </Button>
+                        )}
+                        
+                        {voiceRecording.isRecording && (
+                          <Button
+                            onClick={voiceRecording.stopRecording}
+                            size="sm"
+                            variant="destructive"
+                            className="flex items-center gap-2"
+                          >
+                            <Square className="w-4 h-4" />
+                            Stop Recording
+                          </Button>
+                        )}
+                        
+                        {(voiceRecording.transcript || voiceRecording.audioBlob) && !voiceRecording.isRecording && (
+                          <Button
+                            onClick={voiceRecording.resetRecording}
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-2"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            Reset
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   
-                  {voiceRecording.error && (
+                  {voiceRecording.error && !voiceRecording.isIOS && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex items-center gap-2 text-red-800">
                         <AlertCircle className="w-4 h-4" />
@@ -508,14 +565,12 @@ function App() {
                     </div>
                   )}
                   
-                  {voiceRecording.transcript && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <label className="block text-sm font-medium text-green-800 mb-2">
-                        Your Spoken Response:
-                      </label>
-                      <p className="text-sm text-green-700 break-words leading-relaxed">
-                        {voiceRecording.transcript}
-                      </p>
+                  {voiceRecording.isRecording && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm font-medium">Recording... Speak now to see your text appear in the explanation box below</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -530,6 +585,43 @@ function App() {
                   </p>
                 </div>
               )}
+              
+              {/* Text Input */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Your explanation:
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  value={displayText}
+                  onChange={(e) => {
+                    // Only allow editing when not recording
+                    if (!voiceRecording.isRecording) {
+                      setUserAnswer(e.target.value);
+                    }
+                  }}
+                  className={`w-full p-3 border rounded-lg resize-none h-20 sm:h-24 text-sm ${
+                    voiceRecording.isRecording ? 'border-blue-500 bg-blue-50/30' : ''
+                  }`}
+                  placeholder={voiceRecording.isIOS 
+                    ? "Type here or tap the microphone on your keyboard to dictate..." 
+                    : "Type or click 'Start Recording' to dictate..."}
+                  autoComplete="off"
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
+                  spellCheck="true"
+                />
+                {voiceRecording.isIOS && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    💡 Tip: Use your keyboard's microphone button for voice input
+                  </p>
+                )}
+                {!voiceRecording.isIOS && voiceRecording.speechRecognitionSupported && !voiceRecording.isRecording && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    💡 Tip: Click "Start Recording" to dictate. You'll see your words appear in real-time!
+                  </p>
+                )}
+              </div>
               
               {/* API Key Input for GenAI Assessment */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -548,24 +640,11 @@ function App() {
                   Your API key is used to analyze spoken responses and provide detailed feedback on key concepts. Get your key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline">Anthropic Console</a>.
                 </p>
               </div>
-              
-              {/* Text Input Fallback */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Or type your explanation:
-                </label>
-                <textarea
-                  value={userAnswer}
-                  onChange={(e) => setUserAnswer(e.target.value)}
-                  className="w-full p-3 border rounded-lg resize-none h-20 sm:h-24 text-sm"
-                  placeholder="Explain your understanding of this concept..."
-                />
-              </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={handleSubmitAnswer}
-                  disabled={(!userAnswer.trim() && !voiceRecording.transcript.trim()) || !apiKey.trim()}
+                  disabled={!userAnswer.trim() || !apiKey.trim()}
                   className="flex-1"
                   size="sm"
                 >
@@ -593,17 +672,17 @@ function App() {
           {showAnswer && (
             <div className="space-y-4">
               {/* User's Submitted Answer - only show if they submitted something and we're not waiting for assessment */}
-              {(userAnswer.trim() || voiceRecording.transcript.trim()) && !isAssessing && (
+              {userAnswer.trim() && !isAssessing && (
                 <div className="p-3 sm:p-4 bg-blue-50 rounded-lg max-w-full overflow-hidden border border-blue-200">
                   <h3 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Your Answer:</h3>
                   <p className="text-blue-700 text-sm sm:text-base break-words leading-relaxed">
-                    {userAnswer.trim() || voiceRecording.transcript.trim()}
+                    {userAnswer.trim()}
                   </p>
                 </div>
               )}
 
               {/* Judging Criteria - only show if no answer was submitted (direct Show Answer) */}
-              {!(userAnswer.trim() || voiceRecording.transcript.trim()) && (
+              {!userAnswer.trim() && (
                 <div className="p-3 sm:p-4 bg-green-50 rounded-lg max-w-full overflow-hidden border border-green-200">
                   <h3 className="font-semibold text-green-800 mb-2 text-sm sm:text-base">Expected Answer:</h3>
                   <p className="text-green-700 text-sm sm:text-base break-words leading-relaxed mb-3">
@@ -616,7 +695,7 @@ function App() {
               )}
 
               {/* Continue Button - only show if no submission was made (direct Show Answer) */}
-              {!(userAnswer.trim() || voiceRecording.transcript.trim()) && (
+              {!userAnswer.trim() && (
                 <div className="text-center">
                   <Button 
                     onClick={handleStudyCardComplete}

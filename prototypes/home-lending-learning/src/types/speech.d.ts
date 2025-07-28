@@ -86,4 +86,5 @@ declare var webkitSpeechRecognition: {
 interface Window {
   SpeechRecognition: typeof SpeechRecognition;
   webkitSpeechRecognition: typeof webkitSpeechRecognition;
+  MSStream?: any;
 }

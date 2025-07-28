@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 interface VoiceRecordingState {
   isRecording: boolean;
@@ -6,6 +6,10 @@ interface VoiceRecordingState {
   transcript: string;
   error: string | null;
   audioBlob: Blob | null;
+  isIOS: boolean;
+  speechRecognitionSupported: boolean;
+  finalTranscript: string;
+  interimTranscript: string;
 }
 
 export const useVoiceRecording = (language: string = 'en-US') => {
@@ -15,20 +19,50 @@ export const useVoiceRecording = (language: string = 'en-US') => {
     transcript: '',
     error: null,
     audioBlob: null,
+    isIOS: false,
+    speechRecognitionSupported: false,
+    finalTranscript: '',
+    interimTranscript: '',
   });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const processedResultIndexRef = useRef<number>(0);
+
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const speechRecognitionSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+    
+    setState(prev => ({ 
+      ...prev, 
+      isIOS,
+      speechRecognitionSupported: speechRecognitionSupported && !isIOS 
+    }));
+  }, []);
 
   const startRecording = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, error: null, transcript: '', isProcessing: false }));
+      setState(prev => ({ 
+        ...prev, 
+        error: null, 
+        transcript: '', 
+        isProcessing: false,
+        finalTranscript: '',
+        interimTranscript: ''
+      }));
       
-      // Request microphone permission
+      if (state.isIOS) {
+        setState(prev => ({ 
+          ...prev, 
+          error: 'On iOS, please use the microphone button on your keyboard to dictate text directly into the answer field.',
+          isRecording: false 
+        }));
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Setup MediaRecorder for audio recording
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -44,8 +78,7 @@ export const useVoiceRecording = (language: string = 'en-US') => {
         stream.getTracks().forEach(track => track.stop());
       };
 
-      // Setup Speech Recognition for live transcription
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      if (state.speechRecognitionSupported) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
@@ -57,10 +90,11 @@ export const useVoiceRecording = (language: string = 'en-US') => {
           let finalTranscript = '';
           let interimTranscript = '';
 
+          // Process all results to build the complete transcript
           for (let i = 0; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              finalTranscript += transcript;
+              finalTranscript += transcript + ' ';
             } else {
               interimTranscript += transcript;
             }
@@ -68,7 +102,9 @@ export const useVoiceRecording = (language: string = 'en-US') => {
 
           setState(prev => ({ 
             ...prev, 
-            transcript: finalTranscript + interimTranscript 
+            finalTranscript: finalTranscript,
+            interimTranscript: interimTranscript,
+            transcript: finalTranscript + interimTranscript
           }));
         };
 
@@ -80,14 +116,13 @@ export const useVoiceRecording = (language: string = 'en-US') => {
               error: `Language ${language} is not supported. Try switching to English.`
             }));
           }
-          // Don't set error state for other speech recognition issues, just continue with recording
         };
 
         recognitionRef.current.start();
       }
 
-      // Start recording
       mediaRecorderRef.current.start();
+      processedResultIndexRef.current = 0;
       setState(prev => ({ ...prev, isRecording: true }));
 
     } catch (error) {
@@ -98,36 +133,37 @@ export const useVoiceRecording = (language: string = 'en-US') => {
         isRecording: false 
       }));
     }
-  }, []);
+  }, [state.isIOS, state.speechRecognitionSupported, language]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && state.isRecording) {
       setState(prev => ({ ...prev, isRecording: false, isProcessing: true }));
       
-      // Stop speech recognition
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
       
-      // Stop media recorder
       mediaRecorderRef.current.stop();
     }
   }, [state.isRecording]);
 
   const resetRecording = useCallback(() => {
-    setState({
+    setState(prev => ({
+      ...prev,
       isRecording: false,
       isProcessing: false,
       transcript: '',
       error: null,
       audioBlob: null,
-    });
+      finalTranscript: '',
+      interimTranscript: '',
+    }));
     audioChunksRef.current = [];
   }, []);
 
   const isSupported = useCallback(() => {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  }, []);
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || state.isIOS;
+  }, [state.isIOS]);
 
   return {
     ...state,
