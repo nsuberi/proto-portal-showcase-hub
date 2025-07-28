@@ -30,6 +30,18 @@ echo "📋 Copying FFX build to main dist..."
 mkdir -p dist/prototypes/ffx-skill-map
 cp -r prototypes/ffx-skill-map/dist/* dist/prototypes/ffx-skill-map/
 
+# Build Home Lending Learning prototype
+echo "🏠 Building Home Lending Learning prototype..."
+
+# Build Home Lending prototype (dependencies already installed via workspace)
+echo "🏗️ Building Home Lending prototype..."
+yarn workspace @proto-portal/home-lending-learning build
+
+# Copy Home Lending build to main dist directory
+echo "📋 Copying Home Lending build to main dist..."
+mkdir -p dist/prototypes/home-lending-learning
+cp -r prototypes/home-lending-learning/dist/* dist/prototypes/home-lending-learning/
+
 # Create a prototypes index.html that redirects to ffx-skill-map
 echo "📋 Creating prototypes index redirect..."
 cat > dist/prototypes/index.html << 'EOF'
@@ -53,3 +65,4 @@ EOF
 echo "✅ Build completed successfully!"
 echo "📦 Main portfolio built files are in the dist/ directory"
 echo "🎮 FFX Skill Map prototype files are in dist/prototypes/ffx-skill-map/"
+echo "🏠 Home Lending Learning prototype files are in dist/prototypes/home-lending-learning/"

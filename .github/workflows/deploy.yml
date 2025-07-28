@@ -28,6 +28,8 @@ jobs:
       run: |
         cd prototypes/ffx-skill-map
         npm test
+        cd ../home-lending-learning
+        npm test
       env:
         CI: true
         
@@ -36,7 +38,9 @@ jobs:
       if: always()
       with:
         name: jest-test-results
-        path: prototypes/ffx-skill-map/coverage/
+        path: |
+          prototypes/ffx-skill-map/coverage/
+          prototypes/home-lending-learning/coverage/
         retention-days: 7
 
   deploy:
