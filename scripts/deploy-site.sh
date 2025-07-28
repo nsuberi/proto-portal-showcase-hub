@@ -18,10 +18,14 @@ fi
 
 echo "🔧 Rebuilding frontend with correct API Gateway URL: $API_GATEWAY_URL"
 
-# Replace placeholder in FFX skill map and rebuild
+# Build all prototypes using the centralized build script
+echo "🏗️ Running full build process..."
+./scripts/build.sh
+
+# Replace placeholder in FFX skill map and rebuild (for AI integration)
 cd prototypes/ffx-skill-map
 
-echo "🔧 Replacing placeholder with API Gateway URL in source..."
+echo "🔧 Replacing placeholder with API Gateway URL in FFX source..."
 # Backup and replace placeholder
 cp src/components/SecureAIAnalysisWidget.tsx src/components/SecureAIAnalysisWidget.tsx.bak
 sed -i "s|PLACEHOLDER_API_GATEWAY_URL|$API_GATEWAY_URL|g" src/components/SecureAIAnalysisWidget.tsx
@@ -36,7 +40,7 @@ echo "✅ Placeholder replaced successfully"
 echo "🔧 Rebuilding FFX skill map with correct API URL..."
 VITE_API_URL="$API_GATEWAY_URL" npm run build
 
-# Copy rebuilt files to main dist
+# Copy rebuilt FFX files to main dist
 echo "📋 Copying rebuilt FFX files to main dist..."
 mkdir -p ../../dist/prototypes/ffx-skill-map
 cp -r dist/* ../../dist/prototypes/ffx-skill-map/

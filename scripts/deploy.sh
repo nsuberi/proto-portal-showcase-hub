@@ -50,6 +50,12 @@ cd ..
 # Step 2: Build frontend with the real API URL
 echo ""
 echo "📋 Step 2: Building frontend with API Gateway URL..."
+
+# First, build all prototypes using the centralized build script
+echo "🏗️ Running full build process..."
+./scripts/build.sh
+
+# Then customize FFX with API Gateway URL for AI integration
 cd prototypes/ffx-skill-map
 
 echo "📦 Installing dependencies..."
@@ -76,7 +82,7 @@ else
     grep -n "$API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx || echo "URL not found in expected location"
 fi
 
-echo "🔧 Building with API Gateway URL: $API_GATEWAY_URL"
+echo "🔧 Building FFX with API Gateway URL: $API_GATEWAY_URL"
 VITE_API_URL="$API_GATEWAY_URL" npm run build
 
 echo "🔧 Restoring original source file..."
@@ -92,14 +98,14 @@ cd ../..
 echo ""
 echo "📋 Step 3: Uploading frontend to S3..."
 
-# Upload the main site files
+# Upload all files from dist directory (includes main site and both prototypes)
 if [ -d "dist" ]; then
-    echo "📤 Uploading main site files..."
+    echo "📤 Uploading all site files (main + all prototypes)..."
     aws s3 sync dist/ s3://$S3_BUCKET/ --delete
 fi
 
-# Upload the ffx-skill-map prototype
-echo "📤 Uploading ffx-skill-map prototype..."
+# Copy the updated FFX build (with API integration) over the existing one
+echo "📤 Updating FFX prototype with API integration..."
 aws s3 sync prototypes/ffx-skill-map/dist/ s3://$S3_BUCKET/prototypes/ffx-skill-map/ --delete
 
 # Step 4: Invalidate CloudFront cache
@@ -117,5 +123,6 @@ echo "   🔗 AI API (Gateway): $API_GATEWAY_URL"
 echo "   📦 S3 Bucket: $S3_BUCKET"
 echo "   ☁️  CloudFront: $CLOUDFRONT_ID"
 echo ""
-echo "🧪 Test the AI skill recommendations at:"
-echo "   $WEBSITE_URL/prototypes/ffx-skill-map/"
+echo "🧪 Test the prototypes at:"
+echo "   FFX Skill Map (with AI): $WEBSITE_URL/prototypes/ffx-skill-map/"
+echo "   Home Lending Learning: $WEBSITE_URL/prototypes/home-lending-learning/"
