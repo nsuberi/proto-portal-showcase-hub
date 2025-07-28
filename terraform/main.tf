@@ -63,8 +63,39 @@ resource "aws_s3_bucket_policy" "website" {
   depends_on = [aws_s3_bucket_public_access_block.website]
 }
 
-# Lambda@Edge resources temporarily removed due to IAM permission complexities
-# Can be re-added later once AWS service-linked roles are properly configured
+# CloudFront Function for prototype SPA routing
+resource "aws_cloudfront_function" "prototype_router" {
+  name    = "${var.bucket_name}-prototype-router"
+  runtime = "cloudfront-js-1.0"
+  code    = <<-EOT
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    // Handle prototype directory access - add index.html if missing
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+        return request;
+    }
+    
+    // Handle SPA routing within prototypes
+    if (uri.startsWith('/prototypes/')) {
+        var pathParts = uri.split('/');
+        
+        // If accessing a prototype subdirectory without file extension, serve the prototype's index.html
+        if (pathParts.length >= 3 && !uri.includes('.')) {
+            var prototypeName = pathParts[2];
+            // Only handle known prototypes
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning') {
+                request.uri = '/prototypes/' + prototypeName + '/index.html';
+            }
+        }
+    }
+    
+    return request;
+}
+EOT
+}
 
 # Uncomment the following resources when ready to implement Lambda@Edge:
 
@@ -197,9 +228,9 @@ resource "aws_cloudfront_distribution" "website" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  # Custom cache behavior for prototypes subdirectories
+  # FFX Skill Map cache behavior
   ordered_cache_behavior {
-    path_pattern           = "/prototypes/*"
+    path_pattern           = "/prototypes/ffx-skill-map/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-${var.bucket_name}"
@@ -217,11 +248,36 @@ resource "aws_cloudfront_distribution" "website" {
     default_ttl = 3600
     max_ttl     = 86400
 
-    # Lambda@Edge will be added back once permissions are resolved
-    # lambda_function_association {
-    #   event_type   = "origin-request"
-    #   lambda_arn   = aws_lambda_function.spa_routing.qualified_arn
-    # }
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
+  # Home Lending Learning cache behavior
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/home-lending-learning/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
   }
 
   default_cache_behavior {
@@ -243,19 +299,11 @@ resource "aws_cloudfront_distribution" "website" {
     max_ttl     = 86400
   }
 
-  # Main SPA routing - redirect 404s to index.html
+  # Main SPA routing - redirect 404s to index.html (for main site only)
   custom_error_response {
     error_code         = 404
     response_code      = 200
     response_page_path = "/index.html"
-  }
-
-  # Prototype SPA routing fallback - redirect 403s to prototype index.html
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/prototypes/ffx-skill-map/index.html"
-    error_caching_min_ttl = 0
   }
 
   restrictions {
