@@ -6,7 +6,9 @@ interface VoiceRecordingState {
   transcript: string;
   error: string | null;
   audioBlob: Blob | null;
+  isMobile: boolean;
   isIOS: boolean;
+  isAndroid: boolean;
   speechRecognitionSupported: boolean;
   finalTranscript: string;
   interimTranscript: string;
@@ -19,7 +21,9 @@ export const useVoiceRecording = (language: string = 'en-US') => {
     transcript: '',
     error: null,
     audioBlob: null,
+    isMobile: false,
     isIOS: false,
+    isAndroid: false,
     speechRecognitionSupported: false,
     finalTranscript: '',
     interimTranscript: '',
@@ -32,12 +36,16 @@ export const useVoiceRecording = (language: string = 'en-US') => {
 
   useEffect(() => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isMobile = isIOS || isAndroid;
     const speechRecognitionSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
     
     setState(prev => ({ 
       ...prev, 
       isIOS,
-      speechRecognitionSupported: speechRecognitionSupported && !isIOS 
+      isAndroid,
+      isMobile,
+      speechRecognitionSupported: speechRecognitionSupported && !isMobile 
     }));
   }, []);
 
@@ -52,10 +60,11 @@ export const useVoiceRecording = (language: string = 'en-US') => {
         interimTranscript: ''
       }));
       
-      if (state.isIOS) {
+      if (state.isMobile) {
+        const deviceType = state.isIOS ? 'iOS' : 'Android';
         setState(prev => ({ 
           ...prev, 
-          error: 'On iOS, please use the microphone button on your keyboard to dictate text directly into the answer field.',
+          error: `On ${deviceType}, please use the microphone button on your keyboard to dictate text directly into the explanation field.`,
           isRecording: false 
         }));
         return;
@@ -162,8 +171,8 @@ export const useVoiceRecording = (language: string = 'en-US') => {
   }, []);
 
   const isSupported = useCallback(() => {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || state.isIOS;
-  }, [state.isIOS]);
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || state.isMobile;
+  }, [state.isMobile]);
 
   return {
     ...state,

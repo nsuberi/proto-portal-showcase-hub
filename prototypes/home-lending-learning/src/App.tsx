@@ -67,7 +67,7 @@ function App() {
   
   // Handle voice recording state changes
   useEffect(() => {
-    if (!voiceRecording.isIOS && !voiceRecording.isRecording && voiceRecording.finalTranscript && 
+    if (!voiceRecording.isMobile && !voiceRecording.isRecording && voiceRecording.finalTranscript && 
         voiceRecording.finalTranscript !== processedTranscriptRef.current) {
       // When recording stops and we have final transcript, insert it at cursor position
       const finalText = baseText.substring(0, cursorPosition) + voiceRecording.finalTranscript + baseText.substring(cursorPosition);
@@ -459,35 +459,39 @@ function App() {
 
           {!showAnswer && (
             <div className="space-y-4">
-              {/* Language Selection */}
-              <div className="flex items-center gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/20">
-                <label htmlFor="language-select" className="text-sm font-medium text-primary whitespace-nowrap">
-                  Speech Language:
-                </label>
-                <select
-                  id="language-select"
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="flex-1 p-2 border border-secondary/30 rounded-md text-sm bg-background"
-                  disabled={voiceRecording.isRecording}
-                >
-                  <option value="en-US">English (US)</option>
-                  <option value="es-US">Spanish (US)</option>
-                  <option value="es">Spanish</option>
-                </select>
-              </div>
+              {/* Language Selection - Only show on desktop where speech recognition is used */}
+              {!voiceRecording.isMobile && (
+                <div className="flex items-center gap-2 p-3 bg-secondary/5 rounded-lg border border-secondary/20">
+                  <label htmlFor="language-select" className="text-sm font-medium text-primary whitespace-nowrap">
+                    Speech Language:
+                  </label>
+                  <select
+                    id="language-select"
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    className="flex-1 p-2 border border-secondary/30 rounded-md text-sm bg-background"
+                    disabled={voiceRecording.isRecording}
+                  >
+                    <option value="en-US">English (US)</option>
+                    <option value="es-US">Spanish (US)</option>
+                    <option value="es">Spanish</option>
+                  </select>
+                </div>
+              )}
 
               {/* Voice Recording Interface */}
               {voiceRecording.isSupported ? (
                 <div className="space-y-4">
-                  {voiceRecording.isIOS ? (
+                  {voiceRecording.isMobile ? (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-start gap-2">
                         <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-800 mb-2">Voice Input on iOS</p>
+                          <p className="text-sm font-medium text-blue-800 mb-2">
+                            Voice Input on {voiceRecording.isIOS ? 'iOS' : 'Android'}
+                          </p>
                           <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                            <li>Tap the answer text field above</li>
+                            <li>Tap the explanation text field below</li>
                             <li>Tap the microphone button on your keyboard</li>
                             <li>Speak your answer</li>
                             <li>Tap "Done" when finished</li>
@@ -603,7 +607,7 @@ function App() {
                   className={`w-full p-3 border rounded-lg resize-none h-20 sm:h-24 text-sm ${
                     voiceRecording.isRecording ? 'border-blue-500 bg-blue-50/30' : ''
                   }`}
-                  placeholder={voiceRecording.isIOS 
+                  placeholder={voiceRecording.isMobile 
                     ? "Type here or tap the microphone on your keyboard to dictate..." 
                     : "Type or click 'Start Recording' to dictate..."}
                   autoComplete="off"
@@ -611,12 +615,12 @@ function App() {
                   autoCapitalize="sentences"
                   spellCheck="true"
                 />
-                {voiceRecording.isIOS && (
+                {voiceRecording.isMobile && (
                   <p className="text-xs text-gray-600 mt-1">
                     💡 Tip: Use your keyboard's microphone button for voice input
                   </p>
                 )}
-                {!voiceRecording.isIOS && voiceRecording.speechRecognitionSupported && !voiceRecording.isRecording && (
+                {!voiceRecording.isMobile && voiceRecording.speechRecognitionSupported && !voiceRecording.isRecording && (
                   <p className="text-xs text-gray-600 mt-1">
                     💡 Tip: Click "Start Recording" to dictate. You'll see your words appear in real-time!
                   </p>
