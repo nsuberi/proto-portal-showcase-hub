@@ -3,5 +3,8 @@
 # FFX Skill Map prototype - serve its index.html for any route under /prototypes/ffx-skill-map/
 /prototypes/ffx-skill-map/* /prototypes/ffx-skill-map/index.html 200
 
+# Home Lending Learning prototype - serve its index.html for any route under /prototypes/home-lending-learning/
+/prototypes/home-lending-learning/* /prototypes/home-lending-learning/index.html 200
+
 # Main portfolio SPA - serve main index.html for all other routes
 /* /index.html 200
