@@ -95,6 +95,31 @@ function App() {
     voiceRecording.startRecording();
   };
 
+  const handleRequestMicrophonePermission = async () => {
+    try {
+      // Attempt to request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // If successful, stop the stream immediately
+      stream.getTracks().forEach(track => track.stop());
+      alert('Microphone permission granted! You can now try using voice typing in the text field.');
+    } catch (error) {
+      console.error('Microphone permission denied:', error);
+      // If denied, show instructions for manual permission
+      alert('Microphone permission was denied. Please follow the manual steps below to enable permissions.');
+    }
+  };
+
+  const handleOpenAndroidSettings = () => {
+    // Try to open Android app settings (this may or may not work depending on the browser)
+    try {
+      // This is a best-effort attempt - results may vary by browser and Android version
+      window.open('intent://apps/settings/app/permissions#Intent;scheme=android-app;end', '_system');
+    } catch (error) {
+      // Fallback - just provide instructions
+      alert('Please go to your Android Settings → Apps → find your browser → Permissions → Microphone → Allow');
+    }
+  };
+
   // Compute display text for the textarea
   const displayText = voiceRecording.isRecording 
     ? baseText.substring(0, cursorPosition) + voiceRecording.transcript + baseText.substring(cursorPosition)
@@ -496,6 +521,39 @@ function App() {
                             <li>Speak your answer</li>
                             <li>Tap "Done" when finished</li>
                           </ol>
+                          {voiceRecording.isAndroid && (
+                            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                              <p className="font-medium text-yellow-800 mb-2">If you see "No permission to enable voice typing":</p>
+                              
+                              {/* Quick permission request */}
+                              <div className="mb-3">
+                                <p className="text-yellow-700 mb-1">Try this first:</p>
+                                <Button
+                                  onClick={handleRequestMicrophonePermission}
+                                  size="sm"
+                                  className="text-xs py-1 px-2 h-auto bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Request Microphone Permission
+                                </Button>
+                              </div>
+
+                              {/* Manual steps */}
+                              <div className="border-t border-yellow-300 pt-2">
+                                <p className="text-yellow-700 mb-1">If that doesn't work, enable manually:</p>
+                                <div className="flex flex-col gap-1">
+                                  <Button
+                                    onClick={handleOpenAndroidSettings}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs py-1 px-2 h-auto border-yellow-400 text-yellow-800 hover:bg-yellow-100"
+                                  >
+                                    Open App Settings
+                                  </Button>
+                                  <p className="text-yellow-600 mt-1">Or go to: Settings → Apps → Browser → Permissions → Microphone → Allow</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
