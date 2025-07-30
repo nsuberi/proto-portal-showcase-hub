@@ -1,0 +1,78 @@
+# Page snapshot
+
+```yaml
+- heading "Interactive AI Experiences" [level=1]
+- paragraph: Creating AI-powered interactions that bring people together and enhance human connection
+- button "Explore My Work":
+  - text: Explore My Work
+  - img
+- heading "Live Prototypes" [level=2]
+- paragraph: Fully implemented interactive experiences ready to explore
+- heading "Final Fantasy X Skill Map for Employees" [level=3]
+- text: Live Demo Available
+- paragraph: Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.
+- text: Skill Mapping Graph Database Learning Pathways Neo4j
+- link "Try Live Demo":
+  - /url: /prototypes/ffx-skill-map/
+  - text: Try Live Demo
+  - img
+- heading "Home Lending Learning Platform" [level=3]
+- text: Live Demo Available
+- paragraph: Master the complex world of home lending through interactive learning. Features process flow maps, glossary browser, and knowledge testing cards to help innovators understand mortgage industry fundamentals.
+- text: Education Financial Services Process Flow Knowledge Testing
+- link "Try Live Demo":
+  - /url: /prototypes/home-lending-learning/
+  - text: Try Live Demo
+  - img
+- heading "Prototype Ideas" [level=2]
+- paragraph: Concepts and ideas exploring the future of human-AI collaboration
+- heading "Onboarding Advisor Council" [level=3]
+- text: Concept
+- paragraph: A team of AI advisors guides new employees through company knowledge, helping them get productive quickly with role-based memory and stakeholder alignment.
+- text: Multi-agent Memory Onboarding
+- button "Coming Soon" [disabled]
+- heading "Guitar Spiral + Music Learning" [level=3]
+- text: Concept
+- paragraph: Interactive visual interface where musical notes spiral by pitch and octaves, with real-time chord-to-shape translation for guitar learning.
+- text: Music Visualization Learning
+- button "Coming Soon" [disabled]
+- heading "Conversing Forest / Living Museum" [level=3]
+- text: Concept
+- paragraph: Embodied AI agents simulate philosophical conversations about nature harmony. When visitors speak, agents pause and respond contextually.
+- text: Embodied AI Museum Interaction
+- button "Coming Soon" [disabled]
+- heading "AI Development Team Simulation" [level=3]
+- text: Concept
+- paragraph: A lightweight, always-on development team of AI agents that creates tickets, works on features, and presents demos with continuous collaboration.
+- text: Dev Team Automation Collaboration
+- button "Coming Soon" [disabled]
+- 'heading "IAM Governance: Path to Production" [level=3]'
+- text: Concept
+- paragraph: Infrastructure management that validates AWS IAM policies automatically, ensuring sandbox environments follow guidelines without ops bottlenecks.
+- text: Infrastructure Security Automation
+- button "Coming Soon" [disabled]
+- 'heading "InfraOracle: Cost-Aware Architecture" [level=3]'
+- text: Concept
+- paragraph: Analyzes cloud infrastructure and offers cost-saving suggestions using AI agents, with visual dashboards and memory of past decisions.
+- text: Cloud Cost Optimization AI Analysis
+- button "Coming Soon" [disabled]
+- 'heading "Story Tags: QR Characters in the Wild" [level=3]'
+- text: Concept
+- paragraph: Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.
+- text: Location-based Storytelling Tourism
+- button "Coming Soon" [disabled]
+- heading "About Me" [level=2]
+- paragraph: I explore how AI can create meaningful interactions between people through thoughtful design and technology. My work combines human-computer interaction research with practical applications that make AI more accessible and genuinely helpful in bringing communities together.
+- paragraph: Each prototype investigates different ways technology can enhance human connection - from collaborative learning experiences to immersive storytelling that bridges digital and physical worlds.
+- heading "Let's Connect" [level=2]
+- paragraph: Interested in exploring how AI can enhance human connection? Let's discuss ideas and collaborate!
+- button "Email":
+  - img
+  - text: Email
+- button "LinkedIn":
+  - img
+  - text: LinkedIn
+- button "GitHub":
+  - img
+  - text: GitHub
+```

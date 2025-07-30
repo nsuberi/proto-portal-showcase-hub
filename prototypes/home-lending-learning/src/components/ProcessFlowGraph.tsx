@@ -9,9 +9,10 @@ interface ProcessFlowGraphProps {
   nodes: FlowMapNode[];
   glossaryTerms: Record<string, any>;
   onNodeClick: (node: FlowMapNode) => void;
+  highlightedNodes?: string[];
 }
 
-export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick }: ProcessFlowGraphProps) {
+export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlightedNodes = [] }: ProcessFlowGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
@@ -121,7 +122,19 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick }: ProcessF
       nodeReducer: (node, data) => {
         const res = { ...data };
         res.size = isSmallScreen ? 12 : 15;
-        if (hoveredNode && hoveredNode !== node && !graph.neighbors(hoveredNode).includes(node)) {
+        
+        // Highlight nodes if they're in the highlightedNodes array
+        if (highlightedNodes.length > 0) {
+          if (highlightedNodes.includes(node)) {
+            res.size = isSmallScreen ? 16 : 20; // Make highlighted nodes larger
+            res.color = '#F59E0B'; // Amber color for highlighting
+            res.borderColor = '#D97706';
+            res.borderSize = 2;
+          } else {
+            res.color = '#E5E7EB'; // Dim non-highlighted nodes
+            res.label = ''; // Hide labels for non-highlighted nodes
+          }
+        } else if (hoveredNode && hoveredNode !== node && !graph.neighbors(hoveredNode).includes(node)) {
           res.label = '';
           res.color = '#E5E7EB';
         }
@@ -160,7 +173,7 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick }: ProcessF
     return () => {
       sigma.kill();
     };
-  }, [nodes, onNodeClick, hoveredNode]);
+  }, [nodes, onNodeClick, hoveredNode, highlightedNodes]);
 
   return (
     <div className="w-full h-full relative">

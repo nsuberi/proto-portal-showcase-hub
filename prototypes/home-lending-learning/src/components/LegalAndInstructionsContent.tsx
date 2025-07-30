@@ -20,15 +20,25 @@ export const LegalAndInstructionsContent: React.FC<LegalAndInstructionsContentPr
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" size="sm" asChild className="text-xs">
-            <a href="https://selling-guide.fanniemae.com/" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-3 h-3 mr-2" />
-              Fannie Mae Selling Guide
+            <a 
+              href="https://selling-guide.fanniemae.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <span>Fannie Mae Selling Guide</span>
             </a>
           </Button>
           <Button variant="outline" size="sm" asChild className="text-xs">
-            <a href="https://guide.freddiemac.com/" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-3 h-3 mr-2" />
-              Freddie Mac Guide
+            <a 
+              href="https://guide.freddiemac.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <span>Freddie Mac Guide</span>
             </a>
           </Button>
         </div>

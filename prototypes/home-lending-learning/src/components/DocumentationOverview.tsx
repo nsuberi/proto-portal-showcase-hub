@@ -12,7 +12,9 @@ import {
   FileCheck,
   AlertCircle,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { ProcessPersona, DocumentRequirement } from '../types';
 
@@ -31,6 +33,7 @@ export const DocumentationOverview: React.FC<DocumentationOverviewProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'borrower-provided' | 'professional-obtained' | 'process-generated'>('all');
   const [selectedPersona, setSelectedPersona] = useState<ProcessPersona | null>(null);
+  const [isDocumentsExpanded, setIsDocumentsExpanded] = useState(true);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -151,6 +154,26 @@ export const DocumentationOverview: React.FC<DocumentationOverviewProps> = ({
             Who Reviews Your Documentation
           </CardTitle>
         </CardHeader>
+        
+        {/* Mobile: Show selected persona description directly below header */}
+        {selectedPersona && (
+          <div className="md:hidden mx-6 mb-4 p-4 bg-secondary/10 rounded-lg">
+            <h5 className="font-semibold mb-2">{selectedPersona.title} Responsibilities:</h5>
+            <ul className="space-y-1 mb-3">
+              {selectedPersona.responsibilities.map((resp, idx) => (
+                <li key={idx} className="text-sm flex items-start gap-2">
+                  <CheckCircle className="w-3 h-3 text-green-600 mt-0.5" />
+                  <span>{resp}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium">Active during:</span>{' '}
+              {selectedPersona.processStages.join(', ')}
+            </div>
+          </div>
+        )}
+
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {personas.map((persona) => (
@@ -182,8 +205,9 @@ export const DocumentationOverview: React.FC<DocumentationOverviewProps> = ({
             ))}
           </div>
 
+          {/* Desktop: Show selected persona description at bottom (existing behavior) */}
           {selectedPersona && (
-            <div className="mt-4 p-4 bg-secondary/10 rounded-lg">
+            <div className="hidden md:block mt-4 p-4 bg-secondary/10 rounded-lg">
               <h5 className="font-semibold mb-2">{selectedPersona.title} Responsibilities:</h5>
               <ul className="space-y-1 mb-3">
                 {selectedPersona.responsibilities.map((resp, idx) => (
@@ -202,98 +226,124 @@ export const DocumentationOverview: React.FC<DocumentationOverviewProps> = ({
         </CardContent>
       </Card>
 
-      {/* Document Categories Filter */}
-      <div className="flex flex-wrap gap-2 justify-center">
-        <Button
-          variant={selectedCategory === 'all' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedCategory('all')}
+      {/* Document Exploration - Collapsible */}
+      <Card>
+        <CardHeader 
+          className="cursor-pointer hover:bg-secondary/5 transition-colors"
+          onClick={() => setIsDocumentsExpanded(!isDocumentsExpanded)}
         >
-          All Documents ({documents.length})
-        </Button>
-        <Button
-          variant={selectedCategory === 'borrower-provided' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedCategory('borrower-provided')}
-          className="flex items-center gap-2"
-        >
-          <User className="w-3 h-3" />
-          You Provide ({documents.filter(d => d.category === 'borrower-provided').length})
-        </Button>
-        <Button
-          variant={selectedCategory === 'professional-obtained' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedCategory('professional-obtained')}
-          className="flex items-center gap-2"
-        >
-          <Building className="w-3 h-3" />
-          Professionals Gather ({documents.filter(d => d.category === 'professional-obtained').length})
-        </Button>
-        <Button
-          variant={selectedCategory === 'process-generated' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedCategory('process-generated')}
-          className="flex items-center gap-2"
-        >
-          <FileCheck className="w-3 h-3" />
-          Process Creates ({documents.filter(d => d.category === 'process-generated').length})
-        </Button>
-      </div>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <FileText className="w-5 h-5" />
+              Document Exploration
+            </CardTitle>
+            <Button variant="ghost" size="sm">
+              {isDocumentsExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        {isDocumentsExpanded && (
+          <CardContent className="space-y-6">
+            {/* Document Categories Filter */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('all')}
+              >
+                All Documents ({documents.length})
+              </Button>
+              <Button
+                variant={selectedCategory === 'borrower-provided' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('borrower-provided')}
+                className="flex items-center gap-2"
+              >
+                <User className="w-3 h-3" />
+                You Provide ({documents.filter(d => d.category === 'borrower-provided').length})
+              </Button>
+              <Button
+                variant={selectedCategory === 'professional-obtained' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('professional-obtained')}
+                className="flex items-center gap-2"
+              >
+                <Building className="w-3 h-3" />
+                Professionals Gather ({documents.filter(d => d.category === 'professional-obtained').length})
+              </Button>
+              <Button
+                variant={selectedCategory === 'process-generated' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('process-generated')}
+                className="flex items-center gap-2"
+              >
+                <FileCheck className="w-3 h-3" />
+                Process Creates ({documents.filter(d => d.category === 'process-generated').length})
+              </Button>
+            </div>
 
-      {/* Documents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredDocuments.map((doc) => (
-          <Card 
-            key={doc.id} 
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => onDocumentClick?.(doc)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-base flex items-start gap-2">
-                  {getCategoryIcon(doc.category)}
-                  <span className="break-words">{doc.name}</span>
-                </CardTitle>
-              </div>
-              <Badge className={`${getCategoryColor(doc.category)} text-xs`}>
-                {getCategoryLabel(doc.category)}
-              </Badge>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{doc.description}</p>
-              
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-primary mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium">When needed:</p>
-                    <p className="text-xs text-muted-foreground">{doc.whenNeeded}</p>
-                  </div>
-                </div>
-                
-                {doc.tips && (
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-xs font-medium">Tip:</p>
-                      <p className="text-xs text-muted-foreground">{doc.tips}</p>
+            {/* Documents Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredDocuments.map((doc) => (
+                <Card 
+                  key={doc.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => onDocumentClick?.(doc)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base flex items-start gap-2">
+                        {getCategoryIcon(doc.category)}
+                        <span className="break-words">{doc.name}</span>
+                      </CardTitle>
                     </div>
-                  </div>
-                )}
-              </div>
+                    <Badge className={`${getCategoryColor(doc.category)} text-xs`}>
+                      {getCategoryLabel(doc.category)}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">{doc.description}</p>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-primary mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium">When needed:</p>
+                          <p className="text-xs text-muted-foreground">{doc.whenNeeded}</p>
+                        </div>
+                      </div>
+                      
+                      {doc.tips && (
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-xs font-medium">Tip:</p>
+                            <p className="text-xs text-muted-foreground">{doc.tips}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">
-                  Reviewed by: {doc.reviewedBy.map(r => {
-                    const persona = personas.find(p => p.id === r);
-                    return persona?.title || r;
-                  }).join(', ')}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        Reviewed by: {doc.reviewedBy.map(r => {
+                          const persona = personas.find(p => p.id === r);
+                          return persona?.title || r;
+                        }).join(', ')}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        )}
+      </Card>
     </div>
   );
 };
