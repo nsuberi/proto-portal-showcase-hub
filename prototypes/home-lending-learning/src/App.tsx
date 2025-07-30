@@ -38,11 +38,16 @@ import {
   RotateCcw,
   MessageSquare,
   Lightbulb,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { ProcessFlowGraph } from './components/ProcessFlowGraph';
 import { NodeDetailPopup } from './components/NodeDetailPopup';
 import { GlossaryBrowser } from './components/GlossaryBrowser';
+import { DocumentationOverview } from './components/DocumentationOverview';
+import { LegalAndInstructionsContent } from './components/LegalAndInstructionsContent';
+import { processPersonas, documentRequirements } from './data/documentationData';
 
 type ViewMode = 'dashboard' | 'profile';
 
@@ -61,6 +66,9 @@ function App() {
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [baseText, setBaseText] = useState('');
   const processedTranscriptRef = useRef<string>('');
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(true);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [glossaryBrowserExpanded, setGlossaryBrowserExpanded] = useState(false);
   
   // Voice recording hook
   const voiceRecording = useVoiceRecording(selectedLanguage);
@@ -260,11 +268,22 @@ function App() {
       setAssessment(null);
       voiceRecording.resetRecording();
       
-      // Auto-scroll to study card section
+      // Expand the Glossary Browser
+      setGlossaryBrowserExpanded(true);
+      
+      // Auto-scroll to glossary browser first, then to study card section
       setTimeout(() => {
-        const studyCardElement = document.querySelector('[data-study-card-section]');
-        if (studyCardElement) {
-          studyCardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const glossaryElement = document.querySelector('[data-glossary-browser]');
+        if (glossaryElement) {
+          glossaryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          // Then scroll to study card within the glossary browser
+          setTimeout(() => {
+            const studyCardElement = document.querySelector('[data-study-card-section]');
+            if (studyCardElement) {
+              studyCardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 500);
         }
       }, 100);
     } else {
@@ -287,11 +306,22 @@ function App() {
       setAssessment(null);
       voiceRecording.resetRecording();
       
-      // Auto-scroll to study card section
+      // Expand the Glossary Browser
+      setGlossaryBrowserExpanded(true);
+      
+      // Auto-scroll to glossary browser first, then to study card section
       setTimeout(() => {
-        const studyCardElement = document.querySelector('[data-study-card-section]');
-        if (studyCardElement) {
-          studyCardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const glossaryElement = document.querySelector('[data-glossary-browser]');
+        if (glossaryElement) {
+          glossaryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          // Then scroll to study card within the glossary browser
+          setTimeout(() => {
+            const studyCardElement = document.querySelector('[data-study-card-section]');
+            if (studyCardElement) {
+              studyCardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 500);
         }
       }, 100);
     }
@@ -343,6 +373,16 @@ function App() {
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowInstructions(true)}
+              className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+            >
+              <Info className="h-4 w-4" />
+              <span className="hidden sm:inline">How to Use</span>
+              <span className="sm:hidden">Help</span>
+            </Button>
+            <Button
               variant={currentView === 'dashboard' ? 'default' : 'ghost'}
               onClick={() => setCurrentView('dashboard')}
               size="sm"
@@ -359,6 +399,17 @@ function App() {
             >
               <User className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Profile</span>
+            </Button>
+            <Button 
+              asChild
+              size="sm"
+              className="bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 text-xs sm:text-sm"
+            >
+              <a href="/" className="flex items-center space-x-1 sm:space-x-2">
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Back to Portfolio</span>
+                <span className="sm:hidden">Back</span>
+              </a>
             </Button>
           </div>
         </div>
@@ -1044,13 +1095,21 @@ function App() {
     <div className="space-y-6 sm:space-y-8">
       <div className="text-center max-w-full px-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-          Welcome to Home Lending Learning
+          Navigate Your Home Loan Journey with Confidence
         </h2>
         <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto break-words leading-relaxed">
-          Master the complex world of home lending through interactive learning. 
-          Study key terms, understand the process flow, and test your knowledge 
-          to become an effective innovator in the home lending industry.
+          Understand what happens behind the scenes when applying for a home loan. 
+          See what documents you'll need, who reviews them, and how each step 
+          of the process works—from application to closing.
         </p>
+      </div>
+
+      {/* Documentation Overview Section - NEW MAIN CONTENT */}
+      <div className="space-y-6">
+        <DocumentationOverview 
+          personas={processPersonas}
+          documents={documentRequirements}
+        />
       </div>
 
       {/* Process Flow Section */}
@@ -1062,51 +1121,21 @@ function App() {
         {renderProcessFlow()}
       </div>
 
-      {/* Study Cards Section */}
-      <div className="space-y-6" data-study-card-section>
-        <div className="flex items-center gap-2 px-4">
-          <Brain className="w-5 h-5 text-primary" />
-          <h3 className="text-lg sm:text-xl font-semibold">Study Cards</h3>
-        </div>
-        {renderStudyCards()}
+      {/* Glossary Section with Study Cards */}
+      <div data-glossary-browser>
+        <GlossaryBrowser
+          glossaryTerms={glossaryTerms}
+          userProfile={userProfile}
+          onTermSelect={setSelectedGlossaryTerm}
+          selectedTerm={selectedGlossaryTerm}
+          currentStudyCard={currentStudyCard}
+          showTestingSection={true}
+          studyCardContent={renderStudyCards()}
+          onTestKnowledge={handleTestKnowledge}
+          isExpanded={glossaryBrowserExpanded}
+          onExpandedChange={setGlossaryBrowserExpanded}
+        />
       </div>
-
-      {/* Glossary Section */}
-      <GlossaryBrowser
-        glossaryTerms={glossaryTerms}
-        userProfile={userProfile}
-        onTermSelect={setSelectedGlossaryTerm}
-        selectedTerm={selectedGlossaryTerm}
-      />
-
-      {/* Resources Section */}
-      <Card className="mx-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-            Learning Resources
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <p className="text-muted-foreground mb-4 text-sm sm:text-base break-words">
-            This learning platform is based on official documentation and guidelines from:
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <Button variant="outline" size="sm" asChild className="text-xs sm:text-sm">
-              <a href="https://selling-guide.fanniemae.com/" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                Fannie Mae Selling Guide
-              </a>
-            </Button>
-            <Button variant="outline" size="sm" asChild className="text-xs sm:text-sm">
-              <a href="https://guide.freddiemac.com/" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                Freddie Mac Guide
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
@@ -1118,6 +1147,57 @@ function App() {
           {currentView === 'dashboard' ? renderDashboard() : renderProfile()}
         </div>
       </main>
+
+      {/* Legal Disclaimer Popup */}
+      {showLegalDisclaimer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 animate-in fade-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                Important Legal Notice & Instructions
+              </h2>
+            </div>
+            <div className="p-6">
+              <LegalAndInstructionsContent showFullLegalDisclaimer={true} />
+              
+              <div className="flex justify-end pt-6 border-t mt-6">
+                <Button 
+                  onClick={() => setShowLegalDisclaimer(false)}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  I Understand and Accept
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions Popup */}
+      {showInstructions && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 animate-in fade-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Info className="h-5 w-5 text-blue-600" />
+                How to Use This Learning Platform
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInstructions(false)}
+                className="p-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-6">
+              <LegalAndInstructionsContent showFullLegalDisclaimer={true} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

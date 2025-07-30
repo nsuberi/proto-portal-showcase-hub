@@ -3,23 +3,41 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { BookOpen, Search, ChevronDown, ChevronUp } from 'lucide-react';
-import { GlossaryTerm, UserProfile } from '../types';
+import { BookOpen, Search, ChevronDown, ChevronUp, Brain, AlertCircle } from 'lucide-react';
+import { GlossaryTerm, UserProfile, StudyCard } from '../types';
 
 interface GlossaryBrowserProps {
   glossaryTerms: GlossaryTerm[];
   userProfile: UserProfile;
   onTermSelect: (term: GlossaryTerm) => void;
   selectedTerm: GlossaryTerm | null;
+  currentStudyCard?: StudyCard | null;
+  showTestingSection?: boolean;
+  studyCardContent?: React.ReactNode;
+  onTestKnowledge?: (term: GlossaryTerm) => void;
+  isExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 export function GlossaryBrowser({ 
   glossaryTerms, 
   userProfile, 
   onTermSelect, 
-  selectedTerm 
+  selectedTerm,
+  currentStudyCard,
+  showTestingSection = false,
+  studyCardContent,
+  onTestKnowledge,
+  isExpanded,
+  onExpandedChange
 }: GlossaryBrowserProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [internalIsCollapsed, setInternalIsCollapsed] = useState(true);
+  
+  // Use external state if provided, otherwise use internal state
+  const isCollapsed = isExpanded !== undefined ? !isExpanded : internalIsCollapsed;
+  const setIsCollapsed = onExpandedChange 
+    ? (collapsed: boolean) => onExpandedChange(!collapsed)
+    : setInternalIsCollapsed;
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
@@ -31,40 +49,41 @@ export function GlossaryBrowser({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-primary" />
-          <h3 className="text-lg sm:text-xl font-semibold">Glossary Browser</h3>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center gap-2"
-        >
-          {isCollapsed ? (
-            <>
-              <span className="text-sm">Show</span>
-              <ChevronDown className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <span className="text-sm">Hide</span>
-              <ChevronUp className="h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </div>
-
-      {!isCollapsed && (
+    <Card className="border-2 border-primary/20 shadow-md">
+      <CardContent className="p-0">
         <div className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">Glossary Browser</h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Search and explore comprehensive home lending terminology
-            </p>
+          <div className="flex items-center justify-between px-4 py-4 border-b bg-secondary/5">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <h3 className="text-lg sm:text-xl font-semibold">Glossary Browser and Knowledge Tests</h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="flex items-center gap-2"
+            >
+              {isCollapsed ? (
+                <>
+                  <span className="text-sm">Show</span>
+                  <ChevronDown className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  <span className="text-sm">Hide</span>
+                  <ChevronUp className="h-4 w-4" />
+                </>
+              )}
+            </Button>
           </div>
+
+          {!isCollapsed && (
+            <div className="space-y-6 p-4">
+              <div className="text-center">
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Search and explore comprehensive home lending terminology, then test your knowledge
+                </p>
+              </div>
 
           {/* Search and Filter */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -190,11 +209,54 @@ export function GlossaryBrowser({
                     </div>
                   </div>
                 )}
+                
+                {onTestKnowledge && (
+                  <div className="pt-4 border-t">
+                    <Button
+                      onClick={() => onTestKnowledge(selectedTerm)}
+                      className="w-full sm:w-auto"
+                      size="sm"
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
+                      Test Your Knowledge
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
-        </div>
-      )}
-    </div>
+
+          {/* Study Cards Section */}
+          {showTestingSection && (
+            <div className="mt-8 space-y-6">
+              <div className="flex items-center gap-2">
+                <Brain className="w-5 h-5 text-primary" />
+                <h3 className="text-lg sm:text-xl font-semibold">Test Your Knowledge</h3>
+              </div>
+              
+              {studyCardContent ? (
+                <div data-study-card-section>
+                  {studyCardContent}
+                </div>
+              ) : (
+                <Card className="p-6 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <AlertCircle className="w-12 h-12 text-muted-foreground" />
+                    <div>
+                      <h4 className="font-semibold mb-2">Select a Term to Test</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a glossary term above and click "Test Your Knowledge" to start practicing
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+            )}
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
   );
 }

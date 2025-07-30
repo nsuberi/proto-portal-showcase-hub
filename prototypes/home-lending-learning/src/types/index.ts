@@ -59,3 +59,23 @@ export interface Document {
   relevantTerms: string[];
   category: 'guide' | 'regulation' | 'form' | 'reference';
 }
+
+export interface ProcessPersona {
+  id: string;
+  title: string;
+  description: string;
+  responsibilities: string[];
+  reviewsDocuments: string[];
+  processStages: string[];
+}
+
+export interface DocumentRequirement {
+  id: string;
+  name: string;
+  description: string;
+  category: 'borrower-provided' | 'professional-obtained' | 'process-generated';
+  requiredFor: string[];
+  reviewedBy: string[];
+  whenNeeded: string;
+  tips: string;
+}
