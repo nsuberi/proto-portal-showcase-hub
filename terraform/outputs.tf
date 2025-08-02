@@ -3,6 +3,21 @@ output "website_url" {
   value       = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
 
+output "custom_domain_url" {
+  description = "Custom domain URL"
+  value       = "https://portfolio.cookinupideas.com"
+}
+
+output "certificate_arn" {
+  description = "ACM certificate ARN"
+  value       = aws_acm_certificate.portfolio.arn
+}
+
+output "route53_zone_id" {
+  description = "Route 53 zone ID"
+  value       = data.aws_route53_zone.main.zone_id
+}
+
 output "s3_bucket_name" {
   description = "S3 bucket name"
   value       = aws_s3_bucket.website.id

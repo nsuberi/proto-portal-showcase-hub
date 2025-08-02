@@ -78,7 +78,7 @@ resource "aws_lambda_function" "ai_api" {
       CLAUDE_API_URL     = var.claude_api_url
       CLAUDE_MODEL       = var.claude_model
       LOG_LEVEL         = var.environment == "production" ? "info" : "debug"
-      CORS_ORIGIN       = "https://${aws_cloudfront_distribution.website.domain_name}"
+      CORS_ORIGIN       = "https://portfolio.cookinupideas.com"
     }
   }
 
@@ -200,7 +200,7 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'https://${aws_cloudfront_distribution.website.domain_name}'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'https://portfolio.cookinupideas.com'"
   }
 
   depends_on = [aws_api_gateway_integration.options_integration]
@@ -262,7 +262,7 @@ resource "aws_lambda_function_url" "ai_api" {
 
   cors {
     allow_credentials = false
-    allow_origins     = ["https://${aws_cloudfront_distribution.website.domain_name}"]
+    allow_origins     = ["https://portfolio.cookinupideas.com"]
     allow_methods     = ["*"]
     allow_headers     = ["date", "keep-alive", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-port", "x-amzn-trace-id", "content-type", "x-api-key", "authorization"]
     max_age          = 86400
