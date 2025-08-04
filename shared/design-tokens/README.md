@@ -253,7 +253,6 @@ The system provides convenient utility classes:
 
 - [Main Portfolio Configuration](../../tailwind.config.ts)
 - [FFX Prototype Configuration](../../prototypes/ffx-skill-map/tailwind.config.ts)
-- [Previous Design System Analysis](../../previous-design-system/README.md)
 
 ---
 

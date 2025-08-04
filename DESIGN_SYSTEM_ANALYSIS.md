@@ -162,10 +162,6 @@ The system includes comprehensive dark mode support with alternative token value
 4. **Theming**: Dark mode switching via CSS custom property overrides
 5. **Developer Experience**: Meaningful class names like `bg-primary` vs hex values
 
-## Token Evolution
-
-The `previous-design-system/` folder documents the evolution of design tokens, showing how the system has been refined over time while maintaining backward compatibility and design consistency.
-
 ## Recommendations
 
 1. **Token Documentation**: Consider generating automatic documentation from CSS custom properties
