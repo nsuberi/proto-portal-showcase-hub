@@ -6,17 +6,17 @@ import heroVideo from "@/assets/find_your_path.mp4";
 const Portfolio = () => {
   const implementedPrototypes = [
     {
-      title: "Final Fantasy X Skill Map for Employees",
+      title: "Skill Sphere Grid: Your Learning Adventure Map",
       description:
-        "Interactive skill mapping system inspired by Final Fantasy X's sphere grid. Visualize employee skills, take assessment quizzes, and get personalized learning recommendations with Neo4j graph database.",
+        "Inspired by Final Fantasy X's sphere grid system, visualize your skills in an interactive map, tailor your learning path to match your professional goals, and discover colleagues to collaborate with. Find mentors to guide you or people to mentor as your teams learn and grow together.",
       link: "/prototypes/ffx-skill-map/",
-      tags: ["Skill Mapping", "Graph Database", "Learning Pathways", "Neo4j"],
+      tags: ["Skill Mapping", "Graph Database", "Learning Pathways"],
       status: "Live Demo Available",
     },
     {
       title: "Home Lending Learning Platform",
       description:
-        "Master the complex world of home lending through interactive learning. Features process flow maps, glossary browser, and knowledge testing cards to help innovators understand mortgage industry fundamentals.",
+        "Get a behind-the-scenes peek at the home loan journey! Explore interactive process maps, discover who's involved at each step, and learn what documents you'll need. Test your knowledge with fun quiz cards. For educational purposes only - your actual mortgage adventure may vary!",
       link: "/prototypes/home-lending-learning/",
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
       status: "Live Demo Available",
@@ -33,10 +33,26 @@ const Portfolio = () => {
       status: "Concept",
     },
     {
+      title: "Fog of Work: Priority Discovery Game",
+      description:
+        "Arrows emerge from fog with unknown origins. Ask questions about stakeholder priorities to dispel the cloud - correctly identifying priorities reveals full arrow paths. Align all arrows to help cross-functional teams find a unified path forward.",
+      link: "#prototype2",
+      tags: ["Visualization", "Organizational Learning", "AI Assessment"],
+      status: "Concept",
+    },
+    {
+      title: "Mind Palace: Gesture-Driven Knowledge Explorer",
+      description:
+        "Minority Report-style document exploration with floating summaries. Camera on! Use hand gestures to dive into data sources, select documents to see relationships. Voice commands add notes that integrate into the knowledge cloud, helping externalize your understanding.",
+      link: "#prototype3",
+      tags: ["Spatial UI", "Knowledge Management", "Gesture Control", "Voice Interface"],
+      status: "Concept",
+    },
+    {
       title: "Guitar Spiral + Music Learning",
       description:
         "Interactive visual interface where musical notes spiral by pitch and octaves, with real-time chord-to-shape translation for guitar learning.",
-      link: "#prototype2",
+      link: "#prototype4",
       tags: ["Music", "Visualization", "Learning"],
       status: "Concept",
     },
@@ -44,15 +60,23 @@ const Portfolio = () => {
       title: "Conversing Forest / Living Museum",
       description:
         "Embodied AI agents simulate philosophical conversations about nature harmony. When visitors speak, agents pause and respond contextually.",
-      link: "#prototype3",
+      link: "#prototype5",
       tags: ["Embodied AI", "Museum", "Interaction"],
+      status: "Concept",
+    },
+    {
+      title: "Story Tags: QR Characters in the Wild",
+      description:
+        "Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.",
+      link: "#prototype6",
+      tags: ["Location-based", "Storytelling", "Tourism"],
       status: "Concept",
     },
     {
       title: "AI Development Team Simulation",
       description:
         "A lightweight, always-on development team of AI agents that creates tickets, works on features, and presents demos with continuous collaboration.",
-      link: "#prototype4",
+      link: "#prototype7",
       tags: ["Dev Team", "Automation", "Collaboration"],
       status: "Concept",
     },
@@ -60,7 +84,7 @@ const Portfolio = () => {
       title: "IAM Governance: Path to Production",
       description:
         "Infrastructure management that validates AWS IAM policies automatically, ensuring sandbox environments follow guidelines without ops bottlenecks.",
-      link: "#prototype5",
+      link: "#prototype8",
       tags: ["Infrastructure", "Security", "Automation"],
       status: "Concept",
     },
@@ -68,16 +92,8 @@ const Portfolio = () => {
       title: "InfraOracle: Cost-Aware Architecture",
       description:
         "Analyzes cloud infrastructure and offers cost-saving suggestions using AI agents, with visual dashboards and memory of past decisions.",
-      link: "#prototype6",
+      link: "#prototype9",
       tags: ["Cloud", "Cost Optimization", "AI Analysis"],
-      status: "Concept",
-    },
-    {
-      title: "Story Tags: QR Characters in the Wild",
-      description:
-        "Tourists scan QR codes at locations to chat with site-specific AI characters who tell stories and answer questions with growing memory.",
-      link: "#prototype7",
-      tags: ["Location-based", "Storytelling", "Tourism"],
       status: "Concept",
     },
   ];
@@ -85,7 +101,7 @@ const Portfolio = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <video
           className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45"
           autoPlay
@@ -100,18 +116,18 @@ const Portfolio = () => {
         </video>
 
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            <span style={{ color: "rgb(144, 19, 254)" }}>
-              Interactive AI Experiences
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto bg-background/20 backdrop-blur-sm rounded-lg px-6 py-4">
-            Creating AI-powered interactions that bring people together and
-            enhance human connection
-          </p>
+          <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
+              Pathfinding to the Future of Learning with AI
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+              Create AI-powered interactions. Bring people together.<br />
+              Enhance human connection. Grow and access opportunities.
+            </p>
+          </div>
           <Button
             size="lg"
-            className="bg-gradient-primary text-white hover:shadow-glow transition-smooth"
+            className="bg-gradient-primary text-white hover:shadow-glow transition-smooth text-lg md:text-xl px-8 py-6"
             onClick={() => {
               document.getElementById("prototypes-section")?.scrollIntoView({
                 behavior: "smooth",
@@ -119,7 +135,7 @@ const Portfolio = () => {
             }}
           >
             Explore My Work
-            <ExternalLink className="ml-2 h-5 w-5" />
+            <ExternalLink className="ml-2 h-6 w-6" />
           </Button>
         </div>
       </section>
@@ -132,7 +148,7 @@ const Portfolio = () => {
               Live Prototypes
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Fully implemented interactive experiences ready to explore
+              Interactive learning experiences ready to explore
             </p>
           </div>
 
@@ -144,14 +160,9 @@ const Portfolio = () => {
               >
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent" />
                 <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-semibold group-hover:text-primary transition-smooth">
-                      {prototype.title}
-                    </h3>
-                    <span className="px-2 py-1 text-xs bg-primary/20 text-primary rounded-full font-medium border border-primary/30">
-                      {prototype.status}
-                    </span>
-                  </div>
+                  <h3 className="text-xl font-semibold group-hover:text-primary transition-smooth mb-3">
+                    {prototype.title}
+                  </h3>
                   <p className="text-muted-foreground mb-4 leading-relaxed">
                     {prototype.description}
                   </p>
@@ -233,18 +244,17 @@ const Portfolio = () => {
       {/* About Section */}
       <section className="py-20 px-6 bg-gradient-subtle">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8">About Me</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent">About Me</h2>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-            I explore how AI can create meaningful interactions between people
-            through thoughtful design and technology. My work combines
-            human-computer interaction research with practical applications that
-            make AI more accessible and genuinely helpful in bringing
-            communities together.
+            As an experienced educator and lifelong learner, I'm passionate about
+            helping others learn and grow. I explore how AI can create meaningful 
+            interactions between people through thoughtful design and technology.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Each prototype investigates different ways technology can enhance
             human connection - from collaborative learning experiences to
-            immersive storytelling that bridges digital and physical worlds.
+            immersive storytelling that bridges digital and physical worlds
+            to create real opportunity for people and their communities.
           </p>
         </div>
       </section>
@@ -256,8 +266,8 @@ const Portfolio = () => {
             Let's Connect
           </h2>
           <p className="mobile-text text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-mobile-safe">
-            Interested in exploring how AI can enhance human connection? Let's
-            discuss ideas and collaborate!
+            Interested in exploring how AI can enhance human connection and the future of learning and education?<br />
+            Let's discuss ideas and collaborate!
           </p>
 
           <div className="btn-group-mobile max-w-none sm:max-w-fit mx-auto">
@@ -265,6 +275,7 @@ const Portfolio = () => {
               variant="outline"
               size="default"
               className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
+              onClick={() => window.location.href = "mailto:nsuberi@gmail.com"}
             >
               <Mail className="mr-2 mobile-icon" />
               <span className="mobile-text">Email</span>
@@ -273,6 +284,7 @@ const Portfolio = () => {
               variant="outline"
               size="default"
               className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
+              onClick={() => window.open("https://www.linkedin.com/in/nathan-suberi-3b13a818/", "_blank")}
             >
               <Linkedin className="mr-2 mobile-icon" />
               <span className="mobile-text">LinkedIn</span>
@@ -281,6 +293,7 @@ const Portfolio = () => {
               variant="outline"
               size="default"
               className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
+              onClick={() => window.open("https://github.com/nsuberi", "_blank")}
             >
               <Github className="mr-2 mobile-icon" />
               <span className="mobile-text">GitHub</span>
