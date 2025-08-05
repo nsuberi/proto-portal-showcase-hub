@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
-import heroImage from "@/assets/hero-bg.jpg";
+import heroVideo from "@/assets/find_your_path.mp4";
 
 const Portfolio = () => {
   const implementedPrototypes = [
@@ -86,11 +86,18 @@ const Portfolio = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-primary opacity-10" />
+        <video
+          className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45"
+          autoPlay
+          loop
+          muted
+          playsInline
+          webkit-playsinline="true"
+          preload="auto"
+        >
+          <source src={heroVideo} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
 
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
