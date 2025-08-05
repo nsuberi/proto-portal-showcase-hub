@@ -118,7 +118,7 @@ const Portfolio = () => {
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
-              Exploring the Future of Learning with AI
+              Explore the Future of Learning with AI
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
               Create AI-powered interactions. Bring people together.<br />
