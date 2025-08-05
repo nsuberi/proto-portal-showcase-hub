@@ -17,9 +17,8 @@ import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
 import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
-import SecureAIAnalysisWidget from '../components/SecureAIAnalysisWidget';
-import AITeamPathWidget from '../components/AITeamPathWidget';
-import JustInTimeWidget from '../components/JustInTimeWidget';
+import TeamCollaborationWidget from '../components/TeamCollaborationWidget';
+import TeamGoalWidget from '../components/TeamGoalWidget';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -918,82 +917,77 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
         </p>
         
-        {/* Data Source Toggle */}
-        <div className="mt-4 mb-6">
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-sm text-muted-foreground">Skill Set:</span>
-            <div className="flex items-center border border-border rounded-lg p-1 bg-background">
-              <button
-                onClick={() => {
-                  setDataSource('tech')
-                  setSelectedEmployeeId('')
-                  setCurrentGoal(null)
-                  setSelectedSkill(null)
-                  // Invalidate all cached data when switching datasets
-                  queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
-                  queryClient.invalidateQueries({ queryKey: ['ffx-connections'] })
-                  queryClient.invalidateQueries({ queryKey: ['ffx-employees'] })
-                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-                  dataSource === 'tech'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
-              >
-                <Code className="h-4 w-4" />
-                <span>Tech Organization</span>
-              </button>
-              <button
-                onClick={() => {
-                  setDataSource('ffx')
-                  setSelectedEmployeeId('')
-                  setCurrentGoal(null)
-                  setSelectedSkill(null)
-                  // Invalidate all cached data when switching datasets
-                  queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
-                  queryClient.invalidateQueries({ queryKey: ['tech-connections'] })
-                  queryClient.invalidateQueries({ queryKey: ['tech-employees'] })
-                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-                  dataSource === 'ffx'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
-              >
-                <Sword className="h-4 w-4" />
-                <span>Final Fantasy X</span>
-              </button>
-            </div>
-          </div>
-        </div>
         
-        {/* Feature highlights */}
-        <div className="mt-6">
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2 rounded-full border border-primary/20">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-              <span className="font-medium text-primary">Skill Tracking</span>
-              <span className="text-muted-foreground">for employees</span>
+      </div>
+
+      {/* Combined Team Selection and Goal Widget */}
+      <div className="w-full max-w-4xl mb-6 mx-4">
+        <Card className="border-border/50 shadow-lg backdrop-blur-sm relative overflow-hidden">
+          {/* Soft glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 blur-xl" />
+          
+          <CardContent className="relative p-4 space-y-3">
+            {/* Team Selection */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Select Team:</span>
+              <div className="flex items-center border border-border rounded-lg p-0.5 bg-background/80 backdrop-blur-sm">
+                <button
+                  onClick={() => {
+                    setDataSource('tech')
+                    setSelectedEmployeeId('')
+                    setCurrentGoal(null)
+                    setSelectedSkill(null)
+                    // Invalidate all cached data when switching datasets
+                    queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
+                    queryClient.invalidateQueries({ queryKey: ['ffx-connections'] })
+                    queryClient.invalidateQueries({ queryKey: ['ffx-employees'] })
+                    queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                    dataSource === 'tech'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Code className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Tech Organization</span>
+                  <span className="sm:hidden">Tech</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setDataSource('ffx')
+                    setSelectedEmployeeId('')
+                    setCurrentGoal(null)
+                    setSelectedSkill(null)
+                    // Invalidate all cached data when switching datasets
+                    queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
+                    queryClient.invalidateQueries({ queryKey: ['tech-connections'] })
+                    queryClient.invalidateQueries({ queryKey: ['tech-employees'] })
+                    queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                    dataSource === 'ffx'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Sword className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Final Fantasy X</span>
+                  <span className="sm:hidden">FFX</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600/10 to-blue-600/5 px-3 py-2 rounded-full border border-blue-200">
-              <Sparkles className="h-3 w-3 text-blue-600" />
-              <span className="font-medium text-blue-600">Smart Recommendations</span>
-              <span className="text-muted-foreground">based on expertise</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/10 to-purple-600/5 px-3 py-2 rounded-full border border-purple-200">
-              <TrendingUp className="h-3 w-3 text-purple-600" />
-              <span className="font-medium text-purple-600">Learning Pathways</span>
-              <span className="text-muted-foreground">between skills</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/10 to-green-600/5 px-3 py-2 rounded-full border border-green-200">
-              <BarChart3 className="h-3 w-3 text-green-600" />
-              <span className="font-medium text-green-600">Team Analytics</span>
-              <span className="text-muted-foreground">and gaps</span>
-            </div>
-          </div>
-        </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+            {/* Team Goal */}
+            <TeamGoalWidget 
+              teamId={dataSource}
+              teamName={dataSource === 'ffx' ? 'Final Fantasy Team' : 'Tech Org'}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Employee dropdown */}
@@ -1096,54 +1090,23 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       </div>
 
-      {/* Just-in-Time Learning Widget */}
+      {/* Team Collaboration Widget */}
       {selectedEmployee && (
-        <JustInTimeWidget
+        <TeamCollaborationWidget
           employeeId={selectedEmployeeId}
           employee={selectedEmployee}
           currentGoal={currentGoal}
           dataSource={dataSource}
+          onGoalSet={(goalSkill, path) => {
+            setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
+          }}
         />
       )}
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
 
-        {/* Secure AI Analysis Widget */}
-        <div className="mb-8">
-          <SecureAIAnalysisWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSelect={(skill) => {
-              setCurrentGoal({ skill, path: [] });
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onScrollToGoals={() => {
-              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          />
-        </div>
 
-        {/* Skill Goal Widget */}
-        <div ref={skillGoalRef} className="mb-8">
-          <SkillGoalWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            currentGoal={currentGoal?.skill || null}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSet={(goalSkill, path) => {
-              setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onLearnNewSkills={handleLearnNewSkills}
-            onGoalCompleted={handleGoalCompleted}
-          />
-        </div>
 
         {/* Skill Recommendation Widget */}
         <div ref={skillRecommendationRef} className="mb-8">
@@ -1183,23 +1146,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           />
         </div>
 
-        {/* AI Team Path Analysis Widget */}
-        <div className="mb-8">
-          <AITeamPathWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSelect={(skill) => {
-              setCurrentGoal({ skill, path: [] });
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onScrollToGoals={() => {
-              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          />
-        </div>
 
         {/* Team Analytics */}
         <div className="mb-8">
@@ -1209,7 +1155,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 <BarChart3 className="h-5 w-5 text-green-600" />
                 Team Analytics
               </CardTitle>
-              <CardDescription>Skill distribution across all team members</CardDescription>
+              <CardDescription>Skill distribution and team coverage analysis</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1231,9 +1177,105 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   </div>
                 </div>
 
+                {/* Team Goal Analysis */}
+                {(() => {
+                  const teamGoal = localStorage.getItem(`team-goal-${dataSource}`);
+                  if (!teamGoal) return null;
+                  
+                  return (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-2">Team Goal Alignment</h4>
+                      <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3 mb-3">
+                        <p className="text-sm text-blue-800">{teamGoal}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Critical Skills and Single Points of Failure */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Skill Coverage Analysis</h4>
+                  <div className="space-y-2">
+                    {(() => {
+                      // Count how many employees have each skill
+                      const skillCoverage: Record<string, { skill: any, count: number, employees: string[] }> = {};
+                      
+                      employees?.forEach(emp => {
+                        emp.mastered_skills?.forEach(skillId => {
+                          const skill = skills?.find(s => s.id === skillId);
+                          if (skill) {
+                            if (!skillCoverage[skillId]) {
+                              skillCoverage[skillId] = { skill, count: 0, employees: [] };
+                            }
+                            skillCoverage[skillId].count++;
+                            skillCoverage[skillId].employees.push(emp.name);
+                          }
+                        });
+                      });
+                      
+                      // Sort by count (ascending) to show single points of failure first
+                      const sortedSkills = Object.values(skillCoverage).sort((a, b) => a.count - b.count);
+                      
+                      // Show skills with 1 or 2 people only
+                      const criticalSkills = sortedSkills.filter(item => item.count <= 2);
+                      
+                      if (criticalSkills.length === 0) {
+                        return (
+                          <div className="text-sm text-gray-600 p-4 text-center bg-green-50/50 rounded-lg border border-green-200">
+                            ✅ Great team coverage! No single points of failure detected.
+                          </div>
+                        );
+                      }
+                      
+                      return criticalSkills.map(({ skill, count, employees }) => {
+                        const isSinglePoint = count === 1;
+                        const categoryInfo = getCategoryInfo(skill.category);
+                        
+                        return (
+                          <div 
+                            key={skill.id} 
+                            className={`p-3 rounded-lg border ${
+                              isSinglePoint 
+                                ? 'bg-red-50/50 border-red-300' 
+                                : 'bg-yellow-50/50 border-yellow-300'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm" style={{ color: CATEGORY_COLORS[skill.category as keyof typeof CATEGORY_COLORS] }}>
+                                    {categoryInfo.icon}
+                                  </span>
+                                  <span className="font-medium text-sm">{skill.name}</span>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs ${
+                                      isSinglePoint 
+                                        ? 'bg-red-100 text-red-800 border-red-300' 
+                                        : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                    }`}
+                                  >
+                                    {isSinglePoint ? '⚠️ Single Point of Failure' : '⚡ Limited Coverage'}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-gray-600 mb-1">{skill.description}</p>
+                                <p className="text-xs font-medium">
+                                  Mastered by: <span className={isSinglePoint ? 'text-red-700' : 'text-yellow-700'}>
+                                    {employees.join(', ')}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
                 {/* Team Mastered Skills by Category */}
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Type</h4>
+                  <h4 className="text-sm font-medium mb-3">Team Skills by Type</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                     {(() => {
                       // Count all mastered skills by category across all employees
@@ -1269,7 +1311,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
                 {/* Team Mastered Skills by Level */}
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Level</h4>
+                  <h4 className="text-sm font-medium mb-3">Team Skills by Level</h4>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {[1, 2, 3, 4, 5, 6].map(level => {
                       // Count all mastered skills by level across all employees

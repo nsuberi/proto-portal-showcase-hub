@@ -407,7 +407,7 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
                 </div>
               )}
               <span className="truncate">
-                {goalSkillId ? `Next Steps for ${employee?.name}` : `Next Skills for ${employee?.name}`}
+                Invest in your Learning
               </span>
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">
