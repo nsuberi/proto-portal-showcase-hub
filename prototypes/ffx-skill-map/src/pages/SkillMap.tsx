@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { sharedEnhancedService } from '../services/sharedService'
 import TechSkillsService from '../services/techSkillsData'
 
@@ -10,7 +9,7 @@ const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useEmployeeGoals } from '../hooks/useEmployeeGoals'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
 import Graph from 'graphology';
@@ -19,7 +18,7 @@ import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap
 import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
 import TeamCollaborationWidget from '../components/TeamCollaborationWidget';
-import TeamGoalWidget from '../components/TeamGoalWidget';
+import UnifiedTeamWidget, { getHeroVideoSrc } from '../components/UnifiedTeamWidget';
 import { calculateGoalPath } from '../utils/goalPathUtils';
 
 // Convert HSL to hex for Sigma.js compatibility
@@ -282,7 +281,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
-  const [isResetting, setIsResetting] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState<any>(null)
   const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
   const [showTutorial, setShowTutorial] = useState(() => {
@@ -357,28 +355,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
   const masteredSkills = selectedEmployee?.mastered_skills || []
 
-  // Reset skills for selected employee
-  const handleResetSkills = async () => {
-    if (!selectedEmployeeId) return;
-    
-    setIsResetting(true);
-    try {
-      await currentService.resetEmployeeSkills(selectedEmployeeId);
-      
-      // Permanently delete the goal from localStorage when skills are reset
-      deleteGoalForEmployee(selectedEmployeeId, dataSource);
-      
-      // Use efficient non-blocking invalidation with current data source
-      queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-      
-      console.log(`✅ Successfully reset skills and cleared goal for ${selectedEmployee?.name || selectedEmployeeId}`);
-    } catch (error) {
-      console.error('Failed to reset employee skills:', error);
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   // Always call hooks before any early returns - Rules of Hooks
   // Memoize filtered skills for performance
@@ -947,144 +923,67 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       )}
 
-      {/* Header with Title and Intro */}
-      <div className="mb-6 md:mb-8 text-center px-4">
-        <div className="mb-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center"
-              style={{
-                background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                color: 'transparent'
-              }}>
-            Map of Mastery
-          </h1>
-        </div>
-        <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-          Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
-        </p>
-        
-        
-      </div>
-
-      {/* Combined Team Selection and Goal Widget */}
-      <div className="w-full max-w-4xl mb-6 mx-4">
-        <Card className="border-border/50 shadow-lg backdrop-blur-sm relative overflow-hidden">
-          {/* Soft glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 blur-xl" />
-          
-          <CardContent className="relative p-4 space-y-3">
-            {/* Team Selection */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Select Team:</span>
-              <div className="flex items-center border border-border rounded-lg p-0.5 bg-background/80 backdrop-blur-sm">
-                <button
-                  onClick={() => {
-                    setDataSource('tech')
-                    setSelectedEmployeeId('')
-                    clearGoal() // Clear goal when switching data sources
-                    setSelectedSkill(null)
-                    // Invalidate all cached data when switching datasets
-                    queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
-                    queryClient.invalidateQueries({ queryKey: ['ffx-connections'] })
-                    queryClient.invalidateQueries({ queryKey: ['ffx-employees'] })
-                    queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
-                    dataSource === 'tech'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Code className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Tech Organization</span>
-                  <span className="sm:hidden">Tech</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setDataSource('ffx')
-                    setSelectedEmployeeId('')
-                    clearGoal() // Clear goal when switching data sources
-                    setSelectedSkill(null)
-                    // Invalidate all cached data when switching datasets
-                    queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
-                    queryClient.invalidateQueries({ queryKey: ['tech-connections'] })
-                    queryClient.invalidateQueries({ queryKey: ['tech-employees'] })
-                    queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
-                    dataSource === 'ffx'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                  }`}
-                >
-                  <Sword className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Final Fantasy X</span>
-                  <span className="sm:hidden">FFX</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-            {/* Team Goal */}
-            <TeamGoalWidget 
-              teamId={dataSource}
-              teamName={dataSource === 'ffx' ? 'Final Fantasy Team' : 'Tech Org'}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Employee dropdown */}
-      <div className="w-full max-w-4xl mb-4 mx-4">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1 max-w-md">
-            <Select value={selectedEmployeeId} onValueChange={(employeeId) => {
-              console.log('👤 SkillMap: Employee selection changed to:', employeeId);
-              setSelectedEmployeeId(employeeId);
-            }}>
-              <SelectTrigger className="w-full" data-testid="employee-select">
-                <SelectValue placeholder="Select an employee to highlight mastered skills..." />
-              </SelectTrigger>
-              <SelectContent>
-                {employees?.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    <div className="flex items-center gap-3">
-                      {emp.images?.face && (
-                        <img 
-                          src={emp.images.face} 
-                          alt={emp.name}
-                          className="w-6 h-6 rounded-full object-cover flex-shrink-0 max-w-full"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <div>
-                        <span className="block sm:hidden">{emp.name}</span>
-                        <span className="hidden sm:block">{emp.name} - {emp.role}</span>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleResetSkills}
-            disabled={!selectedEmployeeId || isResetting}
-            className="whitespace-nowrap"
+      {/* Hero Section with Video Background */}
+      <section className="relative mb-8 overflow-hidden -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
+        {/* Hero Video Background */}
+        <div className="absolute inset-0 w-screen left-1/2 transform -translate-x-1/2">
+          <video
+            key={getHeroVideoSrc(dataSource)}
+            className="absolute inset-0 w-full h-full object-cover opacity-45"
+            style={{ width: '100vw' }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            webkit-playsinline="true"
+            preload="auto"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {isResetting ? 'Resetting...' : 'Reset Skills'}
-          </Button>
+            <source src={getHeroVideoSrc(dataSource)} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/20 to-background/30" />
         </div>
-      </div>
+
+        {/* Header with Title and Intro */}
+        <div className="relative z-10 pt-12 pb-8 text-center px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+          <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8 max-w-4xl mx-auto">
+            <div className="mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center drop-shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    color: 'transparent'
+                  }}>
+                Map of Mastery
+              </h1>
+            </div>
+            <p className="text-sm sm:text-base md:text-lg text-foreground/90 max-w-3xl mx-auto drop-shadow-md">
+              Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
+            </p>
+          </div>
+        </div>
+
+        {/* Unified Team Widget - Team Selection, Goal, and Member Headshots */}
+        <div className="relative z-10 pb-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+          <UnifiedTeamWidget
+            dataSource={dataSource}
+            employees={employees || []}
+            selectedEmployeeId={selectedEmployeeId}
+            onDataSourceChange={setDataSource}
+            onEmployeeSelect={(employeeId) => {
+              console.log('👤 SkillMap: Employee selected from unified widget:', employeeId);
+              setSelectedEmployeeId(employeeId);
+            }}
+            queryClient={queryClient}
+            clearGoal={clearGoal}
+            setSelectedSkill={setSelectedSkill}
+            currentService={currentService}
+          />
+        </div>
+      </section>
+
 
       {/* Sigma.js visualization container */}
       <div className="mb-8">
