@@ -487,8 +487,8 @@ IMPORTANT:
 - Be creative in connecting unconventional personal goals to professional skill development
 - Do not include additional sections or recommendations beyond what is requested`;
 
-      const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
+      const baseUrl = getApiUrl().replace(/\/$/, ''); // Remove trailing slash
+      const response = await fetch(`${baseUrl}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1034,6 +1034,8 @@ IMPORTANT:
             clearGoal={clearGoal}
             setSelectedSkill={setSelectedSkill}
             currentService={currentService}
+            teamGoal={teamGoal}
+            onTeamGoalChange={setTeamGoal}
           />
         </div>
       </section>

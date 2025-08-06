@@ -15,6 +15,8 @@ interface UnifiedTeamWidgetProps {
   clearGoal: () => void;
   setSelectedSkill: (skill: any) => void;
   currentService: any;
+  teamGoal: string;
+  onTeamGoalChange: (goal: string) => void;
 }
 
 export const getHeroVideoSrc = (dataSource: 'ffx' | 'tech') => {
@@ -32,7 +34,9 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
   queryClient,
   clearGoal,
   setSelectedSkill,
-  currentService
+  currentService,
+  teamGoal,
+  onTeamGoalChange
 }) => {
   const [isResettingTeam, setIsResettingTeam] = useState(false);
   const teamDisplayName = dataSource === 'ffx' ? 'Final Fantasy X Team' : 'Tech Organization';
@@ -148,6 +152,8 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
             <TeamGoalWidget 
               teamId={dataSource}
               teamName={teamDisplayName}
+              teamGoal={teamGoal}
+              onTeamGoalChange={onTeamGoalChange}
             />
           </div>
 

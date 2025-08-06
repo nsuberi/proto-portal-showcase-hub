@@ -8,34 +8,30 @@ import { Target, Save, Edit2 } from 'lucide-react';
 interface TeamGoalWidgetProps {
   teamId: string;
   teamName: string;
+  teamGoal: string;
+  onTeamGoalChange: (goal: string) => void;
 }
 
-const TeamGoalWidget: React.FC<TeamGoalWidgetProps> = ({ teamId, teamName }) => {
-  const [goal, setGoal] = useState<string>('');
+const TeamGoalWidget: React.FC<TeamGoalWidgetProps> = ({ teamId, teamName, teamGoal, onTeamGoalChange }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [tempGoal, setTempGoal] = useState<string>('');
 
-  // Load goal from localStorage when component mounts or teamId changes
+  // Start editing if no goal is set
   useEffect(() => {
-    const storageKey = `team-goal-${teamId}`;
-    const savedGoal = localStorage.getItem(storageKey);
-    if (savedGoal) {
-      setGoal(savedGoal);
-    } else {
-      setGoal('');
+    if (!teamGoal.trim()) {
       setIsEditing(true);
     }
-  }, [teamId]);
+  }, [teamGoal]);
 
   const handleSave = () => {
     const storageKey = `team-goal-${teamId}`;
     localStorage.setItem(storageKey, tempGoal);
-    setGoal(tempGoal);
+    onTeamGoalChange(tempGoal);
     setIsEditing(false);
   };
 
   const handleEdit = () => {
-    setTempGoal(goal);
+    setTempGoal(teamGoal);
     setIsEditing(true);
   };
 
@@ -67,7 +63,7 @@ const TeamGoalWidget: React.FC<TeamGoalWidgetProps> = ({ teamId, teamName }) => 
                 <Save className="h-3 w-3 mr-1" />
                 <span className="hidden sm:inline">Save</span>
               </Button>
-              {goal && (
+              {teamGoal && (
                 <Button onClick={handleCancel} variant="outline" size="sm">
                   <span className="hidden sm:inline">Cancel</span>
                   <span className="sm:hidden">✕</span>
@@ -83,16 +79,16 @@ const TeamGoalWidget: React.FC<TeamGoalWidgetProps> = ({ teamId, teamName }) => 
             <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Team Goal:</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:flex-1">
-            {goal ? (
+            {teamGoal ? (
               <div className="p-2 bg-primary/5 rounded-md border border-primary/20 flex-1">
-                <p className="text-sm">{goal}</p>
+                <p className="text-sm">{teamGoal}</p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic flex-1">No goal set</p>
             )}
             <Button onClick={handleEdit} variant="outline" size="sm" className="flex-shrink-0">
               <Edit2 className="h-3 w-3 mr-1" />
-              <span>{goal ? 'Edit' : 'Set Goal'}</span>
+              <span>{teamGoal ? 'Edit' : 'Set Goal'}</span>
             </Button>
           </div>
         </div>

@@ -40,7 +40,8 @@ export async function assessUserUnderstanding(
   
   try {
     // Use the same API pattern as FFX skill map
-    const API_ENDPOINT = `${getApiUrl()}/api/v1/ai-analysis/home-lending-assessment`;
+    const baseUrl = getApiUrl().replace(/\/$/, ''); // Remove trailing slash
+    const API_ENDPOINT = `${baseUrl}/api/v1/ai-analysis/home-lending-assessment`;
     
     const requestPayload = {
       userResponse,
