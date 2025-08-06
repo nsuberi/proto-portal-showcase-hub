@@ -9,7 +9,7 @@ const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useEmployeeGoals } from '../hooks/useEmployeeGoals'
-import { Sword, Zap, Heart, Star, Crown, Filter, Users, HelpCircle, X, Sparkles, Code, Settings, Plus, Calendar, Key, Eye, EyeOff, Target } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, Users, HelpCircle, X, Sparkles, Code, Settings, Plus, Calendar, Key, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -295,8 +295,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [showMenteeCalendar, setShowMenteeCalendar] = useState(false)
   const [teamGoal, setTeamGoal] = useState('')
   const [personalGrowthGoal, setPersonalGrowthGoal] = useState('')
-  const [apiKey, setApiKey] = useState('')
-  const [showApiKey, setShowApiKey] = useState(false)
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
   const [insightsResponse, setInsightsResponse] = useState('')
   const [insightsError, setInsightsError] = useState<string | null>(null)
@@ -426,18 +424,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     setInsightsResponse('');
 
     try {
-      let requestApiKey = apiKey.trim();
-      if (!requestApiKey && import.meta.env.DEV) {
-        requestApiKey = 'mock';
-      }
-
-      if (!requestApiKey) {
-        throw new Error('Claude API Key is required. In development mode, you can leave this empty to use mock data.');
-      }
-
-      if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
-        throw new Error('Invalid API key format. API keys should start with "sk-ant-api".');
-      }
 
       // Build team skills mapping
       const teamSkillsMap = employees?.map(teammate => ({
@@ -508,7 +494,6 @@ IMPORTANT:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: requestApiKey,
           character: {
             name: selectedEmployee?.name,
             role: selectedEmployee?.role,
@@ -534,7 +519,14 @@ IMPORTANT:
       
     } catch (err) {
       console.error('AI insights request failed:', err);
-      setInsightsError(err instanceof Error ? err.message : 'Failed to get AI insights');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get AI insights';
+      
+      // Check for server-side API key configuration error
+      if (errorMessage.includes('Server Side API key not configured')) {
+        setInsightsError('Server Side API key not configured. Please contact your administrator to configure the Claude API key in AWS Secrets Manager.');
+      } else {
+        setInsightsError(errorMessage);
+      }
     } finally {
       setIsLoadingInsights(false);
     }
@@ -1378,38 +1370,15 @@ IMPORTANT:
                   Get AI Insights
                 </h3>
                 
-                {/* API Key Section */}
+                {/* Server-side AI Info */}
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <Key className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-green-700 mb-3">
-                        <strong>Claude API Key Required:</strong> Enter your Anthropic Claude API key to get personalized recommendations for skills and mentors based on your team goal and personal growth interests.
-                        {import.meta.env.DEV && " In development mode, you can leave this empty to use mock data."}
+                      <p className="text-sm text-green-700">
+                        <strong>Secure Server-side Processing:</strong> AI recommendations are processed server-side using securely managed API keys for personalized skills and mentor suggestions.
+                        {import.meta.env.DEV && " In development mode, mock data will be used if no server-side API key is configured."}
                       </p>
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <Input
-                            type={showApiKey ? "text" : "password"}
-                            placeholder="sk-ant-api03-..."
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            className="pr-10 text-sm"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                            onClick={() => setShowApiKey(!showApiKey)}
-                          >
-                            {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        <p className="text-xs text-green-600">
-                          Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline">Anthropic Console</a>
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>

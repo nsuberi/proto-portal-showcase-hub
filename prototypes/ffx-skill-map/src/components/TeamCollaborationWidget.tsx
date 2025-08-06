@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Users, Key, Eye, EyeOff, Sparkles, Target, Zap } from 'lucide-react';
+import { ChevronDown, ChevronUp, Users, Key, Sparkles, Target, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Employee, Skill } from '../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,8 +33,6 @@ const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
   onMenteeSelect
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
   const [personalGrowthGoal, setPersonalGrowthGoal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState('');
@@ -178,19 +176,6 @@ const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
     setResponse('');
 
     try {
-      let requestApiKey = apiKey.trim();
-      if (!requestApiKey && import.meta.env.DEV) {
-        requestApiKey = 'mock';
-      }
-
-      if (!requestApiKey) {
-        throw new Error('Claude API Key is required. In development mode, you can leave this empty to use mock data.');
-      }
-
-      if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
-        throw new Error('Invalid API key format. API keys should start with "sk-ant-api".');
-      }
-
       // Build team skills mapping
       const teamSkillsMap = teammates.map(teammate => ({
         employeeId: teammate.id,
@@ -246,7 +231,6 @@ IMPORTANT:
 - Do not include additional sections or recommendations beyond what is requested`;
 
       const requestPayload = {
-        apiKey: requestApiKey,
         character: {
           name: employee.name,
           role: employee.role,
@@ -267,7 +251,6 @@ IMPORTANT:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: requestApiKey,
           character: requestPayload.character,
           allSkills: requestPayload.allSkills,
           teammates: requestPayload.teammates,
@@ -287,7 +270,14 @@ IMPORTANT:
       
     } catch (err) {
       console.error('Team collaboration request failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to get team collaboration recommendations');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get team collaboration recommendations';
+      
+      // Check for server-side API key configuration error
+      if (errorMessage.includes('Server Side API key not configured')) {
+        setError('Server Side API key not configured. Please contact your administrator to configure the Claude API key in AWS Secrets Manager.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -390,38 +380,15 @@ IMPORTANT:
           </div>
 
 
-          {/* API Key Section */}
+          {/* Server-side API Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
               <Key className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-blue-700 mb-3">
-                  <strong>Claude API Key Required:</strong> Enter your Anthropic Claude API key to enable AI-powered recommendations. 
-                  {import.meta.env.DEV && " In development mode, you can leave this empty to use mock data."}
+                <p className="text-sm text-blue-700">
+                  <strong>Secure Server-side Processing:</strong> AI analysis is processed server-side using securely managed API keys.
+                  {import.meta.env.DEV && " In development mode, mock data will be used if no server-side API key is configured."}
                 </p>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Input
-                      type={showApiKey ? "text" : "password"}
-                      placeholder="sk-ant-api03-..."
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className="pr-10 text-sm"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-blue-600">
-                    Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline">Anthropic Console</a>
-                  </p>
-                </div>
               </div>
             </div>
           </div>
