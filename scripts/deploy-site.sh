@@ -22,33 +22,8 @@ echo "🔧 Rebuilding frontend with correct API Gateway URL: $API_GATEWAY_URL"
 echo "🏗️ Running full build process..."
 ./scripts/build.sh
 
-# Replace placeholder in FFX skill map and rebuild (for AI integration)
-cd prototypes/ffx-skill-map
-
-echo "🔧 Replacing placeholder with API Gateway URL in FFX source..."
-# Backup and replace placeholder
-cp src/components/SecureAIAnalysisWidget.tsx src/components/SecureAIAnalysisWidget.tsx.bak
-sed -i "s|PLACEHOLDER_API_GATEWAY_URL|$API_GATEWAY_URL|g" src/components/SecureAIAnalysisWidget.tsx
-
-# Verify replacement worked
-if grep -q "PLACEHOLDER_API_GATEWAY_URL" src/components/SecureAIAnalysisWidget.tsx; then
-    echo "❌ Error: Placeholder replacement failed!"
-    exit 1
-fi
-
-echo "✅ Placeholder replaced successfully"
-echo "🔧 Rebuilding FFX skill map with correct API URL..."
-VITE_API_URL="$API_GATEWAY_URL" npm run build
-
-# Copy rebuilt FFX files to main dist
-echo "📋 Copying rebuilt FFX files to main dist..."
-mkdir -p ../../dist/prototypes/ffx-skill-map
-cp -r dist/* ../../dist/prototypes/ffx-skill-map/
-
-# Restore original source file  
-mv src/components/SecureAIAnalysisWidget.tsx.bak src/components/SecureAIAnalysisWidget.tsx
-
-cd ../..
+# The FFX skill map has already been built by build.sh
+# No need to rebuild or replace placeholders since SecureAIAnalysisWidget.tsx no longer exists
 
 # Sync files to S3
 echo "🗂️ Syncing files to S3 bucket: $BUCKET_NAME"
