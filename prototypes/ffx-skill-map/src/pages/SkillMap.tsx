@@ -821,11 +821,12 @@ IMPORTANT:
                   Visualize employee expertise through an interactive skill network and guide their professional development.
                 </p>
                 <div className="space-y-2">
-                  <p><strong className="text-blue-600">1. Select an employee</strong> from the dropdown to view their current skills and expertise</p>
-                  <p><strong className="text-purple-600">2. Set a learning goal</strong> using the Goal Planner - choose what skill they should work toward next</p>
-                  <p><strong className="text-green-600">3. Invest in recommended skills</strong> from the Next Steps section to progress toward your goal</p>
-                  <p><strong className="text-orange-600">4. Track your progress</strong> on the interactive skill network as you build expertise</p>
-                  <p><strong className="text-teal-600">5. Work with your team</strong> to make magic happen - prioritize skills your teammates need help with, and lean on them to do the same for you</p>
+                  <p><strong className="text-blue-600">1. Choose your team</strong> and set a team goal to align everyone's growth direction</p>
+                  <p><strong className="text-purple-600">2. Select a team member</strong> to view their current skills and plan their development path</p>
+                  <p><strong className="text-green-600">3. Share your personal growth interests</strong> and get AI-powered recommendations for skills and mentors</p>
+                  <p><strong className="text-orange-600">4. Set learning goals</strong> that align both team objectives and individual interests</p>
+                  <p><strong className="text-teal-600">5. Connect with mentors and mentees</strong> to accelerate learning through collaboration</p>
+                  <p><strong className="text-indigo-600">6. Track progress</strong> on the interactive skill network as expertise grows</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -874,8 +875,8 @@ IMPORTANT:
                     <span className="block w-2 h-2 bg-blue-600 rounded-full"></span>
                   </div>
                   <div>
-                    <p><strong className="text-blue-600">Select an employee</strong></p>
-                    <p className="text-gray-600">Choose from the dropdown to view their current skills and expertise</p>
+                    <p><strong className="text-blue-600">Choose your team & set goals</strong></p>
+                    <p className="text-gray-600">Select your team and establish a shared goal to guide everyone's development</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -883,8 +884,8 @@ IMPORTANT:
                     <span className="block w-2 h-2 bg-purple-600 rounded-full"></span>
                   </div>
                   <div>
-                    <p><strong className="text-purple-600">Set a learning goal</strong></p>
-                    <p className="text-gray-600">Use the Goal Planner to choose what skill they should work toward next</p>
+                    <p><strong className="text-purple-600">Get AI recommendations</strong></p>
+                    <p className="text-gray-600">Share personal growth interests and receive personalized skill and mentor suggestions</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -892,8 +893,8 @@ IMPORTANT:
                     <span className="block w-2 h-2 bg-green-600 rounded-full"></span>
                   </div>
                   <div>
-                    <p><strong className="text-green-600">Invest in recommended skills</strong></p>
-                    <p className="text-gray-600">Progress toward your goal using the Next Steps section</p>
+                    <p><strong className="text-green-600">Set aligned learning goals</strong></p>
+                    <p className="text-gray-600">Choose goals that support both team success and individual growth aspirations</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -901,8 +902,8 @@ IMPORTANT:
                     <span className="block w-2 h-2 bg-orange-600 rounded-full"></span>
                   </div>
                   <div>
-                    <p><strong className="text-orange-600">Track your progress</strong></p>
-                    <p className="text-gray-600">Monitor advancement on the interactive skill network</p>
+                    <p><strong className="text-orange-600">Connect & collaborate</strong></p>
+                    <p className="text-gray-600">Find mentors to learn from and mentees to guide based on AI recommendations</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -910,8 +911,8 @@ IMPORTANT:
                     <span className="block w-2 h-2 bg-teal-600 rounded-full"></span>
                   </div>
                   <div>
-                    <p><strong className="text-teal-600">Work with your team</strong></p>
-                    <p className="text-gray-600">Make magic happen - prioritize skills your teammates need help with, and lean on them to do the same for you</p>
+                    <p><strong className="text-teal-600">Track progress together</strong></p>
+                    <p className="text-gray-600">Monitor skill development on the interactive network and celebrate team achievements</p>
                   </div>
                 </div>
               </div>
@@ -978,13 +979,19 @@ IMPORTANT:
       )}
 
       {/* Hero Section with Video Background */}
-      <section className="relative mb-8 overflow-hidden -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
+      <section className="relative mb-8 overflow-hidden -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16 min-h-fit">
         {/* Hero Video Background */}
-        <div className="absolute inset-0 w-screen left-1/2 transform -translate-x-1/2">
+        <div className="absolute inset-0 w-screen left-1/2 transform -translate-x-1/2 h-full">
           <video
             key={getHeroVideoSrc(dataSource)}
-            className="absolute inset-0 w-full h-full object-cover opacity-45"
-            style={{ width: '100vw' }}
+            className="absolute top-0 left-0 opacity-45 object-cover object-center"
+            style={{ 
+              width: 'min(100vw, 1536px)',
+              height: '100%',
+              minHeight: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)'
+            }}
             autoPlay
             muted
             loop
