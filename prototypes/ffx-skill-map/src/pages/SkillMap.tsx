@@ -1176,28 +1176,32 @@ IMPORTANT:
           Plan your Path to Victory - as a Team
         </h2>
 
-        {/* Character and Mentor/Mentee Display */}
-        {selectedEmployee && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-center gap-8">
-              {/* Selected Character */}
-              <div className="flex flex-col items-center">
-                <div className="relative ring-4 ring-blue-400 rounded-lg overflow-hidden shadow-lg mb-2">
-                  {selectedEmployee.images?.face ? (
-                    <img 
-                      src={selectedEmployee.images.face} 
-                      alt={selectedEmployee.name}
-                      className="w-20 h-24 object-cover"
-                    />
-                  ) : (
-                    <div className="w-20 h-24 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <span className="text-gray-500 text-sm font-medium">
-                        {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{selectedEmployee.name}</h3>
+        {/* Character and Mentor/Mentee Display - Always Show */}
+        <div className="space-y-6 mb-8">
+          <div className="flex items-center justify-center gap-8">
+            {/* Selected Character */}
+            <div className="flex flex-col items-center">
+              <div className={`relative ${selectedEmployee ? 'ring-4 ring-blue-400' : 'ring-2 ring-gray-300'} rounded-lg overflow-hidden shadow-lg mb-2`}>
+                {selectedEmployee?.images?.face ? (
+                  <img 
+                    src={selectedEmployee.images.face} 
+                    alt={selectedEmployee.name}
+                    className="w-20 h-24 object-cover"
+                  />
+                ) : selectedEmployee ? (
+                  <div className="w-20 h-24 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm font-medium">
+                      {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="w-20 h-24 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-3xl">?</span>
+                  </div>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg mb-2">{selectedEmployee?.name || 'Select Character'}</h3>
+              {selectedEmployee ? (
                 <div className="flex gap-2">
                   <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
                     Level {selectedEmployee.level || 1}
@@ -1206,26 +1210,39 @@ IMPORTANT:
                     {selectedEmployee.current_xp || 0} XP
                   </Badge>
                 </div>
-              </div>
-
-              {/* Mentor Box */}
-              <div className="flex flex-col items-center">
-                <h4 className="text-sm font-medium text-gray-600 mb-2">Mentor</h4>
-                <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
-                  {selectedMentor?.images?.face ? (
-                    <img 
-                      src={selectedMentor.images.face} 
-                      alt={selectedMentor.name}
-                      className="w-16 h-20 object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
-                      <span className="text-gray-400 text-3xl">?</span>
-                    </div>
-                  )}
+              ) : (
+                <div className="flex gap-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300">
+                    Level --
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300">
+                    -- XP
+                  </Badge>
                 </div>
-                <p className="text-sm text-gray-500 mb-2">{selectedMentor?.name || 'Not Selected'}</p>
-                {selectedMentor && (
+              )}
+            </div>
+
+            {/* Mentor Box */}
+            <div className="flex flex-col items-center">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentor</h4>
+              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                {selectedMentor?.images?.face ? (
+                  <img 
+                    src={selectedMentor.images.face} 
+                    alt={selectedMentor.name}
+                    className="w-16 h-20 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-3xl">?</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mb-2">
+                {selectedMentor?.name || (selectedEmployee ? 'Not Selected' : 'Will show mentor')}
+              </p>
+              {selectedMentor && selectedEmployee ? (
+                <>
                   <div className="flex gap-2 mb-2">
                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-xs">
                       Level {selectedMentor.level || 1}
@@ -1234,8 +1251,6 @@ IMPORTANT:
                       {selectedMentor.current_xp || 0} XP
                     </Badge>
                   </div>
-                )}
-                {selectedMentor && (
                   <div className="flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setSelectedMentor(null)} className="h-6 w-6 p-0">
                       <X className="h-3 w-3" />
@@ -1244,27 +1259,40 @@ IMPORTANT:
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
+                </>
+              ) : selectedEmployee ? null : (
+                <div className="flex gap-2 mb-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300 text-xs">
+                    Level --
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300 text-xs">
+                    -- XP
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Mentee Box */}
+            <div className="flex flex-col items-center">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentee</h4>
+              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                {selectedMentee?.images?.face ? (
+                  <img 
+                    src={selectedMentee.images.face} 
+                    alt={selectedMentee.name}
+                    className="w-16 h-20 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-3xl">?</span>
+                  </div>
                 )}
               </div>
-
-              {/* Mentee Box */}
-              <div className="flex flex-col items-center">
-                <h4 className="text-sm font-medium text-gray-600 mb-2">Mentee</h4>
-                <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
-                  {selectedMentee?.images?.face ? (
-                    <img 
-                      src={selectedMentee.images.face} 
-                      alt={selectedMentee.name}
-                      className="w-16 h-20 object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
-                      <span className="text-gray-400 text-3xl">?</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-gray-500 mb-2">{selectedMentee?.name || 'Not Selected'}</p>
-                {selectedMentee && (
+              <p className="text-sm text-gray-500 mb-2">
+                {selectedMentee?.name || (selectedEmployee ? 'Not Selected' : 'Will show mentee')}
+              </p>
+              {selectedMentee && selectedEmployee ? (
+                <>
                   <div className="flex gap-2 mb-2">
                     <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
                       Level {selectedMentee.level || 1}
@@ -1273,8 +1301,6 @@ IMPORTANT:
                       {selectedMentee.current_xp || 0} XP
                     </Badge>
                   </div>
-                )}
-                {selectedMentee && (
                   <div className="flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setSelectedMentee(null)} className="h-6 w-6 p-0">
                       <X className="h-3 w-3" />
@@ -1283,29 +1309,38 @@ IMPORTANT:
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
-                )}
-              </div>
+                </>
+              ) : selectedEmployee ? null : (
+                <div className="flex gap-2 mb-2">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300 text-xs">
+                    Level --
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-gray-300 text-xs">
+                    -- XP
+                  </Badge>
+                </div>
+              )}
             </div>
-
-            {/* Next Meetings Display */}
-            {(mentorMeetingDate || menteeMeetingDate) && (
-              <div className="flex justify-center gap-8 text-sm">
-                {mentorMeetingDate && selectedMentor && (
-                  <div className="text-center">
-                    <p className="text-gray-600">Next meeting with {selectedMentor.name}:</p>
-                    <p className="font-semibold">{mentorMeetingDate.toLocaleDateString()}</p>
-                  </div>
-                )}
-                {menteeMeetingDate && selectedMentee && (
-                  <div className="text-center">
-                    <p className="text-gray-600">Next meeting with {selectedMentee.name}:</p>
-                    <p className="font-semibold">{menteeMeetingDate.toLocaleDateString()}</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        )}
+
+          {/* Next Meetings Display */}
+          {selectedEmployee && (mentorMeetingDate || menteeMeetingDate) && (
+            <div className="flex justify-center gap-8 text-sm">
+              {mentorMeetingDate && selectedMentor && (
+                <div className="text-center">
+                  <p className="text-gray-600">Next meeting with {selectedMentor.name}:</p>
+                  <p className="font-semibold">{mentorMeetingDate.toLocaleDateString()}</p>
+                </div>
+              )}
+              {menteeMeetingDate && selectedMentee && (
+                <div className="text-center">
+                  <p className="text-gray-600">Next meeting with {selectedMentee.name}:</p>
+                  <p className="font-semibold">{menteeMeetingDate.toLocaleDateString()}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Combined Team Collaboration, Skill Goal, and Learning Widget */}
         {selectedEmployee && (
