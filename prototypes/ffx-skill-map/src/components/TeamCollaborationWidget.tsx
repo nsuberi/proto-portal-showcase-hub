@@ -245,7 +245,7 @@ IMPORTANT:
       };
 
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/v1/ai-analysis/just-in-time`, {
+      const response = await fetch(`${apiUrl}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
