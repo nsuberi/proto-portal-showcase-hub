@@ -6,9 +6,9 @@ import heroVideo from "@/assets/find_your_path.mp4";
 const Portfolio = () => {
   const implementedPrototypes = [
     {
-      title: "Skill Sphere Grid: Your Learning Adventure Map",
+      title: "Your Learning Adventure Map",
       description:
-        "Inspired by Final Fantasy X's sphere grid system, visualize your skills in an interactive map, tailor your learning path to match your professional goals, and discover colleagues to collaborate with. Find mentors to guide you or people to mentor as your teams learn and grow together.",
+        "Ready to level up as a team? Set shared goals, share your personal growth dreams, and let AI be your career compass! Inspired by Final Fantasy X's Skill Sphere Grid, this interactive map helps you discover the perfect next skills to master, connects you with ideal mentors, and shows you who you could guide. It's like having a career GPS that knows where your team wants to go AND where your heart wants to grow. Adventure awaits!",
       link: "/prototypes/ffx-skill-map/",
       tags: ["Skill Mapping", "Graph Database", "Learning Pathways"],
       status: "Live Demo Available",
