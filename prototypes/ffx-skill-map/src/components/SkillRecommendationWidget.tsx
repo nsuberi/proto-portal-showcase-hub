@@ -406,8 +406,11 @@ const SkillRecommendationWidget = forwardRef<SkillRecommendationWidgetRef, Skill
                   />
                 </div>
               )}
-              <span className="truncate">
+              <span className="truncate hidden sm:inline">
                 Invest in your Learning
+              </span>
+              <span className="truncate sm:hidden">
+                Learn Skills
               </span>
             </CardTitle>
             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm">

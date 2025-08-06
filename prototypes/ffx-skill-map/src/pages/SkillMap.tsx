@@ -1659,7 +1659,8 @@ IMPORTANT:
                                           : 'bg-green-600 hover:bg-green-700 text-white'
                                         }`}
                                       >
-                                        {selectedMentor?.id === learnFromMentor.teammate?.id ? 'Current Mentor' : 'Select Mentor'}
+                                        <span className="hidden sm:inline">{selectedMentor?.id === learnFromMentor.teammate?.id ? 'Current Mentor' : 'Select Mentor'}</span>
+                                        <span className="sm:hidden">{selectedMentor?.id === learnFromMentor.teammate?.id ? 'Current' : 'Select'}</span>
                                       </Button>
                                     )}
                                   </div>
@@ -1723,7 +1724,8 @@ IMPORTANT:
                                           : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                       >
-                                        {selectedMentee?.id === mentorTo.teammate?.id ? 'Current Mentee' : 'Select Mentee'}
+                                        <span className="hidden sm:inline">{selectedMentee?.id === mentorTo.teammate?.id ? 'Current Mentee' : 'Select Mentee'}</span>
+                                        <span className="sm:hidden">{selectedMentee?.id === mentorTo.teammate?.id ? 'Current' : 'Select'}</span>
                                       </Button>
                                     )}
                                   </div>
@@ -1856,12 +1858,6 @@ IMPORTANT:
                       setMentorMeetingDate(new Date(e.target.value));
                     }
                   }}
-                  onBlur={(e) => {
-                    // Auto-close on mobile when date is selected
-                    if (e.target.value && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                      setTimeout(() => setShowMentorCalendar(false), 100);
-                    }
-                  }}
                 />
               </div>
               <div className="flex gap-3">
@@ -1901,12 +1897,6 @@ IMPORTANT:
                   onChange={(e) => {
                     if (e.target.value) {
                       setMenteeMeetingDate(new Date(e.target.value));
-                    }
-                  }}
-                  onBlur={(e) => {
-                    // Auto-close on mobile when date is selected
-                    if (e.target.value && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                      setTimeout(() => setShowMenteeCalendar(false), 100);
                     }
                   }}
                 />
