@@ -20,6 +20,7 @@ import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../comp
 import SkillGoalWidget from '../components/SkillGoalWidget';
 import TeamCollaborationWidget from '../components/TeamCollaborationWidget';
 import TeamGoalWidget from '../components/TeamGoalWidget';
+import { calculateGoalPath } from '../utils/goalPathUtils';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -713,14 +714,20 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
   const handleSetGoal = () => {
     if (selectedSkill && selectedEmployeeId) {
+      const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId);
+      if (!selectedEmployee) return;
+      
+      // Calculate goal path using shared utility function
+      const goalPath = calculateGoalPath(selectedSkill, selectedEmployee, currentService);
+      
       // Set the goal using the external manager
       const goalToSet = {
         skill: selectedSkill,
-        path: [],
+        path: goalPath,
         employeeId: selectedEmployeeId,
         dataSource
       };
-      console.log('🎯 SkillMap: Setting goal from handleSetGoal:', goalToSet);
+      console.log('🎯 SkillMap: Setting goal from handleSetGoal with path:', goalToSet);
       setGoal(goalToSet);
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false })
       setSelectedSkill(null)
@@ -1151,12 +1158,19 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 onClick={() => {
                   if (skills.length > 0) {
                     const testSkill = skills[0];
+                    const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId);
+                    if (!selectedEmployee) return;
+                    
+                    // Calculate goal path using shared utility function
+                    const goalPath = calculateGoalPath(testSkill, selectedEmployee, currentService);
+                    
                     setGoal({
                       skill: testSkill,
-                      path: [],
+                      path: goalPath,
                       employeeId: selectedEmployeeId,
                       dataSource
                     });
+                    console.log('🧪 SkillMap: Set test goal with calculated path:', { skill: testSkill.name, path: goalPath });
                   }
                 }}
                 className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
@@ -1195,6 +1209,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           employee={selectedEmployee}
           currentGoal={currentGoal}
           dataSource={dataSource}
+          service={currentService}
           onGoalSet={(goalSkill, path) => {
             console.log('🎯 SkillMap: TeamCollaborationWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
             if (goalSkill && selectedEmployeeId) {

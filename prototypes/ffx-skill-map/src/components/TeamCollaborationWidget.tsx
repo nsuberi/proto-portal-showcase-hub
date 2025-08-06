@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import SkillGoalWidget from './SkillGoalWidget';
+import { calculateGoalPath } from '../utils/goalPathUtils';
 
 interface TeamCollaborationWidgetProps {
   employeeId: string;
@@ -16,6 +17,7 @@ interface TeamCollaborationWidgetProps {
   currentGoal?: { skill: Skill; path: string[] } | null;
   dataSource: 'ffx' | 'tech';
   onGoalSet?: (goalSkill: Skill | null, path: string[]) => void;
+  service?: any; // Service for path calculation
 }
 
 const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
@@ -23,7 +25,8 @@ const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
   employee,
   currentGoal,
   dataSource,
-  onGoalSet
+  onGoalSet,
+  service
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -566,8 +569,10 @@ IMPORTANT:
                                       <Button
                                         size="sm"
                                         onClick={() => {
-                                          if (onGoalSet) {
-                                            onGoalSet(skillItem.skill, []);
+                                          if (onGoalSet && skillItem.skill) {
+                                            const calculatedPath = calculateGoalPath(skillItem.skill, employee, service);
+                                            console.log('🎯 TeamCollaborationWidget: Setting goal with calculated path:', { skill: skillItem.skill.name, path: calculatedPath });
+                                            onGoalSet(skillItem.skill, calculatedPath);
                                           }
                                         }}
                                         className="bg-blue-600 hover:bg-blue-700 text-white"
