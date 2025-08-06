@@ -293,6 +293,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [menteeMeetingDate, setMenteeMeetingDate] = useState<Date | null>(null)
   const [showMentorCalendar, setShowMentorCalendar] = useState(false)
   const [showMenteeCalendar, setShowMenteeCalendar] = useState(false)
+  const [showMentorSetAnimation, setShowMentorSetAnimation] = useState(false)
+  const [showMenteeSetAnimation, setShowMenteeSetAnimation] = useState(false)
   const [teamGoal, setTeamGoal] = useState('')
   const [personalGrowthGoal, setPersonalGrowthGoal] = useState('')
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
@@ -301,6 +303,37 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
   // Use external goal manager
   const { currentGoal, isLoading: goalLoading, setGoal, clearGoal, loadGoal, updatePath, deleteGoalForEmployee } = useEmployeeGoals()
+
+  // Utility functions for mentor/mentee persistence
+  const getMentorMenteeStorageKey = (employeeId: string, dataSource: string) => {
+    return `skillmap-mentor-mentee-${dataSource}-${employeeId}`
+  }
+
+  const saveMentorMentee = (employeeId: string, dataSource: string, mentorId?: string, menteeId?: string) => {
+    try {
+      const storageKey = getMentorMenteeStorageKey(employeeId, dataSource)
+      const data = { mentorId, menteeId }
+      localStorage.setItem(storageKey, JSON.stringify(data))
+      console.log('💾 Saved mentor/mentee for', employeeId, ':', data)
+    } catch (error) {
+      console.warn('Failed to save mentor/mentee data:', error)
+    }
+  }
+
+  const loadMentorMentee = (employeeId: string, dataSource: string) => {
+    try {
+      const storageKey = getMentorMenteeStorageKey(employeeId, dataSource)
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const data = JSON.parse(saved)
+        console.log('🔄 Loaded mentor/mentee for', employeeId, ':', data)
+        return data
+      }
+    } catch (error) {
+      console.warn('Failed to load mentor/mentee data:', error)
+    }
+    return { mentorId: null, menteeId: null }
+  }
 
   // Debug current goal state
   useEffect(() => {
@@ -356,14 +389,33 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       }
     }
     
-    // Clear mentor/mentee selections and meeting dates when employee changes
-    setSelectedMentor(null);
-    setSelectedMentee(null);
+    // Load mentor/mentee selections when employee changes, or clear if no employee
+    if (selectedEmployeeId && employees) {
+      const savedMentorMentee = loadMentorMentee(selectedEmployeeId, dataSource);
+      
+      // Find the actual employee objects from the saved IDs
+      const mentor = savedMentorMentee.mentorId 
+        ? employees.find(emp => emp.id === savedMentorMentee.mentorId) 
+        : null;
+      const mentee = savedMentorMentee.menteeId 
+        ? employees.find(emp => emp.id === savedMentorMentee.menteeId) 
+        : null;
+      
+      console.log('🔄 SkillMap: Loading saved mentor/mentee:', { mentor: mentor?.name, mentee: mentee?.name });
+      setSelectedMentor(mentor || null);
+      setSelectedMentee(mentee || null);
+    } else {
+      // Clear mentor/mentee selections when no employee is selected
+      setSelectedMentor(null);
+      setSelectedMentee(null);
+    }
+    
+    // Always clear meeting dates and insights when employee changes
     setMentorMeetingDate(null);
     setMenteeMeetingDate(null);
     setInsightsResponse('');
     setInsightsError(null);
-  }, [selectedEmployeeId, dataSource, skills, isLoading, loadGoal, clearGoal]);
+  }, [selectedEmployeeId, dataSource, skills, employees, isLoading, loadGoal, clearGoal]);
 
   // Load team goal from localStorage
   useEffect(() => {
@@ -1253,7 +1305,13 @@ IMPORTANT:
                     </Badge>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedMentor(null)} className="h-6 w-6 p-0">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setSelectedMentor(null)
+                      // Save cleared mentor to localStorage
+                      if (selectedEmployeeId) {
+                        saveMentorMentee(selectedEmployeeId, dataSource, undefined, selectedMentee?.id)
+                      }
+                    }} className="h-6 w-6 p-0">
                       <X className="h-3 w-3" />
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setShowMentorCalendar(true)} className="h-6 w-6 p-0">
@@ -1303,7 +1361,13 @@ IMPORTANT:
                     </Badge>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedMentee(null)} className="h-6 w-6 p-0">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setSelectedMentee(null)
+                      // Save cleared mentee to localStorage
+                      if (selectedEmployeeId) {
+                        saveMentorMentee(selectedEmployeeId, dataSource, selectedMentor?.id, undefined)
+                      }
+                    }} className="h-6 w-6 p-0">
                       <X className="h-3 w-3" />
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setShowMenteeCalendar(true)} className="h-6 w-6 p-0">
@@ -1477,6 +1541,7 @@ IMPORTANT:
                                       {skillItem.skill && (
                                         <Button
                                           size="sm"
+                                          disabled={currentGoal?.skill?.id === skillItem.skill.id}
                                           onClick={() => {
                                             if (skillItem.skill && selectedEmployeeId) {
                                               const calculatedPath = calculateGoalPath(skillItem.skill, selectedEmployee, currentService);
@@ -1488,12 +1553,25 @@ IMPORTANT:
                                                 dataSource
                                               };
                                               setGoal(goalToSet);
+                                              
+                                              // Scroll to the goal section after a brief delay to allow state to update
+                                              setTimeout(() => {
+                                                if (skillGoalRef.current) {
+                                                  skillGoalRef.current.scrollIntoView({ 
+                                                    behavior: 'smooth', 
+                                                    block: 'center' 
+                                                  });
+                                                }
+                                              }, 200);
                                             }
                                           }}
-                                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                                          className={`${currentGoal?.skill?.id === skillItem.skill.id 
+                                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                          }`}
                                         >
                                           <Target className="h-3 w-3 mr-1" />
-                                          Set as Goal
+                                          {currentGoal?.skill?.id === skillItem.skill.id ? 'Current Goal' : 'Set as Goal'}
                                         </Button>
                                       )}
                                     </div>
@@ -1550,7 +1628,7 @@ IMPORTANT:
                           <h3 className="text-lg font-semibold text-blue-800 mb-3">Mentorship Recommendations</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {learnFromMentor && (
-                              <Card className="border-green-200 bg-gradient-to-br from-green-50/50 to-white shadow-sm">
+                              <Card className="border-green-200 bg-gradient-to-br from-green-50/50 to-white shadow-sm relative">
                                 <CardContent className="p-4">
                                   <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-green-100 rounded-full">
@@ -1563,13 +1641,32 @@ IMPORTANT:
                                     {learnFromMentor.teammate && (
                                       <Button
                                         size="sm"
-                                        onClick={() => setSelectedMentor(learnFromMentor.teammate!)}
-                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        disabled={selectedMentor?.id === learnFromMentor.teammate?.id}
+                                        onClick={() => {
+                                          const newMentor = learnFromMentor.teammate!
+                                          setSelectedMentor(newMentor)
+                                          setShowMentorSetAnimation(true)
+                                          setTimeout(() => setShowMentorSetAnimation(false), 2000)
+                                          
+                                          // Save mentor selection to localStorage
+                                          if (selectedEmployeeId) {
+                                            saveMentorMentee(selectedEmployeeId, dataSource, newMentor.id, selectedMentee?.id)
+                                          }
+                                        }}
+                                        className={`${selectedMentor?.id === learnFromMentor.teammate?.id 
+                                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                          : 'bg-green-600 hover:bg-green-700 text-white'
+                                        }`}
                                       >
-                                        Select Mentor
+                                        {selectedMentor?.id === learnFromMentor.teammate?.id ? 'Current Mentor' : 'Select Mentor'}
                                       </Button>
                                     )}
                                   </div>
+                                  {showMentorSetAnimation && (
+                                    <div className="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse z-10">
+                                      ✅ Mentor Set!
+                                    </div>
+                                  )}
                                   <div className="flex items-start gap-3">
                                     {learnFromMentor.teammate?.images?.face && (
                                       <img
@@ -1595,7 +1692,7 @@ IMPORTANT:
                             )}
                             
                             {mentorTo && (
-                              <Card className="border-purple-200 bg-gradient-to-br from-purple-50/50 to-white shadow-sm">
+                              <Card className="border-purple-200 bg-gradient-to-br from-purple-50/50 to-white shadow-sm relative">
                                 <CardContent className="p-4">
                                   <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2 bg-purple-100 rounded-full">
@@ -1608,13 +1705,32 @@ IMPORTANT:
                                     {mentorTo.teammate && (
                                       <Button
                                         size="sm"
-                                        onClick={() => setSelectedMentee(mentorTo.teammate!)}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                                        disabled={selectedMentee?.id === mentorTo.teammate?.id}
+                                        onClick={() => {
+                                          const newMentee = mentorTo.teammate!
+                                          setSelectedMentee(newMentee)
+                                          setShowMenteeSetAnimation(true)
+                                          setTimeout(() => setShowMenteeSetAnimation(false), 2000)
+                                          
+                                          // Save mentee selection to localStorage
+                                          if (selectedEmployeeId) {
+                                            saveMentorMentee(selectedEmployeeId, dataSource, selectedMentor?.id, newMentee.id)
+                                          }
+                                        }}
+                                        className={`${selectedMentee?.id === mentorTo.teammate?.id 
+                                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                        }`}
                                       >
-                                        Select Mentee
+                                        {selectedMentee?.id === mentorTo.teammate?.id ? 'Current Mentee' : 'Select Mentee'}
                                       </Button>
                                     )}
                                   </div>
+                                  {showMenteeSetAnimation && (
+                                    <div className="absolute top-0 right-0 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse z-10">
+                                      ✅ Mentee Set!
+                                    </div>
+                                  )}
                                   <div className="flex items-start gap-3">
                                     {mentorTo.teammate?.images?.face && (
                                       <img
@@ -1650,7 +1766,7 @@ IMPORTANT:
             )}
 
             {/* Skill Goal Widget Content */}
-            <div className="mx-4">
+            <div ref={skillGoalRef} className="mx-4">
               <SkillGoalWidget
                 employeeId={selectedEmployeeId}
                 employee={selectedEmployee}
@@ -1679,7 +1795,7 @@ IMPORTANT:
             </div>
 
             {/* Skill Recommendation Widget */}
-            <div className="mx-4">
+            <div ref={skillRecommendationRef} className="mx-4">
               <SkillRecommendationWidget
                 ref={skillRecommendationWidgetRef}
                 employeeId={selectedEmployeeId}
