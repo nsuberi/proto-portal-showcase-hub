@@ -2,6 +2,7 @@ import serverless from 'serverless-http';
 import app from './src/server.js';
 
 // Create the serverless handler
+// Updated: 2025-08-06 - Force Lambda redeploy for CORS fix
 export const handler = serverless(app, {
   // Configure for better Lambda performance
   provider: 'aws',
