@@ -18,6 +18,8 @@ interface TeamCollaborationWidgetProps {
   dataSource: 'ffx' | 'tech';
   onGoalSet?: (goalSkill: Skill | null, path: string[]) => void;
   service?: any; // Service for path calculation
+  onMentorSelect?: (mentor: Employee) => void;
+  onMenteeSelect?: (mentee: Employee) => void;
 }
 
 const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
@@ -26,7 +28,9 @@ const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
   currentGoal,
   dataSource,
   onGoalSet,
-  service
+  service,
+  onMentorSelect,
+  onMenteeSelect
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -295,26 +299,8 @@ IMPORTANT:
     <Card className="mb-6 md:mb-8 relative mx-4 bg-gradient-to-br from-blue-100/70 via-purple-100/70 to-blue-100/70 border-2 border-blue-200/50 shadow-lg backdrop-blur-sm">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between w-full gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-700 via-purple-700 to-blue-700 bg-clip-text text-transparent flex-1 min-w-0">
-            <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg flex-shrink-0">
-              <Users className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
-            </div>
-            
-            {employee.images?.face && (
-              <div className="relative ring-2 ring-blue-200 rounded-lg overflow-hidden flex-shrink-0">
-                <img 
-                  src={employee.images.face} 
-                  alt={employee.name}
-                  className="w-10 h-12 sm:w-12 sm:h-14 md:w-14 md:h-18 object-cover shadow-sm"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-            
-            <span className="truncate min-w-0">How should I work with my team to achieve our goals?</span>
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            {/* Empty div to maintain header structure without title */}
           </div>
 
           <Button
@@ -403,53 +389,6 @@ IMPORTANT:
             />
           </div>
 
-          {/* Integrated Skill Goal Widget */}
-          <div className="border-2 border-blue-200 rounded-lg p-4 bg-white/50">
-            <SkillGoalWidget
-              employeeId={employeeId}
-              employee={employee}
-              skills={allSkills}
-              connections={connections}
-              currentGoal={currentGoal?.skill || null}
-              service={{
-                getAllSkills: async () => allSkills,
-                getSkillConnections: async () => connections,
-                getSkillPath: async (from: string, to: string) => {
-                  // Simple BFS pathfinding implementation
-                  if (!connections || connections.length === 0) return [];
-                  
-                  const adjacency: Record<string, string[]> = {};
-                  connections.forEach(conn => {
-                    if (!adjacency[conn.from]) adjacency[conn.from] = [];
-                    adjacency[conn.from].push(conn.to);
-                  });
-                  
-                  const queue = [[from]];
-                  const visited = new Set([from]);
-                  
-                  while (queue.length > 0) {
-                    const path = queue.shift()!;
-                    const current = path[path.length - 1];
-                    
-                    if (current === to) {
-                      return path.slice(1); // Exclude the starting node
-                    }
-                    
-                    for (const neighbor of (adjacency[current] || [])) {
-                      if (!visited.has(neighbor)) {
-                        visited.add(neighbor);
-                        queue.push([...path, neighbor]);
-                      }
-                    }
-                  }
-                  
-                  return []; // No path found
-                }
-              }}
-              dataSource={dataSource}
-              onGoalSet={onGoalSet}
-            />
-          </div>
 
           {/* API Key Section */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
@@ -646,6 +585,15 @@ IMPORTANT:
                                   <h4 className="font-semibold text-green-800">Learn From</h4>
                                   <p className="text-sm text-green-600">Find a mentor</p>
                                 </div>
+                                {learnFromMentor.teammate && onMentorSelect && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => onMentorSelect(learnFromMentor.teammate!)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    Select Mentor
+                                  </Button>
+                                )}
                               </div>
                               <div className="flex items-start gap-3">
                                 {learnFromMentor.teammate?.images?.face && (
@@ -682,6 +630,15 @@ IMPORTANT:
                                   <h4 className="font-semibold text-purple-800">Mentor</h4>
                                   <p className="text-sm text-purple-600">Share your knowledge</p>
                                 </div>
+                                {mentorTo.teammate && onMenteeSelect && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => onMenteeSelect(mentorTo.teammate!)}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                  >
+                                    Select Mentee
+                                  </Button>
+                                )}
                               </div>
                               <div className="flex items-start gap-3">
                                 {mentorTo.teammate?.images?.face && (
