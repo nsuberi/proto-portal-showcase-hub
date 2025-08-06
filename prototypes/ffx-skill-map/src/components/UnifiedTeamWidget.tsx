@@ -46,6 +46,11 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
       if (employees && employees.length > 0) {
         for (const employee of employees) {
           await currentService.resetEmployeeSkills(employee.id);
+          
+          // Clear goals for each employee from localStorage
+          const goalKey = `employee-goal-${dataSource}-${employee.id}`;
+          localStorage.removeItem(goalKey);
+          console.log(`🗑️ Cleared goal for ${employee.name}`);
         }
       }
       
@@ -59,7 +64,7 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
       queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
       
-      console.log(`✅ Successfully reset all skills for ${teamDisplayName}`);
+      console.log(`✅ Successfully reset all skills and goals for ${teamDisplayName}`);
     } catch (error) {
       console.error('Failed to reset team skills:', error);
     } finally {
@@ -135,7 +140,7 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
                 className="whitespace-nowrap flex-shrink-0"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
-                {isResettingTeam ? 'Resetting Team...' : 'Reset Team Skills'}
+                {isResettingTeam ? 'Resetting Team...' : 'Reset Team Skills and Goals'}
               </Button>
             </div>
 
