@@ -422,7 +422,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            Skill Goal Planner
+            <span className="hidden sm:inline">Skill Goal Planner</span>
+            <span className="sm:hidden">Goal Planner</span>
           </CardTitle>
           <CardDescription className="text-sm">
             Select an employee to set skill learning goals
@@ -443,7 +444,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-3 text-base sm:text-lg">
           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          <span className="truncate">Skill Goal for {employee.name}</span>
+          <span className="truncate hidden sm:inline">Skill Goal for {employee.name}</span>
+          <span className="truncate sm:hidden">Goal: {employee.name}</span>
         </CardTitle>
         <CardDescription className="text-sm">
           Search for a skill to set as your learning goal
