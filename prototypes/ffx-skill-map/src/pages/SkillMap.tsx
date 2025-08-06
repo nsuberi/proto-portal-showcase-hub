@@ -850,20 +850,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       </section>
 
 
-      {/* Sigma.js visualization container */}
-      <div className="mb-8">
-        <SigmaGraph
-          skills={skills}
-          connections={connections}
-          masteredSkills={masteredSkills}
-          selectedEmployeeId={selectedEmployeeId}
-          goalPath={currentGoal?.path}
-          goalSkillId={currentGoal?.skill?.id}
-          onNodeClick={handleNodeClick}
-          categoryColors={CATEGORY_COLORS}
-        />
-      </div>
-
       {/* Skill Types Legend */}
       <div className="mb-6 md:mb-8 relative mx-4">
         <div className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-lg p-3 md:p-4 shadow-sm">
@@ -903,6 +889,20 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             })}
           </div>
         </div>
+      </div>
+
+      {/* Sigma.js visualization container */}
+      <div className="mb-8">
+        <SigmaGraph
+          skills={skills}
+          connections={connections}
+          masteredSkills={masteredSkills}
+          selectedEmployeeId={selectedEmployeeId}
+          goalPath={currentGoal?.path}
+          goalSkillId={currentGoal?.skill?.id}
+          onNodeClick={handleNodeClick}
+          categoryColors={CATEGORY_COLORS}
+        />
       </div>
 
       {/* Debug Goal State - Remove in production */}
