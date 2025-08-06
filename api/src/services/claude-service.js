@@ -29,9 +29,9 @@ export class ClaudeService {
       return this.apiKey;
     }
 
-    // If AWS_SECRETS_ENABLED is false, return null (will trigger mock mode or error)
+    // If AWS_SECRETS_ENABLED is false, return the environment variable API key
     if (process.env.AWS_SECRETS_ENABLED === 'false') {
-      return null;
+      return process.env.CLAUDE_API_KEY;
     }
 
     try {
