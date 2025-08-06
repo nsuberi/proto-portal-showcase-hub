@@ -416,8 +416,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
   // Handle AI insights request
   const handleGetInsights = async () => {
-    if (!personalGrowthGoal.trim() || !teamGoal.trim()) {
-      setInsightsError('Both team goal and personal growth goal are required.');
+    if (!teamGoal.trim()) {
+      setInsightsError('Team goal is required.');
       return;
     }
 
@@ -456,6 +456,9 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         return acc;
       }, {} as Record<string, string>) || {};
 
+      // Ensure personal growth goal is always included in the prompt
+      const effectivePersonalGrowthGoal = personalGrowthGoal.trim() || "general professional development and skill improvement";
+
       const systemPrompt = `You are an AI assistant helping ${selectedEmployee?.name} (${selectedEmployee?.role}) identify which skills would be most helpful for their team to achieve "${teamGoal}".
 
 Current team composition and skills:
@@ -464,33 +467,38 @@ ${JSON.stringify(teamSkillsMap, null, 2)}
 Available skills and descriptions:
 ${JSON.stringify(skillDescriptions, null, 2)}
 
-The employee wants to grow in this direction: "${personalGrowthGoal}"
+The employee's personal growth goal is: "${effectivePersonalGrowthGoal}"
+
+IMPORTANT: You must consider and reference the employee's personal growth goal ("${effectivePersonalGrowthGoal}") in your recommendations, even if it seems unconventional or silly. Find creative ways to connect it to skill development and team collaboration.
 
 Please provide your response in the following format:
 
 ## RECOMMENDED SKILLS
 List 3-5 skills that would:
-1. Help the team achieve their goal
-2. Align with the employee's personal growth interests  
+1. Help the team achieve their goal: "${teamGoal}"
+2. Align with or creatively connect to the employee's personal growth interests: "${effectivePersonalGrowthGoal}"
 3. Build on their existing skills: ${selectedEmployee?.mastered_skills?.map(id => skills?.find(s => s.id === id)?.name).filter(Boolean).join(', ')}
 
 For each skill, format as:
 **[SKILL_NAME]**
-- Why it's important for the team goal
-- How it connects to their existing skills
+- Why it's important for the team goal: "${teamGoal}"
+- How it connects to their personal growth goal: "${effectivePersonalGrowthGoal}"
+- How it builds on their existing skills
 - Which team members they should collaborate with to learn it
 
 ## MENTORSHIP RECOMMENDATIONS
 
 **LEARN FROM:** [Team member name]
-One brief sentence explaining why this person would be a good mentor for ${selectedEmployee?.name}.
+One brief sentence explaining why this person would be a good mentor for ${selectedEmployee?.name}, considering both the team goal and their personal growth interest in "${effectivePersonalGrowthGoal}".
 
 **MENTOR:** [Team member name]  
-One brief sentence explaining why ${selectedEmployee?.name} would be a good mentor for this person.
+One brief sentence explaining why ${selectedEmployee?.name} would be a good mentor for this person, potentially drawing on insights from their personal growth focus on "${effectivePersonalGrowthGoal}".
 
 IMPORTANT: 
 - Use exact skill names from the available skills list for the RECOMMENDED SKILLS section
+- Always reference the personal growth goal ("${effectivePersonalGrowthGoal}") in your recommendations
 - Keep mentorship descriptions to ONE sentence each
+- Be creative in connecting unconventional personal goals to professional skill development
 - Do not include additional sections or recommendations beyond what is requested`;
 
       const apiUrl = getApiUrl();
@@ -512,7 +520,7 @@ IMPORTANT:
           teammates: employees?.filter(t => t.id !== selectedEmployee?.id) || [],
           widgetSystemPrompt: 'You are an AI assistant helping with team collaboration and skill development.',
           userSystemPrompt: systemPrompt,
-          justInTimeQuestion: `Team Goal: ${teamGoal}\nPersonal Growth Interest: ${personalGrowthGoal}`
+          justInTimeQuestion: `Team Goal: ${teamGoal}\nPersonal Growth Interest: ${effectivePersonalGrowthGoal}`
         }),
       });
 
@@ -1374,7 +1382,7 @@ IMPORTANT:
                 {/* Get Insights Button */}
                 <Button
                   onClick={handleGetInsights}
-                  disabled={isLoadingInsights || !personalGrowthGoal.trim() || !teamGoal.trim()}
+                  disabled={isLoadingInsights || !teamGoal.trim()}
                   className="w-full p-3 bg-gradient-to-r from-green-600 via-blue-600 to-green-600 text-white hover:from-green-700 hover:via-blue-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md font-medium"
                 >
                   {isLoadingInsights ? (
