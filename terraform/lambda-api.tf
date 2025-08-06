@@ -82,7 +82,6 @@ resource "aws_lambda_function" "ai_api" {
       JWT_SECRET            = var.jwt_secret
       API_KEY_SALT          = var.api_key_salt
       AWS_SECRETS_ENABLED   = "true"
-      AWS_REGION            = var.aws_region
       CLAUDE_SECRET_NAME    = "prod/proto-portal/claude-api-key"
       CLAUDE_API_URL        = var.claude_api_url
       CLAUDE_MODEL          = var.claude_model
