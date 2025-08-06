@@ -9,6 +9,7 @@ import TechSkillsService from '../services/techSkillsData'
 const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { useEmployeeGoals } from '../hooks/useEmployeeGoals'
 import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
@@ -281,14 +282,21 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const [isResetting, setIsResetting] = useState(false)
-  const [currentGoal, setCurrentGoal] = useState<{ skill: any; path: string[] } | null>(null)
+  const [selectedSkill, setSelectedSkill] = useState<any>(null)
+  const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
   const [showTutorial, setShowTutorial] = useState(() => {
     // Show tutorial on first visit
     return !localStorage.getItem('skillMapTutorialSeen')
   })
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
-  const [selectedSkill, setSelectedSkill] = useState<any>(null)
-  const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
+
+  // Use external goal manager
+  const { currentGoal, isLoading: goalLoading, setGoal, clearGoal, loadGoal, updatePath, deleteGoalForEmployee } = useEmployeeGoals()
+
+  // Debug current goal state
+  useEffect(() => {
+    console.log('🎯 SkillMap: Current goal state changed:', currentGoal);
+  }, [currentGoal]);
   const skillGoalRef = useRef<HTMLDivElement>(null)
   const skillRecommendationRef = useRef<HTMLDivElement>(null)
   const skillRecommendationWidgetRef = useRef<SkillRecommendationWidgetRef>(null)
@@ -318,6 +326,32 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     queryFn: () => currentService.getAllEmployees(),
   })
 
+  // Load goal when employee, dataSource, or skills change
+  useEffect(() => {
+    console.log('🔄 SkillMap: Employee/DataSource/Skills changed:', {
+      selectedEmployeeId,
+      dataSource,
+      skillsLength: skills?.length || 0,
+      isLoading,
+      skillsExists: !!skills
+    });
+    
+    if (selectedEmployeeId && skills && skills.length > 0 && !isLoading) {
+      console.log('🚀 SkillMap: Loading goal for employee:', selectedEmployeeId);
+      loadGoal(selectedEmployeeId, dataSource, skills);
+    } else {
+      console.log('🧹 SkillMap: Clearing goal - conditions not met:', {
+        hasEmployeeId: !!selectedEmployeeId,
+        hasSkills: !!skills,
+        skillsLength: skills?.length || 0,
+        isLoading
+      });
+      if (!isLoading) {
+        clearGoal();
+      }
+    }
+  }, [selectedEmployeeId, dataSource, skills, isLoading, loadGoal, clearGoal]);
+
   // Find selected employee's mastered skills
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
   const masteredSkills = selectedEmployee?.mastered_skills || []
@@ -330,14 +364,14 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     try {
       await currentService.resetEmployeeSkills(selectedEmployeeId);
       
-      // Clear the current goal when skills are reset
-      setCurrentGoal(null);
+      // Permanently delete the goal from localStorage when skills are reset
+      deleteGoalForEmployee(selectedEmployeeId, dataSource);
       
       // Use efficient non-blocking invalidation with current data source
       queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
       
-      console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
+      console.log(`✅ Successfully reset skills and cleared goal for ${selectedEmployee?.name || selectedEmployeeId}`);
     } catch (error) {
       console.error('Failed to reset employee skills:', error);
     } finally {
@@ -679,8 +713,15 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
   const handleSetGoal = () => {
     if (selectedSkill && selectedEmployeeId) {
-      // Simply set the goal - let the SkillGoalWidget handle path calculation
-      setCurrentGoal({ skill: selectedSkill, path: [] })
+      // Set the goal using the external manager
+      const goalToSet = {
+        skill: selectedSkill,
+        path: [],
+        employeeId: selectedEmployeeId,
+        dataSource
+      };
+      console.log('🎯 SkillMap: Setting goal from handleSetGoal:', goalToSet);
+      setGoal(goalToSet);
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false })
       setSelectedSkill(null)
       
@@ -935,7 +976,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   onClick={() => {
                     setDataSource('tech')
                     setSelectedEmployeeId('')
-                    setCurrentGoal(null)
+                    clearGoal() // Clear goal when switching data sources
                     setSelectedSkill(null)
                     // Invalidate all cached data when switching datasets
                     queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
@@ -957,7 +998,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   onClick={() => {
                     setDataSource('ffx')
                     setSelectedEmployeeId('')
-                    setCurrentGoal(null)
+                    clearGoal() // Clear goal when switching data sources
                     setSelectedSkill(null)
                     // Invalidate all cached data when switching datasets
                     queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
@@ -994,7 +1035,10 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       <div className="w-full max-w-4xl mb-4 mx-4">
         <div className="flex gap-3 items-end">
           <div className="flex-1 max-w-md">
-            <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+            <Select value={selectedEmployeeId} onValueChange={(employeeId) => {
+              console.log('👤 SkillMap: Employee selection changed to:', employeeId);
+              setSelectedEmployeeId(employeeId);
+            }}>
               <SelectTrigger className="w-full" data-testid="employee-select">
                 <SelectValue placeholder="Select an employee to highlight mastered skills..." />
               </SelectTrigger>
@@ -1090,6 +1134,60 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       </div>
 
+      {/* Debug Goal State - Remove in production */}
+      {false && (
+        <div className="mx-4 mb-4 p-4 bg-gray-100 rounded-lg border">
+          <h3 className="font-bold text-sm mb-2">🐛 Goal Debug Info:</h3>
+          <div className="text-xs space-y-1">
+            <div><strong>Current Goal:</strong> {currentGoal ? `${currentGoal.skill.name} (${currentGoal.employeeId})` : 'None'}</div>
+            <div><strong>Selected Employee:</strong> {selectedEmployeeId || 'None'}</div>
+            <div><strong>Data Source:</strong> {dataSource}</div>
+            <div><strong>Skills Loaded:</strong> {skills?.length || 0}</div>
+            <div><strong>Goal Loading:</strong> {goalLoading ? 'Yes' : 'No'}</div>
+          </div>
+          {selectedEmployeeId && skills?.length > 0 && (
+            <div className="mt-2 space-x-2">
+              <button 
+                onClick={() => {
+                  if (skills.length > 0) {
+                    const testSkill = skills[0];
+                    setGoal({
+                      skill: testSkill,
+                      path: [],
+                      employeeId: selectedEmployeeId,
+                      dataSource
+                    });
+                  }
+                }}
+                className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+              >
+                Set Test Goal
+              </button>
+              <button 
+                onClick={() => {
+                  if (selectedEmployeeId) {
+                    deleteGoalForEmployee(selectedEmployeeId, dataSource);
+                  }
+                }}
+                className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+              >
+                Delete Goal
+              </button>
+              <button 
+                onClick={() => {
+                  if (selectedEmployeeId && skills) {
+                    loadGoal(selectedEmployeeId, dataSource, skills);
+                  }
+                }}
+                className="px-2 py-1 bg-green-500 text-white text-xs rounded"
+              >
+                Reload Goal
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Team Collaboration Widget */}
       {selectedEmployee && (
         <TeamCollaborationWidget
@@ -1098,7 +1196,20 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           currentGoal={currentGoal}
           dataSource={dataSource}
           onGoalSet={(goalSkill, path) => {
-            setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
+            console.log('🎯 SkillMap: TeamCollaborationWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
+            if (goalSkill && selectedEmployeeId) {
+              const goalToSet = {
+                skill: goalSkill,
+                path,
+                employeeId: selectedEmployeeId,
+                dataSource
+              };
+              console.log('🎯 SkillMap: Setting goal from TeamCollaborationWidget:', goalToSet);
+              setGoal(goalToSet);
+            } else {
+              console.log('🧹 SkillMap: Clearing goal from TeamCollaborationWidget');
+              clearGoal();
+            }
           }}
         />
       )}
@@ -1115,6 +1226,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
             goalSkillId={currentGoal?.skill?.id}
+            currentGoal={currentGoal?.skill || null}
             service={currentService}
             dataSource={dataSource}
             onSkillLearn={async (skill, updatedEmployee) => {

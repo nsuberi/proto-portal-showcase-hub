@@ -43,6 +43,25 @@ const TeamCollaborationWidget: React.FC<TeamCollaborationWidgetProps> = ({
     }
   }, [dataSource]);
 
+  // Load personal growth goal for current employee from localStorage
+  useEffect(() => {
+    const storageKey = `personal-growth-goal-${dataSource}-${employeeId}`;
+    const savedGoal = localStorage.getItem(storageKey);
+    setPersonalGrowthGoal(savedGoal || '');
+  }, [employeeId, dataSource]);
+
+  // Save personal growth goal to localStorage when it changes
+  useEffect(() => {
+    if (employeeId && personalGrowthGoal !== undefined) {
+      const storageKey = `personal-growth-goal-${dataSource}-${employeeId}`;
+      if (personalGrowthGoal.trim()) {
+        localStorage.setItem(storageKey, personalGrowthGoal);
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+    }
+  }, [personalGrowthGoal, employeeId, dataSource]);
+
   // Fetch all skills, connections, and teammates for the analysis
   const { data: allSkills = [] } = useQuery({
     queryKey: [`${dataSource}-skills`],
