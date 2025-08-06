@@ -1,8 +1,5 @@
 # AI Analysis API Lambda Infrastructure
 
-# Data source to get current AWS account ID
-data "aws_caller_identity" "current" {}
-
 # IAM role for Lambda execution
 resource "aws_iam_role" "ai_api_lambda_role" {
   name = "${var.bucket_name}-ai-api-lambda-role"
