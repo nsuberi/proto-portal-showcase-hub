@@ -22,8 +22,13 @@ echo "🔧 Rebuilding frontend with correct API Gateway URL: $API_GATEWAY_URL"
 echo "🏗️ Running full build process..."
 ./scripts/build.sh
 
-# The FFX skill map has already been built by build.sh
-# No need to rebuild or replace placeholders since SecureAIAnalysisWidget.tsx no longer exists
+# Replace API Gateway URL placeholders in built files
+echo "🔧 Replacing API Gateway URL placeholders..."
+find dist/ -name "*.js" -type f -exec sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|${API_GATEWAY_URL}|g" {} \;
+find dist/ -name "*.html" -type f -exec sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|${API_GATEWAY_URL}|g" {} \;
+
+# Remove backup files
+find dist/ -name "*.bak" -type f -delete
 
 # Sync files to S3
 echo "🗂️ Syncing files to S3 bucket: $BUCKET_NAME"

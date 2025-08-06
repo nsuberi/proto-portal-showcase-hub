@@ -151,11 +151,11 @@ router.get('/ai-analysis/health', async (req, res) => {
 });
 
 /**
- * POST /api/v1/ai-analysis/just-in-time
+ * POST /api/v1/ai-analysis/skills-and-mentors-recommendations
  * 
- * Analyze just-in-time learning requests with system prompts and teammate expertise
+ * Analyze skills and mentors recommendations requests with system prompts and teammate expertise
  */
-router.post('/ai-analysis/just-in-time',
+router.post('/ai-analysis/skills-and-mentors-recommendations',
   authMiddleware,
   async (req, res) => {
     try {
