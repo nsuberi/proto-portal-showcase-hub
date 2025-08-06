@@ -20,6 +20,7 @@ import SkillGoalWidget from '../components/SkillGoalWidget';
 import TeamCollaborationWidget from '../components/TeamCollaborationWidget';
 import UnifiedTeamWidget, { getHeroVideoSrc } from '../components/UnifiedTeamWidget';
 import { calculateGoalPath } from '../utils/goalPathUtils';
+import { Employee } from '../types';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -284,6 +285,8 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     // Show tutorial on first visit
     return !localStorage.getItem('skillMapTutorialSeen')
   })
+  const [selectedMentor, setSelectedMentor] = useState<Employee | null>(null)
+  const [selectedMentee, setSelectedMentee] = useState<Employee | null>(null)
 
   // Use external goal manager
   const { currentGoal, isLoading: goalLoading, setGoal, clearGoal, loadGoal, updatePath, deleteGoalForEmployee } = useEmployeeGoals()
@@ -341,6 +344,10 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         clearGoal();
       }
     }
+    
+    // Clear mentor/mentee selections when employee changes
+    setSelectedMentor(null);
+    setSelectedMentee(null);
   }, [selectedEmployeeId, dataSource, skills, isLoading, loadGoal, clearGoal]);
 
   // Find selected employee's mastered skills
@@ -966,6 +973,114 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       )}
 
+      {/* Plan your Path to Victory - as a Team */}
+      <div className="mb-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8"
+            style={{
+              background: 'linear-gradient(135deg, hsl(263, 70%, 50%), hsl(213, 94%, 68%))',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              color: 'transparent'
+            }}>
+          Plan your Path to Victory - as a Team
+        </h2>
+
+        {/* Character and Mentor/Mentee Display */}
+        {selectedEmployee && (
+          <div className="flex items-center justify-center gap-8 mb-8">
+            {/* Selected Character */}
+            <div className="flex flex-col items-center">
+              <div className="relative ring-4 ring-blue-400 rounded-lg overflow-hidden shadow-lg mb-2">
+                {selectedEmployee.images?.face ? (
+                  <img 
+                    src={selectedEmployee.images.face} 
+                    alt={selectedEmployee.name}
+                    className="w-20 h-24 object-cover"
+                  />
+                ) : (
+                  <div className="w-20 h-24 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-sm font-medium">
+                      {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg">{selectedEmployee.name}</h3>
+            </div>
+
+            {/* Mentor Box */}
+            <div className="flex flex-col items-center">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentor</h4>
+              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                {selectedMentor?.images?.face ? (
+                  <img 
+                    src={selectedMentor.images.face} 
+                    alt={selectedMentor.name}
+                    className="w-16 h-20 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-3xl">?</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">{selectedMentor?.name || 'Not Selected'}</p>
+            </div>
+
+            {/* Mentee Box */}
+            <div className="flex flex-col items-center">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentee</h4>
+              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                {selectedMentee?.images?.face ? (
+                  <img 
+                    src={selectedMentee.images.face} 
+                    alt={selectedMentee.name}
+                    className="w-16 h-20 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-400 text-3xl">?</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">{selectedMentee?.name || 'Not Selected'}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Skill Goal Widget */}
+      {selectedEmployee && (
+        <div className="mb-8 px-4">
+          <SkillGoalWidget
+            employeeId={selectedEmployeeId}
+            employee={selectedEmployee}
+            currentGoal={currentGoal?.skill || null}
+            service={currentService}
+            dataSource={dataSource}
+            onGoalSet={(goalSkill, path) => {
+              console.log('🎯 SkillMap: SkillGoalWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
+              if (goalSkill && selectedEmployeeId) {
+                const goalToSet = {
+                  skill: goalSkill,
+                  path,
+                  employeeId: selectedEmployeeId,
+                  dataSource
+                };
+                console.log('🎯 SkillMap: Setting goal from SkillGoalWidget:', goalToSet);
+                setGoal(goalToSet);
+              } else {
+                console.log('🧹 SkillMap: Clearing goal from SkillGoalWidget');
+                clearGoal();
+              }
+            }}
+            onLearnNewSkills={handleLearnNewSkills}
+            onGoalCompleted={handleGoalCompleted}
+          />
+        </div>
+      )}
+
       {/* Team Collaboration Widget */}
       {selectedEmployee && (
         <TeamCollaborationWidget
@@ -989,6 +1104,14 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
               console.log('🧹 SkillMap: Clearing goal from TeamCollaborationWidget');
               clearGoal();
             }
+          }}
+          onMentorSelect={(mentor) => {
+            console.log('👨‍🏫 SkillMap: Setting mentor:', mentor.name);
+            setSelectedMentor(mentor);
+          }}
+          onMenteeSelect={(mentee) => {
+            console.log('👨‍🎓 SkillMap: Setting mentee:', mentee.name);
+            setSelectedMentee(mentee);
           }}
         />
       )}
