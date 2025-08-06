@@ -97,7 +97,7 @@ const UnifiedTeamWidget: React.FC<UnifiedTeamWidgetProps> = ({
 
   return (
     <div className="w-full max-w-4xl mb-6 mx-auto relative z-10">
-      <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-background relative overflow-hidden">
+      <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-background/60 md:bg-background relative overflow-hidden">
         {/* Soft glow effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 blur-xl" />
         
