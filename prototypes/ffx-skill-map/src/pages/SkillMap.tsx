@@ -9,8 +9,10 @@ const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useEmployeeGoals } from '../hooks/useEmployeeGoals'
-import { Sword, Zap, Heart, Star, Crown, Filter, Users, HelpCircle, X, Sparkles, Code, Settings } from 'lucide-react'
+import { Sword, Zap, Heart, Star, Crown, Filter, Users, HelpCircle, X, Sparkles, Code, Settings, Plus, Calendar, Key, Eye, EyeOff, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import Sigma from 'sigma';
 import Graph from 'graphology';
 import { NodeBorderProgram } from '@sigma/node-border';
@@ -287,6 +289,17 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   })
   const [selectedMentor, setSelectedMentor] = useState<Employee | null>(null)
   const [selectedMentee, setSelectedMentee] = useState<Employee | null>(null)
+  const [mentorMeetingDate, setMentorMeetingDate] = useState<Date | null>(null)
+  const [menteeMeetingDate, setMenteeMeetingDate] = useState<Date | null>(null)
+  const [showMentorCalendar, setShowMentorCalendar] = useState(false)
+  const [showMenteeCalendar, setShowMenteeCalendar] = useState(false)
+  const [teamGoal, setTeamGoal] = useState('')
+  const [personalGrowthGoal, setPersonalGrowthGoal] = useState('')
+  const [apiKey, setApiKey] = useState('')
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false)
+  const [insightsResponse, setInsightsResponse] = useState('')
+  const [insightsError, setInsightsError] = useState<string | null>(null)
 
   // Use external goal manager
   const { currentGoal, isLoading: goalLoading, setGoal, clearGoal, loadGoal, updatePath, deleteGoalForEmployee } = useEmployeeGoals()
@@ -345,10 +358,179 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
       }
     }
     
-    // Clear mentor/mentee selections when employee changes
+    // Clear mentor/mentee selections and meeting dates when employee changes
     setSelectedMentor(null);
     setSelectedMentee(null);
+    setMentorMeetingDate(null);
+    setMenteeMeetingDate(null);
+    setInsightsResponse('');
+    setInsightsError(null);
   }, [selectedEmployeeId, dataSource, skills, isLoading, loadGoal, clearGoal]);
+
+  // Load team goal from localStorage
+  useEffect(() => {
+    const storageKey = `team-goal-${dataSource}`;
+    const savedGoal = localStorage.getItem(storageKey);
+    if (savedGoal) {
+      setTeamGoal(savedGoal);
+    } else {
+      setTeamGoal('Working together to achieve excellence and master new skills');
+    }
+  }, [dataSource]);
+
+  // Load personal growth goal for current employee from localStorage
+  useEffect(() => {
+    if (selectedEmployeeId) {
+      const storageKey = `personal-growth-goal-${dataSource}-${selectedEmployeeId}`;
+      const savedGoal = localStorage.getItem(storageKey);
+      setPersonalGrowthGoal(savedGoal || '');
+    } else {
+      setPersonalGrowthGoal('');
+    }
+  }, [selectedEmployeeId, dataSource]);
+
+  // Save personal growth goal to localStorage when it changes
+  useEffect(() => {
+    if (selectedEmployeeId && personalGrowthGoal !== undefined) {
+      const storageKey = `personal-growth-goal-${dataSource}-${selectedEmployeeId}`;
+      if (personalGrowthGoal.trim()) {
+        localStorage.setItem(storageKey, personalGrowthGoal);
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+    }
+  }, [personalGrowthGoal, selectedEmployeeId, dataSource]);
+
+  // Get API URL
+  const getApiUrl = () => {
+    if (import.meta.env.VITE_API_URL) {
+      return import.meta.env.VITE_API_URL;
+    }
+    
+    if (import.meta.env.DEV || typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      return 'http://localhost:3003';
+    }
+    
+    return 'PLACEHOLDER_API_GATEWAY_URL';
+  };
+
+  // Handle AI insights request
+  const handleGetInsights = async () => {
+    if (!personalGrowthGoal.trim() || !teamGoal.trim()) {
+      setInsightsError('Both team goal and personal growth goal are required.');
+      return;
+    }
+
+    setIsLoadingInsights(true);
+    setInsightsError(null);
+    setInsightsResponse('');
+
+    try {
+      let requestApiKey = apiKey.trim();
+      if (!requestApiKey && import.meta.env.DEV) {
+        requestApiKey = 'mock';
+      }
+
+      if (!requestApiKey) {
+        throw new Error('Claude API Key is required. In development mode, you can leave this empty to use mock data.');
+      }
+
+      if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
+        throw new Error('Invalid API key format. API keys should start with "sk-ant-api".');
+      }
+
+      // Build team skills mapping
+      const teamSkillsMap = employees?.map(teammate => ({
+        employeeId: teammate.id,
+        employeeName: teammate.name,
+        role: teammate.role,
+        masteredSkills: teammate.mastered_skills?.map(skillId => {
+          const skill = skills?.find(s => s.id === skillId);
+          return skill ? skill.name : skillId;
+        }) || []
+      })) || [];
+
+      // Build skill descriptions
+      const skillDescriptions = skills?.reduce((acc, skill) => {
+        acc[skill.name] = skill.description;
+        return acc;
+      }, {} as Record<string, string>) || {};
+
+      const systemPrompt = `You are an AI assistant helping ${selectedEmployee?.name} (${selectedEmployee?.role}) identify which skills would be most helpful for their team to achieve "${teamGoal}".
+
+Current team composition and skills:
+${JSON.stringify(teamSkillsMap, null, 2)}
+
+Available skills and descriptions:
+${JSON.stringify(skillDescriptions, null, 2)}
+
+The employee wants to grow in this direction: "${personalGrowthGoal}"
+
+Please provide your response in the following format:
+
+## RECOMMENDED SKILLS
+List 3-5 skills that would:
+1. Help the team achieve their goal
+2. Align with the employee's personal growth interests  
+3. Build on their existing skills: ${selectedEmployee?.mastered_skills?.map(id => skills?.find(s => s.id === id)?.name).filter(Boolean).join(', ')}
+
+For each skill, format as:
+**[SKILL_NAME]**
+- Why it's important for the team goal
+- How it connects to their existing skills
+- Which team members they should collaborate with to learn it
+
+## MENTORSHIP RECOMMENDATIONS
+
+**LEARN FROM:** [Team member name]
+One brief sentence explaining why this person would be a good mentor for ${selectedEmployee?.name}.
+
+**MENTOR:** [Team member name]  
+One brief sentence explaining why ${selectedEmployee?.name} would be a good mentor for this person.
+
+IMPORTANT: 
+- Use exact skill names from the available skills list for the RECOMMENDED SKILLS section
+- Keep mentorship descriptions to ONE sentence each
+- Do not include additional sections or recommendations beyond what is requested`;
+
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/v1/ai-analysis/just-in-time`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: requestApiKey,
+          character: {
+            name: selectedEmployee?.name,
+            role: selectedEmployee?.role,
+            currentXP: selectedEmployee?.current_xp || 0,
+            level: selectedEmployee?.level || 1,
+            masteredSkills: selectedEmployee?.mastered_skills || []
+          },
+          allSkills: skills || [],
+          teammates: employees?.filter(t => t.id !== selectedEmployee?.id) || [],
+          widgetSystemPrompt: 'You are an AI assistant helping with team collaboration and skill development.',
+          userSystemPrompt: systemPrompt,
+          justInTimeQuestion: `Team Goal: ${teamGoal}\nPersonal Growth Interest: ${personalGrowthGoal}`
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setInsightsResponse(data.response || 'No response generated.');
+      
+    } catch (err) {
+      console.error('AI insights request failed:', err);
+      setInsightsError(err instanceof Error ? err.message : 'Failed to get AI insights');
+    } finally {
+      setIsLoadingInsights(false);
+    }
+  };
 
   // Find selected employee's mastered skills
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
@@ -988,182 +1170,594 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
         {/* Character and Mentor/Mentee Display */}
         {selectedEmployee && (
-          <div className="flex items-center justify-center gap-8 mb-8">
-            {/* Selected Character */}
-            <div className="flex flex-col items-center">
-              <div className="relative ring-4 ring-blue-400 rounded-lg overflow-hidden shadow-lg mb-2">
-                {selectedEmployee.images?.face ? (
-                  <img 
-                    src={selectedEmployee.images.face} 
-                    alt={selectedEmployee.name}
-                    className="w-20 h-24 object-cover"
-                  />
-                ) : (
-                  <div className="w-20 h-24 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                    <span className="text-gray-500 text-sm font-medium">
-                      {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
-                    </span>
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center justify-center gap-8">
+              {/* Selected Character */}
+              <div className="flex flex-col items-center">
+                <div className="relative ring-4 ring-blue-400 rounded-lg overflow-hidden shadow-lg mb-2">
+                  {selectedEmployee.images?.face ? (
+                    <img 
+                      src={selectedEmployee.images.face} 
+                      alt={selectedEmployee.name}
+                      className="w-20 h-24 object-cover"
+                    />
+                  ) : (
+                    <div className="w-20 h-24 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-sm font-medium">
+                        {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{selectedEmployee.name}</h3>
+                <div className="flex gap-2">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
+                    Level {selectedEmployee.level || 1}
+                  </Badge>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
+                    {selectedEmployee.current_xp || 0} XP
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Mentor Box */}
+              <div className="flex flex-col items-center">
+                <h4 className="text-sm font-medium text-gray-600 mb-2">Mentor</h4>
+                <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                  {selectedMentor?.images?.face ? (
+                    <img 
+                      src={selectedMentor.images.face} 
+                      alt={selectedMentor.name}
+                      className="w-16 h-20 object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-400 text-3xl">?</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mb-2">{selectedMentor?.name || 'Not Selected'}</p>
+                {selectedMentor && (
+                  <div className="flex gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-xs">
+                      Level {selectedMentor.level || 1}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 text-xs">
+                      {selectedMentor.current_xp || 0} XP
+                    </Badge>
+                  </div>
+                )}
+                {selectedMentor && (
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedMentor(null)} className="h-6 w-6 p-0">
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowMentorCalendar(true)} className="h-6 w-6 p-0">
+                      <Plus className="h-3 w-3" />
+                    </Button>
                   </div>
                 )}
               </div>
-              <h3 className="font-semibold text-lg">{selectedEmployee.name}</h3>
+
+              {/* Mentee Box */}
+              <div className="flex flex-col items-center">
+                <h4 className="text-sm font-medium text-gray-600 mb-2">Mentee</h4>
+                <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
+                  {selectedMentee?.images?.face ? (
+                    <img 
+                      src={selectedMentee.images.face} 
+                      alt={selectedMentee.name}
+                      className="w-16 h-20 object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-400 text-3xl">?</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mb-2">{selectedMentee?.name || 'Not Selected'}</p>
+                {selectedMentee && (
+                  <div className="flex gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
+                      Level {selectedMentee.level || 1}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300 text-xs">
+                      {selectedMentee.current_xp || 0} XP
+                    </Badge>
+                  </div>
+                )}
+                {selectedMentee && (
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setSelectedMentee(null)} className="h-6 w-6 p-0">
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowMenteeCalendar(true)} className="h-6 w-6 p-0">
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Mentor Box */}
-            <div className="flex flex-col items-center">
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentor</h4>
-              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
-                {selectedMentor?.images?.face ? (
-                  <img 
-                    src={selectedMentor.images.face} 
-                    alt={selectedMentor.name}
-                    className="w-16 h-20 object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
-                    <span className="text-gray-400 text-3xl">?</span>
+            {/* Next Meetings Display */}
+            {(mentorMeetingDate || menteeMeetingDate) && (
+              <div className="flex justify-center gap-8 text-sm">
+                {mentorMeetingDate && selectedMentor && (
+                  <div className="text-center">
+                    <p className="text-gray-600">Next meeting with {selectedMentor.name}:</p>
+                    <p className="font-semibold">{mentorMeetingDate.toLocaleDateString()}</p>
+                  </div>
+                )}
+                {menteeMeetingDate && selectedMentee && (
+                  <div className="text-center">
+                    <p className="text-gray-600">Next meeting with {selectedMentee.name}:</p>
+                    <p className="font-semibold">{menteeMeetingDate.toLocaleDateString()}</p>
                   </div>
                 )}
               </div>
-              <p className="text-sm text-gray-500">{selectedMentor?.name || 'Not Selected'}</p>
+            )}
+          </div>
+        )}
+
+        {/* Combined Team Collaboration, Skill Goal, and Learning Widget */}
+        {selectedEmployee && (
+          <div className="space-y-6">
+            {/* Team Goal Display */}
+            <Card className="mx-4 bg-gradient-to-br from-blue-50/50 to-white border-blue-200">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">Team Goal</h3>
+                  <p className="text-blue-700">{teamGoal}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Personal Growth Question */}
+            <Card className="mx-4 border-purple-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-purple-800 mb-3">Personal Growth</h3>
+                <p className="text-gray-700 mb-3">How would you like to grow, personally?</p>
+                <input 
+                  type="text"
+                  value={personalGrowthGoal}
+                  onChange={(e) => setPersonalGrowthGoal(e.target.value)}
+                  placeholder="e.g., I want to improve my leadership skills..."
+                  className="w-full p-3 border border-purple-200 rounded-lg focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+                />
+              </CardContent>
+            </Card>
+
+            {/* AI Insights Section */}
+            <Card className="mx-4 bg-gradient-to-br from-green-50/50 to-white border-green-200">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Get AI Insights
+                </h3>
+                
+                {/* API Key Section */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Key className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-green-700 mb-3">
+                        <strong>Claude API Key Required:</strong> Enter your Anthropic Claude API key to get personalized recommendations for skills and mentors based on your team goal and personal growth interests.
+                        {import.meta.env.DEV && " In development mode, you can leave this empty to use mock data."}
+                      </p>
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            type={showApiKey ? "text" : "password"}
+                            placeholder="sk-ant-api03-..."
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            className="pr-10 text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                            onClick={() => setShowApiKey(!showApiKey)}
+                          >
+                            {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-green-600">
+                          Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline">Anthropic Console</a>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Get Insights Button */}
+                <Button
+                  onClick={handleGetInsights}
+                  disabled={isLoadingInsights || !personalGrowthGoal.trim() || !teamGoal.trim()}
+                  className="w-full p-3 bg-gradient-to-r from-green-600 via-blue-600 to-green-600 text-white hover:from-green-700 hover:via-blue-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md font-medium"
+                >
+                  {isLoadingInsights ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Getting AI Insights...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Sparkles className="h-4 w-4" />
+                      <span>Get Recommendations for Skills & Mentors</span>
+                    </div>
+                  )}
+                </Button>
+
+                {/* Error Display */}
+                {insightsError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-sm text-red-800">
+                      <strong>Error:</strong> {insightsError}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* AI Insights Response Display */}
+            {insightsResponse && (
+              <Card className="mx-4 bg-gradient-to-br from-blue-50/50 to-white border-blue-200">
+                <CardContent className="p-6">
+                  <h4 className="font-semibold text-blue-800 mb-4 flex items-center space-x-2">
+                    <Users className="w-4 h-4" />
+                    <span>AI Recommendations</span>
+                  </h4>
+                  
+                  {(() => {
+                    // Parse the response into structured sections
+                    const sections = insightsResponse.split('## ');
+                    const skillsSection = sections.find(s => s.startsWith('RECOMMENDED SKILLS'));
+                    const mentorshipSection = sections.find(s => s.startsWith('MENTORSHIP RECOMMENDATIONS'));
+                    
+                    const content = [];
+                    
+                    // Parse Skills Section
+                    if (skillsSection) {
+                      const skillLines = skillsSection.split('\n').filter(line => line.trim());
+                      const recommendedSkills = [];
+                      let currentSkill = null;
+                      
+                      for (const line of skillLines) {
+                        const skillMatch = line.match(/\*\*([^*]+)\*\*/);
+                        if (skillMatch && !line.includes('[')) {
+                          if (currentSkill) recommendedSkills.push(currentSkill);
+                          const skillName = skillMatch[1];
+                          const skill = skills?.find(s => s.name === skillName);
+                          currentSkill = { name: skillName, skill, details: [] };
+                        } else if (line.startsWith('- ') && currentSkill) {
+                          currentSkill.details.push(line.substring(2));
+                        }
+                      }
+                      if (currentSkill) recommendedSkills.push(currentSkill);
+                      
+                      // Render Skills Widgets
+                      if (recommendedSkills.length > 0) {
+                        content.push(
+                          <div key="skills" className="space-y-3 mb-6">
+                            <h3 className="text-lg font-semibold text-blue-800 mb-3">Recommended Skills</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {recommendedSkills.map((skillItem, idx) => (
+                                <Card key={idx} className="border-blue-200 bg-gradient-to-br from-blue-50/50 to-white shadow-sm hover:shadow-md transition-shadow">
+                                  <CardContent className="p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-full bg-blue-100">
+                                          <Target className="h-3 w-3 text-blue-600" />
+                                        </div>
+                                        <h4 className="font-semibold text-blue-900">{skillItem.name}</h4>
+                                      </div>
+                                      {skillItem.skill && (
+                                        <Button
+                                          size="sm"
+                                          onClick={() => {
+                                            if (skillItem.skill && selectedEmployeeId) {
+                                              const calculatedPath = calculateGoalPath(skillItem.skill, selectedEmployee, currentService);
+                                              console.log('🎯 AI Insights: Setting goal with calculated path:', { skill: skillItem.skill.name, path: calculatedPath });
+                                              const goalToSet = {
+                                                skill: skillItem.skill,
+                                                path: calculatedPath,
+                                                employeeId: selectedEmployeeId,
+                                                dataSource
+                                              };
+                                              setGoal(goalToSet);
+                                            }
+                                          }}
+                                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                          <Target className="h-3 w-3 mr-1" />
+                                          Set as Goal
+                                        </Button>
+                                      )}
+                                    </div>
+                                    <div className="space-y-2">
+                                      {skillItem.details.map((detail, detailIdx) => (
+                                        <p key={detailIdx} className="text-sm text-gray-700 leading-relaxed">
+                                          • {detail}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    // Parse Mentorship Section
+                    if (mentorshipSection) {
+                      const mentorshipLines = mentorshipSection.split('\n').filter(line => line.trim());
+                      let learnFromMentor = null;
+                      let mentorTo = null;
+                      let currentSection = null;
+                      
+                      for (const line of mentorshipLines) {
+                        if (line.includes('**LEARN FROM:**')) {
+                          currentSection = 'learnFrom';
+                          const mentorName = line.replace('**LEARN FROM:**', '').trim();
+                          const mentor = employees?.find(t => t.name === mentorName);
+                          learnFromMentor = { name: mentorName, teammate: mentor, description: [] };
+                        } else if (line.includes('**MENTOR:**')) {
+                          currentSection = 'mentor';
+                          const menteeName = line.replace('**MENTOR:**', '').trim();
+                          const mentee = employees?.find(t => t.name === menteeName);
+                          mentorTo = { name: menteeName, teammate: mentee, description: [] };
+                        } else if (line.trim() && currentSection && !line.includes('**')) {
+                          // Stop processing if we hit another section or formatting
+                          if (line.includes('Just-in-Time Learning') || line.includes('Key piece') || line.includes('This focused approach')) {
+                            break;
+                          }
+                          if (currentSection === 'learnFrom' && learnFromMentor) {
+                            learnFromMentor.description.push(line.trim());
+                          } else if (currentSection === 'mentor' && mentorTo) {
+                            mentorTo.description.push(line.trim());
+                          }
+                        }
+                      }
+                      
+                      // Render Mentorship Widgets
+                      content.push(
+                        <div key="mentorship" className="space-y-3">
+                          <h3 className="text-lg font-semibold text-blue-800 mb-3">Mentorship Recommendations</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {learnFromMentor && (
+                              <Card className="border-green-200 bg-gradient-to-br from-green-50/50 to-white shadow-sm">
+                                <CardContent className="p-4">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2 bg-green-100 rounded-full">
+                                      <Users className="h-4 w-4 text-green-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-green-800">Learn From</h4>
+                                      <p className="text-sm text-green-600">Find a mentor</p>
+                                    </div>
+                                    {learnFromMentor.teammate && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => setSelectedMentor(learnFromMentor.teammate!)}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        Select Mentor
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                    {learnFromMentor.teammate?.images?.face && (
+                                      <img
+                                        src={learnFromMentor.teammate.images.face}
+                                        alt={learnFromMentor.name}
+                                        className="w-12 h-14 object-cover rounded-lg shadow-sm flex-shrink-0"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <div className="flex-1">
+                                      <h5 className="font-semibold text-gray-900 mb-1">{learnFromMentor.name}</h5>
+                                      <p className="text-sm text-gray-600 mb-2">{learnFromMentor.teammate?.role}</p>
+                                      <div className="text-sm text-gray-700 leading-relaxed">
+                                        {learnFromMentor.description.join(' ')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                            
+                            {mentorTo && (
+                              <Card className="border-purple-200 bg-gradient-to-br from-purple-50/50 to-white shadow-sm">
+                                <CardContent className="p-4">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2 bg-purple-100 rounded-full">
+                                      <Users className="h-4 w-4 text-purple-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-purple-800">Mentor</h4>
+                                      <p className="text-sm text-purple-600">Share your knowledge</p>
+                                    </div>
+                                    {mentorTo.teammate && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => setSelectedMentee(mentorTo.teammate!)}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                                      >
+                                        Select Mentee
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                    {mentorTo.teammate?.images?.face && (
+                                      <img
+                                        src={mentorTo.teammate.images.face}
+                                        alt={mentorTo.name}
+                                        className="w-12 h-14 object-cover rounded-lg shadow-sm flex-shrink-0"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <div className="flex-1">
+                                      <h5 className="font-semibold text-gray-900 mb-1">{mentorTo.name}</h5>
+                                      <p className="text-sm text-gray-600 mb-2">{mentorTo.teammate?.role}</p>
+                                      <div className="text-sm text-gray-700 leading-relaxed">
+                                        {mentorTo.description.join(' ')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return content;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Skill Goal Widget Content */}
+            <div className="mx-4">
+              <SkillGoalWidget
+                employeeId={selectedEmployeeId}
+                employee={selectedEmployee}
+                currentGoal={currentGoal?.skill || null}
+                service={currentService}
+                dataSource={dataSource}
+                onGoalSet={(goalSkill, path) => {
+                  console.log('🎯 SkillMap: SkillGoalWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
+                  if (goalSkill && selectedEmployeeId) {
+                    const goalToSet = {
+                      skill: goalSkill,
+                      path,
+                      employeeId: selectedEmployeeId,
+                      dataSource
+                    };
+                    console.log('🎯 SkillMap: Setting goal from SkillGoalWidget:', goalToSet);
+                    setGoal(goalToSet);
+                  } else {
+                    console.log('🧹 SkillMap: Clearing goal from SkillGoalWidget');
+                    clearGoal();
+                  }
+                }}
+                onLearnNewSkills={handleLearnNewSkills}
+                onGoalCompleted={handleGoalCompleted}
+              />
             </div>
 
-            {/* Mentee Box */}
-            <div className="flex flex-col items-center">
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Mentee</h4>
-              <div className="relative ring-2 ring-gray-300 rounded-lg overflow-hidden shadow-md mb-2">
-                {selectedMentee?.images?.face ? (
-                  <img 
-                    src={selectedMentee.images.face} 
-                    alt={selectedMentee.name}
-                    className="w-16 h-20 object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-20 bg-gray-100 flex items-center justify-center">
-                    <span className="text-gray-400 text-3xl">?</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-gray-500">{selectedMentee?.name || 'Not Selected'}</p>
+            {/* Skill Recommendation Widget */}
+            <div className="mx-4">
+              <SkillRecommendationWidget
+                ref={skillRecommendationWidgetRef}
+                employeeId={selectedEmployeeId}
+                employee={selectedEmployee}
+                goalSkillId={currentGoal?.skill?.id}
+                currentGoal={currentGoal?.skill || null}
+                service={currentService}
+                dataSource={dataSource}
+                onSkillLearn={async (skill, updatedEmployee) => {
+                  try {
+                    await currentService.learnSkill(selectedEmployeeId, skill.id);
+                    
+                    // Optimistically update the employee cache immediately
+                    const currentEmployees = queryClient.getQueryData([`${dataSource}-employees`]) as any[];
+                    if (currentEmployees) {
+                      const optimisticEmployees = currentEmployees.map(emp => 
+                        emp.id === selectedEmployeeId 
+                          ? { ...emp, mastered_skills: [...emp.mastered_skills, skill.id] }
+                          : emp
+                      );
+                      queryClient.setQueryData([`${dataSource}-employees`], optimisticEmployees);
+                    }
+                    
+                    // Use single invalidation to trigger efficient background refresh
+                    queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
+                    queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
+                    
+                    console.log(`${updatedEmployee.name} learned ${skill.name}!`);
+                  } catch (error) {
+                    console.error('Failed to learn skill:', error);
+                    // Revert optimistic update on error
+                    queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`] });
+                  }
+                }}
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Skill Goal Widget */}
-      {selectedEmployee && (
-        <div className="mb-8 px-4">
-          <SkillGoalWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            currentGoal={currentGoal?.skill || null}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSet={(goalSkill, path) => {
-              console.log('🎯 SkillMap: SkillGoalWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
-              if (goalSkill && selectedEmployeeId) {
-                const goalToSet = {
-                  skill: goalSkill,
-                  path,
-                  employeeId: selectedEmployeeId,
-                  dataSource
-                };
-                console.log('🎯 SkillMap: Setting goal from SkillGoalWidget:', goalToSet);
-                setGoal(goalToSet);
-              } else {
-                console.log('🧹 SkillMap: Clearing goal from SkillGoalWidget');
-                clearGoal();
-              }
-            }}
-            onLearnNewSkills={handleLearnNewSkills}
-            onGoalCompleted={handleGoalCompleted}
-          />
+      {/* Calendar Modals */}
+      {showMentorCalendar && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Schedule Meeting with {selectedMentor?.name}</h3>
+              <input 
+                type="date"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setMentorMeetingDate(new Date(e.target.value));
+                    setShowMentorCalendar(false);
+                  }
+                }}
+              />
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowMentorCalendar(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Team Collaboration Widget */}
-      {selectedEmployee && (
-        <TeamCollaborationWidget
-          employeeId={selectedEmployeeId}
-          employee={selectedEmployee}
-          currentGoal={currentGoal}
-          dataSource={dataSource}
-          service={currentService}
-          onGoalSet={(goalSkill, path) => {
-            console.log('🎯 SkillMap: TeamCollaborationWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
-            if (goalSkill && selectedEmployeeId) {
-              const goalToSet = {
-                skill: goalSkill,
-                path,
-                employeeId: selectedEmployeeId,
-                dataSource
-              };
-              console.log('🎯 SkillMap: Setting goal from TeamCollaborationWidget:', goalToSet);
-              setGoal(goalToSet);
-            } else {
-              console.log('🧹 SkillMap: Clearing goal from TeamCollaborationWidget');
-              clearGoal();
-            }
-          }}
-          onMentorSelect={(mentor) => {
-            console.log('👨‍🏫 SkillMap: Setting mentor:', mentor.name);
-            setSelectedMentor(mentor);
-          }}
-          onMenteeSelect={(mentee) => {
-            console.log('👨‍🎓 SkillMap: Setting mentee:', mentee.name);
-            setSelectedMentee(mentee);
-          }}
-        />
+      {showMenteeCalendar && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Schedule Meeting with {selectedMentee?.name}</h3>
+              <input 
+                type="date"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setMenteeMeetingDate(new Date(e.target.value));
+                    setShowMenteeCalendar(false);
+                  }
+                }}
+              />
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowMenteeCalendar(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Existing SkillMap content below */}
-      <div className="space-y-6">
-
-
-
-        {/* Skill Recommendation Widget */}
-        <div ref={skillRecommendationRef} className="mb-8">
-          <SkillRecommendationWidget
-            ref={skillRecommendationWidgetRef}
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            goalSkillId={currentGoal?.skill?.id}
-            currentGoal={currentGoal?.skill || null}
-            service={currentService}
-            dataSource={dataSource}
-            onSkillLearn={async (skill, updatedEmployee) => {
-              try {
-                await currentService.learnSkill(selectedEmployeeId, skill.id);
-                
-                // Optimistically update the employee cache immediately
-                const currentEmployees = queryClient.getQueryData([`${dataSource}-employees`]) as any[];
-                if (currentEmployees) {
-                  const optimisticEmployees = currentEmployees.map(emp => 
-                    emp.id === selectedEmployeeId 
-                      ? { ...emp, mastered_skills: [...emp.mastered_skills, skill.id] }
-                      : emp
-                  );
-                  queryClient.setQueryData([`${dataSource}-employees`], optimisticEmployees);
-                }
-                
-                // Use single invalidation to trigger efficient background refresh
-                queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
-                queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-                
-                console.log(`${updatedEmployee.name} learned ${skill.name}!`);
-              } catch (error) {
-                console.error('Failed to learn skill:', error);
-                // Revert optimistic update on error
-                queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`] });
-              }
-            }}
-          />
-        </div>
-
-
-
-
-      </div>
     </>
   )
 }
