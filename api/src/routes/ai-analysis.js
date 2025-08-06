@@ -11,10 +11,10 @@ const claudeService = new ClaudeService();
  * POST /api/v1/ai-analysis/skill-recommendations
  * 
  * Analyzes character skills and provides AI-powered recommendations
+ * Uses server-side Claude API key from AWS Secrets Manager
  * 
  * Request Body:
  * {
- *   "apiKey": "sk-ant-api03-...", // Claude API key for this request
  *   "character": {
  *     "name": "Tidus",
  *     "role": "Guardian",
@@ -52,7 +52,7 @@ router.post('/ai-analysis/skill-recommendations',
     const startTime = Date.now();
     
     try {
-      const { apiKey, character, availableSkills, allSkills, context = {} } = req.body;
+      const { character, availableSkills, allSkills, context = {} } = req.body;
       
       logger.info('Processing AI analysis request', {
         character: character.name,
@@ -64,7 +64,6 @@ router.post('/ai-analysis/skill-recommendations',
 
       // Generate analysis using Claude
       const analysis = await claudeService.analyzeSkills({
-        apiKey,
         character,
         availableSkills,
         allSkills,
@@ -161,7 +160,6 @@ router.post('/ai-analysis/just-in-time',
   async (req, res) => {
     try {
       const { 
-        apiKey, 
         character, 
         allSkills, 
         teammates, 
@@ -199,7 +197,6 @@ router.post('/ai-analysis/just-in-time',
 
       const startTime = Date.now();
       const response = await claudeService.analyzeJustInTimeRequest({
-        apiKey,
         character,
         allSkills,
         teammates,
@@ -251,10 +248,10 @@ router.post('/ai-analysis/just-in-time',
  * POST /api/v1/ai-analysis/home-lending-assessment
  * 
  * Analyzes user's spoken or written understanding of home lending terms
+ * Uses server-side Claude API key from AWS Secrets Manager
  * 
  * Request Body:
  * {
- *   "apiKey": "sk-ant-api03-...", // Claude API key for this request
  *   "userResponse": "user's explanation",
  *   "targetTerm": "Credit Score",
  *   "officialDefinition": "A numerical representation of creditworthiness...",
@@ -289,7 +286,6 @@ router.post('/ai-analysis/home-lending-assessment',
     
     try {
       const { 
-        apiKey, 
         userResponse, 
         targetTerm, 
         officialDefinition, 
@@ -346,7 +342,6 @@ router.post('/ai-analysis/home-lending-assessment',
 
       // Generate assessment using Claude
       const assessment = await claudeService.assessHomeLendingUnderstanding({
-        apiKey,
         userResponse,
         targetTerm,
         officialDefinition,

@@ -1,38 +1,85 @@
 import fetch from 'node-fetch';
 import { logger } from '../utils/logger.js';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
 export class ClaudeService {
   constructor(apiKey = null) {
     this.apiKey = apiKey || process.env.CLAUDE_API_KEY;
     this.apiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
     this.model = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022';
-    this.mockMode = process.env.NODE_ENV === 'development' && !this.apiKey;
+    this.secretName = process.env.CLAUDE_SECRET_NAME || 'prod/proto-portal/claude-api-key';
+    this.awsRegion = process.env.AWS_REGION || 'us-east-1';
+    this.mockMode = process.env.NODE_ENV === 'development' && !this.apiKey && process.env.AWS_SECRETS_ENABLED !== 'true';
     
-    // No longer require API key at startup - it can be provided per request
+    // Initialize AWS Secrets Manager client
+    this.secretsClient = new SecretsManagerClient({ 
+      region: this.awsRegion 
+    });
+    
     if (this.mockMode) {
       logger.warn('Claude API key not provided - running in mock mode for development');
     }
   }
 
   /**
+   * Retrieve Claude API key from AWS Secrets Manager
+   */
+  async getClaudeApiKey() {
+    if (this.apiKey) {
+      return this.apiKey;
+    }
+
+    // If AWS_SECRETS_ENABLED is false, return null (will trigger mock mode or error)
+    if (process.env.AWS_SECRETS_ENABLED === 'false') {
+      return null;
+    }
+
+    try {
+      const command = new GetSecretValueCommand({
+        SecretId: this.secretName,
+      });
+
+      const response = await this.secretsClient.send(command);
+      
+      if (response.SecretString) {
+        const secret = JSON.parse(response.SecretString);
+        return secret.apiKey || secret.CLAUDE_API_KEY;
+      }
+      
+      throw new Error('No secret string found in AWS Secrets Manager response');
+    } catch (error) {
+      logger.error('Failed to retrieve Claude API key from AWS Secrets Manager', {
+        error: error.message,
+        secretName: this.secretName,
+        region: this.awsRegion
+      });
+      throw new Error('Server Side API key not configured');
+    }
+  }
+
+  /**
    * Analyze character skills and provide strategic recommendations
    * @param {Object} params - Analysis parameters
-   * @param {string} params.apiKey - Claude API key for this request
    * @param {Object} params.character - Character data
    * @param {Array} params.availableSkills - Available skills array
    * @param {Array} params.allSkills - All skills array
    * @param {Object} params.context - Optional context
    */
-  async analyzeSkills({ apiKey, character, availableSkills, allSkills, context = {} }) {
-    // Return mock data in development mode without API key or with "mock" key
-    if (this.mockMode || !apiKey || apiKey === 'mock') {
-      return this.getMockAnalysis(character, availableSkills);
+  async analyzeSkills({ character, availableSkills, allSkills, context = {} }) {
+    // Get API key from AWS Secrets Manager or environment
+    let requestApiKey;
+    try {
+      requestApiKey = await this.getClaudeApiKey();
+    } catch (error) {
+      if (this.mockMode) {
+        return this.getMockAnalysis(character, availableSkills);
+      }
+      throw error;
     }
 
-    // Use provided API key for this request
-    const requestApiKey = apiKey || this.apiKey;
-    if (!requestApiKey) {
-      throw new Error('Claude API key is required for analysis');
+    // Return mock data in development mode if no API key available
+    if (this.mockMode || !requestApiKey) {
+      return this.getMockAnalysis(character, availableSkills);
     }
 
     const prompt = this.buildAnalysisPrompt(character, availableSkills, allSkills, context);
@@ -120,7 +167,6 @@ export class ClaudeService {
   /**
    * Analyze just-in-time learning request
    * @param {Object} params - Analysis parameters
-   * @param {string} params.apiKey - Claude API key for this request
    * @param {Object} params.character - Character data
    * @param {Array} params.allSkills - All skills array
    * @param {Array} params.teammates - All teammates data
@@ -128,16 +174,21 @@ export class ClaudeService {
    * @param {string} params.userSystemPrompt - User's system prompt
    * @param {string} params.justInTimeQuestion - User's question
    */
-  async analyzeJustInTimeRequest({ apiKey, character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion }) {
-    // Return mock data in development mode without API key or with "mock" key
-    if (this.mockMode || !apiKey || apiKey === 'mock') {
-      return this.getMockJustInTimeResponse(character, justInTimeQuestion);
+  async analyzeJustInTimeRequest({ character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion }) {
+    // Get API key from AWS Secrets Manager or environment
+    let requestApiKey;
+    try {
+      requestApiKey = await this.getClaudeApiKey();
+    } catch (error) {
+      if (this.mockMode) {
+        return this.getMockJustInTimeResponse(character, justInTimeQuestion);
+      }
+      throw error;
     }
 
-    // Use provided API key for this request
-    const requestApiKey = apiKey || this.apiKey;
-    if (!requestApiKey) {
-      throw new Error('Claude API key is required for just-in-time analysis');
+    // Return mock data in development mode if no API key available
+    if (this.mockMode || !requestApiKey) {
+      return this.getMockJustInTimeResponse(character, justInTimeQuestion);
     }
 
     const prompt = this.buildJustInTimePrompt(character, allSkills, teammates, widgetSystemPrompt, userSystemPrompt, justInTimeQuestion);
@@ -504,16 +555,33 @@ Focus on actionable insights that bridge known knowledge with new concepts, emph
   getMockJustInTimeResponse(character, justInTimeQuestion) {
     return new Promise(resolve => {
       setTimeout(() => {
-        const response = `**Key piece of knowledge that can help you advance:**
-Understanding the fundamentals of ${character.role.toLowerCase()} strategy and how it connects to advanced techniques. This knowledge will help you make more informed decisions about skill progression and tactical applications.
+        const response = `## RECOMMENDED SKILLS
 
-**Key person(s) to talk to who are expert in that knowledge:**
-Based on the team expertise, I recommend speaking with senior team members who have mastered complementary skills. They can provide practical insights and real-world applications that aren't covered in basic training materials.
+**Power Strike**
+- Why it's important for the team goal: Enhances overall team effectiveness in challenging scenarios
+- How it connects to their personal growth goal: Builds confidence and leadership capabilities  
+- How it builds on their existing skills: Extends your current combat foundation with advanced tactics
+- Which team members they should collaborate with to learn it: Senior team members with combat expertise
 
-**How your just-in-time question relates to your current goal:**
-Your question "${justInTimeQuestion}" directly relates to bridging your current ${character.role.toLowerCase()} foundation with more advanced concepts. This aligns with your learning objectives by focusing on practical application rather than theoretical knowledge alone.
+**Focus**
+- Why it's important for the team goal: Critical for coordinating team efforts and achieving objectives
+- How it connects to their personal growth goal: Develops analytical thinking and decision-making skills
+- How it builds on their existing skills: Leverages your ${character.role.toLowerCase()} experience for broader planning
+- Which team members they should collaborate with to learn it: Team leads and strategists
 
-The key is to focus on incremental skill building while maintaining your core strengths. Consider practicing with scenarios that combine your existing knowledge with new challenges to accelerate your learning curve.`;
+**Guard**
+- Why it's important for the team goal: Ensures clear coordination and reduces misunderstandings
+- How it connects to their personal growth goal: Enhances leadership and interpersonal skills
+- How it builds on their existing skills: Uses your ${character.role.toLowerCase()} experience to guide others
+- Which team members they should collaborate with to learn it: Communication specialists and team coordinators
+
+## MENTORSHIP RECOMMENDATIONS
+
+**LEARN FROM:** Senior Team Lead
+This person has extensive experience in both technical skills and team coordination that would help you develop your strategic thinking and leadership capabilities.
+
+**MENTOR:** Junior Team Member  
+Your ${character.role.toLowerCase()} experience and growing strategic awareness would be valuable for helping newer team members understand both tactical execution and broader team dynamics.`;
 
         resolve({ response });
       }, 1000);
@@ -523,7 +591,6 @@ The key is to focus on incremental skill building while maintaining your core st
   /**
    * Assess user's understanding of home lending terms
    * @param {Object} params - Assessment parameters
-   * @param {string} params.apiKey - Claude API key for this request
    * @param {string} params.userResponse - User's explanation
    * @param {string} params.targetTerm - The term being assessed
    * @param {string} params.officialDefinition - Official definition of the term
@@ -531,27 +598,26 @@ The key is to focus on incremental skill building while maintaining your core st
    * @param {Object} params.context - Optional context (learning module, difficulty level)
    */
   async assessHomeLendingUnderstanding({ 
-    apiKey, 
     userResponse, 
     targetTerm, 
     officialDefinition, 
     examples = [], 
     context = {} 
   }) {
-    // Return mock data in development mode without API key or with "mock" key
-    if (this.mockMode || !apiKey || apiKey === 'mock') {
+    // Get API key from AWS Secrets Manager or environment
+    let requestApiKey;
+    try {
+      requestApiKey = await this.getClaudeApiKey();
+    } catch (error) {
+      if (this.mockMode) {
+        return this.getMockHomeLendingAssessment(userResponse, targetTerm);
+      }
+      throw error;
+    }
+
+    // Return mock data in development mode if no API key available
+    if (this.mockMode || !requestApiKey) {
       return this.getMockHomeLendingAssessment(userResponse, targetTerm);
-    }
-
-    // Use provided API key for this request
-    const requestApiKey = apiKey || this.apiKey;
-    if (!requestApiKey) {
-      throw new Error('Claude API key is required for assessment');
-    }
-
-    // Validate API key format
-    if (requestApiKey !== 'mock' && !requestApiKey.startsWith('sk-ant-api')) {
-      throw new Error('Invalid API key format. Please provide a valid Claude API key.');
     }
 
     const prompt = this.buildHomeLendingAssessmentPrompt(

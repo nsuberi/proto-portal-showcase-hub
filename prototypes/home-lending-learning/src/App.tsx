@@ -62,7 +62,6 @@ function App() {
   const [userAnswer, setUserAnswer] = useState('');
   const [assessment, setAssessment] = useState<any>(null);
   const [isAssessing, setIsAssessing] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
@@ -202,11 +201,6 @@ function App() {
     const responseText = userAnswer.trim();
     if (!responseText) return;
     
-    if (!apiKey.trim()) {
-      alert('Please enter your Claude API key to get AI assessment of your response.');
-      return;
-    }
-    
     setIsAssessing(true);
     setShowAnswer(true);
     
@@ -226,8 +220,7 @@ function App() {
         responseText,
         termName,
         definition,
-        examples,
-        apiKey
+        examples
       );
       
       setAssessment(result);
@@ -779,28 +772,17 @@ function App() {
                 )}
               </div>
               
-              {/* API Key Input for GenAI Assessment */}
+              {/* Server-side AI Assessment Info */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <label className="block text-sm font-medium text-blue-800 mb-2">
-                  Claude API Key (Required for AI Assessment):
-                </label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="w-full p-2 border rounded text-sm"
-                  placeholder="sk-ant-api03-... (required for detailed analysis)"
-                  required
-                />
-                <p className="text-xs text-blue-600 mt-1">
-                  Your API key is used to analyze spoken responses and provide detailed feedback on key concepts. Get your key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline">Anthropic Console</a>.
+                <p className="text-sm text-blue-700">
+                  <strong>AI Assessment:</strong> Your responses are analyzed server-side using secure AI processing to provide detailed feedback on key concepts.
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={handleSubmitAnswer}
-                  disabled={!userAnswer.trim() || !apiKey.trim()}
+                  disabled={!userAnswer.trim()}
                   className="flex-1"
                   size="sm"
                 >

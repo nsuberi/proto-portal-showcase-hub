@@ -30,11 +30,9 @@ variable "api_key_salt" {
   default     = ""
 }
 
-variable "claude_api_key" {
-  description = "Claude API key for AI analysis"
-  type        = string
-  sensitive   = true
-}
+# NOTE: Claude API key is now stored in AWS Secrets Manager
+# Secret name: prod/proto-portal/claude-api-key
+# No longer passed as Terraform variable for security
 
 variable "claude_api_url" {
   description = "Claude API endpoint URL"

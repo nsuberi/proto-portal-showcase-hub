@@ -1,5 +1,8 @@
 # AI Analysis API Lambda Infrastructure
 
+# Data source to get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # IAM role for Lambda execution
 resource "aws_iam_role" "ai_api_lambda_role" {
   name = "${var.bucket_name}-ai-api-lambda-role"
@@ -35,6 +38,13 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
         ]
         Resource = "arn:aws:logs:*:*:*"
       },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:prod/proto-portal/claude-api-key*"
+      }
     ]
   })
 }
@@ -71,14 +81,16 @@ resource "aws_lambda_function" "ai_api" {
 
   environment {
     variables = {
-      NODE_ENV           = var.environment
-      JWT_SECRET         = var.jwt_secret
-      API_KEY_SALT       = var.api_key_salt
-      CLAUDE_API_KEY     = var.claude_api_key
-      CLAUDE_API_URL     = var.claude_api_url
-      CLAUDE_MODEL       = var.claude_model
-      LOG_LEVEL         = var.environment == "production" ? "info" : "debug"
-      CORS_ORIGIN       = "https://portfolio.cookinupideas.com"
+      NODE_ENV               = var.environment
+      JWT_SECRET            = var.jwt_secret
+      API_KEY_SALT          = var.api_key_salt
+      AWS_SECRETS_ENABLED   = "true"
+      AWS_REGION            = var.aws_region
+      CLAUDE_SECRET_NAME    = "prod/proto-portal/claude-api-key"
+      CLAUDE_API_URL        = var.claude_api_url
+      CLAUDE_MODEL          = var.claude_model
+      LOG_LEVEL            = var.environment == "production" ? "info" : "debug"
+      CORS_ORIGIN          = "https://portfolio.cookinupideas.com"
     }
   }
 

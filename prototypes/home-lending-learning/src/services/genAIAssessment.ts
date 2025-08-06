@@ -35,23 +35,14 @@ export async function assessUserUnderstanding(
   userResponse: string,
   targetTerm: string,
   officialDefinition: string,
-  examples?: string[],
-  apiKey?: string
+  examples?: string[]
 ): Promise<AssessmentResult> {
-  
-  // Require API key
-  if (!apiKey?.trim()) {
-    throw new Error('API key is required for assessment. Please enter your Claude API key.');
-  }
   
   try {
     // Use the same API pattern as FFX skill map
     const API_ENDPOINT = `${getApiUrl()}/api/v1/ai-analysis/home-lending-assessment`;
     
-    const requestApiKey = apiKey.trim();
-    
     const requestPayload = {
-      apiKey: requestApiKey,
       userResponse,
       targetTerm,
       officialDefinition,
@@ -86,7 +77,7 @@ Focus on conceptual understanding rather than exact wording. The response should
       } else if (response.status === 429) {
         throw new Error('Service is busy. Please try again in a few minutes.');
       } else if (response.status === 503) {
-        throw new Error('AI assessment service is temporarily unavailable. Please check your API key and try again later.');
+        throw new Error('AI assessment service is temporarily unavailable. Server side API key not configured.');
       } else if (response.status === 400) {
         throw new Error('Invalid request format. Please contact support.');
       }
@@ -110,7 +101,7 @@ Focus on conceptual understanding rather than exact wording. The response should
       throw error;
     }
     
-    throw new Error('Assessment service is currently unavailable. Please check your API key and try again.');
+    throw new Error('Assessment service is currently unavailable. Please contact your administrator.');
   }
 }
 
