@@ -1231,7 +1231,7 @@ IMPORTANT:
 
         {/* Character and Mentor/Mentee Display - Always Show */}
         <div className="space-y-6 mb-8">
-          <div className="flex items-center justify-center gap-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-8">
             {/* Selected Character */}
             <div className="flex flex-col items-center">
               <div className={`relative ${selectedEmployee ? 'ring-4 ring-blue-400' : 'ring-2 ring-gray-300'} rounded-lg overflow-hidden shadow-lg mb-2`}>
@@ -1470,7 +1470,8 @@ IMPORTANT:
                   ) : (
                     <div className="flex items-center justify-center space-x-2">
                       <Sparkles className="h-4 w-4" />
-                      <span>Get Recommendations for Skills & Mentors</span>
+                      <span className="hidden sm:inline">Get Recommendations for Skills & Mentors</span>
+                      <span className="sm:hidden">Get AI Recommendations</span>
                     </div>
                   )}
                 </Button>
@@ -1527,11 +1528,11 @@ IMPORTANT:
                         content.push(
                           <div key="skills" className="space-y-3 mb-6">
                             <h3 className="text-lg font-semibold text-blue-800 mb-3">Recommended Skills</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 gap-3">
                               {recommendedSkills.map((skillItem, idx) => (
                                 <Card key={idx} className="border-blue-200 bg-gradient-to-br from-blue-50/50 to-white shadow-sm hover:shadow-md transition-shadow">
                                   <CardContent className="p-4">
-                                    <div className="flex items-start justify-between mb-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-2">
                                       <div className="flex items-center gap-2">
                                         <div className="p-1.5 rounded-full bg-blue-100">
                                           <Target className="h-3 w-3 text-blue-600" />
@@ -1626,7 +1627,7 @@ IMPORTANT:
                       content.push(
                         <div key="mentorship" className="space-y-3">
                           <h3 className="text-lg font-semibold text-blue-800 mb-3">Mentorship Recommendations</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4">
                             {learnFromMentor && (
                               <Card className="border-green-200 bg-gradient-to-br from-green-50/50 to-white shadow-sm relative">
                                 <CardContent className="p-4">
@@ -1842,16 +1843,27 @@ IMPORTANT:
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Schedule Meeting with {selectedMentor?.name}</h3>
-              <input 
-                type="date"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setMentorMeetingDate(new Date(e.target.value));
-                    setShowMentorCalendar(false);
-                  }
-                }}
-              />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Meeting Date
+                </label>
+                <input 
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setMentorMeetingDate(new Date(e.target.value));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Auto-close on mobile when date is selected
+                    if (e.target.value && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                      setTimeout(() => setShowMentorCalendar(false), 100);
+                    }
+                  }}
+                />
+              </div>
               <div className="flex gap-3">
                 <Button 
                   variant="outline" 
@@ -1859,6 +1871,13 @@ IMPORTANT:
                   className="flex-1"
                 >
                   Cancel
+                </Button>
+                <Button 
+                  onClick={() => setShowMentorCalendar(false)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!mentorMeetingDate}
+                >
+                  Confirm
                 </Button>
               </div>
             </div>
@@ -1871,16 +1890,27 @@ IMPORTANT:
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-4">Schedule Meeting with {selectedMentee?.name}</h3>
-              <input 
-                type="date"
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setMenteeMeetingDate(new Date(e.target.value));
-                    setShowMenteeCalendar(false);
-                  }
-                }}
-              />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Meeting Date
+                </label>
+                <input 
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setMenteeMeetingDate(new Date(e.target.value));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Auto-close on mobile when date is selected
+                    if (e.target.value && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                      setTimeout(() => setShowMenteeCalendar(false), 100);
+                    }
+                  }}
+                />
+              </div>
               <div className="flex gap-3">
                 <Button 
                   variant="outline" 
@@ -1888,6 +1918,13 @@ IMPORTANT:
                   className="flex-1"
                 >
                   Cancel
+                </Button>
+                <Button 
+                  onClick={() => setShowMenteeCalendar(false)}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={!menteeMeetingDate}
+                >
+                  Confirm
                 </Button>
               </div>
             </div>
