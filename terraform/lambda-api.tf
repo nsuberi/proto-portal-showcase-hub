@@ -271,13 +271,14 @@ resource "aws_lambda_function_url" "ai_api" {
   function_name      = aws_lambda_function.ai_api.function_name
   authorization_type = "NONE"
 
-  cors {
-    allow_credentials = false
-    allow_origins     = ["https://portfolio.cookinupideas.com"]
-    allow_methods     = ["*"]
-    allow_headers     = ["date", "keep-alive", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-port", "x-amzn-trace-id", "content-type", "x-api-key", "authorization"]
-    max_age          = 86400
-  }
+  # CORS disabled - handled by Express app to avoid duplicate headers
+  # cors {
+  #   allow_credentials = false
+  #   allow_origins     = ["https://portfolio.cookinupideas.com"]
+  #   allow_methods     = ["*"]
+  #   allow_headers     = ["date", "keep-alive", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-port", "x-amzn-trace-id", "content-type", "x-api-key", "authorization"]
+  #   max_age          = 86400
+  # }
 }
 
 # Note: API Gateway, Lambda Function URLs, and SSM Parameters commented out due to IAM permission requirements

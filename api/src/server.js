@@ -24,17 +24,14 @@ app.use(helmet({
 }));
 
 // CORS configuration
-// Only use Express CORS when not running in Lambda (Lambda Function URL handles CORS)
-const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-if (!isLambda) {
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8082'];
-  app.use(cors({
-    origin: corsOrigins,
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
-    credentials: false // No cookies needed
-  }));
-}
+// Use Express CORS in all environments - Lambda Function URL CORS config will be disabled
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8082'];
+app.use(cors({
+  origin: corsOrigins,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  credentials: false // No cookies needed
+}));
 
 // Rate limiting with trust proxy handling
 const limiter = rateLimit({
