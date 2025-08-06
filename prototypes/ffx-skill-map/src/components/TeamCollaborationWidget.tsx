@@ -244,8 +244,8 @@ IMPORTANT:
         userPrompt: `Team Goal: ${teamGoal}\nPersonal Growth Interest: ${personalGrowthGoal}`
       };
 
-      const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
+      const baseUrl = getApiUrl().replace(/\/$/, ''); // Remove trailing slash
+      const response = await fetch(`${baseUrl}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
