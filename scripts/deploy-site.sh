@@ -26,6 +26,7 @@ echo "🏗️ Running full build process..."
 echo "🔧 Replacing API Gateway URL placeholders..."
 find dist/ -name "*.js" -type f -exec sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|${API_GATEWAY_URL}|g" {} \;
 find dist/ -name "*.html" -type f -exec sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|${API_GATEWAY_URL}|g" {} \;
+find dist/ -name "*.ts" -type f -exec sed -i.bak "s|PLACEHOLDER_API_GATEWAY_URL|${API_GATEWAY_URL}|g" {} \;
 
 # Remove backup files
 find dist/ -name "*.bak" -type f -delete
