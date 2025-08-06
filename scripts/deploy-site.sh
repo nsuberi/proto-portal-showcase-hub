@@ -7,7 +7,7 @@ echo "📤 Deploying website to AWS S3..."
 cd terraform
 DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
 BUCKET_NAME=$(terraform output -raw s3_bucket_name)
-API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)
+API_GATEWAY_URL=$(terraform output -raw ai_api_url)
 cd ..
 
 # Validate that we got the API Gateway URL
