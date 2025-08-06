@@ -65,6 +65,8 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const originalTotalStepsRef = useRef<number | null>(null);
+  const isSyncingWithExternalRef = useRef<boolean>(false); // Flag to prevent callback loops
+  const isRecalculatingPathRef = useRef<boolean>(false); // Flag to distinguish path recalc vs new goal
 
   const { data: skills } = useQuery({
     queryKey: [`${dataSource}-skills`],
@@ -238,9 +240,12 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     
     setGoalPath(path);
     
-    // Notify parent component
-    if (onGoalSet) {
+    // Only notify parent component if we're not syncing with external state
+    if (onGoalSet && !isSyncingWithExternalRef.current) {
+      console.log('🎯 SkillGoalWidget: Calling onGoalSet for skill:', skill.name);
       onGoalSet(skill, path?.path || []);
+    } else if (isSyncingWithExternalRef.current) {
+      console.log('🔄 SkillGoalWidget: Skipping onGoalSet - syncing with external state');
     }
   };
 
@@ -249,8 +254,13 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
     setGoalPath(null);
     setShowCompletionAnimation(false);
     originalTotalStepsRef.current = null;
-    if (onGoalSet) {
+    
+    // Only notify parent component if we're not syncing with external state
+    if (onGoalSet && !isSyncingWithExternalRef.current) {
+      console.log('🧹 SkillGoalWidget: Calling onGoalSet to clear goal');
       onGoalSet(null, []);
+    } else if (isSyncingWithExternalRef.current) {
+      console.log('🔄 SkillGoalWidget: Skipping onGoalSet clear - syncing with external state');
     }
   };
 
@@ -289,10 +299,10 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
       
       setGoalPath(updatedPath);
       
-      // Notify parent component of path update
-      if (onGoalSet && selectedGoal) {
-        onGoalSet(selectedGoal, updatedPath?.path || []);
-      }
+      // NOTE: We should NOT call onGoalSet during path recalculation
+      // This is just updating the path for an existing goal, not setting a new goal
+      // Calling onGoalSet here causes the widget to overwrite everyone's saved goals
+      console.log('🛤️ SkillGoalWidget: Path recalculated, NOT calling onGoalSet (internal update only)');
       
       // Check if goal was just completed
       if (!previouslyCompleted && updatedPath?.isCompleted) {
@@ -309,14 +319,21 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
 
   // Sync with external currentGoal state (for reset functionality and external goal setting)
   useEffect(() => {
+    console.log('🔄 SkillGoalWidget: Syncing with external currentGoal:', currentGoal?.name, 'internal selectedGoal:', selectedGoal?.name);
+    
+    // Set syncing flag to prevent callback loops
+    isSyncingWithExternalRef.current = true;
+    
     if (currentGoal === null && selectedGoal !== null) {
       // External goal was cleared, clear internal state
+      console.log('🧹 SkillGoalWidget: External goal cleared, clearing internal state');
       setSelectedGoal(null);
       setGoalPath(null);
       setShowCompletionAnimation(false);
       originalTotalStepsRef.current = null;
     } else if (currentGoal !== null && currentGoal.id !== selectedGoal?.id) {
       // External goal was set to a different skill, update internal state
+      console.log('🎯 SkillGoalWidget: External goal changed, updating internal state to:', currentGoal.name);
       setSelectedGoal(currentGoal);
       setSearchTerm('');
       setIsSearchExpanded(false);
@@ -337,6 +354,11 @@ const SkillGoalWidget: React.FC<SkillGoalWidgetProps> = ({
         originalTotalStepsRef.current = null;
       }
     }
+    
+    // Clear syncing flag after state updates
+    setTimeout(() => {
+      isSyncingWithExternalRef.current = false;
+    }, 0);
   }, [currentGoal, selectedGoal, graphAnalyzer, employee, skills]);
 
   const getCategoryIcon = (category: string) => {
