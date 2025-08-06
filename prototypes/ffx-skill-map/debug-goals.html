@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Goal Storage</title>
+</head>
+<body>
+    <h1>Goal Storage Debug Tool</h1>
+    <div id="output"></div>
+    
+    <script>
+        function displayStorageContents() {
+            const output = document.getElementById('output');
+            let html = '<h2>localStorage Contents:</h2><ul>';
+            
+            // Show all localStorage keys that match our pattern
+            const goalKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('employee-goal') || key.includes('personal-growth'))) {
+                    goalKeys.push(key);
+                }
+            }
+            
+            if (goalKeys.length === 0) {
+                html += '<li>No goal-related keys found</li>';
+            } else {
+                goalKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    html += `<li><strong>${key}:</strong> ${value}</li>`;
+                });
+            }
+            
+            html += '</ul>';
+            
+            // Add test buttons
+            html += `
+                <h2>Test Operations:</h2>
+                <button onclick="testSaveGoal()">Test Save Goal</button>
+                <button onclick="testLoadGoal()">Test Load Goal</button>
+                <button onclick="clearGoals()">Clear All Goals</button>
+                <button onclick="displayStorageContents()">Refresh</button>
+            `;
+            
+            output.innerHTML = html;
+        }
+        
+        function testSaveGoal() {
+            const testKey = 'employee-goal-tech-test123';
+            const testGoal = {
+                skillId: 'skill_test',
+                skillName: 'Test Skill',
+                path: ['path1', 'path2']
+            };
+            localStorage.setItem(testKey, JSON.stringify(testGoal));
+            console.log('Saved test goal:', testKey, testGoal);
+            displayStorageContents();
+        }
+        
+        function testLoadGoal() {
+            const testKey = 'employee-goal-tech-test123';
+            const savedGoal = localStorage.getItem(testKey);
+            console.log('Loaded test goal:', testKey, savedGoal);
+            alert('Check console for loaded goal');
+        }
+        
+        function clearGoals() {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('employee-goal') || key.includes('personal-growth'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            console.log('Cleared goal keys:', keysToRemove);
+            displayStorageContents();
+        }
+        
+        // Initial load
+        displayStorageContents();
+        
+        // Auto-refresh every 2 seconds
+        setInterval(displayStorageContents, 2000);
+    </script>
+</body>
+</html>

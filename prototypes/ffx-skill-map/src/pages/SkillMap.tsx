@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { sharedEnhancedService } from '../services/sharedService'
 import TechSkillsService from '../services/techSkillsData'
 
@@ -9,7 +8,8 @@ import TechSkillsService from '../services/techSkillsData'
 const ffxSkillService = sharedEnhancedService
 const techSkillService = new TechSkillsService()
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, RotateCcw, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
+import { useEmployeeGoals } from '../hooks/useEmployeeGoals'
+import { Sword, Zap, Heart, Star, Crown, Filter, ChevronDown, ChevronUp, Maximize2, Minimize2, Users, HelpCircle, X, Sparkles, TrendingUp, BarChart3, Code, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Sigma from 'sigma';
 import Graph from 'graphology';
@@ -17,9 +17,9 @@ import { NodeBorderProgram } from '@sigma/node-border';
 import { getEnhancedGraphNodes, getEnhancedGraphEdges } from './EnhancedSkillMap.utils';
 import SkillRecommendationWidget, { SkillRecommendationWidgetRef } from '../components/SkillRecommendationWidget';
 import SkillGoalWidget from '../components/SkillGoalWidget';
-import SecureAIAnalysisWidget from '../components/SecureAIAnalysisWidget';
-import AITeamPathWidget from '../components/AITeamPathWidget';
-import JustInTimeWidget from '../components/JustInTimeWidget';
+import TeamCollaborationWidget from '../components/TeamCollaborationWidget';
+import UnifiedTeamWidget, { getHeroVideoSrc } from '../components/UnifiedTeamWidget';
+import { calculateGoalPath } from '../utils/goalPathUtils';
 
 // Convert HSL to hex for Sigma.js compatibility
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -281,15 +281,21 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({})
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
-  const [isResetting, setIsResetting] = useState(false)
-  const [currentGoal, setCurrentGoal] = useState<{ skill: any; path: string[] } | null>(null)
+  const [selectedSkill, setSelectedSkill] = useState<any>(null)
+  const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
   const [showTutorial, setShowTutorial] = useState(() => {
     // Show tutorial on first visit
     return !localStorage.getItem('skillMapTutorialSeen')
   })
   const [showSkillExplorer, setShowSkillExplorer] = useState(false)
-  const [selectedSkill, setSelectedSkill] = useState<any>(null)
-  const [dataSource, setDataSource] = useState<'ffx' | 'tech'>('tech') // Default to tech skills
+
+  // Use external goal manager
+  const { currentGoal, isLoading: goalLoading, setGoal, clearGoal, loadGoal, updatePath, deleteGoalForEmployee } = useEmployeeGoals()
+
+  // Debug current goal state
+  useEffect(() => {
+    console.log('🎯 SkillMap: Current goal state changed:', currentGoal);
+  }, [currentGoal]);
   const skillGoalRef = useRef<HTMLDivElement>(null)
   const skillRecommendationRef = useRef<HTMLDivElement>(null)
   const skillRecommendationWidgetRef = useRef<SkillRecommendationWidgetRef>(null)
@@ -319,32 +325,36 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
     queryFn: () => currentService.getAllEmployees(),
   })
 
+  // Load goal when employee, dataSource, or skills change
+  useEffect(() => {
+    console.log('🔄 SkillMap: Employee/DataSource/Skills changed:', {
+      selectedEmployeeId,
+      dataSource,
+      skillsLength: skills?.length || 0,
+      isLoading,
+      skillsExists: !!skills
+    });
+    
+    if (selectedEmployeeId && skills && skills.length > 0 && !isLoading) {
+      console.log('🚀 SkillMap: Loading goal for employee:', selectedEmployeeId);
+      loadGoal(selectedEmployeeId, dataSource, skills);
+    } else {
+      console.log('🧹 SkillMap: Clearing goal - conditions not met:', {
+        hasEmployeeId: !!selectedEmployeeId,
+        hasSkills: !!skills,
+        skillsLength: skills?.length || 0,
+        isLoading
+      });
+      if (!isLoading) {
+        clearGoal();
+      }
+    }
+  }, [selectedEmployeeId, dataSource, skills, isLoading, loadGoal, clearGoal]);
+
   // Find selected employee's mastered skills
   const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId)
   const masteredSkills = selectedEmployee?.mastered_skills || []
 
-  // Reset skills for selected employee
-  const handleResetSkills = async () => {
-    if (!selectedEmployeeId) return;
-    
-    setIsResetting(true);
-    try {
-      await currentService.resetEmployeeSkills(selectedEmployeeId);
-      
-      // Clear the current goal when skills are reset
-      setCurrentGoal(null);
-      
-      // Use efficient non-blocking invalidation with current data source
-      queryClient.invalidateQueries({ queryKey: [`${dataSource}-employees`], exact: false });
-      queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-      
-      console.log(`✅ Successfully reset skills for ${selectedEmployee?.name || selectedEmployeeId}`);
-    } catch (error) {
-      console.error('Failed to reset employee skills:', error);
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   // Always call hooks before any early returns - Rules of Hooks
   // Memoize filtered skills for performance
@@ -680,8 +690,21 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
   const handleSetGoal = () => {
     if (selectedSkill && selectedEmployeeId) {
-      // Simply set the goal - let the SkillGoalWidget handle path calculation
-      setCurrentGoal({ skill: selectedSkill, path: [] })
+      const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId);
+      if (!selectedEmployee) return;
+      
+      // Calculate goal path using shared utility function
+      const goalPath = calculateGoalPath(selectedSkill, selectedEmployee, currentService);
+      
+      // Set the goal using the external manager
+      const goalToSet = {
+        skill: selectedSkill,
+        path: goalPath,
+        employeeId: selectedEmployeeId,
+        dataSource
+      };
+      console.log('🎯 SkillMap: Setting goal from handleSetGoal with path:', goalToSet);
+      setGoal(goalToSet);
       queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false })
       setSelectedSkill(null)
       
@@ -900,146 +923,67 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       )}
 
-      {/* Header with Title and Intro */}
-      <div className="mb-6 md:mb-8 text-center px-4">
-        <div className="mb-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center"
-              style={{
-                background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                color: 'transparent'
-              }}>
-            Map of Mastery
-          </h1>
-        </div>
-        <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
-          Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
-        </p>
-        
-        {/* Data Source Toggle */}
-        <div className="mt-4 mb-6">
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-sm text-muted-foreground">Skill Set:</span>
-            <div className="flex items-center border border-border rounded-lg p-1 bg-background">
-              <button
-                onClick={() => {
-                  setDataSource('tech')
-                  setSelectedEmployeeId('')
-                  setCurrentGoal(null)
-                  setSelectedSkill(null)
-                  // Invalidate all cached data when switching datasets
-                  queryClient.invalidateQueries({ queryKey: ['ffx-skills'] })
-                  queryClient.invalidateQueries({ queryKey: ['ffx-connections'] })
-                  queryClient.invalidateQueries({ queryKey: ['ffx-employees'] })
-                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-                  dataSource === 'tech'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
-              >
-                <Code className="h-4 w-4" />
-                <span>Tech Organization</span>
-              </button>
-              <button
-                onClick={() => {
-                  setDataSource('ffx')
-                  setSelectedEmployeeId('')
-                  setCurrentGoal(null)
-                  setSelectedSkill(null)
-                  // Invalidate all cached data when switching datasets
-                  queryClient.invalidateQueries({ queryKey: ['tech-skills'] })
-                  queryClient.invalidateQueries({ queryKey: ['tech-connections'] })
-                  queryClient.invalidateQueries({ queryKey: ['tech-employees'] })
-                  queryClient.invalidateQueries({ queryKey: ['skill-recommendations'] })
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-                  dataSource === 'ffx'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
-              >
-                <Sword className="h-4 w-4" />
-                <span>Final Fantasy X</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Feature highlights */}
-        <div className="mt-6">
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2 rounded-full border border-primary/20">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-              <span className="font-medium text-primary">Skill Tracking</span>
-              <span className="text-muted-foreground">for employees</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600/10 to-blue-600/5 px-3 py-2 rounded-full border border-blue-200">
-              <Sparkles className="h-3 w-3 text-blue-600" />
-              <span className="font-medium text-blue-600">Smart Recommendations</span>
-              <span className="text-muted-foreground">based on expertise</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/10 to-purple-600/5 px-3 py-2 rounded-full border border-purple-200">
-              <TrendingUp className="h-3 w-3 text-purple-600" />
-              <span className="font-medium text-purple-600">Learning Pathways</span>
-              <span className="text-muted-foreground">between skills</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/10 to-green-600/5 px-3 py-2 rounded-full border border-green-200">
-              <BarChart3 className="h-3 w-3 text-green-600" />
-              <span className="font-medium text-green-600">Team Analytics</span>
-              <span className="text-muted-foreground">and gaps</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Employee dropdown */}
-      <div className="w-full max-w-4xl mb-4 mx-4">
-        <div className="flex gap-3 items-end">
-          <div className="flex-1 max-w-md">
-            <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-              <SelectTrigger className="w-full" data-testid="employee-select">
-                <SelectValue placeholder="Select an employee to highlight mastered skills..." />
-              </SelectTrigger>
-              <SelectContent>
-                {employees?.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    <div className="flex items-center gap-3">
-                      {emp.images?.face && (
-                        <img 
-                          src={emp.images.face} 
-                          alt={emp.name}
-                          className="w-6 h-6 rounded-full object-cover flex-shrink-0 max-w-full"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <div>
-                        <span className="block sm:hidden">{emp.name}</span>
-                        <span className="hidden sm:block">{emp.name} - {emp.role}</span>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleResetSkills}
-            disabled={!selectedEmployeeId || isResetting}
-            className="whitespace-nowrap"
+      {/* Hero Section with Video Background */}
+      <section className="relative mb-8 overflow-hidden -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
+        {/* Hero Video Background */}
+        <div className="absolute inset-0 w-screen left-1/2 transform -translate-x-1/2">
+          <video
+            key={getHeroVideoSrc(dataSource)}
+            className="absolute inset-0 w-full h-full object-cover opacity-45"
+            style={{ width: '100vw' }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            webkit-playsinline="true"
+            preload="auto"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {isResetting ? 'Resetting...' : 'Reset Skills'}
-          </Button>
+            <source src={getHeroVideoSrc(dataSource)} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/20 to-background/30" />
         </div>
-      </div>
+
+        {/* Header with Title and Intro */}
+        <div className="relative z-10 pt-12 pb-8 text-center px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+          <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8 max-w-4xl mx-auto">
+            <div className="mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center drop-shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(263, 70%, 30%), hsl(263, 70%, 75%), hsl(263, 70%, 30%))',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    color: 'transparent'
+                  }}>
+                Map of Mastery
+              </h1>
+            </div>
+            <p className="text-sm sm:text-base md:text-lg text-foreground/90 max-w-3xl mx-auto drop-shadow-md">
+              Navigate the adventure of work with your team.<br />Level up and master skills to take on the world, together.
+            </p>
+          </div>
+        </div>
+
+        {/* Unified Team Widget - Team Selection, Goal, and Member Headshots */}
+        <div className="relative z-10 pb-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+          <UnifiedTeamWidget
+            dataSource={dataSource}
+            employees={employees || []}
+            selectedEmployeeId={selectedEmployeeId}
+            onDataSourceChange={setDataSource}
+            onEmployeeSelect={(employeeId) => {
+              console.log('👤 SkillMap: Employee selected from unified widget:', employeeId);
+              setSelectedEmployeeId(employeeId);
+            }}
+            queryClient={queryClient}
+            clearGoal={clearGoal}
+            setSelectedSkill={setSelectedSkill}
+            currentService={currentService}
+          />
+        </div>
+      </section>
+
 
       {/* Sigma.js visualization container */}
       <div className="mb-8">
@@ -1096,54 +1040,98 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
         </div>
       </div>
 
-      {/* Just-in-Time Learning Widget */}
+      {/* Debug Goal State - Remove in production */}
+      {false && (
+        <div className="mx-4 mb-4 p-4 bg-gray-100 rounded-lg border">
+          <h3 className="font-bold text-sm mb-2">🐛 Goal Debug Info:</h3>
+          <div className="text-xs space-y-1">
+            <div><strong>Current Goal:</strong> {currentGoal ? `${currentGoal.skill.name} (${currentGoal.employeeId})` : 'None'}</div>
+            <div><strong>Selected Employee:</strong> {selectedEmployeeId || 'None'}</div>
+            <div><strong>Data Source:</strong> {dataSource}</div>
+            <div><strong>Skills Loaded:</strong> {skills?.length || 0}</div>
+            <div><strong>Goal Loading:</strong> {goalLoading ? 'Yes' : 'No'}</div>
+          </div>
+          {selectedEmployeeId && skills?.length > 0 && (
+            <div className="mt-2 space-x-2">
+              <button 
+                onClick={() => {
+                  if (skills.length > 0) {
+                    const testSkill = skills[0];
+                    const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId);
+                    if (!selectedEmployee) return;
+                    
+                    // Calculate goal path using shared utility function
+                    const goalPath = calculateGoalPath(testSkill, selectedEmployee, currentService);
+                    
+                    setGoal({
+                      skill: testSkill,
+                      path: goalPath,
+                      employeeId: selectedEmployeeId,
+                      dataSource
+                    });
+                    console.log('🧪 SkillMap: Set test goal with calculated path:', { skill: testSkill.name, path: goalPath });
+                  }
+                }}
+                className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+              >
+                Set Test Goal
+              </button>
+              <button 
+                onClick={() => {
+                  if (selectedEmployeeId) {
+                    deleteGoalForEmployee(selectedEmployeeId, dataSource);
+                  }
+                }}
+                className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+              >
+                Delete Goal
+              </button>
+              <button 
+                onClick={() => {
+                  if (selectedEmployeeId && skills) {
+                    loadGoal(selectedEmployeeId, dataSource, skills);
+                  }
+                }}
+                className="px-2 py-1 bg-green-500 text-white text-xs rounded"
+              >
+                Reload Goal
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Team Collaboration Widget */}
       {selectedEmployee && (
-        <JustInTimeWidget
+        <TeamCollaborationWidget
           employeeId={selectedEmployeeId}
           employee={selectedEmployee}
           currentGoal={currentGoal}
           dataSource={dataSource}
+          service={currentService}
+          onGoalSet={(goalSkill, path) => {
+            console.log('🎯 SkillMap: TeamCollaborationWidget onGoalSet called:', { goalSkill: goalSkill?.name, path, selectedEmployeeId });
+            if (goalSkill && selectedEmployeeId) {
+              const goalToSet = {
+                skill: goalSkill,
+                path,
+                employeeId: selectedEmployeeId,
+                dataSource
+              };
+              console.log('🎯 SkillMap: Setting goal from TeamCollaborationWidget:', goalToSet);
+              setGoal(goalToSet);
+            } else {
+              console.log('🧹 SkillMap: Clearing goal from TeamCollaborationWidget');
+              clearGoal();
+            }
+          }}
         />
       )}
 
       {/* Existing SkillMap content below */}
       <div className="space-y-6">
 
-        {/* Secure AI Analysis Widget */}
-        <div className="mb-8">
-          <SecureAIAnalysisWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSelect={(skill) => {
-              setCurrentGoal({ skill, path: [] });
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onScrollToGoals={() => {
-              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          />
-        </div>
 
-        {/* Skill Goal Widget */}
-        <div ref={skillGoalRef} className="mb-8">
-          <SkillGoalWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            currentGoal={currentGoal?.skill || null}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSet={(goalSkill, path) => {
-              setCurrentGoal(goalSkill ? { skill: goalSkill, path } : null);
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onLearnNewSkills={handleLearnNewSkills}
-            onGoalCompleted={handleGoalCompleted}
-          />
-        </div>
 
         {/* Skill Recommendation Widget */}
         <div ref={skillRecommendationRef} className="mb-8">
@@ -1152,6 +1140,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
             employeeId={selectedEmployeeId}
             employee={selectedEmployee}
             goalSkillId={currentGoal?.skill?.id}
+            currentGoal={currentGoal?.skill || null}
             service={currentService}
             dataSource={dataSource}
             onSkillLearn={async (skill, updatedEmployee) => {
@@ -1183,23 +1172,6 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
           />
         </div>
 
-        {/* AI Team Path Analysis Widget */}
-        <div className="mb-8">
-          <AITeamPathWidget
-            employeeId={selectedEmployeeId}
-            employee={selectedEmployee}
-            service={currentService}
-            dataSource={dataSource}
-            onGoalSelect={(skill) => {
-              setCurrentGoal({ skill, path: [] });
-              // Invalidate recommendations to refresh with goal-directed ones
-              queryClient.invalidateQueries({ queryKey: ['skill-recommendations'], exact: false });
-            }}
-            onScrollToGoals={() => {
-              skillGoalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          />
-        </div>
 
         {/* Team Analytics */}
         <div className="mb-8">
@@ -1209,7 +1181,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                 <BarChart3 className="h-5 w-5 text-green-600" />
                 Team Analytics
               </CardTitle>
-              <CardDescription>Skill distribution across all team members</CardDescription>
+              <CardDescription>Skill distribution and team coverage analysis</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1231,9 +1203,105 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
                   </div>
                 </div>
 
+                {/* Team Goal Analysis */}
+                {(() => {
+                  const teamGoal = localStorage.getItem(`team-goal-${dataSource}`);
+                  if (!teamGoal) return null;
+                  
+                  return (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-2">Team Goal Alignment</h4>
+                      <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3 mb-3">
+                        <p className="text-sm text-blue-800">{teamGoal}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Critical Skills and Single Points of Failure */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Skill Coverage Analysis</h4>
+                  <div className="space-y-2">
+                    {(() => {
+                      // Count how many employees have each skill
+                      const skillCoverage: Record<string, { skill: any, count: number, employees: string[] }> = {};
+                      
+                      employees?.forEach(emp => {
+                        emp.mastered_skills?.forEach(skillId => {
+                          const skill = skills?.find(s => s.id === skillId);
+                          if (skill) {
+                            if (!skillCoverage[skillId]) {
+                              skillCoverage[skillId] = { skill, count: 0, employees: [] };
+                            }
+                            skillCoverage[skillId].count++;
+                            skillCoverage[skillId].employees.push(emp.name);
+                          }
+                        });
+                      });
+                      
+                      // Sort by count (ascending) to show single points of failure first
+                      const sortedSkills = Object.values(skillCoverage).sort((a, b) => a.count - b.count);
+                      
+                      // Show skills with 1 or 2 people only
+                      const criticalSkills = sortedSkills.filter(item => item.count <= 2);
+                      
+                      if (criticalSkills.length === 0) {
+                        return (
+                          <div className="text-sm text-gray-600 p-4 text-center bg-green-50/50 rounded-lg border border-green-200">
+                            ✅ Great team coverage! No single points of failure detected.
+                          </div>
+                        );
+                      }
+                      
+                      return criticalSkills.map(({ skill, count, employees }) => {
+                        const isSinglePoint = count === 1;
+                        const categoryInfo = getCategoryInfo(skill.category);
+                        
+                        return (
+                          <div 
+                            key={skill.id} 
+                            className={`p-3 rounded-lg border ${
+                              isSinglePoint 
+                                ? 'bg-red-50/50 border-red-300' 
+                                : 'bg-yellow-50/50 border-yellow-300'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm" style={{ color: CATEGORY_COLORS[skill.category as keyof typeof CATEGORY_COLORS] }}>
+                                    {categoryInfo.icon}
+                                  </span>
+                                  <span className="font-medium text-sm">{skill.name}</span>
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs ${
+                                      isSinglePoint 
+                                        ? 'bg-red-100 text-red-800 border-red-300' 
+                                        : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                    }`}
+                                  >
+                                    {isSinglePoint ? '⚠️ Single Point of Failure' : '⚡ Limited Coverage'}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-gray-600 mb-1">{skill.description}</p>
+                                <p className="text-xs font-medium">
+                                  Mastered by: <span className={isSinglePoint ? 'text-red-700' : 'text-yellow-700'}>
+                                    {employees.join(', ')}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
                 {/* Team Mastered Skills by Category */}
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Type</h4>
+                  <h4 className="text-sm font-medium mb-3">Team Skills by Type</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                     {(() => {
                       // Count all mastered skills by category across all employees
@@ -1269,7 +1337,7 @@ const SkillMap = ({ showInstructions, setShowInstructions }: { showInstructions:
 
                 {/* Team Mastered Skills by Level */}
                 <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-3">Team Mastered Skills by Level</h4>
+                  <h4 className="text-sm font-medium mb-3">Team Skills by Level</h4>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {[1, 2, 3, 4, 5, 6].map(level => {
                       // Count all mastered skills by level across all employees
