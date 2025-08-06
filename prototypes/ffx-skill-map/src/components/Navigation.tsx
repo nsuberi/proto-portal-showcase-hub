@@ -14,8 +14,8 @@ const Navigation = ({ onShowInstructions }: { onShowInstructions?: () => void })
             <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
               <Sword className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
               <span className="text-sm md:text-xl font-bold text-primary truncate">
-                <span className="hidden sm:inline">Final Fantasy X Skill Map for Employees</span>
-                <span className="sm:hidden">FFX Skill Map</span>
+                <span className="hidden sm:inline">Learning Adventure - Growth as Teams and Individuals</span>
+                <span className="sm:hidden">Learning Adventure</span>
               </span>
             </div>
           </div>
