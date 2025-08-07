@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
+import thisIsMe from "@/assets/this-is-me.jpg";
 
 const Portfolio = () => {
   const implementedPrototypes = [
@@ -243,19 +244,30 @@ const Portfolio = () => {
 
       {/* About Section */}
       <section className="py-20 px-6 bg-gradient-subtle">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent">About Me</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-            As an experienced educator and lifelong learner, I'm passionate about
-            helping others learn and grow. I explore how AI can create meaningful 
-            interactions between people through thoughtful design and technology.
-          </p>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Each prototype investigates different ways technology can enhance
-            human connection - from collaborative learning experiences to
-            immersive storytelling that bridges digital and physical worlds
-            to create real opportunity for people and their communities.
-          </p>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent text-center">About Me</h2>
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="w-full md:w-1/3">
+              <img 
+                src={thisIsMe} 
+                alt="Nathan Suberi" 
+                className="rounded-lg shadow-lg w-full h-auto object-cover"
+              />
+            </div>
+            <div className="w-full md:w-2/3 text-center md:text-left">
+              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+                As an experienced educator and lifelong learner, I'm passionate about
+                helping others learn and grow. I explore how AI can create meaningful 
+                interactions between people through thoughtful design of learning experiences.
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Each prototype in this portfolio investigates ways technology can enhance
+                the human experience by helping to reveal opportunities for personal and communal growth.
+                Immersive storytelling that bridges digital and physical worlds
+                to create real opportunity for people and their communities is the future of learning.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
