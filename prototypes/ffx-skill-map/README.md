@@ -71,8 +71,9 @@ npm run dev
 - Components use token-backed classes such as `bg-primary`, `text-foreground`, `hover:shadow-glow`, and responsive utilities.
 
 ### Shared Secure API
-- For AI analysis features, the repository provides a secure API at `http://localhost:3003` (development) with a production-ready path via API Gateway/Lambda.
-- FFX integrates with this API in AI-related components/services when enabled; in dev, mock mode is used if no key is configured.
+- Development: `http://localhost:3003`
+- Production: API Gateway + Lambda endpoint (see root `docs/SECURITY.md` and `api/README.md`)
+- FFX integrates with this API in AI-related components/services when enabled; in dev, mock mode is used if no key is configured
 
 
 The application now uses mock data instead of Neo4j for browser compatibility. No database setup is required!
