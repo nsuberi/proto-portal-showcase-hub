@@ -47,7 +47,7 @@ Secure backend API for processing AI-powered skill analysis requests using Claud
    npm run dev
    ```
 
-   The API will be available at `http://localhost:3001`
+   The API will be available at `http://localhost:3003`
 
 ### Getting Your API Key
 

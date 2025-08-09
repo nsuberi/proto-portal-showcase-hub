@@ -13,7 +13,7 @@ This project contains multiple Single Page Applications (SPAs) that work togethe
 Run each SPA independently for focused development:
 
 ```bash
-# Main portfolio app (runs on port 8081)
+# Main portfolio app (runs on port 8080)
 npm run dev
 
 # FFX prototype (runs on port 3001)
@@ -172,10 +172,7 @@ To enable navigation between SPAs in Builder.io:
 
 ## Production Deployment
 
-The production environment uses:
-- **Cloudflare Pages** for hosting
-- **Custom routing rules** in `public/_redirects`
-- **CloudFront distribution** for global CDN (configured in `terraform/main.tf`)
+The production environment uses **AWS S3 + CloudFront**, configured via Terraform in `terraform/`. See `DEPLOYMENT.md` for detailed steps.
 
 ## Project Structure
 
@@ -194,10 +191,12 @@ The production environment uses:
 
 | Service | Port | Environment |
 |---------|------|-------------|
-| Main SPA | 8081 | Development |
+| Main SPA | 8080 | Development |
 | FFX SPA | 3001 | Development |
+| Home Lending SPA | 3002 | Development |
 | Proxy Server | 8082 | Development |
-| Production | 443/80 | Cloudflare Pages |
+| API | 3003 | Development |
+| Production | 443/80 | AWS S3 + CloudFront |
 
 ## Troubleshooting
 

@@ -36,7 +36,7 @@ Claude AI Service (Anthropic)
    ```bash
    cd api
    npm install
-   NODE_ENV=development npm start
+   npm run dev
    ```
    Server runs on `http://localhost:3003`
 

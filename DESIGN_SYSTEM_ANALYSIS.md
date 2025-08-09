@@ -75,33 +75,17 @@ boxShadow: {
 }
 ```
 
-## Component Design System
+## Shared Design Tokens (current)
 
-### Shared Component Library
-**Location**: `shared/design-system/`
+### Package Location
+**Location**: `shared/design-tokens/`
 
-A centralized design system package (`@proto-portal/design-system`) provides reusable components with consistent styling.
+The repository provides a shared design tokens package (`@proto-portal/design-tokens`) that exposes:
+- CSS custom properties via `css/tokens.css`
+- Responsive utilities via `css/utilities.css`
+- Tailwind base config via `tailwind/base-config.ts`
 
-### Button Component Example
-**File**: `shared/design-system/ui/button.tsx:7-34`
-
-Uses `class-variance-authority` for systematic variant management:
-
-```typescript
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors...",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        // ... more variants
-      }
-    }
-  }
-)
-```
+Applications consume these tokens locally in their components (no centralized shared UI components).
 
 ## Design System Usage in Components
 
@@ -116,17 +100,11 @@ const buttonVariants = cva(
 4. **Transitions**: `transition-smooth` (`Portfolio.tsx:77,102,123`)
 5. **Typography**: `text-muted-foreground` (`Portfolio.tsx:72,95,107`)
 
-#### Component Usage:
+#### Component Usage (token-based classes):
 ```tsx
-import { Button } from "@proto-portal/design-system";
-import { Card, CardContent } from "@proto-portal/design-system";
-
-<Button 
-  size="lg" 
-  className="bg-gradient-primary text-white hover:shadow-glow transition-smooth"
->
+<button className="bg-primary text-primary-foreground hover:shadow-glow transition-smooth px-4 py-2 rounded-md">
   Explore My Work
-</Button>
+</button>
 ```
 
 ## Utility Class Generation
@@ -167,4 +145,4 @@ The system includes comprehensive dark mode support with alternative token value
 1. **Token Documentation**: Consider generating automatic documentation from CSS custom properties
 2. **Type Safety**: Add TypeScript types for design token values
 3. **Token Validation**: Implement tools to ensure all tokens are properly used
-4. **Component Testing**: The design system includes test files (`shared/design-system/ui/button.test.tsx`) demonstrating testing practices
+4. **Component Testing**: Suggested app-local tests can validate token-based classes and responsive utilities

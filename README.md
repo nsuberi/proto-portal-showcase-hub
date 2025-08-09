@@ -16,20 +16,21 @@ This project implements a **monorepo architecture** with:
 proto-portal-showcase-hub/
 ├── src/                   # Main portfolio application
 │   ├── components/        # Portfolio-specific components
-│   ├── pages/            # Portfolio pages
-│   └── assets/           # Static assets
+│   ├── pages/             # Portfolio pages
+│   └── assets/            # Static assets
 ├── shared/
-│   └── design-system/    # Shared UI components and utilities
+│   └── design-tokens/     # Shared design tokens and Tailwind base config
 ├── prototypes/
-│   └── ffx-skill-map/    # Final Fantasy X Skill Map Prototype
-├── scripts/              # Build and deployment scripts
-├── terraform/            # Infrastructure as Code
-└── .github/workflows/    # CI/CD pipeline
+│   ├── ffx-skill-map/     # Final Fantasy X Skill Map Prototype
+│   └── home-lending-learning/ # Home Lending Learning Prototype
+├── scripts/               # Build and deployment scripts
+├── terraform/             # Infrastructure as Code
+└── .github/workflows/     # CI/CD pipeline
 ```
 
-## 🎨 Design System Architecture
+## 🎨 Design Tokens Architecture
 
-The `shared/design-system` package is the foundation of the monorepo's UI consistency:
+The `shared/design-tokens` workspace is the foundation of the monorepo's UI consistency:
 
 ### **Why a Shared Design System?**
 - **Consistency**: Ensures all prototypes have the same look and feel
@@ -37,31 +38,25 @@ The `shared/design-system` package is the foundation of the monorepo's UI consis
 - **Maintainability**: Central place to update UI components
 - **Scalability**: Easy to add new prototypes with existing components
 
-### **Design System Structure**
+### **Design Tokens Structure**
 ```
-shared/design-system/
-├── ui/                   # Complete Shadcn/ui component library
-│   ├── button.tsx        # Button component
-│   ├── card.tsx          # Card component
-│   ├── dialog.tsx        # Dialog component
-│   └── ...               # 40+ UI components
-├── lib/
-│   ├── utils.ts          # Utility functions (cn, clsx)
-│   └── use-toast.ts      # Toast hook
-├── hooks/
-│   └── use-toast.ts      # Shared React hooks
-├── package.json          # Design system dependencies
-└── index.ts              # Main export file
+shared/design-tokens/
+├── tokens/               # Token definitions (colors, spacing, typography, etc.)
+├── css/                  # CSS custom properties and utilities
+├── tailwind/             # Base Tailwind config
+└── index.ts              # Exports and override helpers
 ```
 
-### **How Prototypes Use the Design System**
-```typescript
-// In any prototype
-import { Button, Card, Dialog } from "@proto-portal/design-system";
+### **How Prototypes Use the Design Tokens**
+```css
+/* In any app's main CSS */
+@import "@proto-portal/design-tokens/css/tokens.css";
+@import "@proto-portal/design-tokens/css/utilities.css";
+```
 
-// Components are automatically styled and consistent
-<Button variant="primary">Click me</Button>
-<Card>Content here</Card>
+```ts
+// In Tailwind config
+import { baseTailwindConfig } from "@proto-portal/design-tokens";
 ```
 
 ## 🎯 Current Prototypes
@@ -131,6 +126,14 @@ yarn dev
 # Start the FFX prototype directly
 yarn dev:ffx
 # Opens at http://localhost:3001
+```
+
+#### API Server (for AI analysis)
+```bash
+# Start the secure API proxy
+cd api
+npm install
+npm run dev  # runs on http://localhost:3003
 
 # Or navigate to the prototype directory
 cd prototypes/ffx-skill-map
@@ -233,22 +236,13 @@ src/
 └── main.tsx              # Entry point
 ```
 
-### **Shared Design System (`shared/design-system/`)**
+### **Shared Design Tokens (`shared/design-tokens/`)**
 ```
-shared/design-system/
-├── ui/                   # 40+ Shadcn/ui components
-│   ├── button.tsx        # Button variants
-│   ├── card.tsx          # Card layouts
-│   ├── dialog.tsx        # Modal dialogs
-│   ├── select.tsx        # Dropdown selects
-│   └── ...               # Complete component library
-├── lib/
-│   ├── utils.ts          # Utility functions
-│   └── use-toast.ts      # Toast notifications
-├── hooks/
-│   └── use-toast.ts      # Shared React hooks
-├── package.json          # Design system dependencies
-└── index.ts              # Exports all components
+shared/design-tokens/
+├── tokens/
+├── css/
+├── tailwind/
+└── index.ts
 ```
 
 ### **FFX Skill Map (`prototypes/ffx-skill-map/`)**
@@ -325,7 +319,7 @@ yarn test:watch       # Run tests in watch mode
 - **Graph Visualization**: Sigma.js + Graphology for interactive skill maps
 - **React Query**: Efficient data fetching and caching
 - **TypeScript**: Type-safe development across all components
-- **Modern UI**: Shared design system with Tailwind CSS
+- **Modern UI**: Shared design tokens with Tailwind CSS
 - **Docker**: Containerized database setup
 - **Monorepo**: Yarn workspaces with shared dependencies
 
@@ -334,18 +328,18 @@ yarn test:watch       # Run tests in watch mode
 ### **Adding New Prototypes**
 1. Create directory in `prototypes/`
 2. Set up `package.json` with workspace dependencies
-3. Import shared components: `import { Button } from "@proto-portal/design-system"`
+3. Import shared design tokens in CSS and Tailwind config
 4. Add scripts to root `package.json`
 5. Update build script to include new prototype
 6. Add to portfolio component
 7. Update this README
 
-### **Shared Component Development**
-1. Add new components to `shared/design-system/ui/`
-2. Export from `shared/design-system/index.ts`
-3. Update package.json dependencies as needed
+### **Shared Tokens Development**
+1. Add or update tokens in `shared/design-tokens/tokens/`
+2. Update `shared/design-tokens/css/*` if new utilities are needed
+3. Export from `shared/design-tokens/index.ts`
 4. Test in prototypes
-5. Document component usage
+5. Document token usage
 
 ### **Database Prototypes**
 1. Create `docker-compose.yml` for database setup
@@ -386,7 +380,7 @@ git push origin main
 
 - **[FFX Skill Map README](prototypes/ffx-skill-map/README.md)** - Detailed prototype documentation
 - **[Deployment Guide](DEPLOYMENT.md)** - Infrastructure and deployment instructions
-- **[Design System Guide](shared/design-system/README.md)** - Component library documentation
+- **[Design Tokens Guide](shared/design-tokens/README.md)** - Token library documentation
 
 ## 🤝 Contributing
 

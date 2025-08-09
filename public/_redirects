@@ -1,4 +1,4 @@
-# Cloudflare Pages routing rules for multiple SPAs
+# Redirect rules for static hosting of multiple SPAs (compatible with Cloudflare/Netlify; optional when using CloudFront SPA routing)
 
 # FFX Skill Map prototype - serve its index.html for any route under /prototypes/ffx-skill-map/
 /prototypes/ffx-skill-map/* /prototypes/ffx-skill-map/index.html 200

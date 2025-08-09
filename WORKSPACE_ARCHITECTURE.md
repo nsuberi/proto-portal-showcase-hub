@@ -44,7 +44,7 @@ proto-portal-showcase-hub/
 ├── src/                        # Main portfolio SPA
 ├── prototypes/
 │   └── ffx-skill-map/          # Workspace: @proto-portal/ffx-skill-map
-└── shared/ (future)            # Workspace: @proto-portal/design-system
+└── shared/design-tokens        # Workspace: @proto-portal/design-tokens
 ```
 
 ## Multi-SPA Architecture
@@ -199,7 +199,7 @@ export default {
 
 ```tsx
 // Shared Design System Component
-// @proto-portal/design-system/Button.tsx
+// @proto-portal/design-tokens (tokens only; components are app-local)
 export const Button = ({ variant = "primary", ...props }) => (
   <button className={cn(
     "px-4 py-2 rounded-md font-medium transition-smooth",
@@ -210,7 +210,7 @@ export const Button = ({ variant = "primary", ...props }) => (
 
 // FFX Prototype Override
 // prototypes/ffx-skill-map/src/components/SkillButton.tsx
-import { Button } from "@proto-portal/design-system";
+import { baseTailwindConfig } from "@proto-portal/design-tokens";
 
 export const SkillButton = ({ skillType, ...props }) => (
   <Button 
@@ -348,7 +348,7 @@ cd prototypes/new-prototype
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@proto-portal/design-system": "workspace:*",
+    "@proto-portal/design-tokens": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   }
@@ -361,7 +361,7 @@ cd prototypes/new-prototype
 /* prototypes/new-prototype/src/index.css */
 
 /* Import base design system */
-@import "@proto-portal/design-system/tokens.css";
+@import "@proto-portal/design-tokens/css/tokens.css";
 
 /* Extend with prototype-specific tokens */
 :root {
@@ -449,9 +449,9 @@ export type { DesignTokens } from "./tokens";
 
 #### ⚠️ Current Limitations
 
-1. **Component Duplication**: UI components are copy-pasted, not shared
-2. **No True Design System Package**: Despite documentation claims, no `@proto-portal/design-system` exists
-3. **Manual Token Sync**: Design tokens are duplicated rather than imported
+1. **Component Duplication**: UI components are app-local rather than shared (by design), but some duplication exists
+2. **Docs Drift**: Older references to `@proto-portal/design-system` components remain in some docs; current shared package is `@proto-portal/design-tokens`
+3. **Token Adoption**: Ensure all apps consistently import tokens via `@proto-portal/design-tokens`
 
 #### 🚀 Migration Path to Ideal Architecture
 
@@ -463,16 +463,16 @@ mkdir shared/design-system
 # Update workspace references
 ```
 
-**Phase 2: Migrate to Shared Components**
+**Phase 2: Migrate components to consume shared tokens**
 ```typescript
-// Replace local components with shared imports
-import { Button, Card } from "@proto-portal/design-system";
+// Replace hardcoded styles with token-based classes
+// e.g., use bg-primary, text-foreground, utilities from shared tokens
 ```
 
 **Phase 3: Token Import System**
 ```css
 /* Replace duplicated tokens with imports */
-@import "@proto-portal/design-system/tokens.css";
+@import "@proto-portal/design-tokens/css/tokens.css";
 ```
 
 ### Performance Considerations
