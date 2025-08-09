@@ -378,12 +378,17 @@ git push origin main
 
 ## 📚 Documentation
 
-- **[FFX Skill Map README](prototypes/ffx-skill-map/README.md)** - FFX implementation details
-- **[Home Lending Learning README](prototypes/home-lending-learning/README.md)** - Home Lending implementation details
-- **[Testing Guide](docs/TESTING.md)** - Consolidated testing documentation
-- **[Security Guide](docs/SECURITY.md)** - Consolidated security and secrets documentation
-- **[Deployment Guide](DEPLOYMENT.md)** - Infrastructure and deployment instructions
-- **[Design Tokens Guide](shared/design-tokens/README.md)** - Token library documentation
+- **[Docs Index](docs/README.md)**
+- **[Development Guide](docs/DEVELOPMENT.md)**
+- **[Deployment Guide](docs/DEPLOYMENT.md)**
+- **[Security Guide](docs/SECURITY.md)**
+- **[Testing Guide](docs/TESTING.md)**
+- **[Design Tokens & Responsive](docs/DESIGN_TOKENS.md)**
+- **[API Overview](docs/API.md)**
+
+Prototype docs:
+- **[FFX Skill Map Docs](prototypes/ffx-skill-map/docs/README.md)**
+- **[Home Lending Learning Docs](prototypes/home-lending-learning/docs/README.md)**
 
 ## 🤝 Contributing
 
