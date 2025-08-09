@@ -378,7 +378,10 @@ git push origin main
 
 ## 📚 Documentation
 
-- **[FFX Skill Map README](prototypes/ffx-skill-map/README.md)** - Detailed prototype documentation
+- **[FFX Skill Map README](prototypes/ffx-skill-map/README.md)** - FFX implementation details
+- **[Home Lending Learning README](prototypes/home-lending-learning/README.md)** - Home Lending implementation details
+- **[Testing Guide](docs/TESTING.md)** - Consolidated testing documentation
+- **[Security Guide](docs/SECURITY.md)** - Consolidated security and secrets documentation
 - **[Deployment Guide](DEPLOYMENT.md)** - Infrastructure and deployment instructions
 - **[Design Tokens Guide](shared/design-tokens/README.md)** - Token library documentation
 

@@ -32,7 +32,8 @@ A graph-based skill development system inspired by Final Fantasy X's Sphere Grid
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
-- **UI Components**: Custom UI components + Tailwind CSS
+- **Design Tokens**: Shared `@proto-portal/design-tokens` (colors, gradients, shadows, responsive utilities)
+- **UI Components**: App-local components styled with Tailwind utilities backed by shared tokens
 - **Data**: Mock Neo4j service (browser-compatible)
 - **State Management**: TanStack Query (React Query)
 - **Routing**: React Router DOM
@@ -62,6 +63,17 @@ npm run dev
 
 # Open http://localhost:3001
 ```
+## Design Tokens & Shared API Usage
+
+### Design Tokens
+- Imports in CSS: `@import "@proto-portal/design-tokens/css/tokens.css";` and `css/utilities.css`
+- Tailwind config extends from `baseTailwindConfig` with FFX-specific chart color overrides via `createDesignTokens(presetOverrides.ffxSkillMap)` in `tailwind.config.ts`.
+- Components use token-backed classes such as `bg-primary`, `text-foreground`, `hover:shadow-glow`, and responsive utilities.
+
+### Shared Secure API
+- For AI analysis features, the repository provides a secure API at `http://localhost:3003` (development) with a production-ready path via API Gateway/Lambda.
+- FFX integrates with this API in AI-related components/services when enabled; in dev, mock mode is used if no key is configured.
+
 
 The application now uses mock data instead of Neo4j for browser compatibility. No database setup is required!
 

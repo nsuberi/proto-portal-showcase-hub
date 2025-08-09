@@ -47,10 +47,15 @@ The platform is based on official documentation from:
 ## Technical Architecture
 
 ### Design System Integration
-- Uses shared `@proto-portal/design-tokens` for consistent styling
-- Custom color scheme optimized for financial services (professional blue, warm orange, success green)
-- Responsive design following established patterns
-- Accessible UI components with proper contrast and navigation
+Uses shared `@proto-portal/design-tokens` for consistent styling:
+- CSS imports: `@import "@proto-portal/design-tokens/css/tokens.css";` and `css/utilities.css`
+- Tailwind base: extends from `baseTailwindConfig` in `tailwind.config.ts`
+- Components: app-local, styled with token-backed Tailwind classes (`bg-primary`, `text-foreground`, `hover:shadow-glow`, responsive utilities)
+
+### Shared Secure API
+- Development: `http://localhost:3003`
+- Production: API Gateway + Lambda endpoint (see root `docs/SECURITY.md` and `api/README.md`)
+- This prototype can consume the secure analysis API for assessment features; in dev, services can run in mock mode when no key is configured
 
 ### Data Structure
 - **Flow Map Nodes**: Process steps with connections and terminology links
