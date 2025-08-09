@@ -7,15 +7,15 @@ This document outlines the testing strategy for the Proto Portal Showcase Hub UI
 ## Testing Framework
 
 ### Primary Tools
-- **Vitest**: Fast, modern testing framework for unit and integration tests
-- **React Testing Library**: Component testing with focus on user behavior
-- **JSDoc**: DOM environment simulation for browser-like testing
+- **Vitest**: Fast, modern testing framework for unit and integration tests (planned)
+- **React Testing Library**: Component testing with focus on user behavior (planned)
+- **jsdom**: DOM environment simulation for browser-like testing (planned)
 
 ### Test Types
 
 #### 1. Unit Tests
 **Scope**: Individual component behavior and props
-**Location**: `shared/design-system/ui/*.test.tsx`
+**Location**: App-local components (no shared UI package). Suggested locations: `src/components/*.test.tsx` in each app.
 
 **What we test:**
 - Component renders correctly with different props
@@ -45,7 +45,7 @@ This document outlines the testing strategy for the Proto Portal Showcase Hub UI
 
 #### 3. Integration Tests
 **Scope**: Component interactions within pages
-**Location**: `src/components/*.test.tsx` or `prototypes/*/src/**/*.test.tsx`
+**Location**: `src/components/*.test.tsx` or `prototypes/*/src/**/*.test.tsx` (suggested)
 
 **What we test:**
 - Portfolio page button interactions
@@ -73,19 +73,12 @@ This document outlines the testing strategy for the Proto Portal Showcase Hub UI
 
 ### Test Commands
 
+No tests are currently configured in this repository. Suggested setup:
+
 ```bash
-# Run all design system tests
-cd shared/design-system
-npm test
-
-# Watch mode for development
-npm run test:watch
-
-# UI mode for interactive testing
-npm run test:ui
-
-# Run tests from root
-npm run test:design-system
+# Root scripts (example)
+"test": "vitest",
+"test:watch": "vitest --watch"
 ```
 
 ## Testing Best Practices
@@ -118,8 +111,7 @@ npm run test:design-system
 ### CI/CD Integration
 ```bash
 # Add to package.json scripts
-"test:ci": "vitest run --coverage",
-"test:design-system": "cd shared/design-system && npm test"
+"test:ci": "vitest run --coverage"
 ```
 
 ## Test Coverage Goals
