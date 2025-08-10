@@ -8,6 +8,36 @@ const router = express.Router();
 const claudeService = new ClaudeService();
 
 /**
+ * GET /api/v1/ai-analysis/health
+ * 
+ * Health check endpoint for AI analysis service
+ * Returns service status and AI provider information
+ */
+router.get('/ai-analysis/health', async (req, res) => {
+  try {
+    // Check Claude service status
+    const aiServiceStatus = await claudeService.healthCheck();
+    
+    res.status(200).json({
+      status: 'healthy',
+      aiService: aiServiceStatus,
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '1.0.0',
+      environment: process.env.NODE_ENV || 'production'
+    });
+  } catch (error) {
+    logger.error('Health check failed', { error: error.message });
+    res.status(503).json({
+      status: 'degraded',
+      aiService: { status: 'unavailable', error: error.message },
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '1.0.0',
+      environment: process.env.NODE_ENV || 'production'
+    });
+  }
+});
+
+/**
  * POST /api/v1/ai-analysis/skill-recommendations
  * 
  * Analyzes character skills and provides AI-powered recommendations

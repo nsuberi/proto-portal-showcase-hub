@@ -4,9 +4,16 @@ import { test, expect } from '@playwright/test';
 test.describe('FFX Skill Map - Smoke', () => {
   test('loads main page and renders heading', async ({ page, baseURL }) => {
     // Navigate to the FFX Skill Map page
-    // In local dev, baseURL already includes /prototypes/ffx-skill-map
-    // In CI/production, we need to ensure we're on the right page
-    const url = baseURL?.includes('/prototypes/ffx-skill-map') ? '/' : '/prototypes/ffx-skill-map/';
+    console.log('Test baseURL:', baseURL);
+    
+    // If baseURL already ends with the prototype path, go to root
+    // Otherwise, navigate to the prototype path
+    let url = '/';
+    if (baseURL && !baseURL.includes('/prototypes/ffx-skill-map')) {
+      url = '/prototypes/ffx-skill-map/';
+    }
+    
+    console.log('Navigating to:', url);
     await page.goto(url);
     await page.waitForLoadState('networkidle');
     

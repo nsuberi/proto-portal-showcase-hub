@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('FFX Skill Map - Claude API Integration', () => {
-  const API_BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
+  // Use dedicated API_BASE_URL or fall back to local development
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3003';
   
   // Test data for API calls
   const mockCharacterData = {

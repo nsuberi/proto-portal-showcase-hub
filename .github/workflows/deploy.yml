@@ -121,10 +121,15 @@ jobs:
         cd prototypes/ffx-skill-map
         npx playwright install --with-deps chromium
       
+    - name: Get API Gateway URL from Terraform
+      run: |
+        cd terraform
+        echo "API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)" >> $GITHUB_ENV
+        
     - name: Run integration tests against production
       run: |
         cd prototypes/ffx-skill-map
-        BASE_URL=https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map npx playwright test --project=chromium
+        BASE_URL=https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map API_BASE_URL=$API_GATEWAY_URL npx playwright test --project=chromium
       env:
         CI: true
         
