@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('FFX Skill Map - Claude API Integration', () => {
-  // Use dedicated API_BASE_URL or fall back to local development
-  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3003';
+  // Prefer CI-provided gateway URL; avoid defaulting to localhost in CI
+  const API_BASE_URL = (process.env.API_BASE_URL || process.env.API_GATEWAY_URL || '').replace(/\/$/, '');
   
   // Test data for API calls
   const mockCharacterData = {
@@ -49,6 +49,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
 
   // Test API key validation and environment configuration
   test('should handle API key configuration properly', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // Test health check endpoint
     const healthResponse = await request.get(`${API_BASE_URL}/api/v1/ai-analysis/health`);
     
@@ -68,6 +69,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should accept requests without server auth for ai-analysis endpoints', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // No API key is required for ai-analysis endpoints (client provides vendor key inside body)
     const noAuthResponse = await request.post(`${API_BASE_URL}/api/v1/ai-analysis/skill-recommendations`, {
       data: {
@@ -82,6 +84,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should successfully call Claude API for skill recommendations', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // Skip if no API key is available (should use mock mode)
     test.skip(!process.env.CLAUDE_API_KEY && !process.env.AWS_SECRETS_ENABLED, 'No Claude API key configured');
 
@@ -171,6 +174,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should handle just-in-time learning recommendations', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     const justInTimeData = {
       character: mockCharacterData,
       allSkills: mockAllSkills,
@@ -227,6 +231,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should validate request data properly', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // Test missing required fields
     const invalidResponse = await request.post(`${API_BASE_URL}/api/v1/ai-analysis/skill-recommendations`, {
       headers: {
@@ -247,6 +252,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should handle Claude API rate limiting gracefully', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // This test demonstrates how the API handles rate limiting
     // In a real scenario with actual Claude API key and rate limits
     
@@ -275,6 +281,7 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   });
 
   test('should demonstrate environment configuration differences', async ({ request }) => {
+    test.skip(!API_BASE_URL, 'API_BASE_URL not set');
     // Test demonstrates how the API works in different environments
     console.log('Environment Configuration Test:');
     console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
