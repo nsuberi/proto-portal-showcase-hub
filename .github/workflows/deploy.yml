@@ -142,6 +142,12 @@ jobs:
         YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
         YARN_NODE_LINKER: node-modules
 
+    - name: Ensure Playwright deps at root
+      run: |
+        node -e "require.resolve('@playwright/test/package.json')" || yarn add -D @playwright/test@^1.54.1 playwright@^1.54.1
+      env:
+        YARN_NODE_LINKER: node-modules
+
     # Do not run `yarn workspaces focus` here; we need root devDependencies available
       
     - name: Get API Gateway URL from Terraform
