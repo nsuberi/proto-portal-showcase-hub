@@ -5,7 +5,14 @@ test.describe('FFX Skill Map - Smoke', () => {
   test('loads main page and renders heading', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    // Use a more specific selector to avoid strict mode violation
-    await expect(page.locator('h1:has-text("Map of Mastery")')).toBeVisible({ timeout: 10000 });
+    
+    // Multiple approaches to ensure we find the element:
+    // 1. First check if any h1 exists (basic sanity check)
+    await expect(page.locator('h1')).toBeVisible({ timeout: 10000 });
+    
+    // 2. Then verify it contains our expected text
+    // Using getByRole is more reliable than text selectors for gradient text
+    const heading = page.getByRole('heading', { level: 1 });
+    await expect(heading).toContainText('Map of Mastery');
   });
 });
