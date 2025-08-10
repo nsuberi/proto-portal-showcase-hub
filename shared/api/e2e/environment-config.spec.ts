@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { spawn, ChildProcess } from 'child_process';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import fetch from 'node-fetch';
 
 test.describe('API Environment Configuration Tests', () => {
@@ -26,8 +28,12 @@ test.describe('API Environment Configuration Tests', () => {
 
   // Helper to start API with specific environment variables
   const startApiWithEnv = async (env: Record<string, string> = {}): Promise<ChildProcess> => {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const apiDir = path.resolve(__dirname, '..');
+
     const process = spawn('npm', ['run', 'dev'], {
-      cwd: '../shared/api',
+      cwd: apiDir,
       stdio: 'pipe',
       shell: true,
       env: { ...process.env, ...env }
