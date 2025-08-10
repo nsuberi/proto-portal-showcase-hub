@@ -22,7 +22,9 @@ jobs:
       run: corepack enable
       
     - name: Install dependencies
-      run: yarn install
+      run: yarn install --mode=update-lockfile
+      env:
+        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
       
     - name: Run unit tests
       run: |
@@ -73,7 +75,9 @@ jobs:
         aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
         
     - name: Install dependencies
-      run: yarn install
+      run: yarn install --mode=update-lockfile
+      env:
+        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
       
     - name: Build application
       run: ./scripts/build.sh
@@ -130,8 +134,10 @@ jobs:
 
     - name: Install dependencies (update lockfile allowed)
       run: |
-        yarn install
+        yarn install --mode=update-lockfile
         npx playwright install --with-deps chromium
+      env:
+        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
       
     - name: Get API Gateway URL from Terraform
       run: |
