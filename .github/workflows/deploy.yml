@@ -78,10 +78,9 @@ jobs:
     - name: Build application
       run: ./scripts/build.sh
       
-    - name: Install API dependencies (package API for Lambda)
+    - name: Install API dependencies for Lambda packaging
       run: |
-        cd shared/api
-        npm ci --omit=dev
+        yarn workspaces focus @proto-portal/ai-analysis-api --production
       
     - name: Deploy infrastructure
       run: ./scripts/deploy-infrastructure.sh
