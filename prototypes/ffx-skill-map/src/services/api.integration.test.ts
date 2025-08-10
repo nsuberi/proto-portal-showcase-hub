@@ -1,50 +1,11 @@
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
-import { spawn, ChildProcess } from 'child_process';
+import { describe, test, expect } from '@jest/globals';
 import fetch from 'node-fetch';
 
+// Integration tests assume API server is already running at localhost:3003
+// These tests should be run separately from unit tests
 describe('API Integration Tests - FFX Skill Map', () => {
-  let apiProcess: ChildProcess;
   const API_PORT = 3003;
   const API_URL = `http://localhost:${API_PORT}`;
-  
-  // Helper to wait for API server to be ready
-  const waitForServer = async (url: string, maxAttempts = 30): Promise<void> => {
-    for (let i = 0; i < maxAttempts; i++) {
-      try {
-        const response = await fetch(`${url}/health`);
-        if (response.ok) {
-          console.log('API server is ready');
-          return;
-        }
-      } catch (error) {
-        // Server not ready yet
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    throw new Error('API server failed to start');
-  };
-
-  beforeAll(async () => {
-    // Start the API server
-    console.log('Starting API server...');
-    apiProcess = spawn('npm', ['run', 'dev'], {
-      cwd: '../../../shared/api',
-      stdio: 'pipe',
-      shell: true
-    });
-
-    // Wait for server to be ready
-    await waitForServer(API_URL);
-  }, 60000); // 60 second timeout
-
-  afterAll(async () => {
-    // Stop the API server
-    if (apiProcess) {
-      console.log('Stopping API server...');
-      apiProcess.kill('SIGTERM');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-  });
 
   test('should successfully call skills and mentors recommendations endpoint', async () => {
     const requestData = {

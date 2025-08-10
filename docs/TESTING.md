@@ -170,7 +170,41 @@ To run all API integration tests with the API server:
 
 **Note:** Without a valid Claude API key, tests will verify mock mode functionality. With a valid API key, tests will demonstrate actual Claude API integration.
 
-## CI suggestions
-- Use `test:ci` in your pipeline for coverage
-- Consider adding Playwright for E2E flows across the portfolio and prototypes
-- Set up environment-specific API key management for CI/CD pipeline testing
+## Test Types and Separation
+
+### Unit Tests vs Integration Tests
+
+**Unit Tests:**
+- Test individual functions in isolation (e.g., `getApiUrl` function)
+- Run as part of `npm test` and in CI/CD
+- Do not require external services
+
+**Integration Tests:**
+- Test API endpoints and service communication
+- Located in `*.integration.test.ts` files
+- **Assume API server is already running** at `localhost:3003`
+- Should be run separately from unit tests
+
+### Running Integration Tests
+
+**Prerequisites:**
+1. Start the API server:
+   ```bash
+   cd shared/api
+   npm run dev
+   ```
+
+2. Run integration tests separately:
+   ```bash
+   # Run specific integration tests
+   npm test -- --testPathPattern="integration.test.ts"
+   
+   # Or run individual files
+   npm test src/services/api.integration.test.ts
+   ```
+
+## CI Pipeline Recommendations
+- Use `test:ci` for unit tests in CI/CD pipelines
+- Integration tests should be run in separate staging environments where API server is available
+- E2E tests with Playwright can test full user workflows
+- Set up environment-specific API key management for full integration testing
