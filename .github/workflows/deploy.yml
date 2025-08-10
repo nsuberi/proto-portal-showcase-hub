@@ -142,9 +142,7 @@ jobs:
         YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
         YARN_NODE_LINKER: node-modules
 
-    - name: Prepare workspaces for testing (ensure dev deps)
-      run: |
-        yarn workspaces focus -A
+    # Do not run `yarn workspaces focus` here; we need root devDependencies available
       
     - name: Get API Gateway URL from Terraform
       run: |
