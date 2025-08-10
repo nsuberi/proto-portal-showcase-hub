@@ -16,6 +16,13 @@ test.describe('Portfolio + Prototypes: end-to-end navigation', () => {
     await page.goto(root);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Explore the Future of Learning with AI');
 
+    // Prevent first-visit tutorial overlay in FFX from blocking interactions
+    await page.evaluate(() => {
+      try {
+        localStorage.setItem('skillMapTutorialSeen', '1');
+      } catch {}
+    });
+
     // FFX live demo via portfolio card
     const ffxCard = page.locator('text=Your Learning Adventure Map').first();
     await ffxCard.scrollIntoViewIfNeeded();
@@ -24,6 +31,12 @@ test.describe('Portfolio + Prototypes: end-to-end navigation', () => {
     // 2) FFX prototype heading
     await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Map of Mastery');
+
+    // If any tutorial/instructions overlay still appears, dismiss it
+    const skipButton = page.getByRole('button', { name: /Skip/i }).first();
+    if (await skipButton.count()) {
+      await skipButton.click();
+    }
 
     // Back to Portfolio (button or text)
     const backFFX = page.getByRole('button', { name: /Back to Portfolio/i }).first();
