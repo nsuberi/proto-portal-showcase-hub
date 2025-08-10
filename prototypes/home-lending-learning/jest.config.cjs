@@ -23,7 +23,7 @@ module.exports = {
   ],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
-    '<rootDir>/src/**/*.integration.test.(ts|tsx|js|jsx)'
+    '<rootDir>/src/.*\\.integration\\.test\\.(ts|tsx|js|jsx)$'
   ],
   collectCoverageFrom: [
     'src/**/*.(ts|tsx)',
