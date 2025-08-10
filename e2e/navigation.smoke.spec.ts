@@ -57,7 +57,7 @@ test.describe('Portfolio + Prototypes: end-to-end navigation', () => {
     // 4) Home Lending headers
     await page.waitForLoadState('networkidle');
     await expect(page.getByText(/Home Lending Learning/i).first()).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2 })).toContainText(/Home Lending Process Flow/i);
+    await expect(page.getByRole('heading', { level: 2, name: /Home Lending Process Flow/i })).toBeVisible();
 
     // Back to portfolio
     const backHL = page.getByRole('button', { name: /Back to Portfolio/i }).first();
