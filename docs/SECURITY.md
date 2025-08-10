@@ -65,7 +65,7 @@ Local development options:
 - Infrastructure via Terraform in `terraform/`
 - S3 + CloudFront for static site
 - API Gateway + Lambda for the secure API
-- See `DEPLOYMENT.md` for static site; see `api/README.md` for API details
+- See `DEVELOPMENT_AND_DEPLOYMENT.md` for deployment overview; see `api/README.md` for API details
 
 ## Troubleshooting
 - 401: invalid Claude API key configuration

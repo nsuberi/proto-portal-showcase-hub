@@ -59,3 +59,72 @@ Checklist:
 - Type-safe tokens and predictable utilities
 
 Prototype docs should explain how they import tokens and which overrides they use.
+
+## Token storage and Tailwind integration (analysis)
+
+### CSS custom properties (tokens)
+Tokens are exposed as CSS variables and consumed by Tailwind utilities and app CSS.
+
+Example structure and semantics:
+
+```css
+:root {
+  /* Semantic colors */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --primary: 263 70% 60%;
+  --primary-foreground: 0 0% 98%;
+
+  /* Extended tokens */
+  --gradient-primary: linear-gradient(135deg, hsl(263, 70%, 60%), hsl(280, 100%, 70%));
+  --shadow-glow: 0 0 40px hsl(263, 70%, 60% / 0.3);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+}
+```
+
+### Tailwind mapping
+The Tailwind base config maps CSS variables to utilities and extends with gradients, shadows, and more.
+
+```ts
+// tailwind.config.ts (derived from base config)
+export default {
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+      },
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-secondary': 'var(--gradient-secondary)',
+      },
+      boxShadow: {
+        glow: 'var(--shadow-glow)',
+        elegant: 'var(--shadow-elegant)',
+      },
+    }
+  }
+}
+```
+
+### Utility classes generated from tokens
+
+```css
+.bg-gradient-primary { background: var(--gradient-primary); }
+.shadow-glow { box-shadow: var(--shadow-glow) !important; }
+.transition-smooth { transition: var(--transition-smooth); }
+```
+
+## Benefits and recommendations
+
+- Consistent, semantic styling across apps; DRY by design
+- Dark mode support via variable overrides
+- Prototype identity via additive overrides, not wholesale replacement
+- Consider generating token docs and adding token validation in CI

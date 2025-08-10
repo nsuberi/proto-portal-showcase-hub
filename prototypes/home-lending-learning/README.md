@@ -1,6 +1,6 @@
 # Home Lending Learning Platform
 
-An interactive learning platform designed to help innovators understand the complex world of home lending. This prototype provides comprehensive educational tools including process flow maps, glossary browsing, and knowledge testing to master mortgage industry fundamentals.
+An interactive learning platform for mastering home lending fundamentals.
 
 ## Features
 
@@ -44,18 +44,11 @@ The platform is based on official documentation from:
 - **Underwriting**: Risk assessment, conditional approval, and loan decisions
 - **Closing Process**: Final approval, closing disclosure, and loan funding
 
-## Technical Architecture
+## Docs
 
-### Design System Integration
-Uses shared `@proto-portal/design-tokens` for consistent styling:
-- CSS imports: `@import "@proto-portal/design-tokens/css/tokens.css";` and `css/utilities.css`
-- Tailwind base: extends from `baseTailwindConfig` in `tailwind.config.ts`
-- Components: app-local, styled with token-backed Tailwind classes (`bg-primary`, `text-foreground`, `hover:shadow-glow`, responsive utilities)
+For details, including how this prototype uses the shared design tokens and API, see:
 
-### Shared Secure API
-- Development: `http://localhost:3003`
-- Production: API Gateway + Lambda endpoint (see root `docs/SECURITY.md` and `api/README.md`)
-- This prototype can consume the secure analysis API for assessment features; in dev, services can run in mock mode when no key is configured
+- `./docs/README.md`
 
 ### Data Structure
 - **Flow Map Nodes**: Process steps with connections and terminology links
@@ -75,10 +68,8 @@ Uses shared `@proto-portal/design-tokens` for consistent styling:
 ```bash
 cd prototypes/home-lending-learning
 npm install
-npm run dev
+npm run dev  # http://localhost:3002
 ```
-
-The application runs on port 3002 and integrates with the shared design system.
 
 ### Target Audience
 - **New Employees** in home lending companies

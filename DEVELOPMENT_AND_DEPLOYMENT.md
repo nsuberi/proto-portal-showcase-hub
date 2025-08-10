@@ -1,6 +1,8 @@
-# Development and Deployment Overview
+# Moved
 
-This guide describes the overall approach for building, testing, and deploying this multi-SPA portfolio project. It intentionally avoids references to specific file paths or implementation details and focuses on architecture, workflows, and best practices.
+See the combined guide under `/docs`:
+
+- docs/DEVELOPMENT_AND_DEPLOYMENT.md
 
 ## Environments at a glance
 

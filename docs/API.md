@@ -11,5 +11,4 @@ Endpoints and setup details are implemented in `api/`.
 
 Related docs:
 - Security and secrets: `./SECURITY.md`
-- Deployment: `./DEPLOYMENT.md`
-- Development: `./DEVELOPMENT.md`
+- Development & Deployment: `./DEVELOPMENT_AND_DEPLOYMENT.md`
