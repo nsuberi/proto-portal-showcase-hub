@@ -26,7 +26,7 @@ yarn dev:all
 # - Main portfolio (port 8080)
 # - FFX Skill Map (port 3001)
 # - Home Lending Learning (port 3002)
-# - Development proxy (port 8081)
+# - Development proxy (port 8082)
 # - API server (port 3003)
 
 # Or start services individually:
