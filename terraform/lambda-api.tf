@@ -58,7 +58,9 @@ data "archive_file" "ai_api_lambda_zip" {
     "README.md",
     "*.test.js",
     "node_modules/.cache",
-    "node_modules/nodemon"
+    "node_modules/nodemon",
+    "node_modules/.bin/eslint*",
+    "node_modules/@types/**"
   ]
 }
 
