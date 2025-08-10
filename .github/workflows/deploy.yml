@@ -131,20 +131,20 @@ jobs:
     - name: Install dependencies
       run: |
         yarn install --immutable
-        cd prototypes/ffx-skill-map
         npx playwright install --with-deps chromium
       
     - name: Get API Gateway URL from Terraform
       run: |
         cd terraform
+        terraform init -reconfigure -input=false
         echo "API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)" >> $GITHUB_ENV
         
     - name: Run integration tests against production (portfolio + prototypes)
       run: |
-        # Root-level E2E (portfolio navigation)
-        npx playwright test --config=playwright.e2e.config.js --project=chromium
-        # Prototype-specific E2E suites
+        # Use FFX workspace's Playwright to run root E2E config
         cd prototypes/ffx-skill-map
+        npx playwright test --config=../../playwright.e2e.config.js --project=chromium
+        # Prototype-specific E2E suites
         npx playwright test --project=chromium
       env:
         CI: true
