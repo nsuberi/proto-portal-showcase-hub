@@ -139,12 +139,16 @@ jobs:
         cd terraform
         echo "API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)" >> $GITHUB_ENV
         
-    - name: Run integration tests against production
+    - name: Run integration tests against production (portfolio + prototypes)
       run: |
+        # Root-level E2E (portfolio navigation)
+        npx playwright test --config=playwright.e2e.config.js --project=chromium
+        # Prototype-specific E2E suites
         cd prototypes/ffx-skill-map
         npx playwright test --project=chromium
       env:
         CI: true
+        PORTFOLIO_BASE_URL: https://d37oliokys9i7z.cloudfront.net/
         BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map/
         API_BASE_URL: ${{ env.API_GATEWAY_URL }}
         
