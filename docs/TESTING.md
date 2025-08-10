@@ -4,10 +4,11 @@
 
 This repository uses a pragmatic, app-local testing approach. Core business logic is unit-tested where it matters, and UI is validated through manual and E2E-style checks when appropriate.
 
-## Tools (planned)
-- Vitest: unit/integration test runner
+## Tools
+- Jest: unit/integration tests in workspaces
 - React Testing Library: component behavior
 - jsdom: browser-like DOM environment
+- Playwright: optional E2E for the FFX prototype
 
 ## Test Types
 
@@ -23,24 +24,40 @@ This repository uses a pragmatic, app-local testing approach. Core business logi
 - Validate token-driven classes (colors, gradients, shadows, transitions)
 - Validate responsive utilities (no overflow > 100vw)
 
-## Running tests (suggested scripts)
-Add to your `package.json` (root or per app):
+## Running tests
 
-```json
-{
-  "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:ci": "vitest run --coverage"
-  }
-}
-```
-
-Run tests:
+### Unit tests (FFX prototype)
 ```bash
+cd prototypes/ffx-skill-map
+npm install
 npm test
-npm run test:watch
 ```
+
+**Note:** You may see ts-jest warnings about `esModuleInterop`. These warnings don't affect test execution and all tests should pass.
+
+### Integration/E2E tests (FFX prototype)
+These tests use Playwright to drive the built dev server.
+
+Run locally:
+```bash
+cd prototypes/ffx-skill-map
+npm run test:e2e
+```
+
+**Prerequisites:**
+- Node.js 18.19 or higher is required for Playwright E2E tests
+- If you get a Node version error, you can use nvm to switch versions:
+  ```bash
+  nvm use v20.16.0  # or any version >= 18.19
+  # Or use nvm exec to run with a specific version:
+  nvm exec v20.16.0 npm run test:e2e
+  ```
+
+Notes:
+- The Playwright config will start the dev server on port 3001 if `BASE_URL` is not set.
+- If you see a port in use, start the app in another terminal: `npm run dev` and rerun the tests.
+- The E2E test performs a smoke test to ensure the app loads and renders the main heading
+- All tests should pass across Chromium, Firefox, and WebKit browsers
 
 ## Design token checks
 - Use Tailwind utilities backed by `@proto-portal/design-tokens`
@@ -54,14 +71,17 @@ npm run test:watch
   - `src/services/xp-logic.test.ts`
   - `src/services/enhancedMockData.test.ts`
   - `src/pages/SkillMap.utils.test.ts`
-- Skipped (historical): deep component tests had ES module transform issues; prefer Vitest/Playwright if reintroducing
+- Integration/E2E (Playwright): `e2e/xp-persistence.spec.ts`
 - Focus areas covered:
   - XP calculation and validation
   - localStorage persistence
-  - Recommendation logic
+  - Recommendation logic and UI persistence (E2E)
 
 ### Home Lending Learning
-- Add tests alongside components/services as they evolve. Follow the same Vitest setup and token checks described above.
+- Currently no tests implemented
+- Add tests alongside components/services as they evolve
+- Run tests with: `cd prototypes/home-lending-learning && npm test`
+- Follow the same Jest setup and token checks described above
 
 ## CI suggestions
 - Use `test:ci` in your pipeline for coverage
