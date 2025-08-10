@@ -58,6 +58,7 @@ Notes:
 - If you see a port in use, start the app in another terminal: `npm run dev` and rerun the tests.
 - The E2E test performs a smoke test to ensure the app loads and renders the main heading
 - All tests should pass across Chromium, Firefox, and WebKit browsers
+- **Best Practice**: Use role-based selectors (e.g., `getByRole`) instead of text selectors for elements with gradient or styled text, as they're more reliable across different environments
 
 ## Design token checks
 - Use Tailwind utilities backed by `@proto-portal/design-tokens`

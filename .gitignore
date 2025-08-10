@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+playwright-report/*
+
 # Environment variables
 **/.env
 
