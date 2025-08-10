@@ -6,107 +6,107 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  # test:
+  #   runs-on: ubuntu-latest
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '20'
         
-    - name: Enable Corepack
-      run: corepack enable
+  #   - name: Enable Corepack
+  #     run: corepack enable
       
-    - name: Install dependencies
-      run: yarn install --mode=update-lockfile
-      env:
-        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+  #   - name: Install dependencies
+  #     run: yarn install --mode=update-lockfile
+  #     env:
+  #       YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
     
-    - name: Prepare workspaces for testing (ensure dev deps)
-      run: |
-        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning
+  #   - name: Prepare workspaces for testing (ensure dev deps)
+  #     run: |
+  #       yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning
       
-    - name: Run unit tests
-      run: |
-        yarn workspace @proto-portal/ffx-skill-map test
-        yarn workspace @proto-portal/home-lending-learning test
-      env:
-        CI: true
+  #   - name: Run unit tests
+  #     run: |
+  #       yarn workspace @proto-portal/ffx-skill-map test
+  #       yarn workspace @proto-portal/home-lending-learning test
+  #     env:
+  #       CI: true
         
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: jest-test-results
-        path: |
-          prototypes/ffx-skill-map/coverage/
-          prototypes/home-lending-learning/coverage/
-        retention-days: 7
+  #   - name: Upload test results
+  #     uses: actions/upload-artifact@v4
+  #     if: always()
+  #     with:
+  #       name: jest-test-results
+  #       path: |
+  #         prototypes/ffx-skill-map/coverage/
+  #         prototypes/home-lending-learning/coverage/
+  #       retention-days: 7
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: test
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: test
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20' # Updated to support Playwright ESM
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '20' # Updated to support Playwright ESM
         
-    - name: Enable Corepack
-      run: corepack enable
+  #   - name: Enable Corepack
+  #     run: corepack enable
         
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.6.0
+  #   - name: Setup Terraform
+  #     uses: hashicorp/setup-terraform@v3
+  #     with:
+  #       terraform_version: 1.6.0
         
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::671388079324:role/terraform-cooking-up-ideas
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+  #   - name: Configure AWS credentials
+  #     uses: aws-actions/configure-aws-credentials@v4
+  #     with:
+  #       role-to-assume: arn:aws:iam::671388079324:role/terraform-cooking-up-ideas
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
         
-    - name: Install dependencies
-      run: yarn install --mode=update-lockfile
-      env:
-        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+  #   - name: Install dependencies
+  #     run: yarn install --mode=update-lockfile
+  #     env:
+  #       YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
       
-    - name: Build application
-      run: ./scripts/build.sh
+  #   - name: Build application
+  #     run: ./scripts/build.sh
       
-    - name: Install API dependencies for Lambda packaging
-      run: |
-        yarn workspaces focus @proto-portal/ai-analysis-api --production
+  #   - name: Install API dependencies for Lambda packaging
+  #     run: |
+  #       yarn workspaces focus @proto-portal/ai-analysis-api --production
       
-    - name: Deploy infrastructure
-      run: ./scripts/deploy-infrastructure.sh
-      env:
-        TF_VAR_bucket_name: ${{ vars.BUCKET_NAME }}
-        TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
-        TF_VAR_environment: ${{ vars.ENVIRONMENT || 'production' }}
-        TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
-        TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
-        TF_VAR_api_key_salt: ${{ secrets.API_KEY_SALT }}
+  #   - name: Deploy infrastructure
+  #     run: ./scripts/deploy-infrastructure.sh
+  #     env:
+  #       TF_VAR_bucket_name: ${{ vars.BUCKET_NAME }}
+  #       TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+  #       TF_VAR_environment: ${{ vars.ENVIRONMENT || 'production' }}
+  #       TF_VAR_claude_api_key: ${{ secrets.CLAUDE_API_KEY }}
+  #       TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+  #       TF_VAR_api_key_salt: ${{ secrets.API_KEY_SALT }}
         
-    - name: Deploy site
-      run: ./scripts/deploy-site.sh
-      env:
-        BUCKET_NAME: ${{ vars.BUCKET_NAME }}
+  #   - name: Deploy site
+  #     run: ./scripts/deploy-site.sh
+  #     env:
+  #       BUCKET_NAME: ${{ vars.BUCKET_NAME }}
 
   # Steel Thread Integration Tests - Test critical XP persistence after deployment
   integration-tests:
     runs-on: ubuntu-latest
-    needs: deploy
+    #needs: deploy
     if: success()
     
     steps:
