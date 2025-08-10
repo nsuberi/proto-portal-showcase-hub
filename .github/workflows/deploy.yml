@@ -129,9 +129,11 @@ jobs:
     - name: Run integration tests against production
       run: |
         cd prototypes/ffx-skill-map
-        BASE_URL=https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map API_BASE_URL=$API_GATEWAY_URL npx playwright test --project=chromium
+        npx playwright test --project=chromium
       env:
         CI: true
+        BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map/
+        API_BASE_URL: ${{ env.API_GATEWAY_URL }}
         
     - name: Upload test results
       uses: actions/upload-artifact@v4
