@@ -1,8 +1,6 @@
 # Documentation
 
-- Architecture: `./ARCHITECTURE.md`
-- Development: `./DEVELOPMENT.md`
-- Deployment: `./DEPLOYMENT.md`
+- Development & Deployment (combined): `./DEVELOPMENT_AND_DEPLOYMENT.md`
 - Security: `./SECURITY.md`
 - Testing: `./TESTING.md`
 - Design Tokens & Responsive: `./DESIGN_TOKENS.md`

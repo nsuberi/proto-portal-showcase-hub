@@ -1,6 +1,6 @@
 # Final Fantasy X Skill Map Prototype
 
-A graph-based skill development system inspired by Final Fantasy X's Sphere Grid. This prototype demonstrates how Neo4j can be used to create an interactive skill mapping system for employee development and career planning.
+A graph-based skill development system inspired by Final Fantasy X's Sphere Grid.
 
 ## Features
 
@@ -29,39 +29,18 @@ A graph-based skill development system inspired by Final Fantasy X's Sphere Grid
 - **Skill Category Distribution** with charts and statistics
 - **Learning Path Visualization** showing prerequisites and dependencies
 
-## Tech Stack
+## Docs
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Design Tokens**: Shared `@proto-portal/design-tokens` (colors, gradients, shadows, responsive utilities)
-- **UI Components**: App-local components styled with Tailwind utilities backed by shared tokens
-- **Data**: Mock Neo4j service (browser-compatible)
-- **State Management**: TanStack Query (React Query)
-- **Routing**: React Router DOM
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Database (Optional)**: Neo4j 5.15 Community Edition
+For full prototype documentation, including how it uses the shared design tokens and API, see:
+
+- `./docs/README.md`
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 18+ and npm
-- Git
-
-### 1. Clone and Setup
 ```bash
-# Navigate to the prototype directory
 cd prototypes/ffx-skill-map
-
-# Install dependencies
 npm install
-```
-
-### 2. Start the Application
-```bash
-# Start the development server
-npm run dev
-
-# Open http://localhost:3001
+npm run dev   # http://localhost:3001
 ```
 ## Design Tokens & Shared API Usage
 
@@ -182,16 +161,7 @@ High-level master abilities requiring significant expertise
 
 ## Development
 
-### Project Structure
-```
-src/
-├── components/          # Reusable UI components
-├── pages/              # Main application pages
-├── services/           # Neo4j service layer
-├── types/              # TypeScript type definitions
-├── data/               # Quiz questions and static data
-└── hooks/              # Custom React hooks
-```
+See prototype docs and root docs for architecture, development, and deployment guidance.
 
 ### Key Files
 - `src/components/ui/`: Custom UI components (Button, Card, etc.)

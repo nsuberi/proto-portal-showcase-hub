@@ -379,8 +379,7 @@ git push origin main
 ## 📚 Documentation
 
 - **[Docs Index](docs/README.md)**
-- **[Development Guide](docs/DEVELOPMENT.md)**
-- **[Deployment Guide](docs/DEPLOYMENT.md)**
+- **[Development & Deployment](docs/DEVELOPMENT_AND_DEPLOYMENT.md)**
 - **[Security Guide](docs/SECURITY.md)**
 - **[Testing Guide](docs/TESTING.md)**
 - **[Design Tokens & Responsive](docs/DESIGN_TOKENS.md)**
