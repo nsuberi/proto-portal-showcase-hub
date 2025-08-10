@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Home Lending Learning - Claude API Integration', () => {
-  const API_BASE_URL = process.env.BASE_URL || 'http://localhost:3002';
+  // Use dedicated API_BASE_URL or fall back to local development
+  const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3003';
   
   // Test data for home lending assessment API calls
   const mockHomeLendingData = {
