@@ -59,6 +59,12 @@ test.describe('Portfolio + Prototypes: end-to-end navigation', () => {
     await expect(page.getByText(/Home Lending Learning/i).first()).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: /Home Lending Process Flow/i })).toBeVisible();
 
+    // Dismiss overlays if present
+    const acceptLegal = page.getByRole('button', { name: /I Understand and Accept/i }).first();
+    if (await acceptLegal.count()) {
+      await acceptLegal.click();
+    }
+
     // Back to portfolio
     const backHL = page.getByRole('button', { name: /Back to Portfolio/i }).first();
     if (await backHL.count()) {
