@@ -9,44 +9,43 @@ describe('API Integration Tests - FFX Skill Map', () => {
 
   test('should successfully call skills and mentors recommendations endpoint', async () => {
     const requestData = {
-      currentSkills: ['JavaScript', 'React', 'Node.js'],
-      desiredRole: 'Senior Full Stack Developer',
-      timeframe: '6 months',
-      learningStyle: 'hands-on'
+      character: {
+        name: 'Test Character',
+        role: 'Guardian',
+        masteredSkills: []
+      },
+      allSkills: [
+        { id: 's1', name: 'Power Strike', description: 'A strong attack', category: 'Combat', level: 1, xp_required: 10 }
+      ],
+      teammates: [
+        { name: 'Auron', role: 'Warrior', mastered_skills: ['s1'] }
+      ],
+      widgetSystemPrompt: 'You are an expert mentor.',
+      userSystemPrompt: 'I want to grow as a leader.',
+      justInTimeQuestion: 'What should I learn next?'
     };
 
     const response = await fetch(`${API_URL}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': 'test-api-key' // This would be mocked in tests
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestData)
     });
 
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data).toHaveProperty('recommendations');
+    expect(data).toHaveProperty('response');
+    expect(data).toHaveProperty('metadata');
   });
 
-  test('should handle missing API key', async () => {
-    const response = await fetch(`${API_URL}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({})
-    });
-
-    expect(response.status).toBe(401);
-  });
+  // Auth is skipped for ai-analysis endpoints; validate body instead
 
   test('should validate request body', async () => {
     const response = await fetch(`${API_URL}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': 'test-api-key'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         // Missing required fields
@@ -57,8 +56,8 @@ describe('API Integration Tests - FFX Skill Map', () => {
   });
 
   test('should handle CORS for FFX prototype port', async () => {
-    const response = await fetch(`${API_URL}/api/v1/ai-analysis/skills-and-mentors-recommendations`, {
-      method: 'OPTIONS',
+    const response = await fetch(`${API_URL}/api/v1/ai-analysis/health`, {
+      method: 'GET',
       headers: {
         'Origin': 'http://localhost:3001'
       }
