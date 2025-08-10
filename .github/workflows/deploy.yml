@@ -22,7 +22,7 @@ jobs:
       run: corepack enable
       
     - name: Install dependencies
-      run: yarn install --immutable
+      run: yarn install
       
     - name: Run unit tests
       run: |
@@ -73,7 +73,7 @@ jobs:
         aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
         
     - name: Install dependencies
-      run: yarn install --immutable
+      run: yarn install
       
     - name: Build application
       run: ./scripts/build.sh
