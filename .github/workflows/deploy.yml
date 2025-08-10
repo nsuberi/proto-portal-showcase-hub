@@ -80,7 +80,7 @@ jobs:
       
     - name: Install API dependencies
       run: |
-        yarn workspace @proto-portal/ai-analysis-api install --production
+        yarn workspaces focus @proto-portal/ai-analysis-api --production
       
     - name: Deploy infrastructure
       run: ./scripts/deploy-infrastructure.sh
