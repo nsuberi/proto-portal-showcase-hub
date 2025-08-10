@@ -128,9 +128,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
-    - name: Install dependencies
+    - name: Install dependencies (update lockfile allowed)
       run: |
-        yarn install --immutable
+        yarn install
         npx playwright install --with-deps chromium
       
     - name: Get API Gateway URL from Terraform
