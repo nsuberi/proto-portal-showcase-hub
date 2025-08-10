@@ -137,7 +137,7 @@ jobs:
     - name: Install dependencies (update lockfile allowed)
       run: |
         yarn install --mode=update-lockfile
-        npx playwright install --with-deps chromium
+        yarn playwright install --with-deps chromium
       env:
         YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
       
@@ -147,30 +147,34 @@ jobs:
         terraform init -reconfigure -input=false
         echo "API_GATEWAY_URL=$(terraform output -raw ai_api_gateway_url)" >> $GITHUB_ENV
         
-    - name: Run integration tests against production (portfolio + prototypes)
+    - name: Run root E2E using root workspace Playwright
       run: |
-        # Run root E2E using root workspace Playwright
-        npx playwright test --config=playwright.e2e.config.js
-        # Prototype-specific E2E suites using root workspace Playwright
-        npx playwright test --config=prototypes/ffx-skill-map/playwright.config.js --project=chromium
+        yarn playwright test --config=playwright.e2e.config.js
       env:
         CI: true
         PORTFOLIO_BASE_URL: https://d37oliokys9i7z.cloudfront.net/
-        BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map/
         API_BASE_URL: ${{ env.API_GATEWAY_URL }}
-        
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report
-        path: prototypes/ffx-skill-map/playwright-report/
-        retention-days: 7
-    
+
     - name: Upload root E2E report
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report-root
+        path: playwright-report/
+        retention-days: 7
+
+    - name: Run FFX prototype E2E using root workspace Playwright
+      run: |
+        yarn playwright test --config=prototypes/ffx-skill-map/playwright.config.js --project=chromium
+      env:
+        CI: true
+        BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/ffx-skill-map/
+        API_BASE_URL: ${{ env.API_GATEWAY_URL }}
+
+    - name: Upload FFX E2E report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-ffx
         path: playwright-report/
         retention-days: 7
