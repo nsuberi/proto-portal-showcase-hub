@@ -80,7 +80,7 @@ jobs:
       
     - name: Install API dependencies
       run: |
-        cd api
+        cd shared/api
         npm ci --only=production
       
     - name: Deploy infrastructure
