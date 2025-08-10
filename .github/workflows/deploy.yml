@@ -28,10 +28,8 @@ jobs:
       
     - name: Run unit tests
       run: |
-        cd prototypes/ffx-skill-map
-        npm test
-        cd ../home-lending-learning
-        npm test
+        yarn workspace @proto-portal/ffx-skill-map test
+        yarn workspace @proto-portal/home-lending-learning test
       env:
         CI: true
         
