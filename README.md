@@ -131,7 +131,7 @@ yarn dev:ffx
 #### API Server (for AI analysis)
 ```bash
 # Start the secure API proxy
-cd api
+cd shared/api
 npm install
 npm run dev  # runs on http://localhost:3003
 

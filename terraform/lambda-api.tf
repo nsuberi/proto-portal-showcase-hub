@@ -50,7 +50,7 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
 data "archive_file" "ai_api_lambda_zip" {
   type        = "zip"
   output_path = "ai-api-lambda.zip"
-  source_dir  = "../api"
+  source_dir  = "../shared/api"
   
   excludes = [
     ".env",

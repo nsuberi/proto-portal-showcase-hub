@@ -16,7 +16,7 @@
     "dev:home-lending": "cd prototypes/home-lending-learning && npm run dev",
     "build:home-lending": "cd prototypes/home-lending-learning && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
-    "dev:all": "concurrently --names \"MAIN,FFX,HOME,PROXY,API\" --prefix-colors \"blue,green,cyan,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:proxy\" \"cd api && npm run dev\"",
+    "dev:all": "concurrently --names \"MAIN,FFX,HOME,PROXY,API\" --prefix-colors \"blue,green,cyan,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:proxy\" \"cd shared/api && npm run dev\"",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
     "test": "echo \"No tests configured\"",
@@ -105,7 +105,8 @@
   "workspaces": [
     "prototypes/ffx-skill-map",
     "prototypes/home-lending-learning",
-    "shared/design-tokens"
+    "shared/design-tokens",
+    "shared/api"
   ],
   "packageManager": "yarn@4.9.2"
 }

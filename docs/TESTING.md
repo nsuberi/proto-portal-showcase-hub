@@ -59,6 +59,7 @@ Notes:
 - The E2E test performs a smoke test to ensure the app loads and renders the main heading
 - All tests should pass across Chromium, Firefox, and WebKit browsers
 - **Best Practice**: Use role-based selectors (e.g., `getByRole`) instead of text selectors for elements with gradient or styled text, as they're more reliable across different environments
+- **Important**: E2E tests must handle different base URLs between local dev and CI/production environments. The test checks if the baseURL already includes the prototype path and navigates accordingly
 
 ## Design token checks
 - Use Tailwind utilities backed by `@proto-portal/design-tokens`
@@ -84,6 +85,92 @@ Notes:
 - Run tests with: `cd prototypes/home-lending-learning && npm test`
 - Follow the same Jest setup and token checks described above
 
+## API Integration Testing
+
+### Claude API E2E Tests
+Both prototypes now include comprehensive E2E tests that showcase Claude API integration:
+
+#### FFX Skill Map API Tests
+```bash
+cd prototypes/ffx-skill-map
+npm run test:e2e -- e2e/api-claude-integration.spec.ts
+```
+
+**Test Coverage:**
+- API key validation and authentication
+- Skill recommendation analysis with Claude
+- Just-in-time learning recommendations
+- Rate limiting and error handling
+- Environment configuration validation
+
+#### Home Lending Learning API Tests  
+```bash
+cd prototypes/home-lending-learning
+npm run test:e2e -- e2e/api-claude-integration.spec.ts
+```
+
+**Test Coverage:**
+- Home lending term assessment with Claude
+- Different user response quality handling (poor, good, excellent)
+- Multiple learning contexts and difficulty levels
+- Input validation and length limits
+- Assessment comprehension level accuracy
+
+### Environment Configuration Testing
+
+#### Local Development (.env file)
+Create `shared/api/.env` based on `.env.example`:
+```bash
+CLAUDE_API_KEY=sk-ant-your-api-key-here
+AWS_SECRETS_ENABLED=false
+NODE_ENV=development
+```
+
+#### Production (AWS Secrets Manager)
+```bash
+AWS_SECRETS_ENABLED=true
+CLAUDE_SECRET_NAME=prod/proto-portal/claude-api-key
+AWS_REGION=us-east-1
+NODE_ENV=production
+```
+
+#### Mock Mode (No API Key)
+```bash
+# Don't set CLAUDE_API_KEY
+AWS_SECRETS_ENABLED=false
+NODE_ENV=development
+```
+
+**Environment Tests:**
+- API configuration validation
+- CORS policy testing
+- Rate limiting configuration
+- Mock mode fallback verification
+
+### Running Full Integration Tests
+To run all API integration tests with the API server:
+
+1. **Start the API server:**
+   ```bash
+   cd shared/api
+   cp .env.example .env  # Add your CLAUDE_API_KEY
+   npm run dev
+   ```
+
+2. **Run prototype E2E tests:**
+   ```bash
+   # FFX Skill Map
+   cd prototypes/ffx-skill-map
+   npm run test:e2e -- e2e/api-claude-integration.spec.ts
+   
+   # Home Lending Learning
+   cd prototypes/home-lending-learning  
+   npm run test:e2e -- e2e/api-claude-integration.spec.ts
+   ```
+
+**Note:** Without a valid Claude API key, tests will verify mock mode functionality. With a valid API key, tests will demonstrate actual Claude API integration.
+
 ## CI suggestions
 - Use `test:ci` in your pipeline for coverage
 - Consider adding Playwright for E2E flows across the portfolio and prototypes
+- Set up environment-specific API key management for CI/CD pipeline testing
