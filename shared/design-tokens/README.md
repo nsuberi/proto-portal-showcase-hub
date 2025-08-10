@@ -1,5 +1,7 @@
 # Proto Portal Design Tokens
 
+Canonical documentation: `../../docs/DESIGN_TOKENS.md`
+
 A centralized design token system for the Proto Portal Showcase Hub that eliminates DRY violations and provides consistent styling across all applications and prototypes.
 
 ## 🎯 Problem Solved
