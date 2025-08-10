@@ -196,12 +196,16 @@ To run all API integration tests with the API server:
 
 2. Run integration tests separately:
    ```bash
-   # Run specific integration tests
-   npm test -- --testPathPattern="integration.test.ts"
+   # From FFX prototype
+   cd prototypes/ffx-skill-map
+   npm run test:integration
    
-   # Or run individual files
-   npm test src/services/api.integration.test.ts
+   # From Home Lending prototype  
+   cd prototypes/home-lending-learning
+   npm run test:integration
    ```
+
+**Note:** Integration tests are excluded from the default `npm test` command and CI/CD runs to prevent failures when the API server is not available.
 
 ## CI Pipeline Recommendations
 - Use `test:ci` for unit tests in CI/CD pipelines
