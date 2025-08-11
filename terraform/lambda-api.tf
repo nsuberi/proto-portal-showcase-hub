@@ -156,6 +156,7 @@ resource "aws_api_gateway_method" "proxy_method" {
   }
 }
 
+
 # API Gateway Integration with Lambda
 resource "aws_api_gateway_integration" "lambda_integration" {
   rest_api_id = aws_api_gateway_rest_api.ai_api_gateway.id
@@ -212,7 +213,7 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
   status_code = aws_api_gateway_method_response.options_response.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Client-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT'"
     "method.response.header.Access-Control-Allow-Origin"  = "'https://portfolio.cookinupideas.com'"
   }

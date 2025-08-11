@@ -38,8 +38,7 @@ export async function askDocumentationQuestion(question: string): Promise<Docume
     const response = await fetch(`${API_BASE_URL}/documentation/ask`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': import.meta.env.VITE_API_KEY || ''
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ question })
     })
