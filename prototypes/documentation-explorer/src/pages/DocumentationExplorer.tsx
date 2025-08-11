@@ -126,67 +126,69 @@ function DocumentationExplorer() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 max-w-4xl mx-auto pt-20">
+      <div className="relative z-10 max-w-4xl mx-auto pt-8 sm:pt-16 lg:pt-20 px-4">
         <Card className="bg-white/10 dark:bg-black/10 backdrop-blur-sm shadow-2xl border border-white/30 dark:border-white/20 ring-1 ring-blue-200/30 dark:ring-blue-400/20">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-2xl sm:text-3xl text-center">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-xl sm:text-2xl lg:text-3xl text-center">
               Ask About the Codebase
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             {/* Search Input */}
             <div className="space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <textarea
-                  placeholder="Ask a question about the codebase and we'll return relevant files to help you get started..."
+                  placeholder="Ask a question about the codebase and we'll return relevant files..."
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full pl-10 pr-4 py-3 text-base min-h-[100px] max-h-[200px] resize-y rounded-lg border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base min-h-[80px] sm:min-h-[100px] max-h-[150px] sm:max-h-[200px] resize-y rounded-lg border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={isLoading}
                 />
               </div>
               
-              <div className="flex justify-between items-center gap-4">
+              {/* Mobile: Stack vertically, Desktop: Side by side */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                 {/* Search limitation notice */}
-                <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 rounded-md px-3 py-2 flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 sm:flex-1">
                   <div className="flex items-start gap-2">
                     <div className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
                     <span>
-                      <strong>Note:</strong> Search results currently analyze file names and paths from the GitHub repository. 
-                      File content analysis is not yet included in the search scope.
+                      <strong>Note:</strong> Search analyzes file names/paths only. 
+                      <span className="hidden sm:inline">File content analysis is not yet included in the search scope.</span>
                     </span>
                   </div>
                 </div>
                 
-                <div className="flex gap-3 flex-shrink-0">
+                <div className="flex gap-2 sm:gap-3 sm:flex-shrink-0">
                 {response && (
                   <Button
                     onClick={handleClearRecommendations}
                     variant="outline"
-                    size="lg"
+                    size="sm"
+                    className="sm:size-lg"
                     disabled={isLoading}
                   >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Clear
+                    <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">Clear</span>
                   </Button>
                 )}
                 <Button
                   onClick={handleAskQuestion}
                   disabled={isLoading}
-                  size="lg"
-                  className="px-12"
+                  size="sm"
+                  className="sm:size-lg px-4 sm:px-12"
                 >
                   {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <Brain className="w-4 h-4 animate-pulse" />
-                      <span>Thinking...</span>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Brain className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
+                      <span className="text-xs sm:text-sm">Thinking...</span>
                     </div>
                   ) : (
                     <>
-                      <Search className="w-4 h-4 mr-2" />
-                      Search
+                      <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Search</span>
                     </>
                   )}
                 </Button>
