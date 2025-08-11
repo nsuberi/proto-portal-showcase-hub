@@ -24,7 +24,7 @@ export interface DocumentData {
 export async function askDocumentationQuestion(question: string): Promise<DocumentationAnalysis> {
   try {
     // Mock implementation that uses fetch
-    const response = await fetch('http://localhost:3003/api/documentation/ask', {
+    const response = await fetch('http://localhost:3003/api/v1/documentation/ask', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
