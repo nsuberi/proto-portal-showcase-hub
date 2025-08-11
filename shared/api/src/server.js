@@ -89,7 +89,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/v1', aiAnalysisRoutes);
-app.use('/api/documentation', documentationRoutes);
+app.use('/api/v1', documentationRoutes);
 
 // Error handling
 app.use(notFoundHandler);

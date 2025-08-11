@@ -35,7 +35,7 @@ export interface DocumentationAnalysis {
 export async function askDocumentationQuestion(question: string): Promise<DocumentationAnalysis> {
   try {
     // Try the API first for Claude analysis
-    const response = await fetch(`${API_BASE_URL}/documentation/ask`, {
+    const response = await fetch(`${API_BASE_URL}/v1/documentation/ask`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ interface DocumentationFilesResponse {
  */
 export async function fetchDocumentationFiles(): Promise<{ documents: DocumentData[], codebaseLinks: Record<string, string> }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/documentation/files`)
+    const response = await fetch(`${API_BASE_URL}/v1/documentation/files`)
     if (!response.ok) {
       throw new Error('Failed to fetch documentation files')
     }
@@ -110,7 +110,7 @@ export async function fetchDocumentationFiles(): Promise<{ documents: DocumentDa
  */
 export async function getDocumentationMetadata(filename: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/documentation/metadata/${filename}`)
+    const response = await fetch(`${API_BASE_URL}/v1/documentation/metadata/${filename}`)
     if (!response.ok) {
       throw new Error('Failed to fetch metadata')
     }
