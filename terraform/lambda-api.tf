@@ -84,6 +84,7 @@ resource "aws_lambda_function" "ai_api" {
       JWT_SECRET            = var.jwt_secret
       API_KEY_SALT          = var.api_key_salt
       API_GATEWAY_ENFORCEMENT = var.api_gateway_enforcement ? "true" : "false"
+      TEMP_ALLOW_NO_CLIENT_KEY = "true"
       AWS_SECRETS_ENABLED   = "true"
       CLAUDE_SECRET_NAME    = "prod/proto-portal/claude-api-key"
       CLAUDE_API_URL        = var.claude_api_url
@@ -147,7 +148,8 @@ resource "aws_api_gateway_method" "proxy_method" {
   resource_id   = aws_api_gateway_resource.proxy.id
   http_method   = "ANY"
   authorization = "NONE"
-  api_key_required = true
+  # Temporarily disabled to allow prototypes to call without client key
+  api_key_required = false
 
   request_parameters = {
     "method.request.path.proxy" = true

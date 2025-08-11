@@ -19,6 +19,12 @@ export function authMiddleware(req, res, next) {
   // When API Gateway API keys are enabled, API Gateway consumes `X-API-Key`.
   // To avoid header collision, read client key from Authorization: Bearer or X-Client-Key.
   const preferSeparateClientHeader = process.env.API_GATEWAY_ENFORCEMENT === 'true';
+
+  // Temporary bypass toggle to allow prototypes while API GW key is disabled
+  if (process.env.TEMP_ALLOW_NO_CLIENT_KEY === 'true') {
+    logger.info('TEMP_ALLOW_NO_CLIENT_KEY enabled: bypassing client key check', { requestId: req.requestId });
+    return next();
+  }
   const apiKey = preferSeparateClientHeader
     ? (req.headers['authorization']?.replace('Bearer ', '') || req.headers['x-client-key'])
     : (req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '') || req.headers['x-client-key']);
