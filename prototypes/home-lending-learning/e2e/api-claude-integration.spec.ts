@@ -99,7 +99,7 @@ test.describe('Home Lending Learning - Claude API Integration', () => {
     }
 
     await page.goto(portfolioBase);
-    const result = await page.evaluate(async (apiUrl, key) => {
+    const result = await page.evaluate(async ({ apiUrl, key }) => {
       const res = await fetch(`${apiUrl}/api/v1/ai-analysis/health`, {
         method: 'GET',
         headers: {
@@ -108,7 +108,7 @@ test.describe('Home Lending Learning - Claude API Integration', () => {
         }
       });
       return { ok: res.ok, status: res.status, text: await res.text(), cors: res.type };
-    }, apiBase, process.env.CLAUDE_API_KEY || '');
+    }, { apiUrl: apiBase, key: process.env.CLAUDE_API_KEY || '' });
 
     expect(result.ok, `CORS/health failed ${result.status}: ${result.text}`).toBe(true);
   });
