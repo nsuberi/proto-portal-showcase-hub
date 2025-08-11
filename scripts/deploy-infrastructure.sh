@@ -9,13 +9,13 @@ echo "🏗️ Deploying AWS infrastructure with Terraform..."
 # Setup environment
 echo "🔧 Initializing Terraform..."
 cd terraform
-terraform init
+terraform init -lock-timeout=5m
 
 echo "📋 Planning infrastructure changes..."
-terraform plan
+terraform plan -lock-timeout=5m
 
 echo "🚀 Applying infrastructure changes..."
-terraform apply -auto-approve
+terraform apply -auto-approve -lock-timeout=5m
 
 echo "📊 Deployment outputs:"
 terraform output
