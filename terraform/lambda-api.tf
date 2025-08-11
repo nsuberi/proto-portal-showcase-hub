@@ -48,6 +48,10 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
 
 # Copy docs folder to shared/api before zipping
 resource "null_resource" "copy_docs" {
+  triggers = {
+    always_run = timestamp()
+  }
+  
   provisioner "local-exec" {
     command = <<-EOT
       rm -rf ../shared/api/docs
