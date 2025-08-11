@@ -49,7 +49,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    #needs: test
+    needs: test
     
     steps:
     - name: Checkout code
@@ -99,6 +99,7 @@ jobs:
         TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
         TF_VAR_api_key_salt: ${{ secrets.API_KEY_SALT }}
         TF_VAR_api_gateway_enforcement: true
+        TF_VAR_api_gateway_api_key_value: ${{ secrets.API_GATEWAY_API_KEY }}
         
     - name: Deploy site
       run: ./scripts/deploy-site.sh
