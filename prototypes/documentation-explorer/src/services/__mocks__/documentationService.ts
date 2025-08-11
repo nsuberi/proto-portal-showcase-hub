@@ -27,8 +27,7 @@ export async function askDocumentationQuestion(question: string): Promise<Docume
     const response = await fetch('http://localhost:3003/api/documentation/ask', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': 'test-key'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ question })
     })
