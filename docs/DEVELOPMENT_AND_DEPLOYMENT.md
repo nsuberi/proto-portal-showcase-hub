@@ -265,10 +265,115 @@ import { baseTailwindConfig } from "@proto-portal/design-tokens";
 // Bundled/built during production builds
 ```
 
-### Adding a new prototype (high level)
-- Create `prototypes/<name>` workspace.
-- Import shared tokens in CSS and Tailwind; add overrides as needed.
-- Include in the unified build and ensure subpath routing works locally and in prod.
+### Adding a New Prototype
+
+When implementing a new prototype, several components need to be updated to ensure proper local development and production deployment:
+
+#### 1. Create the Prototype Workspace
+```bash
+# Create the new prototype directory
+mkdir prototypes/new-prototype-name
+cd prototypes/new-prototype-name
+
+# Initialize with package.json, src/, etc.
+# Import shared design tokens as needed
+```
+
+#### 2. Update Root Workspace Configuration
+Add the new prototype to the root `package.json`:
+```json
+{
+  "workspaces": [
+    "prototypes/ffx-skill-map",
+    "prototypes/home-lending-learning",
+    "prototypes/documentation-explorer",
+    "prototypes/new-prototype-name",  // Add this line
+    "shared/design-tokens",
+    "shared/api"
+  ]
+}
+```
+
+#### 3. Update Local Development Proxy
+Update `scripts/dev-proxy.js` to include the new prototype:
+```javascript
+const prototypes = [
+  { name: 'ffx-skill-map', port: 3001 },
+  { name: 'home-lending-learning', port: 3002 },
+  { name: 'documentation-explorer', port: 3003 },
+  { name: 'new-prototype-name', port: 3005 }  // Add this line
+];
+```
+
+#### 4. Update Build Script
+Update `scripts/build.sh` to build and copy the new prototype:
+```bash
+# Build New Prototype
+echo "🔧 Building New Prototype..."
+yarn workspace @proto-portal/new-prototype-name build
+
+# Copy New Prototype build to main dist directory
+echo "📋 Copying New Prototype build to main dist..."
+mkdir -p dist/prototypes/new-prototype-name
+cp -r prototypes/new-prototype-name/dist/* dist/prototypes/new-prototype-name/
+```
+
+#### 5. Update CloudFront Configuration
+**Critical:** Update the CloudFront function in `terraform/main.tf` to include the new prototype:
+
+```javascript
+// In the CloudFront function viewer-request code:
+if (prototypeName === 'ffx-skill-map' || 
+    prototypeName === 'home-lending-learning' || 
+    prototypeName === 'documentation-explorer' ||
+    prototypeName === 'new-prototype-name') {  // Add this condition
+    request.uri = '/prototypes/' + prototypeName + '/index.html';
+}
+```
+
+#### 6. Add CloudFront Cache Behavior
+Add a cache behavior for the new prototype in `terraform/main.tf`:
+```hcl
+# New Prototype cache behavior
+ordered_cache_behavior {
+  path_pattern           = "/prototypes/new-prototype-name/*"
+  allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+  cached_methods         = ["GET", "HEAD"]
+  target_origin_id       = "S3-${var.bucket_name}"
+  compress               = true
+  viewer_protocol_policy = "redirect-to-https"
+  
+  function_association {
+    event_type   = "viewer-request"
+    function_arn = aws_cloudfront_function.prototype_router.arn
+  }
+}
+```
+
+#### 7. Add Development Scripts
+Update root `package.json` with development scripts:
+```json
+{
+  "scripts": {
+    "dev:new-prototype": "yarn workspace @proto-portal/new-prototype-name dev",
+    "build:new-prototype": "yarn workspace @proto-portal/new-prototype-name build"
+  }
+}
+```
+
+#### 8. Update Portfolio Links
+Add the new prototype to the main portfolio's prototype list in `src/components/Portfolio.tsx`.
+
+**Important Notes:**
+- The CloudFront function update is critical for production routing
+- Cache behaviors ensure proper CDN caching for the new prototype
+- Local proxy configuration enables the unified development experience
+- Build script updates ensure the prototype is included in production builds
+
+**Testing Checklist:**
+- [ ] Local development: `yarn dev:all` serves the new prototype
+- [ ] Build process: `yarn build` includes the new prototype in `dist/`
+- [ ] Production routing: CloudFront correctly routes `/prototypes/new-prototype-name/` requests
 
 Related docs:
 - Security and secrets: `./SECURITY.md`
