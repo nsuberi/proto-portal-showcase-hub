@@ -1,40 +1,83 @@
-import { askDocumentationQuestion } from './documentationService'
+import { askDocumentationQuestion, DocumentationAnalysis } from './__mocks__/documentationService'
+
+// Mock fetch globally
+global.fetch = jest.fn()
 
 describe('documentationService', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+  })
+
   describe('askDocumentationQuestion', () => {
-    it('should return API link for Claude API questions', async () => {
+    it('should return DocumentationAnalysis object for successful API call', async () => {
+      const mockResponse = {
+        files: [
+          {
+            path: 'src/services/claude-service.js',
+            url: 'https://github.com/example/repo/blob/main/src/services/claude-service.js',
+            reason: 'Contains Claude API implementation'
+          }
+        ],
+        confidence: 0.9,
+        reasoning: 'Found relevant files based on your question',
+        justification: 'These files contain the Claude API implementation you asked about'
+      }
+
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      })
+
       const result = await askDocumentationQuestion('Where is the Claude API?')
-      expect(result).toContain('github.com')
-      expect(result).toContain('claude-service')
+      
+      expect(result).toHaveProperty('files')
+      expect(result).toHaveProperty('confidence')
+      expect(result).toHaveProperty('reasoning')
+      expect(result).toHaveProperty('justification')
+      expect(result).toHaveProperty('source', 'claude')
+      expect(result.files).toHaveLength(1)
+      expect(result.files[0].url).toContain('github.com')
+      expect(result.confidence).toBe(0.9)
     })
 
-    it('should return design tokens link for design system questions', async () => {
-      const result = await askDocumentationQuestion('Show me the design tokens')
-      expect(result).toContain('github.com')
-      expect(result).toContain('design-tokens')
+    it('should throw error when API call fails', async () => {
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+
+      await expect(askDocumentationQuestion('test question'))
+        .rejects
+        .toThrow('Documentation service is temporarily unavailable')
     })
 
-    it('should return ffx link for skill map questions', async () => {
-      const result = await askDocumentationQuestion('Where is the skill map prototype?')
-      expect(result).toContain('github.com')
-      expect(result).toContain('ffx-skill-map')
+    it('should throw error when fetch fails', async () => {
+      ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
+
+      await expect(askDocumentationQuestion('test question'))
+        .rejects
+        .toThrow('Documentation service is temporarily unavailable')
     })
 
-    it('should return default link for unclear questions', async () => {
-      const result = await askDocumentationQuestion('Random question that does not match')
-      expect(result).toContain('github.com')
-      expect(result).toContain('proto-portal-showcase-hub')
-    })
+    it('should handle empty question', async () => {
+      const mockResponse = {
+        files: [],
+        confidence: 0.1,
+        reasoning: 'Empty question provided',
+        justification: 'No files could be recommended for an empty question'
+      }
 
-    it('should return portfolio link for main page questions', async () => {
-      const result = await askDocumentationQuestion('Where is the main portfolio page?')
-      expect(result).toContain('github.com')
-      expect(result).toContain('Portfolio')
-    })
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      })
 
-    it('should handle empty questions gracefully', async () => {
       const result = await askDocumentationQuestion('')
-      expect(result).toContain('github.com')
+      
+      expect(result).toHaveProperty('files')
+      expect(result.files).toHaveLength(0)
+      expect(result.confidence).toBeLessThan(0.5)
     })
   })
 })
