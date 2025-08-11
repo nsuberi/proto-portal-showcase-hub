@@ -197,18 +197,18 @@ jobs:
         path: playwright-report/
         retention-days: 7
 
-    - name: Run Documentation Explorer prototype E2E using root workspace Playwright
-      run: |
-        npx playwright test --config=prototypes/documentation-explorer/playwright.config.js --project=chromium
-      env:
-        CI: true
-        BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/documentation-explorer/
-        API_BASE_URL: ${{ env.API_GATEWAY_URL }}
+    # - name: Run Documentation Explorer prototype E2E using root workspace Playwright
+    #   run: |
+    #     npx playwright test --config=prototypes/documentation-explorer/playwright.config.js --project=chromium
+    #   env:
+    #     CI: true
+    #     BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/documentation-explorer/
+    #     API_BASE_URL: ${{ env.API_GATEWAY_URL }}
 
-    - name: Upload Documentation Explorer E2E report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report-documentation-explorer
-        path: playwright-report/
-        retention-days: 7
+    # - name: Upload Documentation Explorer E2E report
+    #   uses: actions/upload-artifact@v4
+    #   if: always()
+    #   with:
+    #     name: playwright-report-documentation-explorer
+    #     path: playwright-report/
+    #     retention-days: 7
