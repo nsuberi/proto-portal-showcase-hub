@@ -45,3 +45,23 @@ variable "claude_model" {
   type        = string
   default     = "claude-3-5-sonnet-20241022"
 }
+
+# When true, application will prefer Authorization/X-Client-Key for client key
+variable "api_gateway_enforcement" {
+  description = "Enable API Gateway API key enforcement coordination with app layer"
+  type        = bool
+  default     = true
+}
+
+variable "enable_api_gateway_api_key" {
+  description = "Require API key at API Gateway and create usage plan"
+  type        = bool
+  default     = false
+}
+
+variable "api_gateway_api_key_value" {
+  description = "Optional explicit API Gateway API key value (otherwise generated randomly)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

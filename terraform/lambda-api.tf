@@ -83,6 +83,7 @@ resource "aws_lambda_function" "ai_api" {
       NODE_ENV               = var.environment
       JWT_SECRET            = var.jwt_secret
       API_KEY_SALT          = var.api_key_salt
+      API_GATEWAY_ENFORCEMENT = var.api_gateway_enforcement ? "true" : "false"
       AWS_SECRETS_ENABLED   = "true"
       CLAUDE_SECRET_NAME    = "prod/proto-portal/claude-api-key"
       CLAUDE_API_URL        = var.claude_api_url
@@ -146,6 +147,7 @@ resource "aws_api_gateway_method" "proxy_method" {
   resource_id   = aws_api_gateway_resource.proxy.id
   http_method   = "ANY"
   authorization = "NONE"
+  api_key_required = true
 
   request_parameters = {
     "method.request.path.proxy" = true
@@ -268,19 +270,48 @@ resource "aws_api_gateway_stage" "ai_api_stage" {
   }
 }
 
+# API Gateway API Key and Usage Plan for throttling and access control
+resource "random_string" "api_key" {
+  count   = var.enable_api_gateway_api_key ? 1 : 0
+  length  = 32
+  special = false
+  upper   = false
+}
+
+resource "aws_api_gateway_api_key" "approved_prototypes" {
+  count     = var.enable_api_gateway_api_key ? 1 : 0
+  name      = "${var.bucket_name}-approved-prototypes"
+  enabled   = true
+  value     = var.api_gateway_api_key_value != "" ? var.api_gateway_api_key_value : random_string.api_key[0].result
+}
+
+resource "aws_api_gateway_usage_plan" "ai_api_plan" {
+  count = var.enable_api_gateway_api_key ? 1 : 0
+  name = "${var.bucket_name}-ai-api-plan"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.ai_api_gateway.id
+    stage  = aws_api_gateway_stage.ai_api_stage.stage_name
+  }
+
+  throttle {
+    burst_limit = 50
+    rate_limit  = 100
+  }
+}
+
+resource "aws_api_gateway_usage_plan_key" "approved_prototypes_key_link" {
+  count         = var.enable_api_gateway_api_key ? 1 : 0
+  key_id        = aws_api_gateway_api_key.approved_prototypes[0].id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.ai_api_plan[0].id
+}
+
 # Lambda Function URL (requires lambda:CreateFunctionUrlConfig permission)
 resource "aws_lambda_function_url" "ai_api" {
   function_name      = aws_lambda_function.ai_api.function_name
-  authorization_type = "NONE"
-
-  # CORS disabled - handled by Express app to avoid duplicate headers
-  # cors {
-  #   allow_credentials = false
-  #   allow_origins     = ["https://portfolio.cookinupideas.com"]
-  #   allow_methods     = ["*"]
-  #   allow_headers     = ["date", "keep-alive", "x-forwarded-for", "x-forwarded-proto", "x-forwarded-port", "x-amzn-trace-id", "content-type", "x-api-key", "authorization"]
-  #   max_age          = 86400
-  # }
+  # Lock down Function URL to IAM to prevent public invocation
+  authorization_type = "AWS_IAM"
 }
 
 # Note: API Gateway, Lambda Function URLs, and SSM Parameters commented out due to IAM permission requirements

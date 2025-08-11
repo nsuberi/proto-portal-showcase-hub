@@ -39,6 +39,12 @@ output "ai_api_gateway_url" {
   value       = "https://${aws_api_gateway_rest_api.ai_api_gateway.id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_stage.ai_api_stage.stage_name}"
 }
 
+output "ai_api_gateway_api_key" {
+  description = "API Gateway API key (if enabled). Prefer retrieving from state in CI, do not log publicly."
+  value       = try(aws_api_gateway_api_key.approved_prototypes[0].value, "")
+  sensitive   = true
+}
+
 output "ai_api_function_name" {
   description = "Lambda function name for AI Analysis API"
   value       = aws_lambda_function.ai_api.function_name
