@@ -22,6 +22,14 @@ const Portfolio = () => {
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
       status: "Live Demo Available",
     },
+    {
+      title: "Interactive Documentation Explorer",
+      description:
+        "Navigate the codebase like never before! Ask questions in plain English and get direct links to the relevant code. Watch documentation files float in the background - click them to explore their content, then copy and search to find related implementations. It's your intelligent guide to understanding any codebase, starting with this portfolio itself!",
+      link: "/prototypes/documentation-explorer/",
+      tags: ["Documentation", "Code Navigation", "AI Assistant", "Interactive Learning"],
+      status: "Live Demo Available",
+    },
   ];
 
   const prototypeIdeas = [

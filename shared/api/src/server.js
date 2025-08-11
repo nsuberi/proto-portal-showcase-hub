@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { aiAnalysisRoutes } from './routes/ai-analysis.js';
+import documentationRoutes from './routes/documentation.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handlers.js';
 import { logger } from './utils/logger.js';
 
@@ -12,8 +13,8 @@ import { logger } from './utils/logger.js';
 dotenv.config();
 
 const app = express();
-// Default to 3003 to match frontend configs and docs
-const PORT = process.env.PORT || 3003;
+// Default to 3004 to avoid conflicts with prototypes
+const PORT = process.env.PORT || 3004;
 
 // Trust proxy for Lambda/API Gateway
 app.set('trust proxy', true);
@@ -26,7 +27,15 @@ app.use(helmet({
 
 // CORS configuration
 // Use Express CORS in all environments - Lambda Function URL CORS config will be disabled
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8082'];
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
+  'http://localhost:3000', 
+  'http://localhost:3001', 
+  'http://localhost:3002', 
+  'http://localhost:3004',
+  'http://localhost:3005', 
+  'http://localhost:8080',
+  'http://localhost:8082'
+];
 app.use(cors({
   origin: corsOrigins,
   methods: ['GET', 'POST'],
@@ -80,6 +89,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/v1', aiAnalysisRoutes);
+app.use('/api/documentation', documentationRoutes);
 
 // Error handling
 app.use(notFoundHandler);

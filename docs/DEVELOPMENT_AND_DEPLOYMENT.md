@@ -26,13 +26,15 @@ yarn dev:all
 # - Main portfolio (port 8080)
 # - FFX Skill Map (port 3001)
 # - Home Lending Learning (port 3002)
+# - Documentation Explorer (port 3003)
 # - Development proxy (port 8082)
-# - API server (port 3003)
+# - API server (port 3004)
 
 # Or start services individually:
 yarn dev                    # Main portfolio only
 yarn dev:ffx               # FFX prototype only
 yarn dev:home-lending      # Home Lending prototype only
+yarn dev:documentation-explorer  # Documentation Explorer prototype only
 cd shared/api && npm run dev  # API server only
 ```
 
@@ -41,14 +43,17 @@ cd shared/api && npm run dev  # API server only
 # Run unit tests for all prototypes
 cd prototypes/ffx-skill-map && npm test
 cd prototypes/home-lending-learning && npm test
+cd prototypes/documentation-explorer && npm test
 
 # Run integration tests (requires API server running)
 cd prototypes/ffx-skill-map && npm run test:integration
 cd prototypes/home-lending-learning && npm run test:integration
+cd prototypes/documentation-explorer && npm run test:integration
 
 # Run E2E tests
 cd prototypes/ffx-skill-map && npm run test:e2e
 cd prototypes/home-lending-learning && npm run test:e2e
+cd prototypes/documentation-explorer && npm run test:e2e
 ```
 
 ### Build and Preview
@@ -59,6 +64,7 @@ yarn build
 # Build individual prototypes
 yarn build:ffx
 yarn build:home-lending
+yarn build:documentation-explorer
 
 # Preview production build locally
 yarn preview
