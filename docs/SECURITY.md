@@ -116,3 +116,13 @@ Operational hardening:
 - Keep CORS restricted to the exact production origin.
 - Monitor 4xx/5xx rates and WAF blocks; alert on spikes.
 - Rotate API keys and the CloudFront secret header periodically.
+
+### Temporary allowances during rollout
+- Per request to keep prototypes working without embedding a client key:
+  - API Gateway `api_key_required` is temporarily disabled on the proxy method, so calls from the site do not need a client API key.
+  - `TEMP_ALLOW_NO_CLIENT_KEY=true` is set on the Lambda, and `authMiddleware` bypasses client-key checks when this flag is present.
+  - Deployed assets are configured to call the API Gateway execute-api.* URL (not the Lambda Function URL), and CORS is enforced at the app to allow `https://portfolio.cookinupideas.com`.
+  - When ready to re-enable keys, unset the TEMP flag and set `api_key_required=true` again; then issue per‑prototype keys and rotate regularly.
+
+Note on API key budget/limits:
+- The supplied API key(s) used for client access are constrained by an API Gateway usage plan and by a limited provider budget to hedge against abuse by outside sources. Keep limits tight during pilots and raise gradually as needed, monitoring usage and error rates.

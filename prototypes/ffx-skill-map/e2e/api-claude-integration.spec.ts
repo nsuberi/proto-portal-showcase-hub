@@ -4,8 +4,8 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
   // Prefer CI-provided gateway URL, but do not skip when present via env
   const API_BASE_URL = (process.env.API_BASE_URL || process.env.API_GATEWAY_URL || '').replace(/\/$/, '');
 
-  // Only used endpoint: skills-and-mentors-recommendations
-  test('should handle just-in-time learning recommendations', async ({ request }) => {
+  // Direct API call must succeed (no silent pass)
+  test('API: skills-and-mentors-recommendations returns 200 with valid payload', async ({ request }) => {
     if (!API_BASE_URL) {
       throw new Error('API_BASE_URL not set for production integration tests');
     }
@@ -31,41 +31,37 @@ test.describe('FFX Skill Map - Claude API Integration', () => {
       },
       data: justInTimeData
     });
-
-    if (response.ok()) {
-      const data = await response.json();
-      
-      expect(data).toHaveProperty('response');
-      expect(data).toHaveProperty('metadata');
-      expect(typeof data.response).toBe('string');
-      expect(data.response.length).toBeGreaterThan(0);
-      
-      console.log('Just-in-time learning response received:', {
-        responseLength: data.response.length,
-        model: data.metadata.model,
-        processingTime: `${data.metadata.processingTimeMs}ms`
-      });
-      
-    } else {
-      let errorBody: unknown = null;
-      try {
-        errorBody = await response.json();
-      } catch {
-        try {
-          errorBody = await response.text();
-        } catch {}
-      }
-      console.log('Just-in-time API Error:', { status: response.status(), body: errorBody });
-
-      // Allow test to pass in mock mode or with transient server errors in CI
-      const status = response.status();
-      if (status === 401 || status === 503 || (status >= 500 && status <= 599)) {
-        console.log('Service unavailable or unauthorized - allowing pass in fallback/mock mode');
-      } else {
-        throw new Error(`Just-in-time API failed: ${status}`);
-      }
-    }
+    expect(response.ok(), `API error ${response.status()}: ${await response.text()}`).toBe(true);
+    const data = await response.json();
+    expect(data).toHaveProperty('response');
+    expect(data).toHaveProperty('metadata');
+    expect(typeof data.response).toBe('string');
+    expect(data.response.length).toBeGreaterThan(0);
   });
 
-  // Other unused endpoints removed from tests
+  // CORS from portfolio origin must succeed (browser context)
+  test('CORS: portfolio origin can call API Gateway', async ({ page }) => {
+    const portfolioBase = process.env.BASE_URL || process.env.PORTFOLIO_BASE_URL;
+    if (!portfolioBase) {
+      throw new Error('Portfolio BASE_URL not provided');
+    }
+    const apiBase = (process.env.API_BASE_URL || '').replace(/\/$/, '');
+    if (!apiBase) {
+      throw new Error('API_BASE_URL not provided');
+    }
+
+    await page.goto(portfolioBase);
+    const result = await page.evaluate(async (apiUrl, key) => {
+      const res = await fetch(`${apiUrl}/api/v1/ai-analysis/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(key ? { 'x-api-key': key } : {})
+        }
+      });
+      return { ok: res.ok, status: res.status, text: await res.text(), cors: res.type };
+    }, apiBase, process.env.CLAUDE_API_KEY || '');
+
+    expect(result.ok, `CORS/health failed ${result.status}: ${result.text}`).toBe(true);
+  });
 });
