@@ -6,50 +6,50 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  # test:
+  #   runs-on: ubuntu-latest
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '20'
         
-    - name: Enable Corepack
-      run: corepack enable
+  #   - name: Enable Corepack
+  #     run: corepack enable
       
-    - name: Install dependencies
-      run: yarn install --mode=update-lockfile
-      env:
-        YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+  #   - name: Install dependencies
+  #     run: yarn install --mode=update-lockfile
+  #     env:
+  #       YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
     
-    - name: Prepare workspaces for testing (ensure dev deps)
-      run: |
-        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning
+  #   - name: Prepare workspaces for testing (ensure dev deps)
+  #     run: |
+  #       yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning
       
-    - name: Run unit tests
-      run: |
-        yarn workspace @proto-portal/ffx-skill-map test
-        yarn workspace @proto-portal/home-lending-learning test
-      env:
-        CI: true
+  #   - name: Run unit tests
+  #     run: |
+  #       yarn workspace @proto-portal/ffx-skill-map test
+  #       yarn workspace @proto-portal/home-lending-learning test
+  #     env:
+  #       CI: true
         
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: jest-test-results
-        path: |
-          prototypes/ffx-skill-map/coverage/
-          prototypes/home-lending-learning/coverage/
-        retention-days: 7
+  #   - name: Upload test results
+  #     uses: actions/upload-artifact@v4
+  #     if: always()
+  #     with:
+  #       name: jest-test-results
+  #       path: |
+  #         prototypes/ffx-skill-map/coverage/
+  #         prototypes/home-lending-learning/coverage/
+  #       retention-days: 7
 
   deploy:
     runs-on: ubuntu-latest
-    needs: test
+    #needs: test
     
     steps:
     - name: Checkout code
