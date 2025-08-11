@@ -77,3 +77,42 @@ Local development options:
 - API details: `api/README.md`
 - Terraform: `terraform/*.tf`
 - Local proxy: `scripts/dev-proxy.js`
+
+## API access controls and restricting use to approved prototypes
+
+This section documents how the deployed Lambda-backed API is currently exposed and whether it is protected from use by non-approved clients.
+
+### What protects the API today
+- CORS is enforced by the Express app and limited in production to `https://portfolio.cookinupideas.com` (via `CORS_ORIGIN`). This limits calls from browsers not running on the approved origin.
+- Basic rate limiting is enabled at the application layer and keyed by client IP.
+- Secrets for upstream AI providers are stored in AWS Secrets Manager and never exposed to clients.
+
+### Gaps (why other applications can still call it)
+- API Gateway methods are configured with anonymous access (no AWS IAM auth, no JWT/Cognito, and no API Gateway API key requirement).
+- A public Lambda Function URL is configured with `authorization_type = "NONE"` (if enabled), which allows direct invocation outside the browser and bypasses CORS entirely.
+- Application-layer API key auth is currently skipped for the AI analysis endpoints, so requests to those endpoints are not challenged for a key.
+- CORS only restricts browsers; non-browser clients (e.g., curl, server-side scripts) can still invoke the API endpoints directly.
+
+Conclusion: as currently configured, the deployed API is not restricted strictly to “approved prototypes.” It can be invoked by any client that knows the URL.
+
+### Recommendations to restrict access
+
+Short-term (fastest to implement):
+- Enforce API key auth in the app for AI endpoints by removing the skip and requiring `X-API-Key` on all protected routes. Issue per-prototype keys and inject them at build time as environment variables. Keep server-side rate limiting.
+- Disable the Lambda Function URL entirely (or set it to `AWS_IAM`) so API access goes only through API Gateway.
+
+More robust (recommended for production):
+- Put API Gateway behind CloudFront as a second origin and configure CloudFront to add a private header (for example, `X-Edge-Auth: <random-secret>`) on origin requests. Attach AWS WAF to API Gateway to block requests missing or with an incorrect header. This ensures browsers cannot exfiltrate the secret and only traffic coming via your CloudFront distribution reaches the API.
+- Alternatively or additionally, require API Gateway API keys and a Usage Plan for rate limiting. This is suitable for prototypes but note that any key embedded in browser code can be copied; prefer the CloudFront+WAF header approach to keep secrets off the client.
+- If you need identity-aware access, use a Lambda authorizer or Cognito JWT authorizer at API Gateway.
+
+Implementation pointers (in this repo):
+- Disable or lock down Lambda Function URL: manage in `terraform/lambda-api.tf` (remove it or set `authorization_type = "AWS_IAM"`).
+- Require API keys at API Gateway: set `api_key_required = true` on methods and add `aws_api_gateway_api_key`, `aws_api_gateway_usage_plan`, and `aws_api_gateway_usage_plan_key` resources in Terraform.
+- Enforce app-layer key until gateway auth is in place: require `X-API-Key` on AI routes in `shared/api/` and remove any auth bypass on those paths.
+- For the CloudFront+WAF pattern: add API Gateway as a CloudFront origin with a behavior for `/api/*`, configure a secret header in the origin request policy, and attach an `aws_wafv2_web_acl` to the API Gateway stage that validates the header.
+
+Operational hardening:
+- Keep CORS restricted to the exact production origin.
+- Monitor 4xx/5xx rates and WAF blocks; alert on spikes.
+- Rotate API keys and the CloudFront secret header periodically.
