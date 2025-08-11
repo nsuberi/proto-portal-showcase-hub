@@ -160,7 +160,7 @@ router.get('/documentation/files', async (req, res) => {
   try {
     // Path to docs folder - different in Lambda vs local development
     const docsPath = process.env.AWS_LAMBDA_FUNCTION_NAME 
-      ? path.resolve(__dirname, '../docs')
+      ? path.resolve('/var/task/docs')
       : path.resolve(__dirname, '../../../../docs');
     
     logger.info('Loading documentation files', { docsPath });
@@ -253,7 +253,7 @@ router.get('/documentation/metadata/:filename', async (req, res) => {
 
     // Path to docs folder - different in Lambda vs local development
     const docsPath = process.env.AWS_LAMBDA_FUNCTION_NAME 
-      ? path.resolve(__dirname, '../docs')
+      ? path.resolve('/var/task/docs')
       : path.resolve(__dirname, '../../../../docs');
     const filePath = path.join(docsPath, filename);
     
