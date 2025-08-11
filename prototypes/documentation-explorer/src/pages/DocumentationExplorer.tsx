@@ -127,7 +127,7 @@ function DocumentationExplorer() {
 
       {/* Main Content */}
       <div className="relative z-10 max-w-4xl mx-auto pt-20">
-        <Card className="bg-white/60 dark:bg-black/60 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/10 ring-1 ring-blue-200/20 dark:ring-blue-400/10">
+        <Card className="bg-white/10 dark:bg-black/10 backdrop-blur-sm shadow-2xl border border-white/30 dark:border-white/20 ring-1 ring-blue-200/30 dark:ring-blue-400/20">
           <CardHeader className="pb-4">
             <CardTitle className="text-2xl sm:text-3xl text-center">
               Ask About the Codebase
