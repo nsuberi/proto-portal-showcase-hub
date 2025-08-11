@@ -147,7 +147,20 @@ function DocumentationExplorer() {
                   disabled={isLoading}
                 />
               </div>
-              <div className="flex justify-end gap-3">
+              
+              <div className="flex justify-between items-center gap-4">
+                {/* Search limitation notice */}
+                <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 rounded-md px-3 py-2 flex-1">
+                  <div className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
+                    <span>
+                      <strong>Note:</strong> Search results currently analyze file names and paths from the GitHub repository. 
+                      File content analysis is not yet included in the search scope.
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 flex-shrink-0">
                 {response && (
                   <Button
                     onClick={handleClearRecommendations}
@@ -177,6 +190,7 @@ function DocumentationExplorer() {
                     </>
                   )}
                 </Button>
+                </div>
               </div>
             </div>
 
