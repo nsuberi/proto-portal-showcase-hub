@@ -4,7 +4,7 @@ import { codebaseLinks } from '@/data/documentsData'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
   (import.meta.env.DEV 
     ? 'http://localhost:3003/api' 
-    : 'https://ai-api.cookingupideas.net/api')
+    : 'PLACEHOLDER_API_GATEWAY_URL/api')
 
 interface DocumentationResponse {
   files: Array<{
