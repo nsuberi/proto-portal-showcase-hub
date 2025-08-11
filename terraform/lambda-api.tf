@@ -291,7 +291,7 @@ resource "aws_api_gateway_usage_plan" "ai_api_plan" {
     stage  = aws_api_gateway_stage.ai_api_stage.stage_name
   }
 
-  throttle {
+  throttle_settings {
     burst_limit = 50
     rate_limit  = 100
   }
