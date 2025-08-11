@@ -90,9 +90,9 @@ async function fetchRepositoryStructure() {
 
 /**
  * Ask a documentation question and get relevant codebase files
- * POST /api/documentation/ask
+ * POST /api/v1/documentation/ask
  */
-router.post('/ask', authMiddleware, async (req, res) => {
+router.post('/documentation/ask', authMiddleware, async (req, res) => {
   try {
     const { question } = req.body;
 
@@ -154,9 +154,9 @@ router.post('/ask', authMiddleware, async (req, res) => {
 
 /**
  * Get all documentation files
- * GET /api/documentation/files
+ * GET /api/v1/documentation/files
  */
-router.get('/files', async (req, res) => {
+router.get('/documentation/files', async (req, res) => {
   try {
     // Path to docs folder relative to the API server
     const docsPath = path.resolve(__dirname, '../../../../docs');
@@ -231,6 +231,57 @@ router.get('/files', async (req, res) => {
     
     res.status(500).json({
       error: 'Failed to load documentation files'
+    });
+  }
+});
+
+/**
+ * Get metadata about a documentation file
+ * GET /api/v1/documentation/metadata/:filename
+ */
+router.get('/documentation/metadata/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    if (!filename) {
+      return res.status(400).json({
+        error: 'Missing filename parameter'
+      });
+    }
+
+    // Path to docs folder relative to the API server
+    const docsPath = path.resolve(__dirname, '../../../../docs');
+    const filePath = path.join(docsPath, filename);
+    
+    // Check if file exists and get stats
+    try {
+      const stats = await fs.stat(filePath);
+      
+      res.json({
+        filename,
+        size: stats.size,
+        lastModified: stats.mtime,
+        created: stats.birthtime
+      });
+    } catch (fileError) {
+      logger.warn('Documentation file not found', {
+        filename,
+        error: fileError.message
+      });
+      
+      return res.status(404).json({
+        error: 'Documentation file not found'
+      });
+    }
+    
+  } catch (error) {
+    logger.error('Failed to get documentation metadata', {
+      error: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      error: 'Failed to get documentation metadata'
     });
   }
 });
