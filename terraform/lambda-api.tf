@@ -272,21 +272,18 @@ resource "aws_api_gateway_stage" "ai_api_stage" {
 
 # API Gateway API Key and Usage Plan for throttling and access control
 resource "random_string" "api_key" {
-  count   = var.enable_api_gateway_api_key ? 1 : 0
   length  = 32
   special = false
   upper   = false
 }
 
 resource "aws_api_gateway_api_key" "approved_prototypes" {
-  count     = var.enable_api_gateway_api_key ? 1 : 0
   name      = "${var.bucket_name}-approved-prototypes"
   enabled   = true
-  value     = var.api_gateway_api_key_value != "" ? var.api_gateway_api_key_value : random_string.api_key[0].result
+  value     = var.api_gateway_api_key_value != "" ? nonsensitive(var.api_gateway_api_key_value) : random_string.api_key.result
 }
 
 resource "aws_api_gateway_usage_plan" "ai_api_plan" {
-  count = var.enable_api_gateway_api_key ? 1 : 0
   name = "${var.bucket_name}-ai-api-plan"
 
   api_stages {
@@ -301,10 +298,9 @@ resource "aws_api_gateway_usage_plan" "ai_api_plan" {
 }
 
 resource "aws_api_gateway_usage_plan_key" "approved_prototypes_key_link" {
-  count         = var.enable_api_gateway_api_key ? 1 : 0
-  key_id        = aws_api_gateway_api_key.approved_prototypes[0].id
+  key_id        = aws_api_gateway_api_key.approved_prototypes.id
   key_type      = "API_KEY"
-  usage_plan_id = aws_api_gateway_usage_plan.ai_api_plan[0].id
+  usage_plan_id = aws_api_gateway_usage_plan.ai_api_plan.id
 }
 
 # Lambda Function URL (requires lambda:CreateFunctionUrlConfig permission)

@@ -53,12 +53,6 @@ variable "api_gateway_enforcement" {
   default     = true
 }
 
-variable "enable_api_gateway_api_key" {
-  description = "Require API key at API Gateway and create usage plan"
-  type        = bool
-  default     = false
-}
-
 variable "api_gateway_api_key_value" {
   description = "Optional explicit API Gateway API key value (otherwise generated randomly)"
   type        = string
