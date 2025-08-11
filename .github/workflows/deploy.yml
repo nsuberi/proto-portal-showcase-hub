@@ -32,12 +32,13 @@ jobs:
     
     - name: Prepare workspaces for testing (ensure dev deps)
       run: |
-        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning
+        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning @proto-portal/documentation-explorer
       
     - name: Run unit tests
       run: |
         yarn workspace @proto-portal/ffx-skill-map test
         yarn workspace @proto-portal/home-lending-learning test
+        yarn workspace @proto-portal/documentation-explorer test
       env:
         CI: true
         
@@ -49,6 +50,7 @@ jobs:
         path: |
           prototypes/ffx-skill-map/coverage/
           prototypes/home-lending-learning/coverage/
+          prototypes/documentation-explorer/coverage/
         retention-days: 7
 
   deploy:
@@ -192,5 +194,21 @@ jobs:
       if: always()
       with:
         name: playwright-report-ffx
+        path: playwright-report/
+        retention-days: 7
+
+    - name: Run Documentation Explorer prototype E2E using root workspace Playwright
+      run: |
+        npx playwright test --config=prototypes/documentation-explorer/playwright.config.js --project=chromium
+      env:
+        CI: true
+        BASE_URL: https://d37oliokys9i7z.cloudfront.net/prototypes/documentation-explorer/
+        API_BASE_URL: ${{ env.API_GATEWAY_URL }}
+
+    - name: Upload Documentation Explorer E2E report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-documentation-explorer
         path: playwright-report/
         retention-days: 7

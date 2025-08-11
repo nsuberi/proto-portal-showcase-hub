@@ -15,8 +15,10 @@
     "build:ffx": "cd prototypes/ffx-skill-map && npm run build",
     "dev:home-lending": "cd prototypes/home-lending-learning && npm run dev",
     "build:home-lending": "cd prototypes/home-lending-learning && npm run build",
+    "dev:documentation-explorer": "cd prototypes/documentation-explorer && npm run dev",
+    "build:documentation-explorer": "cd prototypes/documentation-explorer && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
-    "dev:all": "concurrently --names \"MAIN,FFX,HOME,PROXY,API\" --prefix-colors \"blue,green,cyan,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:proxy\" \"cd shared/api && npm run dev\"",
+    "dev:all": "concurrently --names \"MAIN,FFX,HOME,DOCS,PROXY,API\" --prefix-colors \"blue,green,cyan,purple,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:documentation-explorer\" \"npm run dev:proxy\" \"cd shared/api && npm run dev\"",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
     "test": "echo \"No tests configured\"",
@@ -81,8 +83,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.54.1",
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.54.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
@@ -106,6 +108,7 @@
   "workspaces": [
     "prototypes/ffx-skill-map",
     "prototypes/home-lending-learning",
+    "prototypes/documentation-explorer",
     "shared/design-tokens",
     "shared/api"
   ],

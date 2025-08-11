@@ -26,6 +26,10 @@ const SPA_SERVERS = {
     port: 3002,
     buildPath: "prototypes/home-lending-learning/dist",
   },
+  "documentation-explorer": {
+    port: 3005,
+    buildPath: "prototypes/documentation-explorer/dist",
+  },
 };
 
 console.log("🚀 Starting Multi-SPA Development Proxy Server...");
@@ -123,6 +127,46 @@ app.use(
   }),
 );
 
+// Proxy for Documentation Explorer prototype
+console.log(`🔧 Setting up Documentation Explorer proxy route: /prototypes/documentation-explorer -> localhost:${SPA_SERVERS["documentation-explorer"].port}`);
+app.use(
+  "/prototypes/documentation-explorer",
+  (req, res, next) => {
+    console.log(`📖 DOCUMENTATION EXPLORER ROUTE MATCHED: ${req.method} ${req.originalUrl}`);
+    console.log(`🔄 req.url: ${req.url}`);
+    console.log(`🔄 req.originalUrl: ${req.originalUrl}`);
+    console.log(`🔄 About to proxy to: http://localhost:${SPA_SERVERS["documentation-explorer"].port}${req.originalUrl}`);
+    next();
+  },
+  createProxyMiddleware({
+    target: `http://localhost:${SPA_SERVERS["documentation-explorer"].port}`,
+    changeOrigin: true,
+    logLevel: 'debug',
+    router: (req) => {
+      console.log(`🔧 Router called with: ${req.originalUrl}`);
+      return `http://localhost:${SPA_SERVERS["documentation-explorer"].port}`;
+    },
+    pathRewrite: (path, req) => {
+      console.log(`🔧 PathRewrite: ${path} -> ${req.originalUrl}`);
+      return req.originalUrl;
+    },
+    onError: (err, req, res) => {
+      console.log(`❌ Documentation Explorer server error: ${err.message}`);
+      console.log(`❌ Error code: ${err.code}`);
+      console.log("🔄 Starting fallback...");
+      // Fallback to built files if dev server is not running
+      serveFallbackSPA(req, res, "documentation-explorer");
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`📡 Proxying Documentation Explorer request: ${req.method} ${req.url} -> http://localhost:${SPA_SERVERS["documentation-explorer"].port}${proxyReq.path}`);
+    },
+    onProxyRes: (proxyRes, req, res) => {
+      console.log(`✅ Documentation Explorer response: ${proxyRes.statusCode} for ${req.url}`);
+      console.log(`✅ Response headers: ${JSON.stringify(proxyRes.headers)}`);
+    },
+  }),
+);
+
 // Proxy for main application (all other routes)
 console.log(`🔧 Setting up Main proxy route: / -> localhost:${SPA_SERVERS.main.port}`);
 app.use(
@@ -175,6 +219,7 @@ function serveFallbackSPA(req, res, spaType) {
             <li>For main app: <code>npm run dev</code></li>
             <li>For FFX prototype: <code>npm run dev:ffx</code></li>
             <li>For Home Lending prototype: <code>npm run dev:home-lending</code></li>
+            <li>For Documentation Explorer: <code>cd prototypes/documentation-explorer && npm run dev</code></li>
             <li>Or run all: <code>npm run dev:all</code></li>
           </ul>
           <p><a href="javascript:location.reload()">🔄 Refresh to try again</a></p>
@@ -197,7 +242,7 @@ function serveFallbackSPA(req, res, spaType) {
         <body style="font-family: Arial; padding: 2rem; background: #f5f5f5;">
           <h1>📦 Build Required</h1>
           <p>No built files found for <strong>${spaType}</strong></p>
-          <p>Run: <code>npm run build${spaType === "ffx-skill-map" ? ":ffx" : spaType === "home-lending-learning" ? ":home-lending" : ""}</code></p>
+          <p>Run: <code>npm run build${spaType === "ffx-skill-map" ? ":ffx" : spaType === "home-lending-learning" ? ":home-lending" : spaType === "documentation-explorer" ? ":docs" : ""}</code></p>
         </body>
       </html>
     `);
@@ -213,11 +258,13 @@ app.listen(PORT, () => {
 - Main app: proxies to http://localhost:${SPA_SERVERS.main.port}
 - FFX Skill Map: proxies to http://localhost:${SPA_SERVERS["ffx-skill-map"].port}
 - Home Lending Learning: proxies to http://localhost:${SPA_SERVERS["home-lending-learning"].port}
+- Documentation Explorer: proxies to http://localhost:${SPA_SERVERS["documentation-explorer"].port}
 
 🔗 Routes (in order of matching):
 1. http://localhost:${PORT}/prototypes/ffx-skill-map/* → FFX Skill Map SPA (port ${SPA_SERVERS["ffx-skill-map"].port})
 2. http://localhost:${PORT}/prototypes/home-lending-learning/* → Home Lending Learning SPA (port ${SPA_SERVERS["home-lending-learning"].port})
-3. http://localhost:${PORT}/* → Main Portfolio SPA (port ${SPA_SERVERS.main.port})
+3. http://localhost:${PORT}/prototypes/documentation-explorer/* → Documentation Explorer SPA (port ${SPA_SERVERS["documentation-explorer"].port})
+4. http://localhost:${PORT}/* → Main Portfolio SPA (port ${SPA_SERVERS.main.port})
 
 🛠️  Development workflow:
 1. Start main app: npm run dev

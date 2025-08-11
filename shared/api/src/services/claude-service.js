@@ -862,6 +862,355 @@ Focus on helping the learner build knowledge progressively. Be specific about wh
   }
 
   /**
+   * Analyze a documentation question and recommend multiple relevant files
+   * @param {Object} params - Analysis parameters
+   * @param {string} params.question - User's question about the codebase
+   * @param {Array} params.availableFiles - List of repository files with paths and URLs
+   * @param {Object} params.codebaseLinks - Map of keywords to GitHub links (for fallback)
+   */
+  async analyzeDocumentationQuestion({ question, availableFiles, codebaseLinks }) {
+    return this.analyzeDocumentationQuestionWithFiles({ question, availableFiles, codebaseLinks });
+  }
+
+  /**
+   * Analyze a documentation question and recommend multiple relevant files
+   * @param {Object} params - Analysis parameters
+   * @param {string} params.question - User's question about the codebase
+   * @param {Array} params.availableFiles - List of repository files with paths and URLs
+   * @param {Object} params.codebaseLinks - Map of keywords to GitHub links (for fallback)
+   */
+  async analyzeDocumentationQuestionWithFiles({ question, availableFiles, codebaseLinks }) {
+    // Get API key from AWS Secrets Manager or environment
+    let requestApiKey;
+    try {
+      requestApiKey = await this.getClaudeApiKey();
+    } catch (error) {
+      if (this.mockMode) {
+        return this.getMockDocumentationAnalysisWithFiles(question, availableFiles);
+      }
+      throw error;
+    }
+
+    // Return mock data in development mode if no API key available
+    if (this.mockMode || !requestApiKey) {
+      return this.getMockDocumentationAnalysisWithFiles(question, availableFiles);
+    }
+
+    const prompt = this.buildDocumentationWithFilesPrompt(question, availableFiles);
+    
+    try {
+      logger.info('Making Claude API request for documentation analysis with files', { 
+        questionLength: question.length,
+        availableFilesCount: availableFiles.length,
+        model: this.model
+      });
+
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': requestApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          max_tokens: 2000,
+          temperature: 0.3, // Lower temperature for more consistent responses
+          messages: [{
+            role: 'user',
+            content: prompt
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        logger.error('Claude API error for documentation analysis with files', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+
+        if (response.status === 401) {
+          throw new Error('Invalid API key provided');
+        } else if (response.status === 429) {
+          throw new Error('Claude API rate limit exceeded');
+        } else {
+          throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      const data = await response.json();
+      const content = data.content?.[0]?.text;
+
+      if (!content) {
+        logger.error('No content in Claude response for documentation analysis with files', { data });
+        throw new Error('Invalid response format from Claude API');
+      }
+
+      // Parse the structured response
+      const analysis = this.parseDocumentationWithFilesResponse(content, availableFiles);
+      
+      logger.info('Documentation analysis with files completed successfully', {
+        recommendedFiles: analysis.files?.length || 0,
+        confidence: analysis.confidence
+      });
+
+      return analysis;
+
+    } catch (error) {
+      logger.error('Claude API call failed for documentation analysis with files', {
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Build prompt for documentation question analysis with repository files
+   */
+  buildDocumentationWithFilesPrompt(question, availableFiles) {
+    // Group files by category for better organization
+    const filesByCategory = {
+      'API & Services': availableFiles.filter(f => f.path.includes('api/') || f.path.includes('service')),
+      'Components': availableFiles.filter(f => f.path.includes('component') || f.path.endsWith('.tsx') || f.path.endsWith('.jsx')),
+      'Configuration': availableFiles.filter(f => f.path.includes('config') || f.path.endsWith('.json') || f.path.endsWith('.yml') || f.path.endsWith('.yaml')),
+      'Documentation': availableFiles.filter(f => f.path.endsWith('.md')),
+      'Scripts & Build': availableFiles.filter(f => f.path.includes('script') || f.path.includes('build') || f.path.includes('.sh')),
+      'Testing': availableFiles.filter(f => f.path.includes('test') || f.path.includes('spec') || f.path.includes('e2e')),
+      'Infrastructure': availableFiles.filter(f => f.path.includes('terraform') || f.path.includes('.tf') || f.path.includes('workflow')),
+      'Other': availableFiles.filter(f => 
+        !f.path.includes('api/') && !f.path.includes('service') &&
+        !f.path.includes('component') && !f.path.endsWith('.tsx') && !f.path.endsWith('.jsx') &&
+        !f.path.includes('config') && !f.path.endsWith('.json') && !f.path.endsWith('.yml') && !f.path.endsWith('.yaml') &&
+        !f.path.endsWith('.md') &&
+        !f.path.includes('script') && !f.path.includes('build') && !f.path.includes('.sh') &&
+        !f.path.includes('test') && !f.path.includes('spec') && !f.path.includes('e2e') &&
+        !f.path.includes('terraform') && !f.path.includes('.tf') && !f.path.includes('workflow')
+      )
+    };
+
+    const fileSummary = Object.entries(filesByCategory)
+      .filter(([category, files]) => files.length > 0)
+      .map(([category, files]) => {
+        const sampleFiles = files.slice(0, 5).map(f => f.path).join(', ');
+        return `**${category}** (${files.length} files): ${sampleFiles}${files.length > 5 ? '...' : ''}`;
+      })
+      .join('\n');
+
+    return `You are an expert code assistant helping users navigate a software project codebase. Your task is to analyze a user's question and recommend 3-6 specific files that would be most helpful for understanding the topic.
+
+**Project Context:**
+This is a portfolio of AI-powered learning prototypes built with React, TypeScript, and Claude API integration. The project includes:
+- Main portfolio site
+- FFX Skill Map prototype (learning pathways visualization) 
+- Home Lending Learning platform (educational finance tool)
+- Documentation Explorer (interactive codebase navigator)
+- Shared design tokens and API services
+
+**User Question:**
+"${question}"
+
+**Repository Structure Summary:**
+${fileSummary}
+
+**Task:**
+Analyze the question and select 3-6 specific files that would provide the best starting point for understanding the user's inquiry. Consider:
+1. Which files contain the core implementation related to their question
+2. Which files would help them understand the architecture and context
+3. Which files contain examples or usage patterns they could learn from
+
+Respond with a JSON object in this exact format:
+{
+  "files": [
+    {
+      "path": "exact/file/path/from/repository",
+      "url": "complete_github_url_for_this_file",
+      "reason": "Why this file is relevant to the question"
+    }
+  ],
+  "confidence": 0.85,
+  "reasoning": "Overall explanation of why these files were selected",
+  "justification": "Educational explanation of why this set of files forms a good starting point for understanding the user's question, written to help the user learn effectively"
+}
+
+**Guidelines:**
+- Select 3-6 files maximum (quality over quantity)
+- confidence should be 0.1-1.0 (higher = more certain)
+- Only choose files that actually exist in the repository
+- Prioritize key implementation files over peripheral ones
+- Include a mix of core logic, configuration, and examples when relevant
+- Write the justification to help the user understand how to approach learning about this topic
+- reasoning should be 1-2 sentences, justification should be 2-4 sentences`;
+  }
+
+  /**
+   * Parse Claude's response for documentation analysis with files
+   */
+  parseDocumentationWithFilesResponse(content, availableFiles) {
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        logger.warn('No JSON found in Claude response for documentation analysis with files');
+        return this.getFallbackFilesAnalysis(availableFiles);
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Validate the response structure
+      if (!Array.isArray(parsed.files) || typeof parsed.confidence !== 'number') {
+        logger.warn('Invalid structure in documentation analysis with files response');
+        return this.getFallbackFilesAnalysis(availableFiles);
+      }
+
+      // Validate and filter recommended files to ensure they exist
+      const validFiles = parsed.files.filter(file => {
+        const exists = availableFiles.some(repoFile => repoFile.path === file.path);
+        if (!exists) {
+          logger.warn('Claude recommended non-existent file', { path: file.path });
+        }
+        return exists;
+      }).map(file => {
+        // Ensure URL is correct by looking it up in availableFiles
+        const repoFile = availableFiles.find(rf => rf.path === file.path);
+        return {
+          path: file.path,
+          url: repoFile ? repoFile.url : file.url,
+          reason: file.reason || 'Relevant to your question'
+        };
+      });
+
+      if (validFiles.length === 0) {
+        logger.warn('No valid files after filtering, using fallback');
+        return this.getFallbackFilesAnalysis(availableFiles);
+      }
+
+      // Ensure confidence is in valid range
+      const confidence = Math.max(0.1, Math.min(1.0, parsed.confidence));
+
+      return {
+        files: validFiles.slice(0, 6), // Limit to 6 files max
+        confidence,
+        reasoning: parsed.reasoning || 'Selected files based on analysis of your question',
+        justification: parsed.justification || 'These files provide a good starting point for understanding the codebase related to your question.'
+      };
+
+    } catch (error) {
+      logger.error('Failed to parse Claude response for documentation analysis with files', {
+        error: error.message,
+        content: content.substring(0, 500)
+      });
+      return this.getFallbackFilesAnalysis(availableFiles);
+    }
+  }
+
+  /**
+   * Provide fallback file analysis when Claude parsing fails
+   */
+  getFallbackFilesAnalysis(availableFiles) {
+    // Return some key files as fallback
+    const fallbackFiles = availableFiles
+      .filter(file => {
+        const path = file.path.toLowerCase();
+        return (
+          path.includes('readme') ||
+          path.includes('package.json') ||
+          path.includes('app.tsx') ||
+          path.includes('server.js') ||
+          path.includes('service') ||
+          path.includes('api')
+        );
+      })
+      .slice(0, 5)
+      .map(file => ({
+        path: file.path,
+        url: file.url,
+        reason: 'Key file in the project structure'
+      }));
+
+    return {
+      files: fallbackFiles,
+      confidence: 0.3,
+      reasoning: 'Fallback analysis - selected key project files',
+      justification: 'These are important files in the project structure that can help you get oriented with the codebase.'
+    };
+  }
+
+  /**
+   * Mock documentation analysis with files for development
+   */
+  getMockDocumentationAnalysisWithFiles(question, availableFiles) {
+    const lowerQuestion = question.toLowerCase();
+    let selectedFiles = [];
+    let confidence = 0.7;
+    let reasoning = 'Mock analysis based on keyword matching';
+    let justification = 'These files were selected based on keyword patterns in your question and should provide a good starting point for understanding the relevant parts of the codebase.';
+
+    // Simple keyword matching for mock
+    if (lowerQuestion.includes('api') || lowerQuestion.includes('claude')) {
+      selectedFiles = availableFiles
+        .filter(f => f.path.includes('api/') || f.path.includes('service') || f.path.includes('claude'))
+        .slice(0, 4)
+        .map(f => ({ path: f.path, url: f.url, reason: 'Contains API or Claude service implementation' }));
+      reasoning = 'Question mentions API or Claude, selected service files';
+      justification = 'These files contain the core API implementation and Claude service integration. Start with the service files to understand the API structure, then look at route definitions and middleware.';
+    } else if (lowerQuestion.includes('component') || lowerQuestion.includes('react')) {
+      selectedFiles = availableFiles
+        .filter(f => f.path.endsWith('.tsx') || f.path.endsWith('.jsx') || f.path.includes('component'))
+        .slice(0, 4)
+        .map(f => ({ path: f.path, url: f.url, reason: 'React component implementation' }));
+      reasoning = 'Question about components, selected React files';
+      justification = 'These React components show the frontend implementation patterns. Look at the component structure, hooks usage, and how they integrate with the design system and API services.';
+    } else if (lowerQuestion.includes('design') || lowerQuestion.includes('token') || lowerQuestion.includes('style')) {
+      selectedFiles = availableFiles
+        .filter(f => f.path.includes('design-token') || f.path.includes('css') || f.path.includes('tailwind'))
+        .slice(0, 4)
+        .map(f => ({ path: f.path, url: f.url, reason: 'Design system and styling configuration' }));
+      reasoning = 'Question about design system, selected styling files';
+      justification = 'These files define the design system and styling approach. Start with the design tokens to understand the visual language, then look at how they are integrated into the Tailwind configuration and components.';
+    } else if (lowerQuestion.includes('test') || lowerQuestion.includes('e2e')) {
+      selectedFiles = availableFiles
+        .filter(f => f.path.includes('test') || f.path.includes('spec') || f.path.includes('e2e') || f.path.includes('playwright'))
+        .slice(0, 4)
+        .map(f => ({ path: f.path, url: f.url, reason: 'Testing implementation and configuration' }));
+      reasoning = 'Question about testing, selected test files';
+      justification = 'These files show the testing strategy and implementation. Look at the test structure to understand how different parts of the application are tested, including unit tests and end-to-end scenarios.';
+    } else {
+      // Default fallback
+      selectedFiles = availableFiles
+        .filter(f => {
+          const path = f.path.toLowerCase();
+          return (
+            path.includes('readme') ||
+            path.includes('app.tsx') ||
+            path.includes('server.js') ||
+            path.includes('package.json')
+          );
+        })
+        .slice(0, 4)
+        .map(f => ({ path: f.path, url: f.url, reason: 'Key project file for understanding overall structure' }));
+      reasoning = 'General question, selected key project files';
+      justification = 'These are the main entry points and configuration files that will help you understand the overall project structure and architecture.';
+    }
+
+    logger.info('Returning mock documentation analysis with files', {
+      selectedFilesCount: selectedFiles.length,
+      confidence,
+      reasoning
+    });
+
+    return {
+      files: selectedFiles,
+      confidence,
+      reasoning,
+      justification
+    };
+  }
+
+
+  /**
    * Mock home lending assessment for development
    */
   getMockHomeLendingAssessment(userResponse, targetTerm) {

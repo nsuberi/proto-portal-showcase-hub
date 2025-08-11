@@ -1,0 +1,64 @@
+@import '@proto-portal/design-tokens/css/utilities.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Smooth floating text animation - keeps elements on screen */
+@keyframes gentle-float {
+  0% {
+    transform: translate(5vw, 5vh);
+  }
+  25% {
+    transform: translate(calc(70vw - 150px), 15vh);
+  }
+  50% {
+    transform: translate(calc(50vw - 100px), calc(65vh - 50px));
+  }
+  75% {
+    transform: translate(15vw, 35vh);
+  }
+  100% {
+    transform: translate(5vw, 5vh);
+  }
+}
+
+@keyframes gentle-float-reverse {
+  0% {
+    transform: translate(calc(60vw - 120px), 8vh);
+  }
+  25% {
+    transform: translate(8vw, calc(55vh - 50px));
+  }
+  50% {
+    transform: translate(calc(40vw - 80px), calc(75vh - 100px));
+  }
+  75% {
+    transform: translate(calc(75vw - 180px), 25vh);
+  }
+  100% {
+    transform: translate(calc(60vw - 120px), 8vh);
+  }
+}
+
+.floating-text {
+  position: fixed;
+  animation: gentle-float var(--float-duration, 45s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  will-change: transform;
+}
+
+.floating-text-reverse {
+  position: fixed;
+  animation: gentle-float-reverse var(--float-duration, 45s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+  will-change: transform;
+}
