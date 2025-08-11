@@ -1,5 +1,5 @@
 import { Button } from './ui/button'
-import { BookOpen, MousePointer, Copy, Search, X } from 'lucide-react'
+import { BookOpen, MousePointer, ExternalLink, Search, X } from 'lucide-react'
 
 interface InstructionsModalProps {
   open: boolean
@@ -44,7 +44,7 @@ function InstructionsModal({ open, onClose }: InstructionsModalProps) {
             <h3 className="font-semibold text-lg mb-3">What is this?</h3>
             <p className="text-gray-600 dark:text-gray-400">
               This AI-powered documentation explorer helps you navigate the Proto Portal codebase.
-              Ask questions in natural language, and Claude will analyze your query to provide direct links to the most relevant files on GitHub.
+              Ask questions in natural language, and Claude will analyze your query to provide multiple direct links to the most relevant files on GitHub to help you start exploring.
             </p>
           </div>
 
@@ -58,7 +58,7 @@ function InstructionsModal({ open, onClose }: InstructionsModalProps) {
                 <div>
                   <h4 className="font-medium mb-1">Ask Questions</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Type any question about the codebase in the large text area. Claude will analyze your question and find the most relevant code. For example:
+                    Type any question about the codebase in the large text area. Claude will analyze your question and return multiple relevant files with explanations to help you start exploring. For example:
                     "Where is the Claude API integration?" or "Show me the design tokens" or "How does the skill mapping prototype work?"
                   </p>
                 </div>
@@ -79,13 +79,12 @@ function InstructionsModal({ open, onClose }: InstructionsModalProps) {
 
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Copy className="w-5 h-5 text-primary" />
+                  <ExternalLink className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium mb-1">Copy and Explore</h4>
+                  <h4 className="font-medium mb-1">Explore Multiple Results</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Copy content from the documentation and paste it into the search box
-                    to find related code files and implementations. The results show confidence levels and whether Claude AI or keyword matching was used.
+                    Each search returns multiple GitHub file links with explanations of why they're relevant. The results include confidence levels and AI-powered reasoning to help you understand which files to explore first.
                   </p>
                 </div>
               </div>
@@ -94,7 +93,7 @@ function InstructionsModal({ open, onClose }: InstructionsModalProps) {
 
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
             <p className="text-sm">
-              <strong>Note:</strong> This tool always returns a link to the actual codebase at{' '}
+              <strong>Note:</strong> This tool returns multiple links to help you start exploring the actual codebase at{' '}
               <a 
                 href="https://github.com/nsuberi/proto-portal-showcase-hub" 
                 target="_blank" 
