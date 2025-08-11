@@ -41,7 +41,7 @@ output "ai_api_gateway_url" {
 
 output "ai_api_gateway_api_key" {
   description = "API Gateway API key (if enabled). Prefer retrieving from state in CI, do not log publicly."
-  value       = try(aws_api_gateway_api_key.approved_prototypes[0].value, "")
+  value       = try(aws_api_gateway_api_key.approved_prototypes.value, "")
   sensitive   = true
 }
 
