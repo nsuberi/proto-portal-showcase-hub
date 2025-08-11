@@ -42,7 +42,7 @@ test.describe('Home Lending Learning - Claude API Integration', () => {
 
   // Server auth is skipped for /ai-analysis endpoints; focus on payload/response validation
 
-  test('should successfully call Claude API for home lending assessment - good response', async ({ request }) => {
+  test('API: home-lending-assessment returns 200 with valid payload', async ({ request }) => {
     const response = await request.post(`${API_BASE_URL}/api/v1/ai-analysis/home-lending-assessment`, {
       headers: {
         'Content-Type': 'application/json',
@@ -51,64 +51,66 @@ test.describe('Home Lending Learning - Claude API Integration', () => {
       data: mockHomeLendingData
     });
 
-    if (response.ok()) {
-      const data = await response.json();
-      
-      // Verify response structure
-      expect(data).toHaveProperty('assessment');
-      expect(data).toHaveProperty('metadata');
-      
-      const { assessment, metadata } = data;
-      
-      // Verify assessment structure
-      expect(assessment).toHaveProperty('similarities');
-      expect(assessment).toHaveProperty('differences');  
-      expect(assessment).toHaveProperty('feedback');
-      expect(assessment).toHaveProperty('comprehensionLevel');
-      expect(assessment).toHaveProperty('suggestions');
-      
-      // Verify arrays are populated
-      expect(Array.isArray(assessment.similarities)).toBe(true);
-      expect(Array.isArray(assessment.differences)).toBe(true);
-      expect(Array.isArray(assessment.suggestions)).toBe(true);
-      
-      // Verify comprehension level is valid
-      expect(['excellent', 'good', 'partial', 'needs-improvement']).toContain(assessment.comprehensionLevel);
-      
-      // Verify metadata
-      expect(metadata).toHaveProperty('assessmentId');
-      expect(metadata).toHaveProperty('timestamp');
-      expect(metadata).toHaveProperty('model');
-      expect(metadata).toHaveProperty('processingTimeMs');
-      
-      // Verify content quality
-      expect(assessment.similarities.length).toBeGreaterThan(0);
-      expect(assessment.feedback.length).toBeGreaterThan(0);
-      expect(assessment.suggestions.length).toBeGreaterThan(0);
-      
-      console.log('Claude API Home Lending Assessment Result:', {
-        model: metadata.model,
-        processingTime: `${metadata.processingTimeMs}ms`,
-        comprehensionLevel: assessment.comprehensionLevel,
-        similaritiesCount: assessment.similarities.length,
-        differencesCount: assessment.differences.length,
-        suggestionsCount: assessment.suggestions.length
-      });
-      
-    } else {
-      // Log error details for debugging
-      const errorData = await response.json();
-      console.log('API Error Response:', errorData);
-      
-      // Handle different error scenarios
-      if (response.status() === 503) {
-        console.log('AI service unavailable - may be in mock mode or API key issues');
-      } else if (response.status() === 429) {
-        console.log('Rate limit exceeded - Claude API usage limit reached');
-      } else {
-        throw new Error(`API call failed with status ${response.status()}: ${JSON.stringify(errorData)}`);
-      }
+    expect(response.ok(), `API error ${response.status()}: ${await response.text()}`).toBe(true);
+    const data = await response.json();
+    
+    // Verify response structure
+    expect(data).toHaveProperty('assessment');
+    expect(data).toHaveProperty('metadata');
+    
+    const { assessment, metadata } = data;
+    
+    // Verify assessment structure
+    expect(assessment).toHaveProperty('similarities');
+    expect(assessment).toHaveProperty('differences');  
+    expect(assessment).toHaveProperty('feedback');
+    expect(assessment).toHaveProperty('comprehensionLevel');
+    expect(assessment).toHaveProperty('suggestions');
+    
+    // Verify arrays are populated
+    expect(Array.isArray(assessment.similarities)).toBe(true);
+    expect(Array.isArray(assessment.differences)).toBe(true);
+    expect(Array.isArray(assessment.suggestions)).toBe(true);
+    
+    // Verify comprehension level is valid
+    expect(['excellent', 'good', 'partial', 'needs-improvement']).toContain(assessment.comprehensionLevel);
+    
+    // Verify metadata
+    expect(metadata).toHaveProperty('assessmentId');
+    expect(metadata).toHaveProperty('timestamp');
+    expect(metadata).toHaveProperty('model');
+    expect(metadata).toHaveProperty('processingTimeMs');
+    
+    // Verify content quality
+    expect(assessment.similarities.length).toBeGreaterThan(0);
+    expect(assessment.feedback.length).toBeGreaterThan(0);
+    expect(assessment.suggestions.length).toBeGreaterThan(0);
+  });
+
+  // CORS/browser check from portfolio origin
+  test('CORS: portfolio origin can call API health', async ({ page }) => {
+    const portfolioBase = process.env.BASE_URL || process.env.PORTFOLIO_BASE_URL;
+    if (!portfolioBase) {
+      throw new Error('Portfolio BASE_URL not provided');
     }
+    const apiBase = (process.env.API_BASE_URL || '').replace(/\/$/, '');
+    if (!apiBase) {
+      throw new Error('API_BASE_URL not provided');
+    }
+
+    await page.goto(portfolioBase);
+    const result = await page.evaluate(async (apiUrl, key) => {
+      const res = await fetch(`${apiUrl}/api/v1/ai-analysis/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(key ? { 'x-api-key': key } : {})
+        }
+      });
+      return { ok: res.ok, status: res.status, text: await res.text(), cors: res.type };
+    }, apiBase, process.env.CLAUDE_API_KEY || '');
+
+    expect(result.ok, `CORS/health failed ${result.status}: ${result.text}`).toBe(true);
   });
 
   test('should handle poor user responses appropriately', async ({ request }) => {
