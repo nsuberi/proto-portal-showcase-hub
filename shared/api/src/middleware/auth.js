@@ -15,13 +15,13 @@ export function authMiddleware(req, res, next) {
     return next();
   }
 
-  // Skip auth for AI analysis endpoints that use client-provided API keys
-  if (req.path.includes('/ai-analysis/')) {
-    logger.info('Skipping auth for AI analysis endpoint (client provides API keys)', { requestId: req.requestId });
-    return next();
-  }
-
-  const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  // Determine which header to use for client-provided app-layer API key.
+  // When API Gateway API keys are enabled, API Gateway consumes `X-API-Key`.
+  // To avoid header collision, read client key from Authorization: Bearer or X-Client-Key.
+  const preferSeparateClientHeader = process.env.API_GATEWAY_ENFORCEMENT === 'true';
+  const apiKey = preferSeparateClientHeader
+    ? (req.headers['authorization']?.replace('Bearer ', '') || req.headers['x-client-key'])
+    : (req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '') || req.headers['x-client-key']);
   
   if (!apiKey) {
     logger.warn('Missing API key in request', {

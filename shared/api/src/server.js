@@ -30,7 +30,7 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:30
 app.use(cors({
   origin: corsOrigins,
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Client-Key'],
   credentials: false // No cookies needed
 }));
 
