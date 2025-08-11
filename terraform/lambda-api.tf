@@ -50,25 +50,30 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
 data "archive_file" "ai_api_lambda_zip" {
   type        = "zip"
   output_path = "ai-api-lambda.zip"
-  source_dir  = ".."
   
-  # Include only the necessary files
-  includes = [
-    "shared/api/**",
-    "docs/**"
-  ]
+  source {
+    content_dir = "../shared/api"
+    
+    excludes = [
+      ".env",
+      ".env.example", 
+      "README.md",
+      "*.test.js",
+      "node_modules/.cache",
+      "node_modules/nodemon",
+      "node_modules/.bin/eslint*",
+      "node_modules/@types/**"
+    ]
+  }
   
-  excludes = [
-    "shared/api/.env",
-    "shared/api/.env.example", 
-    "shared/api/README.md",
-    "shared/api/*.test.js",
-    "shared/api/node_modules/.cache",
-    "shared/api/node_modules/nodemon",
-    "shared/api/node_modules/.bin/eslint*",
-    "shared/api/node_modules/@types/**",
-    "docs/DOMAIN_SETUP.md"  # Exclude sensitive domain setup info
-  ]
+  source {
+    content_dir = "../docs"
+    output_path = "docs"
+    
+    excludes = [
+      "DOMAIN_SETUP.md"  # Exclude sensitive domain setup info
+    ]
+  }
 }
 
 # Lambda function
@@ -76,7 +81,7 @@ resource "aws_lambda_function" "ai_api" {
   filename         = data.archive_file.ai_api_lambda_zip.output_path
   function_name    = "${var.bucket_name}-ai-api"
   role            = aws_iam_role.ai_api_lambda_role.arn
-  handler         = "shared/api/lambda.handler"
+  handler         = "lambda.handler"
   runtime         = "nodejs18.x"
   timeout         = 30
   memory_size     = 256
