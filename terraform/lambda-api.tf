@@ -46,34 +46,36 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
   })
 }
 
+# Copy docs folder to shared/api before zipping
+resource "null_resource" "copy_docs" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      rm -rf ../shared/api/docs
+      mkdir -p ../shared/api/docs
+      cp ../docs/*.md ../shared/api/docs/ || true
+      rm -f ../shared/api/docs/DOMAIN_SETUP.md || true
+    EOT
+  }
+}
+
 # Build the Lambda deployment package
 data "archive_file" "ai_api_lambda_zip" {
   type        = "zip"
   output_path = "ai-api-lambda.zip"
+  source_dir  = "../shared/api"
   
-  source {
-    content_dir = "../shared/api"
-    
-    excludes = [
-      ".env",
-      ".env.example", 
-      "README.md",
-      "*.test.js",
-      "node_modules/.cache",
-      "node_modules/nodemon",
-      "node_modules/.bin/eslint*",
-      "node_modules/@types/**"
-    ]
-  }
+  excludes = [
+    ".env",
+    ".env.example", 
+    "README.md",
+    "*.test.js",
+    "node_modules/.cache",
+    "node_modules/nodemon",
+    "node_modules/.bin/eslint*",
+    "node_modules/@types/**"
+  ]
   
-  source {
-    content_dir = "../docs"
-    output_path = "docs"
-    
-    excludes = [
-      "DOMAIN_SETUP.md"  # Exclude sensitive domain setup info
-    ]
-  }
+  depends_on = [null_resource.copy_docs]
 }
 
 # Lambda function
