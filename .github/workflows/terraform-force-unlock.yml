@@ -28,9 +28,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
-      - name: Force unlock state
+      - name: Force unlock state (auto-accept)
         run: |
           set -e
           cd terraform
           terraform init -reconfigure -lock-timeout=5m
-          terraform force-unlock ${{ inputs.lock_id }}
+          terraform force-unlock -force ${{ inputs.lock_id }}
