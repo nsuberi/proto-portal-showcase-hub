@@ -1,0 +1,32 @@
+@import "@proto-portal/design-tokens/css/tokens.css";
+@import "@proto-portal/design-tokens/css/utilities.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Parchment background for Section 2 */
+.parchment-bg {
+  background: radial-gradient(circle at 20% 20%, rgba(0,0,0,0.03), transparent 40%),
+              radial-gradient(circle at 80% 30%, rgba(0,0,0,0.04), transparent 50%),
+              linear-gradient(#f5f0e6, #efe6d7);
+}
+
+/* Simple hex-like layout helpers */
+.hex-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+}
+.hex-row.offset {
+  padding-left: 1rem;
+}
+.hex-cell {
+  aspect-ratio: 1 / 1;
+  clip-path: polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%);
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
+
+

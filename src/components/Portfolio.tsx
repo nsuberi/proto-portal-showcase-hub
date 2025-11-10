@@ -15,6 +15,14 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
+      title: "Learning Path: Recipes Explorer",
+      description:
+        "Explore a multi-section interactive experience: clustered recipe nodes, parchment-styled world cuisines list with progress tracking, and a hex-grid world map placement. Demonstrates shared design tokens and synchronized interactions.",
+      link: "/prototypes/learning-path/",
+      tags: ["Data Viz", "Interaction", "Synchronization"],
+      status: "Live Demo Available",
+    },
+    {
       title: "Home Lending Learning Platform",
       description:
         "Get a behind-the-scenes peek at the home loan journey! Explore interactive process maps, discover who's involved at each step, and learn what documents you'll need. Test your knowledge with fun quiz cards. For educational purposes only - your actual mortgage adventure may vary!",

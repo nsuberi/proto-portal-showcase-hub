@@ -6,6 +6,9 @@ data "aws_route53_zone" "main" {
 # ACM Certificate for portfolio.cookinupideas.com
 resource "aws_acm_certificate" "portfolio" {
   domain_name       = "portfolio.cookinupideas.com"
+  subject_alternative_names = [
+    "learningpath.cookinupideas.com"
+  ]
   validation_method = "DNS"
 
   lifecycle {
@@ -57,8 +60,33 @@ resource "aws_route53_record" "portfolio" {
 
 # AAAA record for IPv6 support
 resource "aws_route53_record" "portfolio_ipv6" {
-  zone_id = data.aws_route53_zone.main.zone_id
   name    = "portfolio.cookinupideas.com"
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.website.domain_name
+    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# A record for learningpath.cookinupideas.com pointing to CloudFront
+resource "aws_route53_record" "learningpath" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "learningpath.cookinupideas.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.website.domain_name
+    zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# AAAA record for IPv6 support (learning path)
+resource "aws_route53_record" "learningpath_ipv6" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "learningpath.cookinupideas.com"
   type    = "AAAA"
 
   alias {

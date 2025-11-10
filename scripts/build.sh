@@ -54,6 +54,18 @@ echo "📋 Copying Documentation Explorer build to main dist..."
 mkdir -p dist/prototypes/documentation-explorer
 cp -r prototypes/documentation-explorer/dist/* dist/prototypes/documentation-explorer/
 
+# Build Learning Path prototype
+echo "🗺️ Building Learning Path prototype..."
+
+# Build Learning Path prototype (dependencies already installed via workspace)
+echo "🏗️ Building Learning Path prototype..."
+yarn workspace @proto-portal/learning-path build
+
+# Copy Learning Path build to main dist directory
+echo "📋 Copying Learning Path build to main dist..."
+mkdir -p dist/prototypes/learning-path
+cp -r prototypes/learning-path/dist/* dist/prototypes/learning-path/
+
 # Create a prototypes index.html that redirects to ffx-skill-map
 echo "📋 Creating prototypes index redirect..."
 cat > dist/prototypes/index.html << 'EOF'
