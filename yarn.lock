@@ -3019,6 +3019,39 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@proto-portal/learning-path@workspace:prototypes/learning-path":
+  version: 0.0.0-use.local
+  resolution: "@proto-portal/learning-path@workspace:prototypes/learning-path"
+  dependencies:
+    "@eslint/js": "npm:^9.9.0"
+    "@playwright/test": "npm:^1.54.1"
+    "@proto-portal/design-tokens": "workspace:*"
+    "@radix-ui/react-dialog": "npm:^1.1.2"
+    "@tailwindcss/typography": "npm:^0.5.15"
+    "@types/node": "npm:^22.5.5"
+    "@types/react": "npm:^18.3.3"
+    "@types/react-dom": "npm:^18.3.0"
+    "@vitejs/plugin-react-swc": "npm:^3.5.0"
+    autoprefixer: "npm:^10.4.20"
+    clsx: "npm:^2.1.1"
+    eslint: "npm:^9.9.0"
+    eslint-plugin-react-hooks: "npm:^5.1.0-rc.0"
+    eslint-plugin-react-refresh: "npm:^0.4.9"
+    globals: "npm:^15.9.0"
+    lucide-react: "npm:^0.462.0"
+    postcss: "npm:^8.4.47"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    react-router-dom: "npm:^6.26.2"
+    tailwind-merge: "npm:^2.5.2"
+    tailwindcss: "npm:^3.4.11"
+    tailwindcss-animate: "npm:^1.0.7"
+    typescript: "npm:^5.5.3"
+    vite: "npm:^5.4.1"
+    zod: "npm:^3.23.8"
+  languageName: unknown
+  linkType: soft
+
 "@radix-ui/number@npm:1.1.1":
   version: 1.1.1
   resolution: "@radix-ui/number@npm:1.1.1"

@@ -71,10 +71,18 @@ resource "aws_cloudfront_function" "prototype_router" {
 function handler(event) {
     var request = event.request;
     var uri = request.uri;
+    var headers = request.headers || {};
+    var host = (headers.host && headers.host.value) ? headers.host.value : "";
     
     // Handle prototype directory access - add index.html if missing
     if (uri.endsWith('/')) {
         request.uri += 'index.html';
+        return request;
+    }
+    
+    // Host-based subdomain routing
+    if (host === 'learningpath.cookinupideas.com') {
+        request.uri = '/prototypes/learning-path/index.html';
         return request;
     }
     
@@ -86,7 +94,7 @@ function handler(event) {
         if (pathParts.length >= 3 && !uri.includes('.')) {
             var prototypeName = pathParts[2];
             // Only handle known prototypes
-            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer') {
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path') {
                 request.uri = '/prototypes/' + prototypeName + '/index.html';
             }
         }
@@ -306,6 +314,32 @@ resource "aws_cloudfront_distribution" "website" {
     }
   }
 
+  # Learning Path cache behavior
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/learning-path/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
@@ -338,7 +372,7 @@ resource "aws_cloudfront_distribution" "website" {
     }
   }
 
-  aliases = ["portfolio.cookinupideas.com"]
+  aliases = ["portfolio.cookinupideas.com", "learningpath.cookinupideas.com"]
 
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate_validation.portfolio.certificate_arn
