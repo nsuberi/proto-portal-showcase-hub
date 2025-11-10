@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import Section1 from "./components/Section1";
 import Section2 from "./components/Section2";
-import Section3 from "./components/Section3";
 import { CuisineCluster, Recipe } from "./types";
 import { initialRecipeProgress } from "./data/recipes";
 import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
@@ -56,10 +55,7 @@ export default function App() {
           visibleClusters={visibleClusters}
           onSelectRecipe={onSelectRecipe}
         />
-        <Section3
-          selectedRecipe={selectedRecipe ?? undefined}
-          onSelectRecipe={onSelectRecipe}
-        />
+        {/* Section3 removed to improve performance */}
       </main>
 
       <footer className="py-8 text-center text-sm text-muted-foreground">

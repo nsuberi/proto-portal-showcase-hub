@@ -10,6 +10,7 @@ import Graph from "graphology";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - allow JSON import outside src typing
 import countryBorders from "../../country_borders.geo.json";
+import { getPrecomputedCountryRings } from "../data/country_silhouette_cache";
 
 type Props = {
   selectedRecipe?: Recipe | null;
@@ -77,7 +78,7 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
   type FeatureCollection = { type: "FeatureCollection"; features: CountryFeature[] };
 
   const countryNameToFeature = useMemo(() => {
-    const fc = countryBorders as FeatureCollection;
+    const fc = countryBorders as unknown as FeatureCollection;
     const map = new Map<string, CountryFeature>();
     fc.features.forEach((f) => {
       const name = f.properties?.name;
@@ -85,6 +86,7 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
     });
     return map;
   }, []);
+  const precomputedRings = useMemo(() => getPrecomputedCountryRings(), []);
 
   function geometryToRings(geom: FeatureGeometry): PolygonRings[] {
     if (geom.type === "Polygon") {
@@ -127,11 +129,94 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
       return [x, y];
     };
 
+    const isIndia = feature.properties?.name === "India";
+    const maxPointsCap = isIndia ? 400 : 1200;
+    const pixelTolerance = isIndia ? 1.6 : 0.9; // minimum pixel move to keep a vertex
+    const minRingBBoxAreaPx = isIndia ? 900 : 256; // skip tiny rings
+
+    // Ensure ring is closed
+    function ensureClosed(ring: LonLat[]): LonLat[] {
+      if (ring.length === 0) return ring;
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      const isClosed = first[0] === last[0] && first[1] === last[1];
+      return isClosed ? ring : [...ring, first];
+    }
+
+    // Drop rings with tiny projected bounding boxes to reduce complexity
+    function ringProjectedBBoxAreaPx(ring: LonLat[]): number {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const [lon, lat] of ring) {
+        const [x, y] = toPx(lon, lat);
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+      const w = Math.max(0, maxX - minX);
+      const h = Math.max(0, maxY - minY);
+      return w * h;
+    }
+
+    // Simple pixel-distance based decimation in projected (screen) space
+    function simplifyByPixelTolerance(ring: LonLat[], tolPx: number, cap: number): LonLat[] {
+      const closed = ensureClosed(ring);
+      const n = closed.length;
+      if (n <= 2) return closed;
+      const kept: LonLat[] = [];
+      const tolSq = tolPx * tolPx;
+      const first = closed[0];
+      kept.push(first);
+      let [lastX, lastY] = toPx(first[0], first[1]);
+      for (let i = 1; i < n - 1; i++) {
+        const [lon, lat] = closed[i];
+        const [x, y] = toPx(lon, lat);
+        const dx = x - lastX;
+        const dy = y - lastY;
+        if (dx * dx + dy * dy >= tolSq) {
+          kept.push([lon, lat]);
+          lastX = x;
+          lastY = y;
+          if (kept.length >= cap - 1) {
+            break;
+          }
+        }
+      }
+      // ensure closure
+      kept.push(first);
+      if (kept.length < 4) {
+        // fall back to sampling evenly to reach minimum polygon
+        const step = Math.max(1, Math.floor(n / 4));
+        const sampled: LonLat[] = [];
+        for (let i = 0; i < n - 1; i += step) sampled.push(closed[i]);
+        sampled.push(first);
+        return sampled;
+      }
+      return kept;
+    }
+
+    // Ensure ring is closed and decimate points for performance on complex countries
+    function normalizeAndSimplifyRing(ring: LonLat[], maxPoints = maxPointsCap, tolPx = pixelTolerance): LonLat[] {
+      const closed = ensureClosed(ring);
+      // Skip if tiny
+      if (ringProjectedBBoxAreaPx(closed) < minRingBBoxAreaPx) {
+        return [];
+      }
+      const n = closed.length;
+      if (n <= maxPoints) {
+        // still run a small pixel simplification to avoid near-duplicates
+        return simplifyByPixelTolerance(closed, tolPx, maxPoints);
+      }
+      return simplifyByPixelTolerance(closed, tolPx, maxPoints);
+    }
+
     let d = "";
     for (const rings of ringsGroups) {
       // Outer ring first, then holes
-      rings.forEach((ring, ringIdx) => {
-        ring.forEach((pt, idx) => {
+      rings.forEach((ring) => {
+        const simplified = normalizeAndSimplifyRing(ring);
+        if (simplified.length === 0) return;
+        simplified.forEach((pt, idx) => {
           const [x, y] = toPx(pt[0], pt[1]);
           if (idx === 0) {
             d += `M${x.toFixed(2)},${y.toFixed(2)}`;
@@ -141,11 +226,39 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
         });
         // Close each ring
         d += "Z";
-        // Ensure distinct subpaths start
-        if (ringIdx === rings.length - 1) {
-          d += "";
-        }
       });
+    }
+    return d;
+  }
+
+  // Build path from precomputed rings without simplification
+  function buildCountryPathFromPrecomputed(name: string, width: number, height: number, padding: number): string | null {
+    const data = precomputedRings.get(name);
+    if (!data) return null;
+    const { ringsGroups, bounds } = data;
+    const targetW = Math.max(0, width - padding * 2);
+    const targetH = Math.max(0, height - padding * 2);
+    const srcW = Math.max(1e-6, bounds.maxX - bounds.minX);
+    const srcH = Math.max(1e-6, bounds.maxY - bounds.minY);
+    const scale = Math.min(targetW / srcW, targetH / srcH);
+    const xOffset = (width - srcW * scale) / 2;
+    const yOffset = (height - srcH * scale) / 2;
+    const toPx = (lon: number, lat: number): [number, number] => {
+      const x = (lon - bounds.minX) * scale + xOffset;
+      const y = (bounds.maxY - lat) * scale + yOffset;
+      return [x, y];
+    };
+    let d = "";
+    for (const rings of ringsGroups) {
+      for (const ring of rings) {
+        if (!ring || ring.length === 0) continue;
+        ring.forEach((pt, idx) => {
+          const [x, y] = toPx(pt[0], pt[1]);
+          if (idx === 0) d += `M${x.toFixed(2)},${y.toFixed(2)}`;
+          else d += `L${x.toFixed(2)},${y.toFixed(2)}`;
+        });
+        d += "Z";
+      }
     }
     return d;
   }
@@ -181,7 +294,7 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
 
     // Stable hue/lightness per cuisine; saturation varies by progress (0..3)
     const CUISINE_HL: Record<Cuisine, { h: number; l: number }> = {
-      "Middle Eastern": { h: 265, l: 55 }, // violet
+      "Indian": { h: 265, l: 55 },         // violet
       "Japanese": { h: 145, l: 45 },       // green
       "Peruvian": { h: 0, l: 50 },         // red
       "Italian": { h: 38, l: 52 },         // amber
@@ -383,20 +496,25 @@ export default function Section1({ selectedRecipe, onSelectRecipe, onVisibleClus
               const left = centerX - svgW / 2;
               const top = centerY - svgH / 2;
 
-              const pathD = buildCountryPath(feat, svgW, svgH, 8);
+              const precomputed = buildCountryPathFromPrecomputed(countryName, svgW, svgH, 8);
+              const pathD = precomputed ?? buildCountryPath(feat, svgW, svgH, 8);
               // Subtle neutral fill behind points
-              return (
-                <svg
-                  key={`${cluster.cuisine}-${countryName}`}
-                  width={svgW}
-                  height={svgH}
-                  viewBox={`0 0 ${svgW} ${svgH}`}
-                  style={{ position: "absolute", left, top, opacity: 0.16, transform: "translateZ(0)" }}
-                  aria-hidden="true"
-                >
-                  <path d={pathD} fill="currentColor" className="text-foreground" />
-                </svg>
-              );
+              try {
+                return (
+                  <svg
+                    key={`${cluster.cuisine}-${countryName}`}
+                    width={svgW}
+                    height={svgH}
+                    viewBox={`0 0 ${svgW} ${svgH}`}
+                    style={{ position: "absolute", left, top, opacity: 0.16, transform: "translateZ(0)" }}
+                    aria-hidden="true"
+                  >
+                    <path d={pathD} fill="currentColor" className="text-foreground" fillRule="evenodd" />
+                  </svg>
+                );
+              } catch {
+                return null;
+              }
             })}
           </div>
 
