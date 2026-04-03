@@ -7,6 +7,14 @@ import thisIsMe from "@/assets/this-is-me.jpg";
 const Portfolio = () => {
   const implementedPrototypes = [
     {
+      title: "Accepting AI: A Testing Adventure",
+      description:
+        "Ready to embrace AI as an AI Builder? Follow Acme Widget Co's journey from idea to production through 5 educational phases: Interview & Requirements → Solution Design → Implementation → Pre-Production Evaluation → Production Monitoring. Learn where AI evals fit in your testing pyramid alongside unit, integration, and E2E tests. Explore grounding checks, hallucination detection, and behavioral evals. Watch a real support chatbot evolve from verbose to hallucinating to reliably accurate—with full governance tracking. Your testing pyramid just got a shiny new AI-powered top!",
+      link: "/ai-evals/",
+      tags: ["Accepting AI", "Testing Pyramid", "Evals", "SDLC", "Governance"],
+      status: "Live Demo Available",
+    },
+    {
       title: "Your Learning Adventure Map",
       description:
         "Ready to level up as a team? Set shared goals, share your personal growth dreams, and let AI be your career compass! Inspired by Final Fantasy X's Skill Sphere Grid, this interactive map helps you discover the perfect next skills to master, connects you with ideal mentors, and shows you who you could guide. It's like having a career GPS that knows where your team wants to go AND where your heart wants to grow. Adventure awaits!",
