@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 # Lazy imports - only import chromadb when needed to avoid startup errors
 # This prevents chromadb telemetry from blocking Flask startup

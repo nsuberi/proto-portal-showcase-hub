@@ -75,10 +75,10 @@ def main():
     port = int(os.getenv("FLASK_PORT", 5000))
     debug = os.getenv("FLASK_DEBUG", "True").lower() == "true"
 
-    print(f"\nStarting AI Testing Resource...")
+    print("\nStarting AI Testing Resource...")
     print(f"Open http://{host}:{port}/viewer/tests in your browser")
     print(f"Demo available at http://{host}:{port}/ask")
-    print(f"\nPress Ctrl+C to stop\n")
+    print("\nPress Ctrl+C to stop\n")
 
     try:
         print(f"Starting Flask on {host}:{port} (debug={debug})...")

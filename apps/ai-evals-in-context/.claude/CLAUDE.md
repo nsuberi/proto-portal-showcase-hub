@@ -41,6 +41,10 @@ This project uses a breadboarding/affordances-first approach. The persistent aff
 - Copy `.env.example` to `.env` and fill in values for local development.
 - In production, secrets are managed via AWS Secrets Manager (see Deployment section).
 
+### Test Virtual Environments
+
+Local testing may create additional venv directories beyond `.venv/` (e.g. `test_venv/`, `test_venv_py312/`). These are gitignored via `*venv*/` in the root `.gitignore` and `apps/ai-evals-in-context/.gitignore`. Never commit venv directories — they contain thousands of package files (including SDK types like `beta_base64_pdf_source.py`) that have no place in git history. If a new venv pattern appears as untracked, run `git check-ignore -v <dir>` to confirm it's ignored before staging anything.
+
 ### After Completing Work
 
 Update `.claude/affordances.md`:

@@ -2,7 +2,6 @@
 
 from typing import List
 from datetime import datetime, timedelta
-import statistics
 
 from .models import ProductionTrace, MetricsSummary
 

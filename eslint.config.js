@@ -14,6 +14,7 @@ export default tseslint.config(
       "shared/mcp-cli/dist",
       "shared/mcp-servers/**/dist",
       "shared/design-tokens/dist",
+      "**/*venv*",
     ],
   },
   {
