@@ -23,10 +23,10 @@ function DocumentationExplorer() {
   // but visible enough to read and invite clicks. /70 opacity on dark bg passes AA large text (3:1).
   const getCategoryColors = (category?: string) => {
     switch (category) {
-      case 'memory': return 'text-amber-400/70 hover:text-amber-300 hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]'
-      case 'skill': return 'text-violet-400/70 hover:text-violet-300 hover:drop-shadow-[0_0_8px_rgba(167,139,250,0.4)]'
-      case 'tool': return 'text-blue-400/70 hover:text-blue-300 hover:drop-shadow-[0_0_8px_rgba(96,165,250,0.4)]'
-      case 'concept': return 'text-teal-400/70 hover:text-teal-300 hover:drop-shadow-[0_0_8px_rgba(45,212,191,0.4)]'
+      case 'memory': return 'text-amber-400/70 hover:text-amber-300 hover:drop-shadow-glow-memory'
+      case 'skill': return 'text-violet-400/70 hover:text-violet-300 hover:drop-shadow-glow-skill'
+      case 'tool': return 'text-blue-400/70 hover:text-blue-300 hover:drop-shadow-glow-tool'
+      case 'concept': return 'text-teal-400/70 hover:text-teal-300 hover:drop-shadow-glow-concept'
       default: return 'text-slate-400/70 hover:text-slate-300'
     }
   }
