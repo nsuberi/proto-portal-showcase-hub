@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}TSR Governance Portal{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/governance.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="governance-portal">
+  <header class="gov-header">
+    <span class="gov-header__icon">&#127963;</span>
+    <h1>AI Governance &amp; Compliance Portal</h1>
+  </header>
+
+  {% if stats %}
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-card__value">{{ stats.total }}</div>
+      <div class="stat-card__label">Total TSRs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value" style="color: var(--color-success);">{{ stats.go }}</div>
+      <div class="stat-card__label">GO Decisions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value" style="color: var(--color-error);">{{ stats.no_go }}</div>
+      <div class="stat-card__label">NO-GO Blocks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ "%.1f"|format(stats.go_rate * 100) }}%</div>
+      <div class="stat-card__label">Success Rate</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="gov-filters">
+    <select id="filter-environment" onchange="filterTSRs()">
+      <option value="">All Environments</option>
+      <option value="test">Test</option>
+      <option value="staging">Staging</option>
+      <option value="production">Production</option>
+    </select>
+    <select id="filter-decision" onchange="filterTSRs()">
+      <option value="">All Decisions</option>
+      <option value="go">GO</option>
+      <option value="no_go">NO-GO</option>
+      <option value="pending_review">Pending Review</option>
+    </select>
+  </div>
+
+  <div class="tsr-list">
+    {% for tsr in tsrs %}
+    <div class="tsr-card tsr-card--{{ tsr.go_no_go_decision.value }}"
+         data-environment="{{ tsr.environment }}"
+         data-decision="{{ tsr.go_no_go_decision.value }}">
+      <div class="tsr-card__header">
+        <span class="tsr-card__id">{{ tsr.id[:12] }}</span>
+        <span class="tsr-card__decision">
+          {% if tsr.go_no_go_decision.value == 'go' %}&#10003; GO
+          {% elif tsr.go_no_go_decision.value == 'no_go' %}&#10007; NO-GO
+          {% else %}&#9203; PENDING{% endif %}
+        </span>
+      </div>
+      <div class="tsr-card__meta">
+        <div>Environment: <strong>{{ tsr.environment }}</strong></div>
+        <div>Created: {{ tsr.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
+        <div>Triggered by: {{ tsr.triggered_by }}</div>
+      </div>
+      {% if tsr.versions %}
+      <div class="tsr-card__versions">
+        Code: <code>{{ tsr.versions.codebase_sha[:7] }}</code><br>
+        {% if tsr.versions.prompts_version %}
+        Prompts: <code>{{ tsr.versions.prompts_version }}</code>
+        {% endif %}
+      </div>
+      {% endif %}
+      <button class="tsr-card__link" onclick="openTSRModal('{{ tsr.id }}', '{{ tsr.go_no_go_decision.value }}', '{{ tsr.id[:12] }}')">
+        View Details &rarr;
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% include "components/tsr_modal.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTSRs() {
+  const envFilter = document.getElementById('filter-environment').value;
+  const decisionFilter = document.getElementById('filter-decision').value;
+  const cards = document.querySelectorAll('.tsr-card');
+
+  cards.forEach(card => {
+    const env = card.dataset.environment;
+    const decision = card.dataset.decision;
+
+    const envMatch = !envFilter || env === envFilter;
+    const decisionMatch = !decisionFilter || decision === decisionFilter;
+
+    card.style.display = (envMatch && decisionMatch) ? 'block' : 'none';
+  });
+}
+</script>
+{% endblock %}

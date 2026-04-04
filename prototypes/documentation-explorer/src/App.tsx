@@ -10,7 +10,7 @@ function App() {
 
   useEffect(() => {
     // Check if user has seen instructions before
-    const hasSeenInstructions = localStorage.getItem('documentation-explorer-instructions-seen')
+    const hasSeenInstructions = localStorage.getItem('agent-memory-skills-instructions-seen')
     if (hasSeenInstructions) {
       setShowInstructions(false)
     }
@@ -18,7 +18,7 @@ function App() {
 
   const handleCloseInstructions = () => {
     setShowInstructions(false)
-    localStorage.setItem('documentation-explorer-instructions-seen', 'true')
+    localStorage.setItem('agent-memory-skills-instructions-seen', 'true')
   }
 
   return (

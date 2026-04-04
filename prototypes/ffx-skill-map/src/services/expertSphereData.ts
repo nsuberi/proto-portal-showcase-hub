@@ -1,5 +1,6 @@
 // Expert Sphere Grid Network - Nodes and Edges for Sigma.js
 // Based on the complex sphere grid structure with circular clusters and pathways
+// design-token-lint-ignore — per-node hex colors are intentional for visual variety in graph viz
 
 export const expertSphereNodes = [
   // Central Hub Cluster - Ultimate Abilities

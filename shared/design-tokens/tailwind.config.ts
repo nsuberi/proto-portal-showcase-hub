@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { baseTailwindConfig } from "./tailwind/base-config";
+import { baseTailwindConfig } from "./tailwind/base-config.js";
 
 /**
  * Tailwind configuration for shared design tokens package

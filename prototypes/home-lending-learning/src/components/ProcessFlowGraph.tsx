@@ -3,7 +3,7 @@ import Graph from 'graphology';
 import Sigma from 'sigma';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { FlowMapNode } from '../types';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, hslToHex } from '../constants';
 
 interface ProcessFlowGraphProps {
   nodes: FlowMapNode[];
@@ -51,9 +51,9 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
         graph.addNode(node.id, {
           x: currentX,
           y: yPosition,
-          size: node.id === 'loan-denial' ? 18 : 15, // Make loan denial slightly larger
+          size: node.id === 'loan-denial' ? 18 : 15,
           label: node.title,
-          color: node.id === 'loan-denial' ? '#DC2626' : (CATEGORIES[node.category]?.color || '#6B7280'), // Red for loan denial
+          color: node.id === 'loan-denial' ? hslToHex(0, 84.2, 60.2) : (CATEGORIES[node.category]?.color || hslToHex(240, 5, 46)), // destructive / muted
           category: node.category,
           originalNode: node
         });
@@ -72,7 +72,7 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
         if (graph.hasNode(targetId)) {
           graph.addEdge(node.id, targetId, {
             size: 2,
-            color: '#9CA3AF'
+            color: hslToHex(240, 5, 64.9) // --muted-foreground
           });
         }
       });
@@ -107,15 +107,15 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
     const sigma = new Sigma(graph, containerRef.current, {
       renderLabels: true,
       labelRenderedSizeThreshold: 0,
-      defaultNodeColor: '#6B7280',
-      defaultEdgeColor: '#9CA3AF',
+      defaultNodeColor: hslToHex(240, 5, 46),       // muted
+      defaultEdgeColor: hslToHex(240, 5, 64.9),     // muted-foreground
       defaultEdgeType: 'arrow',
       labelDensity: isSmallScreen ? 0.15 : 0.07,
       labelGridCellSize: isSmallScreen ? 80 : 60,
       labelFont: '"Inter", "system-ui", "sans-serif"',
       labelSize: isSmallScreen ? 10 : 12,
       labelWeight: '600',
-      labelColor: { color: '#374151' },
+      labelColor: { color: hslToHex(207, 51, 22) }, // --primary (foreground)
       edgeLabelSize: isSmallScreen ? 10 : 12,
       stagePadding: isSmallScreen ? 20 : 30,
       zoomToSizeRatioFunction: (ratio) => ratio,
@@ -126,17 +126,17 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
         // Highlight nodes if they're in the highlightedNodes array
         if (highlightedNodes.length > 0) {
           if (highlightedNodes.includes(node)) {
-            res.size = isSmallScreen ? 16 : 20; // Make highlighted nodes larger
-            res.color = '#F59E0B'; // Amber color for highlighting
-            res.borderColor = '#D97706';
+            res.size = isSmallScreen ? 16 : 20;
+            res.color = hslToHex(48, 96, 53);     // --warning (highlight)
+            res.borderColor = hslToHex(48, 96, 40);
             res.borderSize = 2;
           } else {
-            res.color = '#E5E7EB'; // Dim non-highlighted nodes
+            res.color = hslToHex(240, 5, 90);     // dimmed muted
             res.label = ''; // Hide labels for non-highlighted nodes
           }
         } else if (hoveredNode && hoveredNode !== node && !graph.neighbors(hoveredNode).includes(node)) {
           res.label = '';
-          res.color = '#E5E7EB';
+          res.color = hslToHex(240, 5, 90); // dimmed muted
         }
         return res;
       },
@@ -189,7 +189,7 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
                 className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
                 style={{ backgroundColor: category.color }}
               />
-              <span className="text-xs text-gray-700 truncate">{category.label}</span>
+              <span className="text-xs text-foreground truncate">{category.label}</span>
             </div>
           ))}
         </div>
@@ -197,7 +197,7 @@ export function ProcessFlowGraph({ nodes, glossaryTerms, onNodeClick, highlighte
 
       {/* Mobile Controls */}
       <div className="absolute bottom-2 left-2 sm:hidden bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
-        <div className="text-xs text-gray-600">
+        <div className="text-xs text-muted-foreground">
           Tap nodes to explore • Pinch to zoom
         </div>
       </div>

@@ -1,409 +1,360 @@
 # Proto Portal Showcase Hub
 
-A monorepo containing various prototypes and shared design components for demonstrating innovative web technologies and concepts. This project showcases a modern portfolio architecture with integrated prototypes, featuring a shared design system and automated deployment pipeline.
+A portfolio monorepo showcasing interactive prototypes deployed to AWS. Each prototype demonstrates a different approach to learning technology, visualization, or AI-assisted interaction.
 
-## 🏗️ Architecture Overview
+**Live site**: https://portfolio.cookinupideas.com
 
-This project implements a **monorepo architecture** with:
-- **Main Portfolio**: Showcases all prototypes with integrated navigation
-- **Shared Design System**: Reusable UI components across all prototypes
-- **Individual Prototypes**: Self-contained applications with specific features
-- **Unified Deployment**: Single build process that creates an integrated experience
+## Prototypes
 
-## 🏗️ Monorepo Structure
+| Prototype | What It Does | Key Tech |
+|-----------|-------------|----------|
+| [FFX Skill Map](prototypes/ffx-skill-map/) | Graph-based skill development inspired by Final Fantasy X's Sphere Grid | Sigma.js, Graphology, Neo4j |
+| [Home Lending Learning](prototypes/home-lending-learning/) | Interactive mortgage education with AI assessments | Claude API, adaptive difficulty |
+| [Documentation Explorer](prototypes/documentation-explorer/) | AI-powered code documentation search with floating cards | Framer Motion, react-markdown |
+| [Learning Path](prototypes/learning-path/) | Geospatial recipe explorer with pre-computed country boundaries | Hex grids, progress tracking |
+| [AI Evals in Context](apps/ai-evals-in-context/) | AI evaluation in the testing pyramid (Flask/ECS) | Flask, ChromaDB, deepeval |
+
+## Architecture
 
 ```
 proto-portal-showcase-hub/
-├── src/                   # Main portfolio application
-│   ├── components/        # Portfolio-specific components
-│   ├── pages/             # Portfolio pages
-│   └── assets/            # Static assets
+├── src/                              # Portfolio landing page (React/Vite)
+├── prototypes/                       # 4 React/Vite prototype apps
+├── apps/
+│   └── ai-evals-in-context/          # Flask app (separate ECS deployment)
 ├── shared/
-│   └── design-tokens/     # Shared design tokens and Tailwind base config
-├── prototypes/
-│   ├── ffx-skill-map/     # Final Fantasy X Skill Map Prototype
-│   └── home-lending-learning/ # Home Lending Learning Prototype
-├── scripts/               # Build and deployment scripts
-├── terraform/             # Infrastructure as Code
-└── .github/workflows/     # CI/CD pipeline
+│   ├── design-tokens/                # Shared UI theme with override system
+│   └── api/                          # Express API proxy (Claude, auth, rate limiting)
+├── terraform/                        # AWS IaC (S3, CloudFront, Lambda, API Gateway)
+├── scripts/                          # Build, deploy, and dev proxy scripts
+└── .github/workflows/                # CI/CD pipeline
 ```
 
-## 🎨 Design Tokens Architecture
+**How it deploys**: React prototypes build to `dist/prototypes/{name}/` and serve from S3 via CloudFront. The shared API runs as a Lambda function behind API Gateway. The AI Evals app deploys to ECS Fargate. CloudFront routes between all three.
 
-The `shared/design-tokens` workspace is the foundation of the monorepo's UI consistency:
+## Getting Started
 
-### **Why a Shared Design System?**
-- **Consistency**: Ensures all prototypes have the same look and feel
-- **Efficiency**: Reduces code duplication across prototypes
-- **Maintainability**: Central place to update UI components
-- **Scalability**: Easy to add new prototypes with existing components
+### Prerequisites
 
-### **Design Tokens Structure**
+- **Node.js 20+** with **Corepack** enabled (`corepack enable`)
+- **Yarn 4.9+** (managed via Corepack — do not install globally)
+- **Docker** (optional, for Neo4j database)
+- **Python 3** (for AI Evals app and testing production builds)
+
+### Installation
+
+```bash
+git clone <repository-url>
+cd proto-portal-showcase-hub
+
+# Enable Corepack for Yarn 4.9
+corepack enable
+
+# Install all workspace dependencies
+yarn install --immutable
 ```
-shared/design-tokens/
-├── tokens/               # Token definitions (colors, spacing, typography, etc.)
-├── css/                  # CSS custom properties and utilities
-├── tailwind/             # Base Tailwind config
-└── index.ts              # Exports and override helpers
+
+### Running Everything Locally
+
+One command starts Docker services, the Flask app, all Node prototypes, the API server, and the dev proxy:
+
+```bash
+./scripts/dev-start.sh
 ```
 
-### **How Prototypes Use the Design Tokens**
+Then open **http://localhost:8082** — the dev proxy routes everything through a single entry point, matching production CloudFront:
+
+```
+http://localhost:8082/                                    → Portfolio
+http://localhost:8082/prototypes/ffx-skill-map/           → FFX Skill Map
+http://localhost:8082/prototypes/home-lending-learning/    → Home Lending
+http://localhost:8082/prototypes/documentation-explorer/   → Docs Explorer
+http://localhost:8082/prototypes/learning-path/            → Learning Path
+http://localhost:8082/api/v1/*                             → API Server
+http://localhost:8082/ai-evals/                            → AI Evals (Flask)
+```
+
+Ctrl+C shuts everything down cleanly, including Docker containers.
+
+**Flags:**
+
+| Flag | Effect |
+|------|--------|
+| `--no-evals` | Skip the AI Evals app entirely |
+| `--neo4j` | Also start Neo4j for FFX (default: skip, uses mock data) |
+| `--evals-local` | Run Flask directly instead of via Docker (no PostgreSQL/Redis) |
+
+### Running Individual Services
+
+If you only need part of the stack:
+
+```bash
+yarn dev:all                          # All Node services + proxy (no Docker)
+yarn dev                              # Main portfolio only (port 8080)
+yarn dev:ffx                          # FFX Skill Map (port 3001)
+yarn dev:home-lending                 # Home Lending (port 3002)
+yarn dev:documentation-explorer       # Docs Explorer (port 3005)
+yarn dev:learning-path                # Learning Path (port 3006)
+cd shared/api && npm run dev          # API server (port 3004)
+yarn dev:proxy                        # Dev proxy only (port 8082)
+```
+
+### AI Features (Claude API)
+
+To enable AI-powered features (skill recommendations, lending assessments, doc search):
+
+```bash
+cd shared/api
+cp .env.example .env
+# Edit .env and add: CLAUDE_API_KEY=sk-ant-your-key-here
+npm run dev
+```
+
+The API server runs on port 3004. Prototypes work without it but AI features will be unavailable.
+
+### AI Evals App (Flask) — First-Time Setup
+
+Before `dev-start.sh` can run the AI Evals app, create the `.env` file:
+
+```bash
+cd apps/ai-evals-in-context/ai-testing-resource
+cp .env.example .env                  # Add ANTHROPIC_API_KEY
+```
+
+The start script handles Docker (or virtualenv creation with `--evals-local`). Access via `http://localhost:8082/ai-evals/`.
+
+Key routes: `/` (landing), `/ask` (live demo), `/viewer/tests` (test navigator), `/governance` (TSR dashboard).
+
+### Neo4j Database (FFX Prototype, Optional)
+
+The FFX prototype uses mock data by default. For real graph database operations:
+
+```bash
+yarn docker:up                        # Start Neo4j container
+cd prototypes/ffx-skill-map
+yarn db:seed                          # Seed skill graph
+# Neo4j Browser: http://localhost:7474 (neo4j/testpassword)
+yarn docker:down                      # Stop when done
+```
+
+## Port Reference
+
+| Service | Port | Production Path |
+|---------|------|-----------------|
+| Main Portfolio | 8080 | `/` |
+| FFX Skill Map | 3001 | `/prototypes/ffx-skill-map/` |
+| Home Lending | 3002 | `/prototypes/home-lending-learning/` |
+| Documentation Explorer | 3005 | `/prototypes/documentation-explorer/` |
+| Learning Path | 3006 | `/prototypes/learning-path/` |
+| API Server | 3004 | `/api/v1/` |
+| Dev Proxy | 8082 | All of the above |
+| AI Evals (Flask) | 5000 (5001 via Docker) | `/ai-evals/` |
+| Neo4j Browser | 7474 | - |
+| Neo4j Bolt | 7687 | - |
+
+## Testing
+
+```bash
+# Unit tests (all prototypes)
+yarn workspace @proto-portal/ffx-skill-map test
+yarn workspace @proto-portal/home-lending-learning test
+yarn workspace @proto-portal/documentation-explorer test
+
+# E2E tests (Playwright)
+cd prototypes/ffx-skill-map && npm run test:e2e
+cd prototypes/home-lending-learning && npm run test:e2e
+
+# Integration tests (needs API server running on port 3004)
+cd shared/api && npm run dev          # start API first
+cd prototypes/ffx-skill-map && npm run test:integration
+
+# AI Evals tests
+cd apps/ai-evals-in-context/ai-testing-resource
+source .venv/bin/activate
+python3 -m pytest tests/unit/ tests/e2e/ -v
+```
+
+## Building & Deploying
+
+```bash
+# Build all prototypes
+yarn build
+# Or: ./scripts/build.sh
+
+# Test the production build locally
+cd dist && python3 -m http.server 8000
+# Visit http://localhost:8000 and http://localhost:8000/prototypes/ffx-skill-map/
+
+# Full deployment (Terraform + build + S3 + CDN invalidation)
+./scripts/deploy.sh
+
+# Infrastructure only
+./scripts/deploy-infrastructure.sh
+
+# Site content only
+./scripts/deploy-site.sh
+```
+
+## Design Token System
+
+All prototypes share a design token system from `shared/design-tokens/`:
+
 ```css
-/* In any app's main CSS */
+/* Import in any prototype's CSS */
 @import "@proto-portal/design-tokens/css/tokens.css";
 @import "@proto-portal/design-tokens/css/utilities.css";
 ```
 
 ```ts
-// In Tailwind config
+// Extend in Tailwind config
 import { baseTailwindConfig } from "@proto-portal/design-tokens";
+
+// Per-prototype overrides
+import { createDesignTokens, presetOverrides } from "@proto-portal/design-tokens";
+const tokens = createDesignTokens(presetOverrides.ffxSkillMap);
 ```
 
-## 🎯 Current Prototypes
+Available presets: `ffxSkillMap` (light theme), `highContrast` (accessibility), `vibrant` (colorful).
 
-### FFX Skill Map
-A graph-based skill development system inspired by Final Fantasy X's Sphere Grid, built with Neo4j and React.
+## CI/CD Pipeline
 
-**Features:**
-- 🗺️ Interactive skill map with Sigma.js visualization
-- 👥 Employee skill tracking and analytics
-- 🧠 Intelligent skill assessment quiz
-- 🎯 Personalized skill recommendations
-- 📊 Dashboard with charts and statistics
+GitHub Actions (`.github/workflows/deploy.yml`) runs on push to `main`:
 
-**Tech Stack:**
-- React 18 + TypeScript + Vite
-- Sigma.js + Graphology for graph visualization
-- Neo4j 5.15 Community Edition
-- Shared Design System + Tailwind CSS
-- TanStack Query + React Router
+1. **Test** — Unit tests for all prototypes
+2. **Deploy** — Terraform apply, build all apps, S3 sync, CDN invalidation
+3. **Integration Tests** — Playwright E2E against production
 
-**Quick Start:**
-```bash
-# Start the FFX prototype in development
-npm run dev:ffx
+Uses OIDC federation for AWS access — no static credentials.
 
-# Start Neo4j database
-npm run docker:up
+## Infrastructure
 
-# Seed database
-cd prototypes/ffx-skill-map && npm run db:seed
-```
+Terraform in `terraform/` manages:
+- **S3** — Static file hosting
+- **CloudFront** — CDN with SPA routing (CloudFront Function handles prototype paths)
+- **Lambda** — Express API from `shared/api/`
+- **API Gateway** — Routes to Lambda with rate limiting
+- **Route53** — DNS for cookinupideas.com subdomains
+- **Secrets Manager** — Claude API key storage
 
-## 🚀 Getting Started
+State: S3 bucket `portfolio-portal-terraform-state` with DynamoDB locking.
 
-### Prerequisites
-- **Node.js 18+** and **Yarn 4.9+** (managed via Corepack)
-- **Docker and Docker Compose** (for database prototypes)
-- **Git**
-- **Python 3** (for local testing of built applications)
+## Security Model
 
-### Installation
-```bash
-# Clone the repository
-git clone <repository-url>
-cd proto-portal-showcase-hub
+- **Zero static credentials** — AWS auth via OIDC federation (short-lived tokens)
+- **Branch protection** — PRs required for `main`, enforce admins enabled
+- **Environment-gated secrets** — `ANTHROPIC_API_KEY` only accessible from `main` branch
+- **API security** — Helmet, CORS whitelist, rate limiting, Secrets Manager
+- See the [detailed security model](#security-details) below for attack vector analysis
 
-# Setup Node.js and enable Corepack
-nvm use 18
-corepack enable
+## Adding a New Prototype
 
-# Install dependencies for all workspaces
-yarn install --immutable
-```
-
-### Development
-
-#### Main Portfolio Application
-```bash
-# Start the main portfolio (shows all prototypes)
-yarn dev
-# Opens at http://localhost:8080
-```
-
-#### FFX Skill Map Prototype
-```bash
-# Start the FFX prototype directly
-yarn dev:ffx
-# Opens at http://localhost:3001
-```
-
-#### API Server (for AI analysis)
-```bash
-# Start the secure API proxy
-cd shared/api
-npm install
-npm run dev  # runs on http://localhost:3003
-
-# Or navigate to the prototype directory
-cd prototypes/ffx-skill-map
-yarn dev
-```
-
-#### Database Setup (for FFX prototype)
-```bash
-# Start Neo4j
-yarn docker:up
-
-# Seed the database
-cd prototypes/ffx-skill-map
-yarn db:seed
-
-# Reset database (if needed)
-yarn db:reset
-```
-
-## 🏗️ Build & Deployment Architecture
-
-### **Build Process**
-The build system creates an integrated deployment where:
-1. **Main Portfolio** builds to `dist/`
-2. **FFX Skill Map** builds to `dist/prototypes/ffx-skill-map/`
-3. **Integrated Navigation** allows seamless movement between portfolio and prototypes
-
-```bash
-# Build everything
-yarn build
-# or
-./scripts/build.sh
-
-# This creates:
-# dist/
-# ├── index.html (main portfolio)
-# ├── assets/ (portfolio assets)
-# └── prototypes/
-#     └── ffx-skill-map/
-#         ├── index.html (FFX app)
-#         └── assets/ (FFX assets)
-```
-
-### **Local Testing with Python HTTP Server**
-
-#### **Why Python HTTP Server?**
-After building the integrated application, you need to serve static files to test the production build. Here's why we use Python's built-in HTTP server:
-
-1. **No Build Tools**: The built application is pure HTML/CSS/JS - no Node.js needed
-2. **Proper Routing**: Serves static files with correct MIME types
-3. **Path Resolution**: Handles relative paths between portfolio and prototypes
-4. **Universal**: Python 3 is available on most systems
-5. **Simple**: One command to test the entire integrated build
-
-#### **Testing the Built Application**
-```bash
-# After building
-yarn build
-
-# Test the integrated build
-cd dist
-python3 -m http.server 8000
-
-# Visit:
-# http://localhost:8000 (main portfolio)
-# http://localhost:8000/prototypes/ffx-skill-map/ (FFX prototype)
-```
-
-#### **Alternative Local Servers**
-```bash
-# Using Node.js serve
-npx serve dist -p 8000
-
-# Using PHP (if available)
-cd dist && php -S localhost:8000
-
-# Using any static file server
-```
-
-### **Production Deployment**
-The project deploys to AWS using:
-- **S3**: Static file hosting
-- **CloudFront**: CDN for global distribution
-- **Terraform**: Infrastructure as Code
-- **GitHub Actions**: Automated CI/CD pipeline
-
-## 📁 Detailed Project Structure
-
-### **Main Portfolio (`src/`)**
-```
-src/
-├── components/
-│   └── Portfolio.tsx     # Main portfolio component
-├── pages/
-│   ├── Index.tsx         # Landing page
-│   └── NotFound.tsx      # 404 page
-├── assets/
-│   └── hero-bg.jpg       # Portfolio assets
-├── App.tsx               # Main app component
-└── main.tsx              # Entry point
-```
-
-### **Shared Design Tokens (`shared/design-tokens/`)**
-```
-shared/design-tokens/
-├── tokens/
-├── css/
-├── tailwind/
-└── index.ts
-```
-
-### **FFX Skill Map (`prototypes/ffx-skill-map/`)**
-```
-prototypes/ffx-skill-map/
-├── src/
-│   ├── components/       # React components
-│   ├── pages/           # Application pages
-│   │   ├── Dashboard.tsx # Analytics dashboard
-│   │   ├── SkillMap.tsx  # Interactive skill map
-│   │   ├── Employees.tsx # Employee management
-│   │   ├── Quiz.tsx      # Skill assessment
-│   │   └── Recommendations.tsx # AI recommendations
-│   ├── services/        # Neo4j service layer
-│   ├── types/           # TypeScript types
-│   ├── data/            # Quiz questions and static data
-│   └── hooks/           # Custom React hooks
-├── scripts/             # Database seeding scripts
-├── docker-compose.yml   # Neo4j container setup
-└── README.md           # Detailed documentation
-```
-
-## 🛠️ Available Scripts
-
-### **Root Level (Portfolio + All Prototypes)**
-```bash
-# Development
-yarn dev              # Start main portfolio
-yarn dev:ffx          # Start FFX prototype
-
-# Building
-yarn build            # Build integrated application
-yarn build:ffx        # Build FFX prototype only
-
-# Database (FFX)
-yarn docker:up        # Start Neo4j for FFX
-yarn docker:down      # Stop Neo4j
-
-# Testing
-yarn preview          # Preview built application
-```
-
-### **FFX Prototype Specific**
-```bash
-cd prototypes/ffx-skill-map
-
-# Development
-yarn dev              # Start development server
-yarn build            # Build for production
-yarn preview          # Preview built prototype
-
-# Database
-yarn docker:up        # Start Neo4j container
-yarn docker:down      # Stop Neo4j container
-yarn db:seed          # Seed database
-yarn db:reset         # Reset and reseed database
-
-# Testing
-yarn test             # Run unit tests
-yarn test:watch       # Run tests in watch mode
-```
-
-## 🎯 Prototype Features
-
-### **FFX Skill Map**
-- **Dashboard**: Overview with statistics and interactive charts
-- **Skill Map**: Sigma.js visualization with employee skill highlighting
-- **Employees**: Employee management with skill tracking
-- **Quiz**: Behavioral assessment for skill inference
-- **Recommendations**: AI-powered skill suggestions
-
-### **Key Technologies Demonstrated**
-- **Graph Databases**: Neo4j for complex relationship modeling
-- **Graph Visualization**: Sigma.js + Graphology for interactive skill maps
-- **React Query**: Efficient data fetching and caching
-- **TypeScript**: Type-safe development across all components
-- **Modern UI**: Shared design tokens with Tailwind CSS
-- **Docker**: Containerized database setup
-- **Monorepo**: Yarn workspaces with shared dependencies
-
-## 🔧 Development Workflow
-
-### **Adding New Prototypes**
-1. Create directory in `prototypes/`
-2. Set up `package.json` with workspace dependencies
+1. Create `prototypes/{name}/` with `package.json` (workspace: `@proto-portal/{name}`)
+2. Set `base: '/prototypes/{name}/'` in `vite.config.ts`
 3. Import shared design tokens in CSS and Tailwind config
-4. Add scripts to root `package.json`
-5. Update build script to include new prototype
-6. Add to portfolio component
-7. Update this README
+4. Add dev/build scripts to root `package.json`
+5. Update `scripts/build.sh` to include the new prototype
+6. Update CloudFront Function in `terraform/main.tf` (add to prototype list)
+7. Add an `AGENTS.md` with prototype-specific guidance
+8. Add to the portfolio component in `src/components/Portfolio.tsx`
 
-### **Shared Tokens Development**
-1. Add or update tokens in `shared/design-tokens/tokens/`
-2. Update `shared/design-tokens/css/*` if new utilities are needed
-3. Export from `shared/design-tokens/index.ts`
-4. Test in prototypes
-5. Document token usage
+## Agent Workflow
 
-### **Database Prototypes**
-1. Create `docker-compose.yml` for database setup
-2. Add seeding scripts in `scripts/`
-3. Create service layer for database interactions
-4. Document setup process in prototype README
+This project uses Claude Code agents with structured guidance:
 
-## 🚀 Deployment Pipeline
+- **Root `AGENTS.md`** — Full monorepo overview and quick commands
+- **Per-prototype `AGENTS.md`** — Architecture decisions, key files, gotchas
+- **`CLAUDE.md`** — Development workflow, commit conventions, port reference
+- **`.claude/skills/breadboarding/`** — Feature shaping methodology (places, affordances, wiring)
 
-### **GitHub Actions Workflow**
-```yaml
-# .github/workflows/deploy.yml
-- Setup Node.js 18 + Yarn
-- Enable Corepack for workspace protocol
-- Install dependencies with yarn
-- Build integrated application
-- Deploy to AWS S3 + CloudFront
-- Invalidate CDN cache
+## Documentation
+
+- [AGENTS.md](AGENTS.md) — Agent instructions and architecture overview
+- [CLAUDE.md](CLAUDE.md) — Development workflow and design guidelines
+- [Shared API](shared/api/AGENTS.md) — API route patterns, security posture, CORS
+- [Terraform](terraform/AGENTS.md) — Infrastructure guide
+- [FFX Skill Map](prototypes/ffx-skill-map/README.md)
+- [Home Lending Learning](prototypes/home-lending-learning/README.md)
+- [Terraform Infrastructure Docs](terraform/docs/)
+
+---
+
+<details>
+<summary><h2 id="security-details">Security Details</h2></summary>
+
+### Access control: who can merge and deploy
+
+Only `nsuberi` can merge pull requests to `main` and trigger deployments. This is enforced by three independent layers:
+
+1. **GitHub collaborator model** — On a personal (non-organization) repository, only collaborators with write access can merge PRs or push to branches. `nsuberi` is the sole collaborator. Only the repo owner can add new collaborators. Anyone can fork the repo and open a PR, but they cannot merge it.
+
+2. **Branch protection on `main`** — Direct pushes to `main` are blocked. All changes must go through a pull request. `enforce_admins` is enabled, so this applies to the owner too. The required approval count is 0, which means the owner can merge their own PRs immediately without waiting for a review (necessary for a solo project).
+
+3. **Environment-gated secrets** — The `ANTHROPIC_API_KEY` is stored as a GitHub environment secret in the `production` environment, which has a branch deployment policy restricting it to `main` only. Even if a workflow runs on another branch, it cannot access production secrets.
+
+### Zero static credentials
+
+There are no AWS access keys stored anywhere in GitHub. AWS authentication uses OpenID Connect (OIDC) federation:
+
+- GitHub Actions requests a short-lived OIDC token from GitHub's token service
+- The `aws-actions/configure-aws-credentials` action exchanges this token with AWS STS
+- AWS validates the token's claims against the IAM role's trust policy
+- Temporary credentials (valid ~1 hour) are issued for the workflow run
+
+### How credentials flow in CI
+
+```
+PR merged to main (only nsuberi can do this)
+  -> deploy.yml triggers (push to main)
+    -> deploy job declares: environment: production
+      -> GitHub checks environment branch policy: is this main? yes
+        -> Job receives OIDC token
+           (sub: repo:nsuberi/proto-portal-showcase-hub:environment:production)
+        -> Job receives ANTHROPIC_API_KEY from production environment secret
+          -> aws-actions/configure-aws-credentials exchanges OIDC token with AWS STS
+            -> AWS validates trust policy on terraform-cooking-up-ideas role
+              -> Temporary credentials issued, Terraform runs
 ```
 
-### **Infrastructure (Terraform)**
-- **S3 Bucket**: Static file hosting
-- **CloudFront Distribution**: Global CDN
-- **Route 53**: DNS management
-- **IAM Roles**: Secure deployment access
+### AWS IAM trust policy
 
-### **Deployment Commands**
-```bash
-# Local deployment (requires AWS credentials)
-./scripts/deploy-infrastructure.sh
-./scripts/deploy-site.sh
+The IAM role `terraform-cooking-up-ideas` is managed in `terraform/additional-iam-policy.tf`. Its trust policy allows:
 
-# Or use GitHub Actions (automatic on push to main)
-git push origin main
-```
+| Principal | Action | Condition |
+|-----------|--------|-----------|
+| IAM user `nsuberi` | `sts:AssumeRole` | None (local CLI access) |
+| GitHub OIDC provider | `sts:AssumeRoleWithWebIdentity` | Subject must be `repo:nsuberi/proto-portal-showcase-hub:environment:production` AND audience must be `sts.amazonaws.com` |
+| `ecs-tasks.amazonaws.com` | `sts:AssumeRole` | None (ECS task execution) |
 
-## 📚 Documentation
+The OIDC subject condition is the critical AWS-side control. It ensures that only workflows running in the `production` environment of this specific repository can assume the role.
 
-- **[Docs Index](docs/README.md)**
-- **[Development & Deployment](docs/DEVELOPMENT_AND_DEPLOYMENT.md)**
-- **[Security Guide](docs/SECURITY.md)**
-- **[Testing Guide](docs/TESTING.md)**
-- **[Design Tokens & Responsive](docs/DESIGN_TOKENS.md)**
-- **[API Overview](docs/API.md)**
+### GitHub settings summary
 
-Prototype docs:
-- **[FFX Skill Map Docs](prototypes/ffx-skill-map/docs/README.md)**
-- **[Home Lending Learning Docs](prototypes/home-lending-learning/docs/README.md)**
+| Setting | Value |
+|---------|-------|
+| Repo-level secrets | None |
+| Production environment secrets | `ANTHROPIC_API_KEY` |
+| Production environment branch policy | `main` only |
+| Branch protection on `main` | PRs required, enforce admins, no force push, no deletions |
+| Required PR approvals | 0 (owner can self-merge) |
+| Collaborators | `nsuberi` (admin) -- sole collaborator |
 
-## 🤝 Contributing
+### What blocks each attack vector
 
-This repository demonstrates modern web development practices:
-- **Monorepo Architecture**: Shared components and utilities
-- **Type Safety**: TypeScript throughout
-- **Modern Tooling**: Vite, Yarn workspaces, GitHub Actions
-- **Cloud Deployment**: AWS infrastructure with Terraform
-- **Testing**: Unit tests and integration tests
+| Vector | Defense |
+|--------|---------|
+| Fork PR attempts to read secrets | GitHub blocks environment secrets from fork PRs |
+| Fork PR modifies workflow to exfiltrate on merge | Only `nsuberi` can merge; changes visible in diff |
+| Workflow on a feature branch references production env | Branch policy rejects -- only `main` allowed |
+| OIDC token from another repo tries to assume AWS role | STS rejects -- subject claim doesn't match |
+| Someone tries to push directly to `main` | Branch protection blocks it |
+| Someone tries to add themselves as collaborator | Only repo owner can manage collaborators |
 
-Feel free to:
-- Fork and experiment with the codebase
-- Add new prototypes or features
-- Improve existing implementations
-- Share feedback and suggestions
+### Terraform state
 
-## 📄 License
+State is stored in S3 (`portfolio-portal-terraform-state`) with DynamoDB locking and encryption at rest. The state file contains sensitive values (database passwords, API keys). Access is limited to the `terraform-cooking-up-ideas` IAM role and the `nsuberi` IAM user.
 
-This project is intended for educational and demonstration purposes as part of the Proto Portal Showcase Hub.
+</details>
+
+## License
+
+This project is intended for educational and demonstration purposes.

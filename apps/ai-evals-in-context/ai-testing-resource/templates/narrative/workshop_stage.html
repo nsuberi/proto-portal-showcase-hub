@@ -1,0 +1,21 @@
+{% extends "narrative/base_narrative.html" %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    {% if phase.number > 0 %}
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    {% endif %}
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+{% if content %}
+<div class="narrative-content narrative-content--narrow">
+  {{ content | safe }}
+</div>
+{% endif %}
+{% endblock %}
