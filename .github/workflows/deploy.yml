@@ -47,7 +47,7 @@ jobs:
 
     - name: Prepare workspaces for testing (ensure dev deps)
       run: |
-        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning @proto-portal/documentation-explorer
+        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning @proto-portal/documentation-explorer @proto-portal/learning-path
 
     - name: Lint (JS + design tokens + Python)
       run: yarn lint
@@ -57,6 +57,7 @@ jobs:
         yarn workspace @proto-portal/ffx-skill-map test
         yarn workspace @proto-portal/home-lending-learning test
         yarn workspace @proto-portal/documentation-explorer test
+        yarn workspace @proto-portal/learning-path test
       env:
         CI: true
         
@@ -69,6 +70,7 @@ jobs:
           prototypes/ffx-skill-map/coverage/
           prototypes/home-lending-learning/coverage/
           prototypes/documentation-explorer/coverage/
+          prototypes/learning-path/coverage/
         retention-days: 7
 
   deploy:

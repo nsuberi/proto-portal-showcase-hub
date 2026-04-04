@@ -3,10 +3,9 @@
 import logging
 import os
 import time
-from typing import Optional
 import anthropic
 
-from .utils import count_tokens, format_response, convert_markdown_to_html
+from .utils import format_response, convert_markdown_to_html
 from .rag import get_relevant_docs
 
 logger = logging.getLogger(__name__)

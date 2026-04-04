@@ -1157,66 +1157,6 @@ IMPORTANT:
         />
       </div>
 
-      {/* Debug Goal State - Remove in production */}
-      {false && (
-        <div className="mx-4 mb-4 p-4 bg-gray-100 rounded-lg border">
-          <h3 className="font-bold text-sm mb-2">🐛 Goal Debug Info:</h3>
-          <div className="text-xs space-y-1">
-            <div><strong>Current Goal:</strong> {currentGoal ? `${currentGoal.skill.name} (${currentGoal.employeeId})` : 'None'}</div>
-            <div><strong>Selected Employee:</strong> {selectedEmployeeId || 'None'}</div>
-            <div><strong>Data Source:</strong> {dataSource}</div>
-            <div><strong>Skills Loaded:</strong> {skills?.length || 0}</div>
-            <div><strong>Goal Loading:</strong> {goalLoading ? 'Yes' : 'No'}</div>
-          </div>
-          {selectedEmployeeId && skills?.length > 0 && (
-            <div className="mt-2 space-x-2">
-              <button 
-                onClick={() => {
-                  if (skills.length > 0) {
-                    const testSkill = skills[0];
-                    const selectedEmployee = employees?.find(emp => emp.id === selectedEmployeeId);
-                    if (!selectedEmployee) return;
-                    
-                    // Calculate goal path using shared utility function
-                    const goalPath = calculateGoalPath(testSkill, selectedEmployee, currentService);
-                    
-                    setGoal({
-                      skill: testSkill,
-                      path: goalPath,
-                      employeeId: selectedEmployeeId,
-                      dataSource
-                    });
-                    console.log('🧪 SkillMap: Set test goal with calculated path:', { skill: testSkill.name, path: goalPath });
-                  }
-                }}
-                className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
-              >
-                Set Test Goal
-              </button>
-              <button 
-                onClick={() => {
-                  if (selectedEmployeeId) {
-                    deleteGoalForEmployee(selectedEmployeeId, dataSource);
-                  }
-                }}
-                className="px-2 py-1 bg-red-500 text-white text-xs rounded"
-              >
-                Delete Goal
-              </button>
-              <button 
-                onClick={() => {
-                  if (selectedEmployeeId && skills) {
-                    loadGoal(selectedEmployeeId, dataSource, skills);
-                  }
-                }}
-                className="px-2 py-1 bg-green-500 text-white text-xs rounded"
-              >
-                Reload Goal
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Plan your Path to Victory - as a Team */}
       <div className="mb-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">

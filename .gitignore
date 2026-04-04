@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Yarn Berry
+.yarn/install-state.gz
+
 playwright-report/*
 
 # Environment variables
@@ -31,6 +34,7 @@ playwright-report/*
 # Python virtual environments
 .lint-venv/
 .venv/
+*venv*/
 
 # Terraform state
 *.tfstate
