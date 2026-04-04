@@ -165,6 +165,15 @@ python3 -m pytest tests/e2e/ -v
 ./scripts/deploy-site.sh
 ```
 
+### ARM64 Architecture (AI Evals ECS)
+
+The AI Evals ECS task definition specifies **ARM64 (Graviton)** as the CPU architecture. This is intentional:
+
+- **Local deploy support:** Docker images built natively on Apple Silicon Macs deploy directly to ECS without slow cross-compilation via QEMU
+- **Cost savings:** Graviton Fargate instances cost ~20% less than x86 equivalents
+- **CI/CD:** The GitHub Actions workflow uses `ARM64` runners to match. Do NOT add `--platform linux/amd64` to Docker builds
+- **Terraform:** `runtime_platform { cpu_architecture = "ARM64" }` in `terraform/modules/ai-evals/modules/ecs/main.tf`
+
 ## Agent Memory & Skills Explorer Sync
 
 The Agent Memory & Skills Explorer (`prototypes/documentation-explorer/`) visualizes the agent configuration layer. Its data lives in `prototypes/documentation-explorer/src/data/documentsData.ts`. **Keep this file in sync whenever the configuration layer changes:**

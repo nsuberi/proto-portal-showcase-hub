@@ -11,7 +11,7 @@ env:
 
 jobs:
   test-and-evaluate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     outputs:
       decision: ${{ steps.go_no_go.outputs.decision }}
       tsr_id: ${{ steps.tsr.outputs.tsr_id }}
@@ -133,7 +133,7 @@ jobs:
   deploy-staging:
     needs: test-and-evaluate
     if: github.ref == 'refs/heads/main' && needs.test-and-evaluate.outputs.decision == 'go'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     permissions:
       contents: read
       id-token: write  # Required for OIDC
@@ -169,7 +169,7 @@ jobs:
   deploy-production:
     needs: deploy-staging
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     permissions:
       contents: read
       id-token: write  # Required for OIDC
