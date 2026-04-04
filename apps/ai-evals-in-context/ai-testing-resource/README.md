@@ -166,6 +166,50 @@ pytest tests/evals/
 pytest --cov=app --cov=viewer
 ```
 
+### Playwright / Steelthread Tests
+
+Browser-based tests for major changes (new routes, template overhauls, layout rework). These require the full Docker Compose stack:
+
+```bash
+# One-time setup
+pip install playwright && playwright install chromium
+
+# Start the stack (serves on :5001)
+docker compose up -d --build
+docker compose ps  # confirm "tsr-api" is healthy
+
+# Run browser tests
+python3 -m pytest tests/playwright/test_browser.py --base-url http://localhost:5001 -v
+python3 -m pytest tests/steelthread/ --base-url http://localhost:5001 -v
+
+# Teardown
+docker compose down
+```
+
+> **Notes:** The container maps port 5000 to 5001. Export `ANTHROPIC_API_KEY` before running `docker compose up`. The `test_steel_thread.py` in `tests/playwright/` hits the deployed production URL.
+
+## Linting
+
+Run linting before committing. Tools: **black** (formatter) + **flake8** (linter) + **mypy** (type checker). Configuration lives in `pyproject.toml`.
+
+```bash
+source .venv/bin/activate
+
+# Auto-format with black (run first)
+black <file_or_dir>
+
+# Check formatting without changes
+black --check <file_or_dir>
+
+# Lint with flake8
+flake8 --exclude .venv,__pycache__ --max-line-length 120 <file_or_dir>
+
+# Type check (optional, non-blocking)
+mypy <file_or_dir>
+```
+
+Run `black` first, then `flake8`. Fix flake8 F-code errors (F811 redefined names, F821 undefined names, E999 syntax errors) before committing.
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -261,6 +305,18 @@ The production deployment uses:
 - **CloudWatch Logs**: Container log aggregation
 
 See architecture diagrams in the [Architecture section](#architecture) above.
+
+#### ARM64 / Graviton
+
+The ECS task definition specifies **ARM64 (Graviton)** as the CPU architecture. This is intentional:
+
+- **Apple Silicon deploys:** Docker images built natively on Apple Silicon Macs deploy directly to ECS without slow cross-compilation via QEMU
+- **Cost savings:** Graviton Fargate instances cost ~20% less than x86 equivalents
+- **CI/CD:** The GitHub Actions workflow uses ARM64 runners to match
+
+> **Do NOT** add `--platform linux/amd64` to Docker builds.
+
+Terraform config: `runtime_platform { cpu_architecture = "ARM64" }` in `terraform/modules/ai-evals/modules/ecs/main.tf`.
 
 ### Prerequisites
 
@@ -363,6 +419,23 @@ aws ecs describe-services \
   --cluster ai-testing-resource-prod \
   --services ai-testing-resource-prod \
   --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount,Health:healthCheck}'
+```
+
+> **Important: A healthy endpoint doesn't guarantee the new deployment succeeded** -- the health check may return healthy from a previous task while the new one is failing. Verify the deployment itself:
+
+```bash
+# Check ECS deployments -- should show one PRIMARY with runningCount == desiredCount
+aws ecs describe-services --cluster ai-testing-resource-prod --services ai-testing-resource-prod \
+  --query 'services[0].deployments' --output table
+
+# Check when running task started (should be after your deploy)
+aws ecs list-tasks --cluster ai-testing-resource-prod --service-name ai-testing-resource-prod \
+  --query 'taskArns' --output text | xargs -I {} aws ecs describe-tasks \
+  --cluster ai-testing-resource-prod --tasks {} \
+  --query 'tasks[0].{startedAt:startedAt,lastStatus:lastStatus}' --output table
+
+# If failing, check logs and stopped tasks
+aws logs tail /ecs/ai-testing-resource-prod --since 30m --follow
 ```
 
 ### Environment Variables (Production)
@@ -480,4 +553,45 @@ aws ecs wait services-stable \
   --cluster ai-testing-resource-prod \
   --services ai-testing-resource-prod
 ```
+
+### Terraform
+
+#### Module Structure
+
+```
+terraform/
+├── main.tf          # Module composition
+├── variables.tf     # Input variables
+├── outputs.tf       # Outputs for integration
+├── backend.tf       # S3 backend config
+└── modules/
+    ├── networking/  # VPC, subnets, security groups
+    ├── database/    # RDS PostgreSQL + Secrets Manager
+    ├── ecs/         # ECR, Fargate cluster, task def, service
+    ├── alb/         # Application Load Balancer + HTTPS
+    └── api_gateway/ # HTTP API + VPC Link
+```
+
+#### State Management
+
+State is stored in S3 bucket `ai-evals-terraform-state` with DynamoDB table `ai-evals-terraform-locks` for locking.
+
+#### Variables
+
+**Required:** `anthropic_api_key` (set via `export TF_VAR_anthropic_api_key="$ANTHROPIC_API_KEY"`).
+
+**Optional (with defaults):**
+
+| Variable | Default |
+|----------|---------|
+| `aws_region` | `us-east-1` |
+| `environment` | `prod` |
+| `app_name` | `ai-testing-resource` |
+| `domain_name` | `portfolio.cookinupideas.com` |
+| `container_cpu` | `256` |
+| `container_memory` | `512` |
+| `db_instance_class` | `db.t4g.micro` |
+| `db_allocated_storage` | `20` |
+
+See `terraform/variables.tf` for the full list.
 
