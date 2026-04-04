@@ -1,0 +1,67 @@
+name: Code Dojo CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/code-dojo/**'
+      - '.github/workflows/code-dojo-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Docker images
+        working-directory: ./apps/code-dojo
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml build
+
+      - name: Start Docker Compose services
+        working-directory: ./apps/code-dojo
+        run: |
+          cp .env.docker .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --no-build
+
+      - name: Show initial container logs
+        if: always()
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "=== Container Status ==="
+          docker compose ps
+          echo ""
+          echo "=== App Container Logs (last 50 lines) ==="
+          docker compose logs --tail=50 app || true
+          echo ""
+          echo "=== Waiting 10 seconds for startup ==="
+          sleep 10
+          echo "=== App Container Logs After 10s (last 100 lines) ==="
+          docker compose logs --tail=100 app || true
+
+      - name: Wait for services to be healthy
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "Waiting for app to be healthy..."
+          timeout 90 bash -c 'until docker compose ps --format json | jq -r "select(.Health == \"healthy\") | .Name" | grep -q code-dojo; do echo "Waiting..."; docker compose ps; sleep 5; done'
+          echo "App is healthy!"
+          docker compose ps
+
+      - name: Run tests in container
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "Running pytest in container..."
+          docker compose exec -T app pytest tests/ \
+            -m "not playwright" \
+            -v \
+            --tb=short
+
+      - name: Cleanup
+        if: always()
+        working-directory: ./apps/code-dojo
+        run: docker compose down -v

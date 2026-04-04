@@ -47,6 +47,14 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
+      title: "Code Dojo: AI-Powered Learning Platform",
+      description:
+        "A hands-on learning platform where students tackle coding challenges, submit GitHub solutions, and receive AI-powered feedback from Claude. Features Socratic dialogue with voice input, architectural PR analysis, and instructor review workflows with role-based access for students, instructors, and admins.",
+      link: "/code-dojo/",
+      tags: ["AI Feedback", "Learning Platform", "Code Review", "LangChain"],
+      status: "Live Demo Available",
+    },
+    {
       title: "AI Testing Resource: Governance-First Development",
       description:
         "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",

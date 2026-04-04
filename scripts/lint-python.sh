@@ -65,6 +65,8 @@ if ! "$PYTHON" -m mypy --version &>/dev/null 2>&1; then
 fi
 
 # Build array of directories/files to lint (only those that exist)
+DOJO_DIR="$ROOT_DIR/apps/code-dojo"
+
 LINT_TARGETS=()
 for d in \
   "$EVALS_DIR/app" \
@@ -73,7 +75,15 @@ for d in \
   "$EVALS_DIR/monitoring" \
   "$EVALS_DIR/scripts" \
   "$EVALS_DIR/config.py" \
-  "$EVALS_DIR/run.py"; do
+  "$EVALS_DIR/run.py" \
+  "$DOJO_DIR/app.py" \
+  "$DOJO_DIR/config.py" \
+  "$DOJO_DIR/seed_data.py" \
+  "$DOJO_DIR/models" \
+  "$DOJO_DIR/routes" \
+  "$DOJO_DIR/services" \
+  "$DOJO_DIR/middleware" \
+  "$DOJO_DIR/tests"; do
   [ -e "$d" ] && LINT_TARGETS+=("$d")
 done
 

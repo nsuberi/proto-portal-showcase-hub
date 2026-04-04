@@ -21,6 +21,7 @@ const SERVICES = {
   "learning-path": { port: 3006, buildPath: "prototypes/learning-path/dist" },
   api: { port: 3004 },
   "ai-evals": { port: process.env.AI_EVALS_PORT || 5000 },
+  "code-dojo": { port: process.env.CODE_DOJO_PORT || 5002 },
 };
 
 console.log("Starting Multi-SPA Development Proxy Server...");
@@ -108,6 +109,36 @@ docker compose up -d --build      # Docker, port 5001</pre>
   }),
 );
 
+// Code Dojo proxy — rewrite /code-dojo to / for the Flask app
+console.log(`  /code-dojo/*          ->  localhost:${SERVICES["code-dojo"].port}`);
+app.use(
+  "/code-dojo",
+  createProxyMiddleware({
+    target: `http://localhost:${SERVICES["code-dojo"].port}`,
+    changeOrigin: true,
+    pathRewrite: { "^/code-dojo": "" },
+    onError: (err, req, res) => {
+      console.log(`[code-dojo] Server not running (${err.code})`);
+      res.status(503).send(`
+        <html>
+          <head><title>Code Dojo Not Running</title></head>
+          <body style="font-family: system-ui; padding: 2rem; background: #f5f5f5;">
+            <h1>Code Dojo App Not Running</h1>
+            <p>Start it with:</p>
+            <pre>cd apps/code-dojo
+python3 app.py                        # direct, port 5002
+# or
+docker compose up -d --build          # Docker, port 5002</pre>
+          </body>
+        </html>
+      `);
+    },
+    onProxyRes: (proxyRes, req) => {
+      console.log(`[code-dojo] ${proxyRes.statusCode} ${req.url}`);
+    },
+  }),
+);
+
 // Main portfolio (catch-all, must be last)
 console.log(`  /*                   ->  localhost:${SERVICES.main.port}`);
 app.use(
@@ -166,6 +197,7 @@ Routes:
   http://localhost:${PORT}/prototypes/learning-path/              -> Learning Path (${SERVICES["learning-path"].port})
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
   http://localhost:${PORT}/ai-evals/                              -> AI Evals Flask (${SERVICES["ai-evals"].port})
+  http://localhost:${PORT}/code-dojo/                              -> Code Dojo Flask (${SERVICES["code-dojo"].port})
 
 Start all services: yarn dev:all
   `);
