@@ -59,3 +59,11 @@ variable "api_gateway_api_key_value" {
   sensitive   = true
   default     = ""
 }
+
+# AI Evals in Context Configuration
+variable "ai_evals_anthropic_api_key" {
+  description = "Anthropic API key for AI Evals application"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

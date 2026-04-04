@@ -4,28 +4,28 @@
  */
 
 // Export all token types and values
-export * from "./tokens/colors";
-export * from "./tokens/gradients";
-export * from "./tokens/shadows";
-export * from "./tokens/spacing";
-export * from "./tokens/transitions";
-export * from "./tokens/typography";
-export * from "./tokens/responsive";
-export * from "./tokens/components/chart-colors";
-export * from "./tokens/components/skill-categories";
+export * from "./tokens/colors.js";
+export * from "./tokens/gradients.js";
+export * from "./tokens/shadows.js";
+export * from "./tokens/spacing.js";
+export * from "./tokens/transitions.js";
+export * from "./tokens/typography.js";
+export * from "./tokens/responsive.js";
+export * from "./tokens/components/chart-colors.js";
+export * from "./tokens/components/skill-categories.js";
 
 // Export Tailwind configuration
-export * from "./tailwind/base-config";
+export * from "./tailwind/base-config.js";
 
-import { ColorTokens, baseColorTokens, darkColorTokens } from "./tokens/colors";
-import { GradientTokens, gradientTokens } from "./tokens/gradients";
-import { ShadowTokens, shadowTokens } from "./tokens/shadows";
-import { SpacingTokens, spacingTokens } from "./tokens/spacing";
-import { TransitionTokens, transitionTokens } from "./tokens/transitions";
-import { TypographyTokens, typographyTokens } from "./tokens/typography";
-import { ResponsiveTokens, responsiveTokens } from "./tokens/responsive";
-import { ChartColorTokens, chartColorTokens } from "./tokens/components/chart-colors";
-import { SkillCategoryTokens, skillCategoryTokens } from "./tokens/components/skill-categories";
+import { ColorTokens, baseColorTokens, darkColorTokens } from "./tokens/colors.js";
+import { GradientTokens, gradientTokens } from "./tokens/gradients.js";
+import { ShadowTokens, shadowTokens } from "./tokens/shadows.js";
+import { SpacingTokens, spacingTokens } from "./tokens/spacing.js";
+import { TransitionTokens, transitionTokens } from "./tokens/transitions.js";
+import { TypographyTokens, typographyTokens } from "./tokens/typography.js";
+import { ResponsiveTokens, responsiveTokens } from "./tokens/responsive.js";
+import { ChartColorTokens, chartColorTokens } from "./tokens/components/chart-colors.js";
+import { SkillCategoryTokens, skillCategoryTokens } from "./tokens/components/skill-categories.js";
 
 /**
  * Complete design token interface
@@ -214,23 +214,69 @@ export const presetOverrides = {
   } as DesignTokenOverrides,
 
   /**
-   * High contrast theme for accessibility
+   * High contrast theme for accessibility (WCAG AAA targets)
+   * Dark background with high-contrast foreground colors
    */
   highContrast: {
     colors: {
-      primary: "220 100% 50%",
+      background: "0 0% 0%",
+      foreground: "0 0% 100%",
+      card: "0 0% 5%",
+      cardForeground: "0 0% 100%",
+      popover: "0 0% 5%",
+      popoverForeground: "0 0% 100%",
+      primary: "220 100% 60%",
+      primaryForeground: "0 0% 0%",
       secondary: "0 0% 20%",
+      secondaryForeground: "0 0% 100%",
       muted: "0 0% 15%",
+      mutedForeground: "0 0% 75%",
+      accent: "50 100% 50%",
+      accentForeground: "0 0% 0%",
+      destructive: "0 100% 55%",
+      destructiveForeground: "0 0% 100%",
+      border: "0 0% 30%",
+      input: "0 0% 20%",
+      ring: "220 100% 60%",
+      success: "120 100% 40%",
+      successForeground: "0 0% 0%",
+      warning: "50 100% 50%",
+      warningForeground: "0 0% 0%",
+      info: "200 100% 60%",
+      infoForeground: "0 0% 0%",
+    },
+    shadows: {
+      glow: "0 0 40px hsl(220, 100%, 60% / 0.4)",
+      primary: "0 4px 20px hsl(220, 100%, 60% / 0.4)",
     },
   } as DesignTokenOverrides,
 
   /**
-   * Colorful theme for vibrant designs
+   * Vibrant theme with saturated colors and bold gradients
    */
   vibrant: {
+    colors: {
+      primary: "280 100% 65%",
+      primaryForeground: "0 0% 100%",
+      accent: "170 100% 45%",
+      accentForeground: "0 0% 0%",
+      success: "150 100% 45%",
+      warning: "40 100% 55%",
+      info: "190 100% 55%",
+      destructive: "350 100% 55%",
+      ring: "280 100% 65%",
+    },
     gradients: {
-      primary: "linear-gradient(135deg, hsl(300, 100%, 60%), hsl(200, 100%, 60%))",
-      secondary: "linear-gradient(135deg, hsl(60, 100%, 60%), hsl(300, 100%, 60%))",
+      primary: "linear-gradient(135deg, hsl(280, 100%, 65%), hsl(190, 100%, 55%))",
+      secondary: "linear-gradient(135deg, hsl(40, 100%, 55%), hsl(350, 100%, 55%))",
+      subtle: "linear-gradient(180deg, hsl(240, 10%, 3.9%), hsl(280, 30%, 8%))",
+      hero: "linear-gradient(135deg, hsl(280, 100%, 65% / 0.8), hsl(190, 100%, 55% / 0.8))",
+      accent: "linear-gradient(90deg, hsl(150, 100%, 45%), hsl(280, 100%, 65%))",
+    },
+    shadows: {
+      glow: "0 0 40px hsl(280, 100%, 65% / 0.4)",
+      primary: "0 4px 20px hsl(280, 100%, 65% / 0.4)",
+      elegant: "0 10px 30px -10px hsl(280, 50%, 20% / 0.5)",
     },
   } as DesignTokenOverrides,
 };

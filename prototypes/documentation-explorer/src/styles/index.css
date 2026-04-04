@@ -1,3 +1,4 @@
+@import '@proto-portal/design-tokens/css/tokens.css';
 @import '@proto-portal/design-tokens/css/utilities.css';
 @tailwind base;
 @tailwind components;

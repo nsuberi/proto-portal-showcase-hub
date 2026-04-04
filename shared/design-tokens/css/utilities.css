@@ -197,4 +197,107 @@
   .px-container { padding-left: var(--spacing-container); padding-right: var(--spacing-container); }
   .p-component { padding: var(--spacing-component); }
   .p-element { padding: var(--spacing-element); }
+
+  /* Entrance Animations */
+  .animate-fade-in {
+    animation: fade-in 0.3s var(--transition-smooth-curve, cubic-bezier(0.4, 0, 0.2, 1)) both;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s var(--transition-smooth-curve, cubic-bezier(0.4, 0, 0.2, 1)) both;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.4s var(--transition-smooth-curve, cubic-bezier(0.4, 0, 0.2, 1)) both;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s var(--transition-bounce-curve, cubic-bezier(0.68, -0.55, 0.265, 1.55)) both;
+  }
+
+  .animate-fade-slide-up {
+    animation: fade-slide-up 0.4s var(--transition-smooth-curve, cubic-bezier(0.4, 0, 0.2, 1)) both;
+  }
+
+  .animate-fade-scale-in {
+    animation: fade-scale-in 0.3s var(--transition-smooth-curve, cubic-bezier(0.4, 0, 0.2, 1)) both;
+  }
+
+  /* Stagger delay utilities — apply to children with animation classes */
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
+  .stagger-7 { animation-delay: 350ms; }
+  .stagger-8 { animation-delay: 400ms; }
+
+  /* Tech Organization Skill Categories */
+  .skill-engineering {
+    background-color: hsl(210, 40%, 95%);
+    border-color: hsl(210, 40%, 80%);
+    color: hsl(210, 40%, 25%);
+  }
+
+  .skill-platform {
+    background-color: hsl(280, 50%, 95%);
+    border-color: hsl(280, 50%, 80%);
+    color: hsl(280, 50%, 25%);
+  }
+
+  .skill-product {
+    background-color: hsl(45, 80%, 95%);
+    border-color: hsl(45, 80%, 80%);
+    color: hsl(45, 80%, 25%);
+  }
+
+  .skill-communication {
+    background-color: hsl(150, 60%, 95%);
+    border-color: hsl(150, 60%, 80%);
+    color: hsl(150, 60%, 25%);
+  }
+
+  .skill-process {
+    background-color: hsl(300, 30%, 95%);
+    border-color: hsl(300, 30%, 80%);
+    color: hsl(300, 30%, 25%);
+  }
+
+  .skill-leadership {
+    background-color: hsl(25, 70%, 95%);
+    border-color: hsl(25, 70%, 80%);
+    color: hsl(25, 70%, 25%);
+  }
+}
+
+/* Keyframes — outside @layer so they're always available */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(12px); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-12px); }
+  to { transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.9); }
+  to { transform: scale(1); }
+}
+
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

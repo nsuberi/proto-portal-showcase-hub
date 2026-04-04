@@ -39,11 +39,19 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
-      title: "Interactive Documentation Explorer",
+      title: "Agent Memory, Skills & Tools Explorer",
       description:
-        "Navigate the codebase like never before! Ask questions in plain English and get direct links to the relevant code. Watch documentation files float in the background - click them to explore their content, then copy and search to find related implementations. It's your intelligent guide to understanding any codebase, starting with this portfolio itself!",
+        "Peek behind the curtain at how AI agents are configured to build this portfolio. Four color-coded layers float around you: amber Memories (persistent cross-session context), violet Skills (/breadboarding, /new-prototype), blue MCP Tools (the proto-mcp CLI and design-tokens server giving Claude live queryable access to project data), and teal Concepts explaining how they all fit together. Click any item to read its full content. The invisible configuration layer, made visible.",
       link: "/prototypes/documentation-explorer/",
-      tags: ["Documentation", "Code Navigation", "AI Assistant", "Interactive Learning"],
+      tags: ["Agent Memory", "Skills", "MCP Tools", "AI Configuration"],
+      status: "Live Demo Available",
+    },
+    {
+      title: "AI Testing Resource: Governance-First Development",
+      description:
+        "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",
+      link: "/ai-evals/",
+      tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
       status: "Live Demo Available",
     },
   ];

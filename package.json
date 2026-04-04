@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "build:with-api": "./scripts/build-with-api-url.sh",
     "deploy": "./scripts/deploy.sh",
-    "lint": "eslint .",
+    "lint": "eslint . && ./scripts/lint-design-tokens.sh && ./scripts/lint-python.sh",
+    "lint:code": "eslint .",
+    "lint:tokens": "./scripts/lint-design-tokens.sh",
+    "lint:python": "./scripts/lint-python.sh",
     "preview": "vite preview",
     "dev:ffx": "cd prototypes/ffx-skill-map && npm run dev",
     "build:ffx": "cd prototypes/ffx-skill-map && npm run build",
@@ -20,12 +23,16 @@
     "dev:learning-path": "cd prototypes/learning-path && npm run dev",
     "build:learning-path": "cd prototypes/learning-path && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
-    "dev:all": "concurrently --names \"MAIN,FFX,HOME,DOCS,PROXY,API\" --prefix-colors \"blue,green,cyan,purple,yellow,magenta\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:documentation-explorer\" \"npm run dev:proxy\" \"cd shared/api && npm run dev\"",
+    "dev:start": "./scripts/dev-start.sh",
+    "dev:all": "concurrently --names \"MAIN,FFX,HOME,DOCS,LEARN,API,PROXY\" --prefix-colors \"blue,green,cyan,purple,red,magenta,yellow\" \"npm run dev\" \"npm run dev:ffx\" \"npm run dev:home-lending\" \"npm run dev:documentation-explorer\" \"npm run dev:learning-path\" \"cd shared/api && npm run dev\" \"npm run dev:proxy\"",
     "docker:up": "cd prototypes/ffx-skill-map && docker-compose up -d",
     "docker:down": "cd prototypes/ffx-skill-map && docker-compose down",
     "test": "echo \"No tests configured\"",
     "test:design-system": "echo \"No design system tests\"",
-    "test:watch": "echo \"No test watch configured\""
+    "test:watch": "echo \"No test watch configured\"",
+    "build:mcp": "yarn workspace @proto-portal/design-tokens build && yarn workspace @proto-portal/mcp-server-design-tokens build && yarn workspace @proto-portal/mcp-cli build",
+    "mcp:list": "node shared/mcp-cli/dist/cli.js list",
+    "mcp:start": "node shared/mcp-cli/dist/cli.js start"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -113,7 +120,9 @@
     "prototypes/documentation-explorer",
     "prototypes/learning-path",
     "shared/design-tokens",
-    "shared/api"
+    "shared/api",
+    "shared/mcp-cli",
+    "shared/mcp-servers/design-tokens"
   ],
   "packageManager": "yarn@4.9.2"
 }

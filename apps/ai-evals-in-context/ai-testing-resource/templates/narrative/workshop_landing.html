@@ -1,0 +1,84 @@
+{% extends "narrative/base_narrative.html" %}
+
+{% block title %}AI Evaluation Workshop - Building Trust in Automated Judgment{% endblock %}
+
+{% block phase_header %}
+<!-- Custom hero instead of standard phase header -->
+<section class="landing-hero">
+  <h1 class="landing-hero__title">AI Evaluation Workshop</h1>
+  <p class="landing-hero__subtitle">
+    How do we know the AI is doing a good job? This workshop walks through building,
+    validating, and improving an AI evaluation pipeline&mdash;from first metric to
+    production-ready Test Summary Report. Governance is an accelerator, not a gate.
+  </p>
+  <a href="{{ url_for('narrative.workshop_1') }}" class="landing-cta landing-cta--workshop">
+    Start the Workshop
+    <span>&rarr;</span>
+  </a>
+</section>
+{% endblock %}
+
+{% block phase_intro %}{% endblock %}
+
+{% block phase_content %}
+{% if content %}
+<section class="narrative-content narrative-content--narrow">
+  {{ content | safe }}
+</section>
+{% endif %}
+
+<!-- 5 Stage Overview Cards -->
+<section class="phases-section">
+  <h2 class="phases-section__title">Five Stages</h2>
+  <div class="phase-cards">
+    <a href="{{ url_for('narrative.workshop_1') }}" class="phase-card">
+      <span class="phase-card__number">1</span>
+      <h3 class="phase-card__title">Foundation</h3>
+      <p class="phase-card__description">
+        Build a RAG pipeline, add generic quality metrics, then encode domain expertise into custom metrics.
+      </p>
+    </a>
+    <a href="{{ url_for('narrative.workshop_2') }}" class="phase-card">
+      <span class="phase-card__number">2</span>
+      <h3 class="phase-card__title">Acceptance</h3>
+      <p class="phase-card__description">
+        Curate golden datasets with positive and negative examples that define what "good" looks like.
+      </p>
+    </a>
+    <a href="{{ url_for('narrative.workshop_3') }}" class="phase-card">
+      <span class="phase-card__number">3</span>
+      <h3 class="phase-card__title">Validation</h3>
+      <p class="phase-card__description">
+        Measure inter-rater reliability with Cohen's and Fleiss' kappa. Calibrate your team.
+      </p>
+    </a>
+    <a href="{{ url_for('narrative.workshop_4') }}" class="phase-card">
+      <span class="phase-card__number">4</span>
+      <h3 class="phase-card__title">Improve</h3>
+      <p class="phase-card__description">
+        Run dual improvement loops&mdash;refine the pipeline and the judge in parallel, with regression tests.
+      </p>
+    </a>
+    <a href="{{ url_for('narrative.workshop_5') }}" class="phase-card">
+      <span class="phase-card__number">5</span>
+      <h3 class="phase-card__title">Reporting</h3>
+      <p class="phase-card__description">
+        Multi-turn conversations, trace validation, and a Test Summary Report wired into CI/CD.
+      </p>
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block phase_navigation %}
+<nav class="phase-nav-bottom">
+  <div></div>
+  <a href="{{ url_for('narrative.workshop_1') }}" class="phase-nav-btn phase-nav-btn--next">
+    <span class="phase-nav-btn__text">
+      <span class="phase-nav-btn__label">Start with</span>
+      <span class="phase-nav-btn__title">Foundation</span>
+    </span>
+    <span class="phase-nav-btn__arrow">&rarr;</span>
+  </a>
+</nav>
+{% endblock %}

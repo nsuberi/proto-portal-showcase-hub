@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ExternalLink, X, Copy, Check, Brain, RotateCcw } from 'lucide-react'
+import { Search, ExternalLink, X, Copy, Check, Brain, RotateCcw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +18,26 @@ function DocumentationExplorer() {
   const [documentsData, setDocumentsData] = useState<DocumentData[]>([])
   const [isLoadingDocs, setIsLoadingDocs] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const getCategoryColors = (category?: string) => {
+    switch (category) {
+      case 'memory': return 'text-amber-600/50 dark:text-amber-400/50 hover:text-amber-600/80'
+      case 'skill': return 'text-violet-600/50 dark:text-violet-400/50 hover:text-violet-600/80'
+      case 'tool': return 'text-blue-600/50 dark:text-blue-400/50 hover:text-blue-600/80'
+      case 'concept': return 'text-teal-600/50 dark:text-teal-400/50 hover:text-teal-600/80'
+      default: return 'text-gray-500/50 dark:text-gray-400/50 hover:text-primary/60'
+    }
+  }
+
+  const getCategoryBadge = (category?: string) => {
+    switch (category) {
+      case 'memory': return { label: 'Memory', bg: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' }
+      case 'skill': return { label: 'Skill', bg: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' }
+      case 'tool': return { label: 'MCP Tool', bg: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
+      case 'concept': return { label: 'Concept', bg: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' }
+      default: return { label: 'Item', bg: 'bg-gray-100 text-gray-800' }
+    }
+  }
 
   // Fetch documentation files on component mount
   useEffect(() => {
@@ -92,7 +112,7 @@ function DocumentationExplorer() {
           <CardContent className="py-8">
             <div className="flex items-center justify-center space-x-4">
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span>Loading documentation files...</span>
+              <span>Loading agent configuration...</span>
             </div>
           </CardContent>
         </Card>
@@ -107,7 +127,7 @@ function DocumentationExplorer() {
         {documentsData.map((doc, index) => (
           <motion.div
             key={doc.id}
-            className={`text-lg sm:text-xl lg:text-2xl font-bold text-gray-500/50 dark:text-gray-400/50 select-none pointer-events-auto cursor-pointer hover:text-primary/60 transition-colors ${
+            className={`text-lg sm:text-xl lg:text-2xl font-bold ${getCategoryColors(doc.category)} select-none pointer-events-auto cursor-pointer transition-colors ${
               index % 2 === 0 ? 'floating-text' : 'floating-text-reverse'
             }`}
             style={{
@@ -129,8 +149,9 @@ function DocumentationExplorer() {
       <div className="relative z-10 max-w-4xl mx-auto pt-8 sm:pt-16 lg:pt-20 px-4">
         <Card className="bg-white/10 dark:bg-black/10 backdrop-blur-sm shadow-2xl border border-white/30 dark:border-white/20 ring-1 ring-blue-200/30 dark:ring-blue-400/20">
           <CardHeader className="pb-2 sm:pb-4">
-            <CardTitle className="text-xl sm:text-2xl lg:text-3xl text-center">
-              Ask About the Codebase
+            <CardTitle className="text-xl sm:text-2xl lg:text-3xl text-center flex items-center justify-center gap-2">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-violet-500" />
+              Explore Agent Memory & Skills
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4">
@@ -139,7 +160,7 @@ function DocumentationExplorer() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <textarea
-                  placeholder="Ask a question about the codebase and we'll return relevant files..."
+                  placeholder="Ask about agent memory, skills, or configuration..."
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -151,12 +172,12 @@ function DocumentationExplorer() {
               {/* Mobile: Stack vertically, Desktop: Side by side */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                 {/* Search limitation notice */}
-                <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 sm:flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 bg-violet-50/50 dark:bg-violet-900/20 border border-violet-200/50 dark:border-violet-800/30 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 sm:flex-1">
                   <div className="flex items-start gap-2">
-                    <div className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
+                    <div className="w-1 h-1 rounded-full bg-violet-500 mt-1.5 flex-shrink-0"></div>
                     <span>
-                      <strong>Note:</strong> Search analyzes file names/paths only. 
-                      <span className="hidden sm:inline">File content analysis is not yet included in the search scope.</span>
+                      <strong>Tip:</strong> Try "How does memory work?" or "What skills are available?"
+                      <span className="hidden sm:inline"> Search finds relevant configuration files from the .claude/ directory.</span>
                     </span>
                   </div>
                 </div>
@@ -206,7 +227,7 @@ function DocumentationExplorer() {
                 {/* Main Result Header */}
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-3 mb-3">
-                    <h3 className="font-semibold text-lg">Recommended Files to Explore:</h3>
+                    <h3 className="font-semibold text-lg">Relevant Agent Configuration:</h3>
                     <div className="flex items-center gap-2">
                       {/* Confidence indicator */}
                       <div className="flex items-center gap-1">
@@ -227,7 +248,7 @@ function DocumentationExplorer() {
 
                   {/* Justification */}
                   <div className="text-sm text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-800/50 p-3 rounded mb-3">
-                    <strong>Why these files:</strong> {response.justification}
+                    <strong>Why these are relevant:</strong> {response.justification}
                   </div>
 
                   {/* File List */}
@@ -275,9 +296,27 @@ function DocumentationExplorer() {
               </motion.div>
             )}
 
-            {/* Instructions */}
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-              <p>The floating document titles in the background represent the currently written documentation for this project. Click on them to learn more.</p>
+            {/* Legend & Instructions */}
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span>Memories</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
+                  <span>Skills</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                  <span>MCP Tools</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                  <span>Concepts</span>
+                </span>
+              </div>
+              <p>Click the floating items to explore how the AI agent is configured for this project.</p>
             </div>
           </CardContent>
         </Card>
@@ -301,7 +340,14 @@ function DocumentationExplorer() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-4 border-b">
-                <h2 className="text-xl font-bold">{selectedDocument.filename}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold">{selectedDocument.filename}</h2>
+                  {selectedDocument.category && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getCategoryBadge(selectedDocument.category).bg}`}>
+                      {getCategoryBadge(selectedDocument.category).label}
+                    </span>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"

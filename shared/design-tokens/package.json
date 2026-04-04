@@ -1,9 +1,19 @@
 {
   "name": "@proto-portal/design-tokens",
   "version": "1.0.0",
+  "type": "module",
   "description": "Shared design tokens for Proto Portal Showcase Hub",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./css/*": "./css/*"
+  },
   "files": [
     "dist/**/*",
     "css/**/*"

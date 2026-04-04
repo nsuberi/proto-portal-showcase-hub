@@ -24,7 +24,7 @@ import UnifiedTeamWidget, { getHeroVideoSrc } from '../components/UnifiedTeamWid
 import { calculateGoalPath } from '../utils/goalPathUtils';
 import { Employee } from '../types';
 
-// Convert HSL to hex for Sigma.js compatibility
+// Convert HSL to hex for Sigma.js compatibility (requires hex, not CSS vars)
 const hslToHex = (h: number, s: number, l: number): string => {
   l /= 100;
   const a = s * Math.min(l, 1 - l) / 100;
@@ -36,24 +36,26 @@ const hslToHex = (h: number, s: number, l: number): string => {
   return `#${f(0)}${f(8)}${f(4)}`;
 };
 
-// Convert design system HSL values to hex for Sigma.js
-const FFX_CATEGORY_COLORS = {
-  combat: hslToHex(0, 84.2, 60.2),     // Red: #f95454
-  magic: hslToHex(213, 94, 68),        // Blue: #429bff  
-  support: hslToHex(142, 76, 36),      // Green: #16a34a
-  special: hslToHex(263, 70, 60),      // Purple: #8b5cf6
-  advanced: hslToHex(48, 96, 53),      // Yellow: #facc15
-  default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
+// Design token HSL values → hex for Sigma.js (which cannot read CSS vars)
+// Source of truth: shared/design-tokens/tokens/components/skill-categories.ts
+// These must stay in sync with the token definitions.
+const FFX_CATEGORY_COLORS: Record<string, string> = {
+  combat:   hslToHex(0, 84.2, 60.2),   // --destructive
+  magic:    hslToHex(213, 94, 68),      // --info
+  support:  hslToHex(142, 76, 36),      // --success
+  special:  hslToHex(263, 70, 60),      // --primary
+  advanced: hslToHex(48, 96, 53),       // --warning
+  default:  hslToHex(240, 5, 64.9),     // --muted-foreground
 };
 
-const TECH_CATEGORY_COLORS = {
-  engineering: hslToHex(213, 94, 68),   // Blue: #429bff
-  platform: hslToHex(142, 76, 36),     // Green: #16a34a
-  product: hslToHex(263, 70, 60),      // Purple: #8b5cf6
-  communication: hslToHex(35, 91, 55), // Orange: #f97316
-  process: hslToHex(193, 95, 68),      // Cyan: #22d3ee
-  leadership: hslToHex(48, 96, 53),    // Yellow: #facc15
-  default: hslToHex(240, 5, 64.9),     // Gray: #a1a1aa
+const TECH_CATEGORY_COLORS: Record<string, string> = {
+  engineering:   hslToHex(210, 40, 50),  // skill-categories.ts engineering.solid
+  platform:      hslToHex(280, 50, 50),  // skill-categories.ts platform.solid
+  product:       hslToHex(45, 80, 50),   // skill-categories.ts product.solid
+  communication: hslToHex(150, 60, 50),  // skill-categories.ts communication.solid
+  process:       hslToHex(300, 30, 50),  // skill-categories.ts process.solid
+  leadership:    hslToHex(25, 70, 50),   // skill-categories.ts leadership.solid
+  default:       hslToHex(240, 5, 64.9), // --muted-foreground
 };
 
 function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, goalPath, goalSkillId, onNodeClick, categoryColors }: {
@@ -98,25 +100,28 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
         
         let color = data.color;
         let labelSize = data.labelSize || 12;
-        let labelColor = data.labelColor || '#2C3E50';
+        // Sigma.js label colors — hex required, derived from foreground token (240 10% 10% ≈ #171719)
+        const LABEL_COLOR = hslToHex(240, 10, 10);
+        const LABEL_COLOR_EMPHASIS = hslToHex(240, 10, 5);
+        const LABEL_COLOR_MAX = '#000000'; // design-token-lint-ignore — pure black for max contrast
+
+        let labelColor = data.labelColor || LABEL_COLOR;
         let labelWeight = data.labelWeight || 'normal';
-        
+
         // Enhanced styling for mastered skills
         if (data.isMastered) {
-          labelSize = 18; // Larger labels for mastered skills to ensure visibility
-          labelColor = '#1A1A1A'; // Darker text for better contrast
-          labelWeight = 'bold'; // Bold text for mastered skills
-          color = data.color; // Keep original vibrant color
+          labelSize = 18;
+          labelColor = LABEL_COLOR_EMPHASIS;
+          labelWeight = 'bold';
+          color = data.color;
         } else if (data.isGoalNode && data.hasEmployeeSelected) {
-          // Goal node - halfway opacity between mastered (1.0) and unmastered (0.6)
           color = hexToRgba(data.color, 0.8);
-          labelColor = '#000000'; // Solid black for maximum visibility
-          labelSize = 24; // Extra large for maximum prominence (since bold isn't supported per-node)
-          labelWeight = 'normal'; // Sigma.js doesn't support per-node bold
+          labelColor = LABEL_COLOR_MAX;
+          labelSize = 24;
+          labelWeight = 'normal';
         } else if (data.hasEmployeeSelected && !data.isMastered) {
-          // Employee doesn't have this skill - make it translucent
           color = hexToRgba(data.color, 0.6);
-          labelColor = hexToRgba('#2C3E50', 0.7); // Fade the label as well
+          labelColor = hexToRgba(LABEL_COLOR, 0.7);
         }
         
         return {
@@ -150,16 +155,13 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
         let borderWidth = 0;
         
         if (data.hasEmployeeSelected && data.isMastered) {
-          // On hover, make border 100% opacity
           borderColor = data.color;
           borderWidth = 3;
         } else if (data.isGoalNode && !data.isMastered) {
-          // Unmastered goal node gets extra thick black border
-          borderColor = '#000000';
+          borderColor = hslToHex(240, 10, 5);
           borderWidth = 10;
         } else if (data.isOnGoalPath) {
-          // Goal path skills get black border to stand out
-          borderColor = '#000000';
+          borderColor = hslToHex(240, 10, 5);
           borderWidth = 2;
         }
         
@@ -241,7 +243,7 @@ function SigmaGraph({ skills, connections, masteredSkills, selectedEmployeeId, g
           if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
             graph.addEdge(edge.source, edge.target, {
               size: edge.size || 1,
-              color: edge.color || '#95A5A6',
+              color: edge.color || hslToHex(240, 5, 64.9), // --muted-foreground
               type: 'line' // Use standard edge type
             });
           }

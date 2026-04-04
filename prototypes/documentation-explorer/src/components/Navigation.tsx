@@ -1,5 +1,5 @@
 import { Button } from './ui/button'
-import { ArrowLeft, Info, Book } from 'lucide-react'
+import { ArrowLeft, Info, Brain } from 'lucide-react'
 
 interface NavigationProps {
   onShowInstructions: () => void
@@ -13,9 +13,9 @@ function Navigation({ onShowInstructions }: NavigationProps) {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <h1 className="text-lg sm:text-xl font-bold text-primary flex items-center gap-2">
-                <Book className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="hidden sm:inline">Documentation Explorer</span>
-                <span className="sm:hidden">Doc Explorer</span>
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="hidden sm:inline">Agent Memory & Skills</span>
+                <span className="sm:hidden">Agent Config</span>
               </h1>
             </div>
           </div>

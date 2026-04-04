@@ -68,6 +68,8 @@ export interface DocumentData {
   title: string;
   filename: string;
   content: string;
+  category?: 'memory' | 'skill' | 'tool' | 'concept';
+  memoryType?: 'user' | 'feedback' | 'project' | 'reference';
   position?: { x: number; y: number };
   floatDuration?: number;
   floatDelay?: number;

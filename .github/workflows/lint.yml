@@ -1,0 +1,68 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'prototypes/**'
+      - 'shared/**'
+      - 'apps/**'
+      - 'scripts/**'
+      - 'eslint.config.js'
+      - 'package.json'
+      - '.github/workflows/lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'prototypes/**'
+      - 'shared/**'
+      - 'apps/**'
+      - 'scripts/**'
+      - 'eslint.config.js'
+      - 'package.json'
+      - '.github/workflows/lint.yml'
+
+jobs:
+  lint-js:
+    name: JavaScript / TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --mode=update-lockfile
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+
+      - name: ESLint — code style
+        run: yarn lint:code
+
+      - name: Design token lint — no hardcoded colors
+        run: yarn lint:tokens
+
+  lint-python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python lint tools
+        run: pip install black flake8 mypy
+
+      - name: Python lint — formatting and style
+        run: ./scripts/lint-python.sh

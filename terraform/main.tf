@@ -225,6 +225,16 @@ EOT
 #   provider = aws.us-east-1
 # }
 
+# AI Evals in Context module
+module "ai_evals" {
+  source = "./modules/ai-evals"
+
+  environment       = "prod"
+  app_name          = "ai-testing-resource"
+  anthropic_api_key = var.ai_evals_anthropic_api_key
+  certificate_arn   = aws_acm_certificate.portfolio.arn
+}
+
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
   origin {
@@ -232,9 +242,34 @@ resource "aws_cloudfront_distribution" "website" {
     origin_id   = "S3-${var.bucket_name}"
   }
 
+  origin {
+    domain_name = module.ai_evals.alb_dns_name
+    origin_id   = "ai-evals-api"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
+
+  # AI Evals cache behavior — routes /ai-evals/* to the ECS ALB
+  ordered_cache_behavior {
+    path_pattern           = "/ai-evals/*"
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ai-evals-api"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
 
   # FFX Skill Map cache behavior
   ordered_cache_behavior {

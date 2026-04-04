@@ -83,12 +83,12 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Chart Colors */
-    --chart-primary: hsl(var(--primary));
-    --chart-success: hsl(var(--success));
-    --chart-info: hsl(var(--info));
-    --chart-warning: hsl(var(--warning));
-    --chart-destructive: hsl(var(--destructive));
+    /* Chart Colors — overridable per prototype */
+    --chart-1: hsl(var(--primary));
+    --chart-2: hsl(var(--success));
+    --chart-3: hsl(var(--info));
+    --chart-4: hsl(var(--warning));
+    --chart-5: hsl(var(--destructive));
 
     /* Skill Category Colors */
     --skill-combat-bg: 0 84% 95%;

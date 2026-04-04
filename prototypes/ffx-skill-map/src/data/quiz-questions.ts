@@ -298,7 +298,7 @@ export function calculateConfidence(answers: { questionId: string; selectedOptio
   const answeredQuestions = answers.length;
   
   // Base confidence on completion rate
-  let confidence = (answeredQuestions / totalQuestions) * 100;
+  const confidence = (answeredQuestions / totalQuestions) * 100;
   
   // Bonus for consistency in answers (same skill categories)
   const skillCounts = new Map<string, number>();
