@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.email }} - {{ core_goal.title }}{% endblock %}
+
+{% block content %}
+<div class="topic-detail-page">
+    <div class="page-header">
+        <a href="{{ url_for('admin.student_progress', user_id=student.id) }}" class="back-link">&larr; Back to Student Progress</a>
+        <h1>{{ core_goal.title }}</h1>
+        <div class="header-meta">
+            <span class="student-name">{{ student.email }}</span>
+            {% if progress %}
+                <span class="status-badge status-{{ progress.status }}">
+                    {% if progress.is_expired() %}⟳ Expired{% elif progress.status == 'passed' %}💎 Mastered{% elif progress.status == 'needs_work' %}💡 Needs Work{% elif progress.status == 'engaged' %}🔵 Engaged{% elif progress.status == 'in_progress' %}⚪ In Progress{% else %}○ Locked{% endif %}
+                </span>
+            {% endif %}
+            <span class="data-source text-muted">Data source: {{ source }}</span>
+        </div>
+    </div>
+
+    <section class="rubric-section">
+        <h2>Rubric</h2>
+        <div class="rubric-items">
+            {% if rubric and rubric.items %}
+                {% for item in rubric.items %}
+                <div class="rubric-item">
+                    <h3>{{ item.criterion }}</h3>
+                    <div class="pass-indicators">
+                        <strong>Pass Indicators:</strong>
+                        <ul>
+                            {% for indicator in item.pass_indicators %}
+                            <li>{{ indicator }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% if item.socratic_hints %}
+                    <div class="hints">
+                        <strong>Socratic Hints:</strong>
+                        <ul class="hints-list">
+                            {% for hint in item.socratic_hints %}
+                            <li>{{ hint }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No rubric defined for this topic.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="conversation-section">
+        <h2>Conversation History</h2>
+        {% if conversations %}
+            {% for conv in conversations %}
+            <div class="conversation-block">
+                <div class="conversation-header">
+                    {% if conv.start_time %}
+                    <h3>Assessment: {{ conv.start_time.strftime('%Y-%m-%d %H:%M') if conv.start_time else 'N/A' }}</h3>
+                    {% endif %}
+                    {% if conv.end_time and conv.start_time %}
+                    <p class="duration text-muted">Duration: {{ ((conv.end_time - conv.start_time).total_seconds() | int) if conv.end_time and conv.start_time else 'N/A' }}s</p>
+                    {% endif %}
+                </div>
+
+                <div class="conversation-flow">
+                    {% if conv.inputs and conv.inputs.messages %}
+                        {% for msg in conv.inputs.messages %}
+                        <div class="message {{ 'user' if msg.role == 'human' or msg.role == 'user' else 'assistant' }}">
+                            <span class="role">{{ 'Student' if msg.role == 'human' or msg.role == 'user' else 'Digi-Trainer' }}:</span>
+                            <span class="content">{{ msg.content }}</span>
+                        </div>
+                        {% endfor %}
+                    {% elif conv.messages %}
+                        {% for msg in conv.messages %}
+                        <div class="message {{ msg.role }}">
+                            <span class="role">{{ 'Student' if msg.role == 'user' else 'Digi-Trainer' }}:</span>
+                            <span class="content">{{ msg.content }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">No message details available.</p>
+                    {% endif %}
+                </div>
+
+                <div class="conversation-footer">
+                    {% if conv.outcome %}
+                    <div class="outcome">
+                        <strong>Outcome:</strong>
+                        {% if conv.outcome == 'passed' %}
+                            💎 Mastered
+                        {% elif conv.outcome == 'needs_work' %}
+                            💡 Needs More Work
+                        {% else %}
+                            {{ conv.outcome }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if conv.run_id %}
+                    <a href="https://smith.langchain.com/runs/{{ conv.run_id }}" target="_blank" class="btn btn-sm">
+                        View in LangSmith &rarr;
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No conversation history found for this topic.</p>
+        {% endif %}
+    </section>
+
+    {% if progress and progress.rubric_results_json %}
+    <section class="evaluation-results">
+        <h2>Latest Evaluation</h2>
+        <div class="eval-details">
+            {% set results = progress.get_rubric_results() %}
+            {% if results.last_evaluation %}
+            <div class="eval-item">
+                <p><strong>Question #:</strong> {{ results.last_evaluation.question_number }}</p>
+                <p><strong>Passed:</strong> {{ 'Yes' if results.last_evaluation.passed else 'No' }}</p>
+                <p><strong>Evaluation:</strong> {{ results.last_evaluation.evaluation }}</p>
+                {% if results.last_evaluation.indicators_shown %}
+                <p><strong>Indicators Shown:</strong></p>
+                <ul>
+                    {% for indicator in results.last_evaluation.indicators_shown %}
+                    <li>{{ indicator }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if results.last_evaluation.missing_concepts %}
+                <p><strong>Missing Concepts:</strong></p>
+                <ul>
+                    {% for concept in results.last_evaluation.missing_concepts %}
+                    <li>{{ concept }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<style>
+    .topic-detail-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .back-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+        color: var(--primary-color);
+    }
+
+    .page-header h1 {
+        margin: 0.5rem 0;
+    }
+
+    .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .student-name {
+        color: var(--text-secondary);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+    }
+
+    .data-source {
+        font-size: 0.85rem;
+    }
+
+    section {
+        margin-bottom: 2rem;
+    }
+
+    section h2 {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .rubric-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .rubric-item h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .pass-indicators ul,
+    .hints-list {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .hints {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed var(--border-color);
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .conversation-block {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .conversation-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .conversation-header h3 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .duration {
+        margin: 0.25rem 0 0;
+        font-size: 0.85rem;
+    }
+
+    .conversation-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .message {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+    }
+
+    .message.user {
+        background: #e3f2fd;
+        margin-left: 1rem;
+    }
+
+    .message.assistant {
+        background: #f5f5f5;
+        margin-right: 1rem;
+    }
+
+    .message .role {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    .message .content {
+        white-space: pre-wrap;
+    }
+
+    .conversation-footer {
+        margin-top: 1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .outcome {
+        font-size: 0.95rem;
+    }
+
+    .evaluation-results .eval-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    .eval-item p {
+        margin: 0.5rem 0;
+    }
+
+    .eval-item ul {
+        margin: 0.25rem 0 0.5rem;
+        padding-left: 1.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .empty-state {
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+</style>
+{% endblock %}
