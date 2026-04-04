@@ -70,6 +70,12 @@
     --spacing-component: 1.5rem;
     --spacing-element: 0.75rem;
 
+    /* Category Glow (drop-shadow values for doc-explorer categories) */
+    --glow-memory: 0 0 8px hsl(43, 96%, 56% / 0.4);
+    --glow-skill: 0 0 8px hsl(255, 92%, 76% / 0.4);
+    --glow-tool: 0 0 8px hsl(213, 94%, 68% / 0.4);
+    --glow-concept: 0 0 8px hsl(172, 66%, 50% / 0.4);
+
     /* Border Radius */
     --radius: 0.5rem;
 

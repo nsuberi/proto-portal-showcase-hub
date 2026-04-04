@@ -94,6 +94,12 @@ export const baseTailwindConfig: Partial<Config> = {
         large: "var(--shadow-large)",
         primary: "var(--shadow-primary)",
       },
+      dropShadow: {
+        "glow-memory": "var(--glow-memory)",
+        "glow-skill": "var(--glow-skill)",
+        "glow-tool": "var(--glow-tool)",
+        "glow-concept": "var(--glow-concept)",
+      },
       transitionTimingFunction: {
         smooth: "var(--transition-smooth)",
         fast: "var(--transition-fast)",
