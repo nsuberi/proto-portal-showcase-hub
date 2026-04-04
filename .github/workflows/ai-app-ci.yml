@@ -2,11 +2,6 @@ name: AI Application CI/CD
 
 on:
   push:
-    branches: [main, staging]
-    paths:
-      - 'apps/ai-evals-in-context/**'
-      - '.github/workflows/ai-app-ci.yml'
-  pull_request:
     branches: [main]
     paths:
       - 'apps/ai-evals-in-context/**'
@@ -17,7 +12,7 @@ env:
 
 jobs:
   test-and-evaluate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     environment: production
     outputs:
       decision: ${{ steps.go_no_go.outputs.decision }}
@@ -140,7 +135,7 @@ jobs:
   deploy-staging:
     needs: test-and-evaluate
     if: github.ref == 'refs/heads/main' && needs.test-and-evaluate.outputs.decision == 'go'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     permissions:
       contents: read
       id-token: write  # Required for OIDC
@@ -176,7 +171,7 @@ jobs:
   deploy-production:
     needs: deploy-staging
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
     permissions:
       contents: read
       id-token: write  # Required for OIDC

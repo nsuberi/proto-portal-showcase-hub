@@ -5,7 +5,7 @@
 This Flask application demonstrates AI evaluations in the testing pyramid. It deploys to AWS ECS Fargate with the following architecture:
 
 **Production Stack:**
-- **Container**: Flask app in Docker on ECS Fargate (0.25 vCPU, 512MB RAM)
+- **Container**: Flask app in Docker on ECS Fargate (0.25 vCPU, 512MB RAM, **ARM64/Graviton**)
 - **Database**: RDS PostgreSQL (db.t4g.micro, 20GB storage) in private subnet
 - **Load Balancer**: Application Load Balancer with HTTPS termination
 - **API Gateway**: HTTP API with VPC Link to ALB
@@ -246,7 +246,7 @@ cp .env.example .env
 
 **What this does:**
 1. Authenticates with ECR
-2. Builds Docker image from `Dockerfile`
+2. Builds Docker image from `Dockerfile` (native architecture — no cross-compilation needed)
 3. Tags image with git commit SHA and `latest`
 4. Pushes both tags to ECR
 5. Fetches current ECS task definition
@@ -254,6 +254,8 @@ cp .env.example .env
 7. Registers new task definition revision
 8. Updates ECS service with new revision
 9. Waits for service to stabilize (healthy tasks)
+
+**ARM64 Architecture:** The ECS task definition specifies `ARM64` (Graviton) as the CPU architecture. This is an intentional choice so that Docker images built natively on Apple Silicon Macs deploy directly to ECS without slow cross-compilation via QEMU. The `docker build` in `scripts/deploy.sh` uses the host's native architecture — do NOT add `--platform linux/amd64`. Graviton Fargate instances also cost ~20% less than x86 equivalents. The GitHub Actions CI/CD workflow (`ai-app-ci.yml`) uses `ubuntu-24.04-arm` runners to match this architecture — Docker builds in CI produce ARM64 images natively.
 
 **Environment Variables (Set in Terraform):**
 - `ANTHROPIC_API_KEY` - From Secrets Manager

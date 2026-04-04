@@ -39,9 +39,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --mode=update-lockfile
-        env:
-          YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
+        run: yarn install
 
       - name: ESLint — code style
         run: yarn lint:code

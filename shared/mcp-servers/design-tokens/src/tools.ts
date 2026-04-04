@@ -12,6 +12,14 @@ import {
   type DesignTokens,
   type DesignTokenOverrides,
 } from "@proto-portal/design-tokens";
+import {
+  checkContrast,
+  contrastRatio,
+  generateHarmony,
+  hslToHex,
+  type HarmonyType,
+  type ContrastResult,
+} from "./utils/color-theory.js";
 
 const TOKEN_CATEGORIES = [
   "colors",
@@ -43,6 +51,41 @@ function getPresetTokens(preset?: string): DesignTokens {
   const overrides = presetOverrides[preset as keyof typeof presetOverrides] as DesignTokenOverrides | undefined;
   if (!overrides) throw new Error(`Unknown preset: ${preset}. Available: ${PRESET_NAMES.join(", ")}`);
   return createDesignTokens(overrides);
+}
+
+const HARMONY_TYPES = [
+  "complementary",
+  "analogous",
+  "triadic",
+  "split-complementary",
+  "tetradic",
+  "monochromatic",
+] as const;
+
+function getSemanticPairs(tokens: DesignTokens): Array<{ foreground: string; background: string; context: string }> {
+  const c = tokens.colors;
+  const pairs = [
+    { foreground: c.foreground, background: c.background, context: "foreground on background" },
+    { foreground: c.cardForeground, background: c.card, context: "cardForeground on card" },
+    { foreground: c.popoverForeground, background: c.popover, context: "popoverForeground on popover" },
+    { foreground: c.primaryForeground, background: c.primary, context: "primaryForeground on primary" },
+    { foreground: c.secondaryForeground, background: c.secondary, context: "secondaryForeground on secondary" },
+    { foreground: c.mutedForeground, background: c.muted, context: "mutedForeground on muted" },
+    { foreground: c.accentForeground, background: c.accent, context: "accentForeground on accent" },
+    { foreground: c.destructiveForeground, background: c.destructive, context: "destructiveForeground on destructive" },
+    { foreground: c.successForeground, background: c.success, context: "successForeground on success" },
+    { foreground: c.warningForeground, background: c.warning, context: "warningForeground on warning" },
+    { foreground: c.infoForeground, background: c.info, context: "infoForeground on info" },
+    { foreground: c.mutedForeground, background: c.background, context: "mutedForeground on background" },
+  ];
+  if (c.sidebar) {
+    pairs.push(
+      { foreground: c.sidebar.foreground, background: c.sidebar.background, context: "sidebar foreground on sidebar background" },
+      { foreground: c.sidebar.primaryForeground, background: c.sidebar.primary, context: "sidebar primaryForeground on sidebar primary" },
+      { foreground: c.sidebar.accentForeground, background: c.sidebar.accent, context: "sidebar accentForeground on sidebar accent" },
+    );
+  }
+  return pairs;
 }
 
 function getTailwindClasses(category?: string): Record<string, unknown> {
@@ -138,6 +181,59 @@ export function registerTools(server: Server): void {
           },
         },
       },
+      {
+        name: "review_contrast",
+        description:
+          "Check WCAG 2.1 color contrast ratios. When called with no pairs, reviews all semantic foreground/background pairs in the theme. Reports pass/fail for AA normal (4.5:1), AA large (3:1), AAA normal (7:1), AAA large (4.5:1). Suggests adjusted colors for failures.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            preset: {
+              type: "string",
+              enum: [...PRESET_NAMES],
+              description: "Theme preset to review. Defaults to 'default'.",
+            },
+            pairs: {
+              type: "array",
+              description:
+                'Specific color pairs to check. Each item has foreground (HSL string like "263 70% 60%"), background (HSL string), and optional context label. If omitted, all semantic theme pairs are checked.',
+              items: {
+                type: "object",
+                properties: {
+                  foreground: { type: "string", description: 'HSL string like "263 70% 60%"' },
+                  background: { type: "string", description: 'HSL string like "0 0% 98%"' },
+                  context: { type: "string", description: "Optional label for this pair" },
+                },
+                required: ["foreground", "background"],
+              },
+            },
+          },
+        },
+      },
+      {
+        name: "generate_palette",
+        description:
+          "Generate a color harmony palette from a base color, inspired by the color wheel. Supports complementary, analogous, triadic, split-complementary, tetradic, and monochromatic harmonies. Returns HSL + hex values and a pairwise contrast matrix.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            base_color: {
+              type: "string",
+              description: 'Base color as an HSL string (e.g., "263 70% 60%").',
+            },
+            harmony: {
+              type: "string",
+              enum: [...HARMONY_TYPES],
+              description: "Color harmony rule to apply.",
+            },
+            steps: {
+              type: "number",
+              description: "Number of colors for monochromatic palettes (default 5). Ignored for other harmony types.",
+            },
+          },
+          required: ["base_color", "harmony"],
+        },
+      },
     ],
   }));
 
@@ -194,6 +290,66 @@ export function registerTools(server: Server): void {
           const classes = getTailwindClasses(category);
           return {
             content: [{ type: "text", text: JSON.stringify(classes, null, 2) }],
+          };
+        } catch (e) {
+          return { content: [{ type: "text", text: (e as Error).message }], isError: true };
+        }
+      }
+
+      case "review_contrast": {
+        const { preset, pairs } = args as {
+          preset?: string;
+          pairs?: Array<{ foreground: string; background: string; context?: string }>;
+        };
+        try {
+          const tokens = getPresetTokens(preset);
+          const pairsToCheck = pairs && pairs.length > 0 ? pairs : getSemanticPairs(tokens);
+          const results: ContrastResult[] = pairsToCheck.map((p) =>
+            checkContrast(p.foreground, p.background, p.context),
+          );
+          const summary = {
+            preset: preset || "default",
+            totalPairs: results.length,
+            passingAA: results.filter((r) => r.passes.AA_normal).length,
+            passingAAA: results.filter((r) => r.passes.AAA_normal).length,
+            failures: results.filter((r) => !r.passes.AA_normal).length,
+            results,
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
+          };
+        } catch (e) {
+          return { content: [{ type: "text", text: (e as Error).message }], isError: true };
+        }
+      }
+
+      case "generate_palette": {
+        const { base_color, harmony, steps } = args as {
+          base_color: string;
+          harmony: HarmonyType;
+          steps?: number;
+        };
+        try {
+          const hslColors = generateHarmony(base_color, harmony, { steps });
+          const colors = hslColors.map((hsl) => ({ hsl, hex: hslToHex(hsl) }));
+
+          // Build pairwise contrast matrix
+          const matrix: { pair: [number, number]; ratio: number; ratioFormatted: string }[] = [];
+          for (let i = 0; i < hslColors.length; i++) {
+            for (let j = i + 1; j < hslColors.length; j++) {
+              const ratio = Math.round(contrastRatio(hslColors[i], hslColors[j]) * 100) / 100;
+              matrix.push({ pair: [i, j], ratio, ratioFormatted: `${ratio}:1` });
+            }
+          }
+
+          const result = {
+            harmony,
+            baseColor: { hsl: hslColors[0], hex: hslToHex(hslColors[0]) },
+            colors,
+            contrastMatrix: matrix,
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
           };
         } catch (e) {
           return { content: [{ type: "text", text: (e as Error).message }], isError: true };
