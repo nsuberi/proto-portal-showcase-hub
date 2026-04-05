@@ -22,3 +22,8 @@ output "alb_security_group_id" {
   description = "ALB security group ID"
   value       = aws_security_group.alb.id
 }
+
+output "alb_https_listener_arn" {
+  description = "HTTPS listener ARN for adding path-based rules"
+  value       = aws_lb_listener.https.arn
+}

@@ -14,6 +14,11 @@ import {
   responsiveTokens,
   chartColorTokens,
   skillCategoryTokens,
+  learningModeTokens,
+  progressTokens,
+  codeEditorTokens,
+  quizTokens,
+  celebrationTokens,
 } from "@proto-portal/design-tokens";
 
 interface ResourceEntry {
@@ -77,6 +82,36 @@ const resources: ResourceEntry[] = [
     name: "Skill Category Tokens",
     description: "Category-specific color sets for FFX (combat, magic, support, special, advanced, default) and tech org (engineering, platform, product, communication, process, leadership).",
     data: skillCategoryTokens,
+  },
+  {
+    uri: "proto-portal://design-tokens/learning-mode",
+    name: "Learning Mode Tokens",
+    description: "Two-mode surface tokens for browse (cream) vs focused learning (navy). Apply .learning-mode class to swap all surface colors. Codecademy-inspired pattern.",
+    data: learningModeTokens,
+  },
+  {
+    uri: "proto-portal://design-tokens/progress",
+    name: "Progress & XP Tokens",
+    description: "Yellow progress bar fill, dark track, circle stroke, XP gain green, segment colors (complete/active/pending). Codecademy-inspired.",
+    data: progressTokens,
+  },
+  {
+    uri: "proto-portal://design-tokens/code-editor",
+    name: "Code Editor Tokens",
+    description: "Code editor surface colors: background, foreground, line numbers, active line, selection, cursor, gutter.",
+    data: codeEditorTokens,
+  },
+  {
+    uri: "proto-portal://design-tokens/quiz",
+    name: "Quiz Tokens",
+    description: "Quiz option card colors: border (blue/teal), hover, selected (purple), correct (green), incorrect (red).",
+    data: quizTokens,
+  },
+  {
+    uri: "proto-portal://design-tokens/celebration",
+    name: "Celebration Tokens",
+    description: "Completion screen colors: background, trophy (yellow), confetti colors, CTA button, checkmark.",
+    data: celebrationTokens,
   },
 ];
 

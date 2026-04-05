@@ -6,19 +6,44 @@ watch tutorials, submit GitHub solutions, receive AI feedback,
 and get instructor reviews.
 """
 
+import os
 import re
 import markdown
 from markupsafe import Markup
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_login import LoginManager, current_user
 from config import Config
 from models import db
 from models.user import User
 from models.module import LearningModule
 
+
+def combine_prefix(base, suffix):
+    """Combine APPLICATION_ROOT with a blueprint's own prefix.
+
+    Args:
+        base: The APPLICATION_ROOT prefix (e.g., '/code-dojo')
+        suffix: The blueprint's internal prefix (e.g., '/auth')
+
+    Returns:
+        Combined prefix or None if both are empty
+    """
+    if base and suffix:
+        return f"{base}{suffix}"
+    return base or suffix or None
+
+
+# URL prefix for all routes (used when behind CloudFront at /code-dojo/*)
+url_prefix = os.getenv("APPLICATION_ROOT", "") or None
+
+# Set static_url_path to include the prefix so url_for('static', ...) works
+static_url_path = f"{url_prefix}/static" if url_prefix else "/static"
+
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_url_path=static_url_path)
 app.config.from_object(Config)
+if url_prefix:
+    app.config["APPLICATION_ROOT"] = url_prefix
 
 
 # Custom Jinja2 filters
@@ -261,44 +286,90 @@ from routes.admin import admin_bp
 from routes.anatomy import anatomy_bp
 from routes.scheduling import scheduling_bp
 from routes.agent_harness import agent_bp
+from routes.api import api_bp
 
-app.register_blueprint(auth_bp)
-app.register_blueprint(modules_bp)
-app.register_blueprint(submissions_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(anatomy_bp)
-app.register_blueprint(scheduling_bp)
-app.register_blueprint(agent_bp)
+app.register_blueprint(api_bp, url_prefix=combine_prefix(url_prefix, "/api"))
+app.register_blueprint(auth_bp, url_prefix=combine_prefix(url_prefix, "/auth"))
+app.register_blueprint(modules_bp, url_prefix=combine_prefix(url_prefix, "/modules"))
+app.register_blueprint(
+    submissions_bp, url_prefix=combine_prefix(url_prefix, "/submissions")
+)
+app.register_blueprint(admin_bp, url_prefix=combine_prefix(url_prefix, "/admin"))
+app.register_blueprint(
+    anatomy_bp, url_prefix=combine_prefix(url_prefix, "/submissions")
+)
+app.register_blueprint(
+    scheduling_bp, url_prefix=combine_prefix(url_prefix, "/schedule")
+)
+app.register_blueprint(agent_bp, url_prefix=combine_prefix(url_prefix, "/api/agent"))
 
 
 # Home route
-@app.route("/")
+home_route = f"{url_prefix}/" if url_prefix else "/"
+
+
+@app.route(home_route)
 def home():
     """Home page showing available learning modules."""
     modules = LearningModule.query.order_by(LearningModule.order).all()
     return render_template("home.html", modules=modules)
 
 
-# Health check
-@app.route("/health")
+# Health check — register at both paths for ALB health checks
+health_route = "/health"
+prefixed_health = f"{url_prefix}/health" if url_prefix else "/health"
+
+
+@app.route(health_route)
+@app.route(prefixed_health)
 def health():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "code-dojo"}
 
 
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
-    return render_template("base.html"), 404
+# --- React SPA serving ---
+# In production, serve the React frontend build from /frontend_dist/
+# The React app handles client-side routing for all non-API paths
+
+frontend_dist = os.path.join(os.path.dirname(__file__), "frontend_dist")
+has_frontend = os.path.isdir(frontend_dist)
+
+if has_frontend:
+    from flask import send_from_directory
+
+    # Serve static assets (JS, CSS, images) from the React build
+    spa_assets_prefix = f"{url_prefix}/assets" if url_prefix else "/assets"
+
+    @app.route(f"{spa_assets_prefix}/<path:filename>")
+    def spa_assets(filename):
+        return send_from_directory(os.path.join(frontend_dist, "assets"), filename)
+
+    # SPA fallback — serve index.html for any unmatched route under the prefix
+    # This lets React Router handle client-side navigation
+    @app.errorhandler(404)
+    def spa_fallback(error):
+        # Don't serve SPA for API routes — return JSON 404
+        if request.path.startswith(f"{url_prefix}/api/") or request.path.startswith(
+            f"{url_prefix}/submissions/"
+        ):
+            return {"error": "Not found"}, 404
+        return send_from_directory(frontend_dist, "index.html")
+
+else:
+    # Development fallback — no React build, use Jinja2 templates
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("base.html"), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    return render_template("base.html"), 500
+    return {"error": "Internal server error"}, 500
 
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=Config.DEBUG, port=5002)
+    host = os.getenv("FLASK_HOST", "127.0.0.1")
+    app.run(host=host, debug=Config.DEBUG, port=5002)
