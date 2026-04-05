@@ -2,8 +2,8 @@ services:
   # Flask application with SQLite
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/code-dojo/Dockerfile
     container_name: code-dojo-app
     environment:
       # Flask

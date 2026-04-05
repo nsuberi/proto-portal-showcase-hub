@@ -122,7 +122,9 @@
     "shared/design-tokens",
     "shared/api",
     "shared/mcp-cli",
-    "shared/mcp-servers/design-tokens"
+    "shared/mcp-servers/design-tokens",
+    "shared/ui-components",
+    "apps/code-dojo/frontend"
   ],
   "packageManager": "yarn@4.9.2"
 }

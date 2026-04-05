@@ -67,3 +67,39 @@ variable "ai_evals_anthropic_api_key" {
   sensitive   = true
   default     = ""
 }
+
+# Code Dojo Configuration
+variable "code_dojo_anthropic_api_key" {
+  description = "Anthropic API key for Code Dojo"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "code_dojo_github_token" {
+  description = "GitHub token for Code Dojo PR analysis"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "code_dojo_openai_api_key" {
+  description = "OpenAI API key for Code Dojo Whisper transcription"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "code_dojo_langsmith_api_key" {
+  description = "LangSmith API key for Code Dojo tracing"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "code_dojo_flask_secret_key" {
+  description = "Flask secret key for Code Dojo sessions"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

@@ -11,8 +11,13 @@ export * from "./tokens/spacing.js";
 export * from "./tokens/transitions.js";
 export * from "./tokens/typography.js";
 export * from "./tokens/responsive.js";
+export * from "./tokens/learning-mode.js";
 export * from "./tokens/components/chart-colors.js";
 export * from "./tokens/components/skill-categories.js";
+export * from "./tokens/components/progress.js";
+export * from "./tokens/components/code-editor.js";
+export * from "./tokens/components/quiz.js";
+export * from "./tokens/components/celebration.js";
 
 // Export Tailwind configuration
 export * from "./tailwind/base-config.js";
@@ -24,8 +29,13 @@ import { SpacingTokens, spacingTokens } from "./tokens/spacing.js";
 import { TransitionTokens, transitionTokens } from "./tokens/transitions.js";
 import { TypographyTokens, typographyTokens } from "./tokens/typography.js";
 import { ResponsiveTokens, responsiveTokens } from "./tokens/responsive.js";
+import { LearningModeTokens, learningModeTokens } from "./tokens/learning-mode.js";
 import { ChartColorTokens, chartColorTokens } from "./tokens/components/chart-colors.js";
 import { SkillCategoryTokens, skillCategoryTokens } from "./tokens/components/skill-categories.js";
+import { ProgressTokens, progressTokens } from "./tokens/components/progress.js";
+import { CodeEditorTokens, codeEditorTokens } from "./tokens/components/code-editor.js";
+import { QuizTokens, quizTokens } from "./tokens/components/quiz.js";
+import { CelebrationTokens, celebrationTokens } from "./tokens/components/celebration.js";
 
 /**
  * Complete design token interface
@@ -39,8 +49,13 @@ export interface DesignTokens {
   transitions: TransitionTokens;
   typography: TypographyTokens;
   responsive: ResponsiveTokens;
+  learningMode: LearningModeTokens;
   chartColors: ChartColorTokens;
   skillCategories: SkillCategoryTokens;
+  progress: ProgressTokens;
+  codeEditor: CodeEditorTokens;
+  quiz: QuizTokens;
+  celebration: CelebrationTokens;
 }
 
 /**
@@ -55,8 +70,13 @@ export interface DesignTokenOverrides {
   transitions?: Partial<TransitionTokens>;
   typography?: Partial<TypographyTokens>;
   responsive?: Partial<ResponsiveTokens>;
+  learningMode?: Partial<LearningModeTokens>;
   chartColors?: Partial<ChartColorTokens>;
   skillCategories?: Partial<SkillCategoryTokens>;
+  progress?: Partial<ProgressTokens>;
+  codeEditor?: Partial<CodeEditorTokens>;
+  quiz?: Partial<QuizTokens>;
+  celebration?: Partial<CelebrationTokens>;
 }
 
 /**
@@ -71,8 +91,13 @@ export const baseDesignTokens: DesignTokens = {
   transitions: transitionTokens,
   typography: typographyTokens,
   responsive: responsiveTokens,
+  learningMode: learningModeTokens,
   chartColors: chartColorTokens,
   skillCategories: skillCategoryTokens,
+  progress: progressTokens,
+  codeEditor: codeEditorTokens,
+  quiz: quizTokens,
+  celebration: celebrationTokens,
 };
 
 /**
@@ -148,6 +173,31 @@ export function createCSSVariables(tokens: DesignTokens): string {
 
   Object.entries(tokens.transitions).forEach(([key, value]) => {
     cssVars.push(`--transition-${key}: ${value};`);
+  });
+
+  // Learning mode variables
+  Object.entries(tokens.learningMode).forEach(([key, value]) => {
+    cssVars.push(`--learning-${key}: ${value};`);
+  });
+
+  // Component tokens: progress
+  Object.entries(tokens.progress).forEach(([key, value]) => {
+    cssVars.push(`--progress-${key}: ${value};`);
+  });
+
+  // Component tokens: code editor
+  Object.entries(tokens.codeEditor).forEach(([key, value]) => {
+    cssVars.push(`--code-editor-${key}: ${value};`);
+  });
+
+  // Component tokens: quiz
+  Object.entries(tokens.quiz).forEach(([key, value]) => {
+    cssVars.push(`--quiz-${key}: ${value};`);
+  });
+
+  // Component tokens: celebration
+  Object.entries(tokens.celebration).forEach(([key, value]) => {
+    cssVars.push(`--celebration-${key}: ${value};`);
   });
 
   return cssVars.join('\n  ');
@@ -248,6 +298,95 @@ export const presetOverrides = {
     shadows: {
       glow: "0 0 40px hsl(220, 100%, 60% / 0.4)",
       primary: "0 4px 20px hsl(220, 100%, 60% / 0.4)",
+    },
+  } as DesignTokenOverrides,
+
+  /**
+   * Code Dojo learning platform — Codecademy-inspired two-mode system
+   * Browse mode: warm cream surfaces with white cards
+   * Learn mode: deep navy surfaces (applied via .learning-mode class)
+   * Yellow accent for progress/CTAs, purple for AI/premium features
+   */
+  codeDojo: {
+    colors: {
+      // Browse mode (warm cream surfaces)
+      background: "35 80% 95%",
+      foreground: "220 20% 12%",
+      card: "0 0% 100%",
+      cardForeground: "220 20% 12%",
+      popover: "0 0% 100%",
+      popoverForeground: "220 20% 12%",
+      primary: "263 55% 50%",
+      primaryForeground: "0 0% 98%",
+      secondary: "35 20% 90%",
+      secondaryForeground: "220 20% 12%",
+      muted: "35 30% 92%",
+      mutedForeground: "220 10% 40%",
+      accent: "48 100% 52%",
+      accentForeground: "220 20% 12%",
+      destructive: "350 80% 45%",
+      destructiveForeground: "0 0% 98%",
+      border: "35 25% 88%",
+      input: "35 20% 92%",
+      ring: "263 55% 50%",
+      radius: "0.5rem",
+      success: "142 76% 29%",
+      successForeground: "0 0% 98%",
+      warning: "48 100% 52%",
+      warningForeground: "220 20% 12%",
+      info: "210 90% 45%",
+      infoForeground: "0 0% 98%",
+      sidebar: {
+        background: "0 0% 100%",
+        foreground: "220 20% 12%",
+        primary: "263 55% 50%",
+        primaryForeground: "0 0% 98%",
+        accent: "35 30% 96%",
+        accentForeground: "220 20% 12%",
+        border: "35 25% 90%",
+        ring: "263 55% 50%",
+      },
+    },
+    gradients: {
+      primary: "linear-gradient(135deg, hsl(263, 55%, 50%), hsl(280, 80%, 60%))",
+      secondary: "linear-gradient(135deg, hsl(48, 100%, 52%), hsl(35, 100%, 55%))",
+      subtle: "linear-gradient(180deg, hsl(35, 80%, 95%), hsl(35, 60%, 92%))",
+      hero: "linear-gradient(135deg, hsl(230, 40%, 10%), hsl(230, 45%, 15%))",
+      accent: "linear-gradient(90deg, hsl(48, 100%, 52%), hsl(263, 55%, 50%))",
+    },
+    shadows: {
+      glow: "0 0 40px hsl(263, 55%, 50% / 0.15)",
+      elegant: "0 1px 3px hsl(220, 20%, 12% / 0.08)",
+      subtle: "0 1px 2px hsl(220, 20%, 12% / 0.05)",
+      medium: "0 4px 12px hsl(220, 20%, 12% / 0.08)",
+      large: "0 10px 30px hsl(220, 20%, 12% / 0.1)",
+      primary: "0 4px 14px hsl(263, 55%, 50% / 0.15)",
+    },
+    learningMode: {
+      background: "230 40% 10%",
+      foreground: "0 0% 92%",
+      card: "230 35% 16%",
+      cardForeground: "0 0% 92%",
+      border: "230 25% 22%",
+      muted: "230 30% 20%",
+      mutedForeground: "220 15% 65%",
+      accent: "48 100% 52%",
+      accentForeground: "230 40% 10%",
+      popover: "230 35% 14%",
+      popoverForeground: "0 0% 92%",
+      input: "230 30% 20%",
+      ring: "48 100% 52%",
+    },
+    progress: {
+      barFill: "48 100% 52%",
+      barTrack: "230 25% 22%",
+      circleStroke: "48 100% 52%",
+      circleTrack: "230 25% 22%",
+      xpGain: "142 76% 36%",
+      xpText: "0 0% 92%",
+      segmentComplete: "142 76% 36%",
+      segmentActive: "48 100% 52%",
+      segmentPending: "230 25% 30%",
     },
   } as DesignTokenOverrides,
 

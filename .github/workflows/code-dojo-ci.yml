@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'apps/code-dojo/**'
+      - 'shared/design-tokens/**'
+      - 'shared/ui-components/**'
       - '.github/workflows/code-dojo-ci.yml'
 
 jobs:
@@ -65,3 +67,59 @@ jobs:
         if: always()
         working-directory: ./apps/code-dojo
         run: docker compose down -v
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm  # ARM64 — matches ECS Fargate Graviton
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::671388079324:role/terraform-cooking-up-ideas
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Terraform (for outputs)
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Get ECR repository URL from Terraform
+        id: tf
+        run: |
+          cd terraform
+          terraform init -reconfigure -input=false
+          echo "ECR_URL=$(terraform output -raw code_dojo_ecr_repository_url)" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          docker build -f apps/code-dojo/Dockerfile \
+                        -t ${{ steps.tf.outputs.ECR_URL }}:latest \
+                        -t ${{ steps.tf.outputs.ECR_URL }}:${{ github.sha }} .
+          docker push ${{ steps.tf.outputs.ECR_URL }}:latest
+          docker push ${{ steps.tf.outputs.ECR_URL }}:${{ github.sha }}
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ai-testing-resource-prod \
+            --service code-dojo-prod \
+            --force-new-deployment
+
+      - name: Wait for deployment stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ai-testing-resource-prod \
+            --services code-dojo-prod
+          echo "Code Dojo deployment complete!"

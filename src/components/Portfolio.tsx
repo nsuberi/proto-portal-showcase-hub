@@ -47,11 +47,11 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
-      title: "Code Dojo: AI-Powered Learning Platform",
+      title: "Code Dojo: Become an AI Builder",
       description:
-        "A hands-on learning platform where students tackle coding challenges, submit GitHub solutions, and receive AI-powered feedback from Claude. Features Socratic dialogue with voice input, architectural PR analysis, and instructor review workflows with role-based access for students, instructors, and admins.",
+        "Ever wondered how people actually build software? Code Dojo is your training ground for developing the intuition you need to go from curious beginner to AI-powered builder. Work through hands-on diagnosis exercises where you learn to read code, spot bugs, and understand how the pieces fit together — the same skills that let you collaborate with AI to build real things. No prior experience needed, just curiosity and a willingness to tinker.",
       link: "/code-dojo/",
-      tags: ["AI Feedback", "Learning Platform", "Code Review", "LangChain"],
+      tags: ["AI Builder", "Learn to Code", "Diagnosis Exercises", "Hands-On"],
       status: "Live Demo Available",
     },
     {

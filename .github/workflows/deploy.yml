@@ -9,6 +9,8 @@ on:
       - 'terraform/**'
       - 'scripts/**'
       - 'package.json'
+      - 'src/**'
+      - 'apps/code-dojo/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -129,6 +131,11 @@ jobs:
         TF_VAR_api_gateway_enforcement: true
         TF_VAR_api_gateway_api_key_value: ${{ secrets.API_GATEWAY_API_KEY }}
         TF_VAR_ai_evals_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        TF_VAR_code_dojo_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        TF_VAR_code_dojo_github_token: ${{ secrets.CODE_DOJO_GITHUB_TOKEN }}
+        TF_VAR_code_dojo_openai_api_key: ${{ secrets.CODE_DOJO_OPENAI_API_KEY }}
+        TF_VAR_code_dojo_langsmith_api_key: ${{ secrets.CODE_DOJO_LANGSMITH_API_KEY }}
+        TF_VAR_code_dojo_flask_secret_key: ${{ secrets.CODE_DOJO_FLASK_SECRET_KEY }}
         
     - name: Deploy site
       run: ./scripts/deploy-site.sh
