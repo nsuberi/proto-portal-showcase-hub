@@ -296,9 +296,9 @@ resource "aws_cloudfront_distribution" "website" {
     origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
   }
 
-  # AI Evals cache behavior — routes /ai-evals/* to the ECS ALB
+  # AI Evals cache behavior — routes /prototypes/ai-evals/* to the ECS ALB
   ordered_cache_behavior {
-    path_pattern           = "/ai-evals/*"
+    path_pattern           = "/prototypes/ai-evals/*"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "ai-evals-api"
