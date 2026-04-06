@@ -451,25 +451,25 @@ NARRATIVE_DOCUMENTS = [
         "filename": "ai_evaluation_sdlc.pdf",
         "title": "AI Evaluation SDLC Overview",
         "description": "Complete guide to integrating AI evaluations into the software development lifecycle",
-        "path": "/static/documents/ai_evaluation_sdlc.pdf",
+        "static_path": "documents/ai_evaluation_sdlc.pdf",
     },
     {
         "filename": "sdlc_what_it_is.pdf",
         "title": "SDLC: What It Is and What It Isn't",
         "description": "Clarifying the purpose and misconceptions about the SDLC for AI systems",
-        "path": "/static/documents/sdlc_what_it_is.pdf",
+        "static_path": "documents/sdlc_what_it_is.pdf",
     },
     {
         "filename": "appendix_trace_capture.pdf",
         "title": "Appendix: Trace Capture Implementation",
         "description": "Technical appendix on implementing trace capture for AI system monitoring",
-        "path": "/static/documents/appendix_trace_capture.pdf",
+        "static_path": "documents/appendix_trace_capture.pdf",
     },
     {
         "filename": "appendix_b_unified_monitoring.pdf",
         "title": "Appendix B: Unified Monitoring",
         "description": "Comprehensive monitoring strategy for AI applications in production",
-        "path": "/static/documents/appendix_b_unified_monitoring.pdf",
+        "static_path": "documents/appendix_b_unified_monitoring.pdf",
     },
 ]
 

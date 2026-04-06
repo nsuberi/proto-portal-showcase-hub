@@ -64,21 +64,6 @@ resource "aws_s3_bucket_policy" "website" {
 }
 
 # CloudFront Function for prototype SPA routing
-# Rewrites /prototypes/ai-evals/* → /ai-evals/* so the Flask ALB receives the prefix it expects
-resource "aws_cloudfront_function" "api_path_rewriter" {
-  name    = "${var.bucket_name}-api-path-rewriter"
-  runtime = "cloudfront-js-1.0"
-  code    = <<-EOT
-function handler(event) {
-    var request = event.request;
-    if (request.uri.startsWith('/prototypes/ai-evals')) {
-        request.uri = request.uri.replace('/prototypes/ai-evals', '/ai-evals');
-    }
-    return request;
-}
-EOT
-}
-
 resource "aws_cloudfront_function" "prototype_router" {
   name    = "${var.bucket_name}-prototype-router"
   runtime = "cloudfront-js-1.0"
@@ -322,11 +307,6 @@ resource "aws_cloudfront_distribution" "website" {
 
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.api_path_rewriter.arn
-    }
   }
 
   # FFX Skill Map cache behavior

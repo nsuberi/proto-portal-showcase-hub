@@ -15,7 +15,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter
-        basename="/ai-builders"
+        basename="/prototypes/ai-builders"
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <App />
