@@ -12,7 +12,7 @@ export default function OnboardingPage() {
   return (
     <div className="animate-in fade-in duration-500 flex flex-col items-center">
       {/* Text logo */}
-      <p className="mb-6 text-sm font-semibold tracking-wide text-shelter-white">
+      <p className="mb-6 font-headline text-sm font-bold tracking-wide text-on-surface">
         AI Builders
       </p>
 
@@ -22,7 +22,7 @@ export default function OnboardingPage() {
       {/* Skip link */}
       <button
         type="button"
-        className="mt-6 text-xs text-dust underline-offset-2 transition-colors hover:underline hover:text-shelter-white"
+        className="mt-6 font-label text-xs text-on-primary-container underline-offset-2 transition-colors hover:underline hover:text-on-surface"
         onClick={() => navigate("/")}
       >
         Skip for now

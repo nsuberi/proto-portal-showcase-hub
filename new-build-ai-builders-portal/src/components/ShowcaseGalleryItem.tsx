@@ -1,4 +1,3 @@
-import { tokens } from "@/design-system/tokens";
 import { cn } from "@/lib/utils";
 
 interface ShowcaseGalleryItemProps {
@@ -21,8 +20,8 @@ export function ShowcaseGalleryItem({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-border-warm bg-shelter-white",
-        "cursor-pointer transition-colors duration-200 hover:border-instrument-blue",
+        "overflow-hidden rounded-xl bg-surface-container-low",
+        "cursor-pointer transition-all duration-200 hover:shadow-ambient hover:bg-surface-container",
         className,
       )}
       onClick={onClick}
@@ -40,23 +39,19 @@ export function ShowcaseGalleryItem({
       }
     >
       {/* Preview area */}
-      <div
-        className="flex h-[100px] items-center justify-center"
-        style={{
-          background: `linear-gradient(135deg, ${tokens.color.deepSpace}, ${tokens.color.orbitalBlue})`,
-        }}
-      >
-        <span className="text-[12px] tracking-wide text-shelter-white/70">
-          ▶ artifact preview
+      <div className="flex h-[100px] items-center justify-center bg-gradient-to-br from-surface-container-lowest to-primary-container">
+        <span className="font-label text-[12px] tracking-wide text-on-surface/40">
+          <span className="material-symbols-outlined mr-1 align-middle text-sm">play_circle</span>
+          artifact preview
         </span>
       </div>
 
       {/* Details */}
       <div className="p-3">
-        <h4 className="mb-1 text-[13px] font-semibold text-dark-text">
+        <h4 className="mb-1 font-headline text-[13px] font-semibold text-on-surface">
           {title}
         </h4>
-        <p className="mb-2 text-[11px] text-dust">{author}</p>
+        <p className="mb-2 font-body text-[11px] italic text-on-surface-variant">{author}</p>
 
         {/* Tags */}
         {tags.length > 0 && (
@@ -64,7 +59,7 @@ export function ShowcaseGalleryItem({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-regolith px-2 py-0.5 font-mono text-[9px] text-dust"
+                className="rounded-full bg-surface-container-highest px-2 py-0.5 font-label text-[9px] uppercase tracking-wider text-on-surface-variant"
               >
                 {tag}
               </span>
@@ -73,7 +68,7 @@ export function ShowcaseGalleryItem({
         )}
 
         {/* Reactions */}
-        <p className="text-[11px] text-dust">{reactions}</p>
+        <p className="font-label text-[11px] text-on-primary-container">{reactions}</p>
       </div>
     </div>
   );

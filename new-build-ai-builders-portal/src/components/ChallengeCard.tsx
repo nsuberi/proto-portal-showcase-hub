@@ -1,4 +1,4 @@
-import { tokens, phaseConfig, statusConfig } from "@/design-system/tokens";
+import { phaseConfig, statusConfig } from "@/design-system/tokens";
 import type { Phase, ChallengeStatus } from "@/design-system/tokens";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +29,8 @@ export function ChallengeCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-lg border border-border-warm bg-shelter-white",
-        "transition-shadow duration-200 hover:shadow-md",
+        "relative overflow-hidden rounded-xl bg-surface-container-low",
+        "transition-shadow duration-200 hover:shadow-ambient",
         onClick && "cursor-pointer",
         className,
       )}
@@ -48,21 +48,21 @@ export function ChallengeCard({
           : undefined
       }
     >
-      {/* Phase accent bar */}
+      {/* Phase accent — left border */}
       {phaseData && (
         <div
-          className="h-1 w-full"
+          className="absolute left-0 top-0 bottom-0 w-1"
           style={{ backgroundColor: phaseData.accent }}
         />
       )}
 
-      <div className="p-4">
+      <div className="p-5">
         {/* Header row: phase badge + status badge */}
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {phaseData && (
               <span
-                className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                className="rounded-full px-2.5 py-0.5 font-label text-[10px] font-semibold uppercase tracking-wider"
                 style={{
                   backgroundColor: phaseData.bg,
                   color: phaseData.accent,
@@ -75,7 +75,7 @@ export function ChallengeCard({
 
           {statusData && (
             <span
-              className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+              className="rounded-full px-2.5 py-0.5 font-label text-[10px] font-semibold"
               style={{
                 backgroundColor: statusData.bg,
                 color: statusData.color,
@@ -92,7 +92,7 @@ export function ChallengeCard({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border-warm px-2 py-0.5 text-[11px] text-dust"
+                className="rounded-full bg-surface-container-highest px-2 py-0.5 font-label text-[11px] text-on-surface-variant"
               >
                 {tag}
               </span>
@@ -101,30 +101,30 @@ export function ChallengeCard({
         )}
 
         {/* Title */}
-        <h3 className="mb-1 text-base font-semibold text-deep-space">
+        <h3 className="mb-1 font-headline text-base font-semibold text-on-surface">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="mb-3 text-[13px] leading-relaxed text-dust">
+        <p className="mb-3 font-body text-[13px] leading-relaxed text-on-surface-variant">
           {description}
         </p>
 
         {/* Deliverables */}
         {deliverables.length > 0 && (
-          <div className="rounded-md bg-regolith p-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-dust">
+          <div className="rounded-lg bg-surface-container-lowest p-3">
+            <p className="mb-2 font-label text-[11px] font-semibold uppercase tracking-wider text-on-primary-container">
               Deliverables
             </p>
             <ul className="flex flex-col gap-1.5">
               {deliverables.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-[12px] text-dark-text">
+                <li key={i} className="flex items-center gap-2 font-body text-[12px] text-on-surface">
                   <span
                     className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{
                       backgroundColor: phaseData
                         ? phaseData.accent
-                        : tokens.color.dust,
+                        : "#8e9196",
                     }}
                   />
                   {item}

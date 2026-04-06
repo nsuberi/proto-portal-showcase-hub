@@ -1,29 +1,43 @@
 export const tokens = {
   color: {
-    deepSpace: "#0F1B2D",
-    orbitalBlue: "#1E3A5F",
-    instrumentBlue: "#3B82C4",
-    signalOrange: "#D4763A",
-    atmosphereTeal: "#2A9D8F",
-    regolith: "#F4F1EC",
-    shelterWhite: "#FAFAF8",
-    sediment: "#E8E3DA",
-    dust: "#8B8178",
-    darkText: "#2D2926",
-    borderWarm: "#D5CEC4",
-    phase1: "#1E3A5F",
-    phase2: "#2A9D8F",
-    phase3: "#D4A03A",
+    surface: "#121317",
+    surfaceContainerLowest: "#0d0e12",
+    surfaceContainerLow: "#1a1b20",
+    surfaceContainer: "#1f1f24",
+    surfaceContainerHigh: "#292a2e",
+    surfaceContainerHighest: "#343439",
+    surfaceVariant: "#343439",
+    primary: "#bbc6e2",
+    primaryContainer: "#0f1a2e",
+    onPrimary: "#263046",
+    onPrimaryContainer: "#78839c",
+    secondary: "#ffb4a5",
+    secondaryContainer: "#802918",
+    onSecondaryContainer: "#ff9a85",
+    tertiary: "#ffba38",
+    tertiaryContainer: "#261700",
+    onTertiaryContainer: "#ad7900",
+    onSurface: "#e3e2e8",
+    onSurfaceVariant: "#c4c6cc",
+    outline: "#8e9196",
+    outlineVariant: "#44474c",
+    error: "#ffb4ab",
+    errorContainer: "#93000a",
+    phase1: "#bbc6e2",
+    phase2: "#ffba38",
+    phase3: "#ffb4a5",
   },
   radius: {
-    sm: "4px",
-    md: "8px",
-    lg: "12px",
-    xl: "16px",
+    sm: "0.25rem",
+    md: "0.5rem",
+    lg: "0.75rem",
+    xl: "1.5rem",
     full: "9999px",
   },
   font: {
-    sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+    headline: '"Space Grotesk", sans-serif',
+    body: '"Newsreader", serif',
+    label: '"Inter", sans-serif',
     mono: '"SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", ui-monospace, monospace',
   },
   spacing: {
@@ -45,22 +59,26 @@ export type DevlogSectionKey = "architecture" | "design" | "organization" | "lea
 export type DevlogSections = Partial<Record<DevlogSectionKey, string>>;
 
 export const phaseConfig = {
-  1: { accent: tokens.color.phase1, bg: "#E8EEF4", label: "Guided" },
-  2: { accent: tokens.color.phase2, bg: "#E6F4F1", label: "Constrained" },
-  3: { accent: tokens.color.phase3, bg: "#F4EFE6", label: "Discovery" },
+  1: { accent: tokens.color.phase1, bg: "#0f1a2e", label: "Guided" },
+  2: { accent: tokens.color.phase2, bg: "#261700", label: "Constrained" },
+  3: { accent: tokens.color.phase3, bg: "#3e0500", label: "Discovery" },
 } as const;
 
 export const statusConfig = {
-  "not-started": { label: "Not started", bg: tokens.color.sediment, color: tokens.color.dust },
-  "in-progress": { label: "In progress", bg: "#E0F0FA", color: tokens.color.instrumentBlue },
-  submitted: { label: "Submitted", bg: "#FDE8D8", color: tokens.color.signalOrange },
-  reviewed: { label: "Reviewed", bg: "#D8F0E8", color: tokens.color.atmosphereTeal },
+  "not-started": { label: "Not started", bg: "#292a2e", color: "#8e9196" },
+  "in-progress": { label: "In progress", bg: "#0f1a2e", color: "#bbc6e2" },
+  submitted: { label: "Submitted", bg: "#261700", color: "#ffba38" },
+  reviewed: { label: "Reviewed", bg: "#3e0500", color: "#ffb4a5" },
 } as const;
 
 export const devlogSectionMeta: Record<DevlogSectionKey, { label: string; icon: string }> = {
-  architecture: { label: "Architecture decisions", icon: "◇" },
-  design: { label: "Design decisions", icon: "△" },
-  organization: { label: "Organizational context", icon: "○" },
-  learned: { label: "What I learned", icon: "☆" },
-  change: { label: "What I'd change", icon: "↻" },
+  architecture: { label: "Architecture decisions", icon: "deployed_code" },
+  design: { label: "Design decisions", icon: "palette" },
+  organization: { label: "Organizational context", icon: "workspaces" },
+  learned: { label: "What I learned", icon: "school" },
+  change: { label: "What I'd change", icon: "sync" },
 };
+
+/** Galaxy nebula background image from the Star Chart */
+export const GALAXY_BG_URL =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCEL2BcM694zDF_R2D4MhpefPrK8zOoo4dic57ShfGrouD6GgzSXU4hryliJvEbthccnUd7uR1cN9MZ1iKgzpYVWXz1eCcAqmkjP36bOFcIHL6guPKNu7LyT7MSRbsll1dURaM7NStlL8ywGPZJba2uMlKAToYQt8dcgZW-Knag1W1ROodnaOMMzgI2iSnokmlqQeizoxTN4w74DIM87hLZZ3zJiCDxOBcbLwva3fnTyim3U97Lw6Xj9_9p6R1fQnS7DIzIW7ubw_U";

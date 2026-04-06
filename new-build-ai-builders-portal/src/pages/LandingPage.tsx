@@ -26,19 +26,19 @@ const showcaseItems = [
 const phases = [
   {
     name: "Developing Intuition",
-    accent: "#1E3A5F",
+    accent: "var(--color-phase-1)",
     description:
       "Scaffolded challenges where you develop a feel for the environment. Follow guided walkthroughs, watch community sessions, and learn what building with AI actually looks like.",
   },
   {
     name: "Exercising Judgment",
-    accent: "#2A9D8F",
+    accent: "var(--color-phase-2)",
     description:
       "Defined projects with real decisions about architecture, data, and design. Present your work, notice problems in your organization, and develop judgment about the choices you're making.",
   },
   {
     name: "Navigating Independently",
-    accent: "#D4A03A",
+    accent: "var(--color-phase-3)",
     description:
       "Independent discovery. Find problems, shape solutions, create prototypes, record presentations, and advocate for change in your organization.",
   },
@@ -48,44 +48,46 @@ export default function LandingPage() {
   return (
     <div>
       {/* ── Hero Section ── */}
-      <section className="-mx-4 sm:-mx-6 -mt-8 bg-deep-space py-16 sm:py-24">
-        <div className="mx-auto max-w-3xl px-4 text-center">
-          <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-instrument-blue">
-            AI Builders Program
-          </p>
-          <h1 className="mb-4 text-[28px] font-bold leading-tight text-shelter-white sm:text-[32px]">
-            Build real things with AI.
-            <br />
-            Show your work. Grow with a community.
-          </h1>
-          <p className="mx-auto mb-8 max-w-xl text-[14px] leading-relaxed text-dust sm:text-[16px]">
-            A community of practice for enterprise professionals developing the
-            capability to discover problems, prototype solutions, and advocate
-            for change.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Link
-              to="/onboarding"
-              className="inline-flex items-center justify-center min-h-[44px] rounded-lg bg-signal-orange px-6 py-3 text-sm font-semibold text-shelter-white transition-opacity hover:opacity-90"
-            >
-              Start your journey
-            </Link>
-            <Link
-              to="/showcase"
-              className="inline-flex items-center justify-center min-h-[44px] rounded-lg border border-shelter-white/40 px-6 py-3 text-sm font-semibold text-shelter-white transition-colors hover:border-shelter-white"
-            >
-              See what people are building
-            </Link>
+      <section className="-mx-4 sm:-mx-6 -mt-8 py-20 sm:py-28">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="astro-glass rounded-2xl p-8 sm:p-12">
+            <p className="mb-4 font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-tertiary">
+              AI Builders Program
+            </p>
+            <h1 className="mb-4 font-headline text-[28px] font-bold leading-tight text-on-surface sm:text-[36px]">
+              Build real things with AI.
+              <br />
+              <span className="text-primary">Show your work.</span> Grow with a community.
+            </h1>
+            <p className="mx-auto mb-8 max-w-xl font-body text-[14px] leading-relaxed text-on-surface-variant sm:text-[16px]">
+              A community of practice for enterprise professionals developing the
+              capability to discover problems, prototype solutions, and advocate
+              for change.
+            </p>
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
+              <Link
+                to="/onboarding"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-gradient-to-br from-primary to-on-primary-container px-6 py-3 font-label text-sm font-bold uppercase tracking-widest text-on-primary-fixed transition-all hover:brightness-110 active:scale-95"
+              >
+                Start your journey
+              </Link>
+              <Link
+                to="/showcase"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-lg px-6 py-3 font-label text-sm font-semibold text-on-surface ring-1 ring-outline-variant/30 transition-colors hover:ring-primary/50 hover:text-primary"
+              >
+                See what people are building
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Showcase Preview ── */}
       <section className="py-12 sm:py-16">
-        <h2 className="mb-1 text-[20px] font-semibold text-deep-space">
+        <h2 className="mb-1 font-headline text-[20px] font-semibold text-on-surface">
           People are building this right now
         </h2>
-        <p className="mb-6 text-[13px] text-dust">
+        <p className="mb-6 font-body text-[13px] text-on-surface-variant">
           Real work from the community. Running code, visible reasoning, peer
           feedback.
         </p>
@@ -97,36 +99,31 @@ export default function LandingPage() {
         <div className="mt-6">
           <Link
             to="/showcase"
-            className="text-[13px] font-medium text-instrument-blue hover:underline"
+            className="font-label text-[13px] font-medium text-primary hover:text-tertiary transition-colors"
           >
             Browse all showcase work &rarr;
           </Link>
         </div>
       </section>
 
-      {/* ── How It Works ── */}
+      {/* ── How It Works — HUD-style phase cards ── */}
       <section className="py-12 sm:py-16">
-        <h2 className="mb-6 text-[20px] font-semibold text-deep-space">
+        <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
           Three phases of development
         </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {phases.map((phase) => (
             <div
               key={phase.name}
-              className="overflow-hidden rounded-lg border border-border-warm bg-shelter-white"
+              className="rounded-xl bg-surface-container-low p-5"
+              style={{ borderLeft: `4px solid ${phase.accent}` }}
             >
-              <div
-                className="h-1 w-full"
-                style={{ backgroundColor: phase.accent }}
-              />
-              <div className="p-4">
-                <h3 className="mb-2 text-[14px] font-semibold text-deep-space">
-                  {phase.name}
-                </h3>
-                <p className="text-[13px] leading-relaxed text-dust">
-                  {phase.description}
-                </p>
-              </div>
+              <h3 className="mb-2 font-headline text-[14px] font-semibold text-on-surface">
+                {phase.name}
+              </h3>
+              <p className="font-body text-[13px] leading-relaxed text-on-surface-variant">
+                {phase.description}
+              </p>
             </div>
           ))}
         </div>
@@ -134,7 +131,7 @@ export default function LandingPage() {
 
       {/* ── Featured Challenge ── */}
       <section className="py-12 sm:py-16">
-        <h2 className="mb-6 text-[20px] font-semibold text-deep-space">
+        <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
           Start with a challenge
         </h2>
         <div className="max-w-2xl">
@@ -153,7 +150,7 @@ export default function LandingPage() {
         <div className="mt-6">
           <Link
             to="/challenges"
-            className="text-[13px] font-medium text-instrument-blue hover:underline"
+            className="font-label text-[13px] font-medium text-primary hover:text-tertiary transition-colors"
           >
             Browse all challenges &rarr;
           </Link>
@@ -161,20 +158,22 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA Footer ── */}
-      <section className="py-12 text-center sm:py-16">
-        <h2 className="mb-2 text-[20px] font-semibold text-deep-space">
-          Ready to find your path?
-        </h2>
-        <p className="mb-6 text-[14px] text-dust">
-          The journey starts with understanding where you are and where you want
-          to go.
-        </p>
-        <Link
-          to="/onboarding"
-          className="inline-block rounded-lg bg-signal-orange px-6 py-3 text-sm font-semibold text-shelter-white transition-opacity hover:opacity-90"
-        >
-          Begin onboarding
-        </Link>
+      <section className="py-12 sm:py-16">
+        <div className="astro-glass rounded-2xl p-8 text-center">
+          <h2 className="mb-2 font-headline text-[20px] font-semibold text-on-surface">
+            Ready to find your path?
+          </h2>
+          <p className="mb-6 font-body text-[14px] text-on-surface-variant">
+            The journey starts with understanding where you are and where you want
+            to go.
+          </p>
+          <Link
+            to="/onboarding"
+            className="inline-block rounded-lg bg-gradient-to-br from-primary to-on-primary-container px-6 py-3 font-label text-sm font-bold uppercase tracking-widest text-on-primary-fixed transition-all hover:brightness-110 active:scale-95"
+          >
+            Begin onboarding
+          </Link>
+        </div>
       </section>
     </div>
   );

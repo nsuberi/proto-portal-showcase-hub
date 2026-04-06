@@ -10,10 +10,10 @@ interface ReferencePanelProps {
 }
 
 const catColors: Record<string, string> = {
-  architecture: tokens.color.instrumentBlue,
-  building: tokens.color.atmosphereTeal,
-  data: "#D4A03A",
-  design: tokens.color.signalOrange,
+  architecture: tokens.color.primary,
+  building: tokens.color.tertiary,
+  data: tokens.color.phase2,
+  design: tokens.color.secondary,
 };
 
 const CALLOUT_QUOTE =
@@ -26,42 +26,34 @@ export function ReferencePanel({
   className,
 }: ReferencePanelProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const accent = catColors[category] ?? tokens.color.dust;
+  const accent = catColors[category] ?? tokens.color.outline;
 
   return (
-    <div className={cn("rounded-lg overflow-hidden", className)}>
+    <div className={cn("rounded-xl overflow-hidden", className)}>
       {/* Toggle button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
           "w-full flex items-center gap-3 px-4 py-3 text-left",
-          "bg-shelter-white border-thin border-border-warm rounded-lg",
+          "bg-surface-container-low rounded-xl",
           "transition-colors cursor-pointer",
-          isOpen && "rounded-b-none",
+          isOpen && "rounded-b-none bg-surface-container",
         )}
         style={{
           borderLeftWidth: 3,
           borderLeftColor: accent,
-          ...(isOpen
-            ? {
-                backgroundColor: `${accent}08`,
-                borderColor: `${accent}40`,
-                borderLeftColor: accent,
-              }
-            : {}),
         }}
       >
-        {/* Accent bar is handled by the left border above */}
-        <span className="flex-1 text-sm font-medium text-dark-text">
+        <span className="flex-1 font-headline text-sm font-medium text-on-surface">
           {title}
         </span>
 
         {/* Category badge */}
         <span
-          className="text-xs font-mono px-2 py-0.5 rounded-full"
+          className="font-label text-xs px-2 py-0.5 rounded-full"
           style={{
-            backgroundColor: `${accent}18`,
+            backgroundColor: `${accent}20`,
             color: accent,
           }}
         >
@@ -69,35 +61,32 @@ export function ReferencePanel({
         </span>
 
         {/* Chevron */}
-        <svg
+        <span
           className={cn(
-            "w-4 h-4 text-dust transition-transform duration-200",
+            "material-symbols-outlined text-on-primary-container transition-transform duration-200",
             isOpen && "rotate-180",
           )}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+          expand_more
+        </span>
       </button>
 
       {/* Expandable content */}
       {isOpen && (
         <div
-          className="bg-regolith border-thin border-t-0 border-border-warm rounded-b-lg px-4 py-4"
+          className="bg-surface-container-lowest rounded-b-xl px-4 py-4"
           style={{
-            borderColor: `${accent}40`,
+            borderLeftWidth: 3,
+            borderLeftColor: accent,
           }}
         >
-          <p className="text-sm text-dark-text leading-relaxed whitespace-pre-wrap m-0">
+          <p className="font-body text-sm text-on-surface leading-relaxed whitespace-pre-wrap m-0">
             {content}
           </p>
 
           {/* Callout quote */}
           <blockquote
-            className="mt-4 pl-4 py-2 text-xs italic text-dust m-0"
+            className="mt-4 pl-4 py-2 font-body text-xs italic text-on-surface-variant m-0"
             style={{
               borderLeft: `3px solid ${accent}`,
             }}
