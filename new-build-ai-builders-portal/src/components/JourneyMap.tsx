@@ -20,7 +20,7 @@ export function JourneyMap({ phases, className }: JourneyMapProps) {
             key={index}
             className={cn(
               "h-1.5 flex-1 rounded-full",
-              phase.complete ? "bg-tertiary shadow-glow-tertiary" : "bg-surface-container-highest",
+              phase.complete ? "bg-tertiary" : "bg-surface-container-highest",
             )}
           />
         ))}

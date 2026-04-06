@@ -30,7 +30,8 @@ export function ChallengeCard({
     <div
       className={cn(
         "relative overflow-hidden rounded-xl bg-surface-container-low",
-        "transition-shadow duration-200 hover:shadow-ambient",
+        "transition-colors duration-200 hover:bg-surface-container",
+        "shadow-[inset_3px_0_12px_-4px_rgba(227,226,232,0.15)]",
         onClick && "cursor-pointer",
         className,
       )}
@@ -48,14 +49,6 @@ export function ChallengeCard({
           : undefined
       }
     >
-      {/* Phase accent — left border */}
-      {phaseData && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1"
-          style={{ backgroundColor: phaseData.accent }}
-        />
-      )}
-
       <div className="p-5">
         {/* Header row: phase badge + status badge */}
         <div className="mb-3 flex items-center justify-between">
@@ -119,14 +112,7 @@ export function ChallengeCard({
             <ul className="flex flex-col gap-1.5">
               {deliverables.map((item, i) => (
                 <li key={i} className="flex items-center gap-2 font-body text-[12px] text-on-surface">
-                  <span
-                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: phaseData
-                        ? phaseData.accent
-                        : "#8e9196",
-                    }}
-                  />
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-on-surface/50" />
                   {item}
                 </li>
               ))}

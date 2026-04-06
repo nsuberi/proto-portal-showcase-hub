@@ -20,7 +20,9 @@ Portfolio monorepo: interactive prototypes (React/Vite) + AI Evals app (Flask/EC
 | Learning Path | 3006 | `/prototypes/learning-path/` |
 | API Server | 3004 | `/api/v1/` |
 | Dev Proxy | 8082 | (routes all) |
-| Code Dojo | 5002 | `/code-dojo/` |
+| Code Dojo (Flask) | 5002 | `/code-dojo/` |
+| Code Dojo (Vite) | 3007 | `/code-dojo/` |
+| AI Builders (Vite) | 3008 | `/ai-builders/` |
 | Neo4j | 7474/7687 | - |
 
 ## Design Rules

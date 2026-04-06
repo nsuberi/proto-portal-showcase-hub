@@ -29,7 +29,7 @@ export function GoalEvolution({ goals, className }: GoalEvolutionProps) {
                   className={cn(
                     "relative z-10 mt-1 inline-block h-[10px] w-[10px] shrink-0 rounded-full",
                     isCurrent
-                      ? "bg-tertiary shadow-glow-tertiary"
+                      ? "bg-tertiary"
                       : "bg-surface-container-highest",
                   )}
                 />
