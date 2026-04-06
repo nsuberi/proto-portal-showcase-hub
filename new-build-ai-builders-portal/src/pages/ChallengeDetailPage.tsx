@@ -60,7 +60,7 @@ export default function ChallengeDetailPage() {
         {/* Left column: narrative content */}
         <div className="flex flex-col gap-6">
           {/* Challenge header card */}
-          <div className="overflow-hidden rounded-xl bg-surface-container-low" style={{ borderLeft: `4px solid ${phase.accent}` }}>
+          <div className="overflow-hidden rounded-xl bg-surface-container-low shadow-[inset_3px_0_12px_-4px_rgba(227,226,232,0.15)]">
             <div className="p-5">
               {/* Phase badge + tags + status */}
               <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -111,10 +111,7 @@ export default function ChallengeDetailPage() {
                   key={i}
                   className="flex items-center gap-2 font-body text-sm text-on-surface"
                 >
-                  <span
-                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: phase.accent }}
-                  />
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-on-surface/50" />
                   {item}
                 </li>
               ))}

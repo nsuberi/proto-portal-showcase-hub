@@ -43,7 +43,7 @@ export function ArtifactRenderer({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl bg-surface-container-lowest shadow-ambient",
+        "overflow-hidden rounded-xl bg-surface-container-lowest",
         className,
       )}
     >

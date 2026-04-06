@@ -58,7 +58,7 @@ export default function PortalLayout() {
       </aside>
 
       {/* Top header bar (frosted glass) */}
-      <header className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-4 md:left-20 bg-surface/70 backdrop-blur-xl shadow-[0_0_40px_rgba(227,226,232,0.05)] font-headline tracking-wide">
+      <header className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-4 md:left-20 bg-surface/70 backdrop-blur-xl font-headline tracking-wide">
         <div className="flex items-center gap-4">
           <span className="text-xl font-bold tracking-tighter text-on-surface md:hidden">
             AI Builders
@@ -104,7 +104,7 @@ export default function PortalLayout() {
       </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around rounded-t-[2rem] px-4 pb-6 pt-2 md:hidden bg-surface/80 backdrop-blur-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+      <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around rounded-t-[2rem] px-4 pb-6 pt-2 md:hidden bg-surface/80 backdrop-blur-2xl">
         {navItems.map((item) => (
           <Link
             key={item.path}

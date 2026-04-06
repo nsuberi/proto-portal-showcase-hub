@@ -21,7 +21,7 @@ export function ShowcaseGalleryItem({
     <div
       className={cn(
         "overflow-hidden rounded-xl bg-surface-container-low",
-        "cursor-pointer transition-all duration-200 hover:shadow-ambient hover:bg-surface-container",
+        "cursor-pointer transition-colors duration-200 hover:bg-surface-container",
         className,
       )}
       onClick={onClick}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { ShowcaseGalleryItem } from "@/components/ShowcaseGalleryItem";
+import { cn } from "@/lib/utils";
 
 const showcaseItems = [
   {
@@ -106,24 +107,79 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works — HUD-style phase cards ── */}
+      {/* ── How It Works — Star chart phases ── */}
       <section className="py-12 sm:py-16">
-        <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
+        <h2 className="mb-10 font-headline text-[20px] font-semibold text-on-surface">
           Three phases of development
         </h2>
-        <div className="flex flex-col gap-4">
-          {phases.map((phase) => (
+
+        {/* Horizontal star timeline — no bounding box */}
+        <div className="relative">
+          {/* Connecting line */}
+          <div className="absolute top-[20px] left-[16.6%] right-[16.6%] h-[1.5px] bg-outline-variant/20" />
+
+          <div className="relative flex justify-between">
+            {phases.map((phase, index) => (
+              <div
+                key={phase.name}
+                className="group relative flex flex-col items-center gap-3 px-2"
+                style={{ flex: "1 1 0" }}
+              >
+                {/* Star point */}
+                <div className="relative flex h-10 w-10 items-center justify-center">
+                  {/* Hover ring */}
+                  <div
+                    className="absolute h-8 w-8 rounded-full border transition-transform duration-500 group-hover:scale-150"
+                    style={{ borderColor: `${phase.accent}40` }}
+                  />
+                  {/* Star core */}
+                  <div
+                    className={cn(
+                      "relative z-10 h-3 w-3 rounded-full transition-all duration-300 group-hover:scale-125",
+                      index === 0 && "bg-phase-1",
+                      index === 1 && "bg-phase-2",
+                      index === 2 && "bg-phase-3",
+                    )}
+                  />
+                </div>
+
+                {/* Phase name */}
+                <h3 className="font-headline text-[14px] font-bold text-on-surface text-center transition-colors group-hover:text-tertiary">
+                  {phase.name}
+                </h3>
+
+                {/* Description */}
+                <p className="max-w-[280px] text-center font-body text-[12px] leading-relaxed text-on-surface-variant">
+                  {phase.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Four Foundations ── */}
+      <section className="py-12 sm:py-16">
+        <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
+          Four foundations
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[
+            { name: "Tools and Platforms", icon: "construction" },
+            { name: "Discovery and Problem Shaping", icon: "search_insights" },
+            { name: "Building", icon: "code_blocks" },
+            { name: "Scaling and Sustaining", icon: "trending_up" },
+          ].map((f) => (
             <div
-              key={phase.name}
-              className="rounded-xl bg-surface-container-low p-5"
-              style={{ borderLeft: `4px solid ${phase.accent}` }}
+              key={f.name}
+              className="group flex flex-col items-center gap-3 rounded-xl bg-surface-container-low p-5 text-center transition-colors duration-200 hover:bg-surface-container"
             >
-              <h3 className="mb-2 font-headline text-[14px] font-semibold text-on-surface">
-                {phase.name}
-              </h3>
-              <p className="font-body text-[13px] leading-relaxed text-on-surface-variant">
-                {phase.description}
-              </p>
+              <span className="material-symbols-outlined text-[28px] text-primary transition-colors group-hover:text-tertiary">
+                {f.icon}
+              </span>
+              <span className="font-headline text-[13px] font-semibold leading-tight text-on-surface">
+                {f.name}
+              </span>
             </div>
           ))}
         </div>

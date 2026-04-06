@@ -74,7 +74,7 @@ export function OnboardingFlow({ onComplete, className }: OnboardingFlowProps) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl shadow-ambient-lg ring-1 ring-white/5",
+        "overflow-hidden rounded-xl ring-1 ring-white/5",
         className,
       )}
     >
