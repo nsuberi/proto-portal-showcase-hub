@@ -4,7 +4,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/ai-builders/",
+  base: "/prototypes/ai-builders/",
   server: {
     port: 3008,
     host: true,

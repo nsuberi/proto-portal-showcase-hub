@@ -45,6 +45,7 @@ playwright-report/*
 
 # Terraform build artifacts
 terraform/*.zip
+terraform/tfplan
 
 # Playwright test output
 test-results/
