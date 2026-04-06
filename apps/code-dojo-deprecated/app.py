@@ -304,16 +304,10 @@ app.register_blueprint(
 app.register_blueprint(agent_bp, url_prefix=combine_prefix(url_prefix, "/api/agent"))
 
 
-# Home route
-home_route = f"{url_prefix}/" if url_prefix else "/"
+# --- React SPA serving vs Jinja2 fallback ---
 
-
-@app.route(home_route)
-def home():
-    """Home page showing available learning modules."""
-    modules = LearningModule.query.order_by(LearningModule.order).all()
-    return render_template("home.html", modules=modules)
-
+frontend_dist = os.path.join(os.path.dirname(__file__), "frontend_dist")
+has_frontend = os.path.isdir(frontend_dist)
 
 # Health check — register at both paths for ALB health checks
 health_route = "/health"
@@ -327,36 +321,60 @@ def health():
     return {"status": "healthy", "service": "code-dojo"}
 
 
-# --- React SPA serving ---
-# In production, serve the React frontend build from /frontend_dist/
-# The React app handles client-side routing for all non-API paths
-
-frontend_dist = os.path.join(os.path.dirname(__file__), "frontend_dist")
-has_frontend = os.path.isdir(frontend_dist)
-
 if has_frontend:
     from flask import send_from_directory
 
-    # Serve static assets (JS, CSS, images) from the React build
+    def _serve_spa():
+        return send_from_directory(frontend_dist, "index.html")
+
+    # Home route serves React SPA
+    home_route = f"{url_prefix}/" if url_prefix else "/"
+
+    @app.route(home_route)
+    def home():
+        return _serve_spa()
+
+    # Serve React build static assets (JS, CSS, images)
     spa_assets_prefix = f"{url_prefix}/assets" if url_prefix else "/assets"
 
     @app.route(f"{spa_assets_prefix}/<path:filename>")
     def spa_assets(filename):
-        return send_from_directory(os.path.join(frontend_dist, "assets"), filename)
+        return send_from_directory(
+            os.path.join(frontend_dist, "assets"), filename
+        )
 
-    # SPA fallback — serve index.html for any unmatched route under the prefix
-    # This lets React Router handle client-side navigation
+    # Catch-all for client-side routes — serve SPA for any non-API path
+    catch_all = f"{url_prefix}/<path:path>" if url_prefix else "/<path:path>"
+
+    @app.route(catch_all)
+    def spa_catch_all(path):
+        # Don't intercept API/data routes — let Flask blueprints handle them
+        api_prefixes = ("api/", "auth/", "modules/", "admin/", "submissions/",
+                        "schedule/", "static/", "health")
+        if any(path.startswith(p) for p in api_prefixes):
+            # Return 404 so Flask continues to blueprint routes
+            from flask import abort
+            abort(404)
+        return _serve_spa()
+
     @app.errorhandler(404)
-    def spa_fallback(error):
-        # Don't serve SPA for API routes — return JSON 404
-        if request.path.startswith(f"{url_prefix}/api/") or request.path.startswith(
-            f"{url_prefix}/submissions/"
-        ):
+    def not_found(error):
+        # API routes get JSON 404, everything else gets SPA
+        if request.path and ("/api/" in request.path
+                             or "/submissions/" in request.path):
             return {"error": "Not found"}, 404
-        return send_from_directory(frontend_dist, "index.html")
+        return _serve_spa()
 
 else:
-    # Development fallback — no React build, use Jinja2 templates
+    # Development — no React build, use Jinja2 templates
+    home_route = f"{url_prefix}/" if url_prefix else "/"
+
+    @app.route(home_route)
+    def home():
+        """Home page showing available learning modules."""
+        modules = LearningModule.query.order_by(LearningModule.order).all()
+        return render_template("home.html", modules=modules)
+
     @app.errorhandler(404)
     def not_found(error):
         return render_template("base.html"), 404

@@ -1,13 +1,14 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, BookOpen, Calendar, FolderKanban, LogOut, Settings,
+  LayoutDashboard, BookOpen, Calendar, FolderKanban, LogOut, Settings, Map,
 } from "lucide-react";
 import { Button } from "@proto-portal/ui-components";
 import { useAuth } from "@/hooks/use-auth";
 
 const NAV_ITEMS = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/learning", icon: BookOpen, label: "My Learning" },
+  { to: "/path", icon: Map, label: "AI Builder Path" },
+  { to: "/catalog", icon: BookOpen, label: "Catalog" },
   { to: "/events", icon: Calendar, label: "Events" },
   { to: "/projects", icon: FolderKanban, label: "Projects" },
 ];

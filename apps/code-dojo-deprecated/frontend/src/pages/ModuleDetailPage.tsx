@@ -2,9 +2,9 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
-  CategoryBadge, Button, SyllabusItem, type SyllabusItemType,
+  CategoryBadge, Badge, Button, SyllabusItem, type SyllabusItemType,
 } from "@proto-portal/ui-components";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Clock } from "lucide-react";
 import { modulesApi } from "@/api/client";
 
 export default function ModuleDetailPage() {
@@ -24,13 +24,26 @@ export default function ModuleDetailPage() {
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link to="/" className="hover:text-foreground">Home</Link>
         <ChevronRight className="h-3 w-3" />
+        {data.module.area && (
+          <>
+            <Link to={`/catalog/${data.module.area.slug}`} className="hover:text-foreground">
+              {data.module.area.title}
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+          </>
+        )}
         <span className="text-foreground font-medium">{data.module.title}</span>
       </nav>
 
       {/* Module header */}
       <Card>
         <CardHeader>
-          <CategoryBadge>Module</CategoryBadge>
+          <div className="flex items-center gap-2">
+            <CategoryBadge>Module</CategoryBadge>
+            {data.module.area && (
+              <CategoryBadge variant="subtle">{data.module.area.title}</CategoryBadge>
+            )}
+          </div>
           <CardTitle className="text-2xl mt-2">{data.module.title}</CardTitle>
           <CardDescription>{data.module.description}</CardDescription>
         </CardHeader>
@@ -40,6 +53,23 @@ export default function ModuleDetailPage() {
               <p className="text-xs uppercase tracking-wide">Goals</p>
               <p className="font-semibold text-foreground">{data.goals.length}</p>
             </div>
+            {data.module.difficulty_level && (
+              <div className="text-center">
+                <p className="text-xs uppercase tracking-wide">Difficulty</p>
+                <p className="font-semibold text-foreground">
+                  {["", "Beginner", "Intermediate", "Advanced", "Expert", "Master"][data.module.difficulty_level] ?? ""}
+                </p>
+              </div>
+            )}
+            {data.module.estimated_hours && (
+              <div className="text-center">
+                <p className="text-xs uppercase tracking-wide">Time</p>
+                <p className="font-semibold text-foreground flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {data.module.estimated_hours}h
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 from models.user import User
+from models.curriculum_area import CurriculumArea
 from models.module import LearningModule
 from models.goal import LearningGoal
 from models.submission import Submission

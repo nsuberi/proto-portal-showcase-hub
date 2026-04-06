@@ -10,6 +10,7 @@ from models.submission import Submission
 from models.goal_progress import GoalProgress
 from models.core_learning_goal import CoreLearningGoal
 from models.challenge_rubric import ChallengeRubric
+from models.curriculum_area import CurriculumArea
 from middleware.auth import require_admin
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -138,16 +139,7 @@ def list_modules():
     modules = LearningModule.query.order_by(LearningModule.order).all()
     return jsonify(
         {
-            "modules": [
-                {
-                    "id": m.id,
-                    "title": m.title,
-                    "description": m.description,
-                    "order": m.order,
-                    "goal_count": m.goals.count(),
-                }
-                for m in modules
-            ]
+            "modules": [m.to_dict() for m in modules]
         }
     )
 
@@ -157,13 +149,11 @@ def module_detail(module_id):
     """Module with its goals."""
     module = LearningModule.query.get_or_404(module_id)
     goals = module.goals.order_by(LearningGoal.order).all()
+    module_data = module.to_dict()
+    module_data.pop("goal_count", None)  # We're sending goals separately
     return jsonify(
         {
-            "module": {
-                "id": module.id,
-                "title": module.title,
-                "description": module.description,
-            },
+            "module": module_data,
             "goals": [
                 {
                     "id": g.id,
@@ -171,6 +161,7 @@ def module_detail(module_id):
                     "order": g.order,
                     "video_url": g.video_url,
                     "starter_repo": g.starter_repo,
+                    "difficulty_level": g.difficulty_level,
                 }
                 for g in goals
             ],
@@ -249,6 +240,191 @@ def goal_detail(module_id, goal_id):
             "challenge_rubric": (
                 {"id": rubric.id, "rubric": rubric.rubric} if rubric else None
             ),
+        }
+    )
+
+
+# ── Curriculum Areas ──────────────────────────────────────────────
+
+
+@api_bp.route("/areas")
+def list_areas():
+    """All curriculum areas with module counts and user progress."""
+    areas = CurriculumArea.query.order_by(CurriculumArea.order).all()
+    result = []
+
+    for area in areas:
+        data = area.to_dict()
+
+        # Add user progress if authenticated
+        if current_user.is_authenticated:
+            area_modules = area.modules.all()
+            module_ids = [m.id for m in area_modules]
+            if module_ids:
+                # Count modules where user has at least one submission
+                started = (
+                    db.session.query(db.func.count(db.distinct(Submission.goal_id)))
+                    .join(LearningGoal)
+                    .filter(
+                        LearningGoal.module_id.in_(module_ids),
+                        Submission.user_id == current_user.id,
+                    )
+                    .scalar()
+                    or 0
+                )
+                data["user_progress"] = {
+                    "modules_started": min(started, len(module_ids)),
+                    "modules_completed": 0,  # TODO: track completion
+                    "total": len(module_ids),
+                }
+            else:
+                data["user_progress"] = None
+        else:
+            data["user_progress"] = None
+
+        result.append(data)
+
+    return jsonify({"areas": result})
+
+
+@api_bp.route("/areas/<slug>")
+def area_detail(slug):
+    """One area with its modules and goals."""
+    area = CurriculumArea.query.filter_by(slug=slug).first_or_404()
+    modules = area.modules.order_by(LearningModule.order).all()
+
+    modules_data = []
+    for m in modules:
+        mod = m.to_dict()
+        if m.status == "published":
+            goals = m.goals.order_by(LearningGoal.order).all()
+            mod["goals"] = [
+                {"id": g.id, "title": g.title, "order": g.order}
+                for g in goals
+            ]
+        else:
+            mod["goals"] = []
+        modules_data.append(mod)
+
+    return jsonify({"area": area.to_dict(), "modules": modules_data})
+
+
+@api_bp.route("/catalog")
+def catalog():
+    """All modules with optional filtering by area, difficulty, status."""
+    query = LearningModule.query.join(
+        CurriculumArea, LearningModule.curriculum_area_id == CurriculumArea.id
+    )
+
+    # Filters
+    area_slug = request.args.get("area")
+    if area_slug:
+        query = query.filter(CurriculumArea.slug == area_slug)
+
+    difficulty = request.args.get("difficulty", type=int)
+    if difficulty:
+        query = query.filter(LearningModule.difficulty_level == difficulty)
+
+    status = request.args.get("status")
+    if status:
+        query = query.filter(LearningModule.status == status)
+
+    modules = query.order_by(
+        CurriculumArea.order, LearningModule.order
+    ).all()
+
+    return jsonify(
+        {
+            "modules": [m.to_dict() for m in modules],
+        }
+    )
+
+
+@api_bp.route("/path/progress")
+@login_required
+def path_progress():
+    """User's progress across the AI Builder path."""
+    areas = CurriculumArea.query.order_by(CurriculumArea.order).all()
+
+    area_progress = []
+    total_modules = 0
+    total_started = 0
+
+    for area in areas:
+        modules = area.modules.all()
+        module_count = len(modules)
+        total_modules += module_count
+
+        # Count modules with submissions
+        module_ids = [m.id for m in modules]
+        started = 0
+        if module_ids:
+            started = (
+                db.session.query(
+                    db.func.count(db.distinct(LearningGoal.module_id))
+                )
+                .join(Submission)
+                .filter(
+                    LearningGoal.module_id.in_(module_ids),
+                    Submission.user_id == current_user.id,
+                )
+                .scalar()
+                or 0
+            )
+        total_started += started
+
+        area_progress.append(
+            {
+                "slug": area.slug,
+                "title": area.title,
+                "icon_name": area.icon_name,
+                "color": area.color,
+                "progress_percent": (
+                    round(started / module_count * 100) if module_count > 0 else 0
+                ),
+                "modules_started": started,
+                "modules_completed": 0,
+                "modules_total": module_count,
+            }
+        )
+
+    overall = (
+        round(total_started / total_modules * 100) if total_modules > 0 else 0
+    )
+
+    # Recommend next: first published module in an area user hasn't started
+    recommended = []
+    for area in areas:
+        published = area.modules.filter_by(status="published").first()
+        if published:
+            has_submission = (
+                Submission.query.join(LearningGoal)
+                .filter(
+                    LearningGoal.module_id == published.id,
+                    Submission.user_id == current_user.id,
+                )
+                .first()
+            )
+            if not has_submission:
+                recommended.append(
+                    {
+                        "module_id": published.id,
+                        "title": published.title,
+                        "area_slug": area.slug,
+                        "area_title": area.title,
+                        "difficulty_level": published.difficulty_level,
+                        "estimated_hours": published.estimated_hours,
+                    }
+                )
+                if len(recommended) >= 3:
+                    break
+
+    return jsonify(
+        {
+            "overall_progress": overall,
+            "total_xp": 0,  # TODO: wire to real XP system
+            "areas": area_progress,
+            "recommended_next": recommended,
         }
     )
 
