@@ -89,12 +89,12 @@ function handler(event) {
     // Handle SPA routing within prototypes
     if (uri.startsWith('/prototypes/')) {
         var pathParts = uri.split('/');
-        
+
         // If accessing a prototype subdirectory without file extension, serve the prototype's index.html
         if (pathParts.length >= 3 && !uri.includes('.')) {
             var prototypeName = pathParts[2];
             // Only handle known prototypes
-            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path') {
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'ai-builders') {
                 request.uri = '/prototypes/' + prototypeName + '/index.html';
             }
         }

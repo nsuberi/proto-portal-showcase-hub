@@ -72,8 +72,8 @@ yarn workspace @proto-portal/ai-builders-portal build
 
 # Copy AI Builders build to main dist directory
 echo "📋 Copying AI Builders build to main dist..."
-mkdir -p dist/ai-builders
-cp -r apps/ai-builders-portal/dist/* dist/ai-builders/
+mkdir -p dist/prototypes/ai-builders
+cp -r apps/ai-builders-portal/dist/* dist/prototypes/ai-builders/
 
 # Create a prototypes index.html that redirects to ffx-skill-map
 echo "📋 Creating prototypes index redirect..."

@@ -55,7 +55,7 @@ function createPrototypeProxy(name) {
 }
 
 // Prototype routes
-for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path"]) {
+for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "ai-builders"]) {
   const svc = SERVICES[name];
   console.log(`  /prototypes/${name}  ->  localhost:${svc.port}`);
   app.use(`/prototypes/${name}`, createPrototypeProxy(name));
@@ -105,24 +105,6 @@ docker compose up -d --build      # Docker, port 5001</pre>
     },
     onProxyRes: (proxyRes, req) => {
       console.log(`[ai-evals] ${proxyRes.statusCode} ${req.url}`);
-    },
-  }),
-);
-
-// AI Builders Portal proxy — forward to Vite dev server (keeps /ai-builders prefix; Vite expects it via base)
-console.log(`  /ai-builders/*        ->  localhost:${SERVICES["ai-builders"].port}`);
-app.use(
-  "/ai-builders",
-  createProxyMiddleware({
-    target: `http://localhost:${SERVICES["ai-builders"].port}`,
-    changeOrigin: true,
-    pathRewrite: (p, req) => req.originalUrl,
-    onError: (err, req, res) => {
-      console.log(`[ai-builders] Server not running (${err.code})`);
-      serveFallbackSPA(req, res, "ai-builders");
-    },
-    onProxyRes: (proxyRes, req) => {
-      console.log(`[ai-builders] ${proxyRes.statusCode} ${req.url}`);
     },
   }),
 );
@@ -185,7 +167,7 @@ Routes:
   http://localhost:${PORT}/prototypes/learning-path/              -> Learning Path (${SERVICES["learning-path"].port})
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
   http://localhost:${PORT}/ai-evals/                              -> AI Evals Flask (${SERVICES["ai-evals"].port})
-  http://localhost:${PORT}/ai-builders/                             -> AI Builders (${SERVICES["ai-builders"].port})
+  http://localhost:${PORT}/prototypes/ai-builders/                  -> AI Builders (${SERVICES["ai-builders"].port})
 
 Start all services: yarn dev:all
   `);
