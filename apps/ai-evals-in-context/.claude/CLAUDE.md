@@ -1,6 +1,6 @@
 # AI Evals In Context
 
-Flask app demonstrating AI evaluations in the testing pyramid. Deployed to ECS Fargate (ARM64) at `https://portfolio.cookinupideas.com/ai-evals/`.
+Flask app demonstrating AI evaluations in the testing pyramid. Deployed to ECS Fargate (ARM64) at `https://portfolio.cookinupideas.com/prototypes/ai-evals/`.
 
 ## Development
 
@@ -50,7 +50,7 @@ cd ai-testing-resource/
 
 **ARM64:** Do NOT add `--platform linux/amd64`. Native builds on Apple Silicon deploy directly. CI uses ARM64 runners.
 
-**Proxy:** `APPLICATION_ROOT=/ai-evals` is set in ECS task def (`terraform/modules/ecs/main.tf`).
+**Proxy:** `APPLICATION_ROOT=/prototypes/ai-evals` is set in ECS task def (`terraform/modules/ecs/main.tf`).
 
 ## Verify Deployment
 

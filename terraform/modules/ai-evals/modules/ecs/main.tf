@@ -197,7 +197,7 @@ resource "aws_ecs_task_definition" "main" {
         },
         {
           name  = "APPLICATION_ROOT"
-          value = "/ai-evals"
+          value = "/prototypes/ai-evals"
         }
       ]
 
@@ -222,7 +222,7 @@ resource "aws_ecs_task_definition" "main" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/ai-evals/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/prototypes/ai-evals/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
