@@ -20,6 +20,8 @@ import {
   type HarmonyType,
   type ContrastResult,
 } from "./utils/color-theory.js";
+import { flowToolDefinitions, handleFlowToolCall } from "./flow-tools.js";
+import { coverageToolDefinitions, handleCoverageToolCall } from "./coverage-tools.js";
 
 // ── Component registry for @proto-portal/ui-components ──────────────────
 
@@ -31,7 +33,7 @@ const COMPONENT_CATEGORIES = [
   "flow",
 ] as const;
 
-interface ComponentEntry {
+export interface ComponentEntry {
   name: string;
   importName: string;
   category: typeof COMPONENT_CATEGORIES[number];
@@ -42,7 +44,9 @@ interface ComponentEntry {
   codeDojo?: string;
 }
 
-const COMPONENT_REGISTRY: ComponentEntry[] = [
+export { COMPONENT_CATEGORIES };
+
+export const COMPONENT_REGISTRY: ComponentEntry[] = [
   // ── Core UI (extracted from prototypes) ──
   {
     name: "Button",
@@ -661,6 +665,8 @@ export function registerTools(server: Server): void {
           required: ["base_color", "harmony"],
         },
       },
+      ...flowToolDefinitions,
+      ...coverageToolDefinitions,
     ],
   }));
 
@@ -814,11 +820,16 @@ export function registerTools(server: Server): void {
         }
       }
 
-      default:
+      default: {
+        const flowResult = await handleFlowToolCall(name, args);
+        if (flowResult) return flowResult;
+        const coverageResult = handleCoverageToolCall(name, args);
+        if (coverageResult) return coverageResult;
         return {
           content: [{ type: "text", text: `Unknown tool: ${name}` }],
           isError: true,
         };
+      }
     }
   });
 }

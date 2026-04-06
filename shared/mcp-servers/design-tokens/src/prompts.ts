@@ -164,6 +164,507 @@ If asked "what color should this be?" or styling a new component with no specifi
 6. Call \`review_contrast\` on your proposed pairs to verify readability
 7. Propose something concrete with rationale — don't just list options`;
 
+// ── Pass 1: Design spec extraction from images ──────────────────────────
+
+function createExtractDesignSpecPrompt(): string {
+  return `You are extracting a design system specification from screenshots. Do NOT generate code yet. Your job is to infer the **system behind the visuals** — the repeating patterns, scales, and vocabularies that a designer would have defined.
+
+## Why This Step Matters
+
+Feeding screenshots directly to a code generator produces "archaeological" output — hardcoded hex values instead of tokens, magic pixel numbers instead of spacing scales, flat markup instead of composable components. The cure is to extract the system first, then generate against it.
+
+## What to Extract
+
+Examine every screenshot carefully and infer these categories:
+
+### 1. Color Palette + Semantic Roles
+Don't just list hex values — identify the *roles*:
+- **Primary action color**: What color are the main CTAs? (e.g., Codecademy uses yellow #FFD300 for all primary actions)
+- **Background tiers**: What distinct background colors exist? (page bg, card bg, input bg, overlay bg)
+- **Text hierarchy colors**: What colors distinguish headings vs body vs metadata vs disabled text?
+- **Accent/category colors**: Are there distinct hues for content categories, status indicators, or data viz?
+- **Feedback colors**: Success, error, warning, info — what palette?
+- **Interactive states**: Hover, focus, active, disabled — how do colors shift?
+
+Output as HSL values with semantic names.
+
+### 2. Typography Scale
+Infer the type system by measuring relative sizes across screenshots:
+- **Font families**: How many typefaces? Serif, sans, mono? Where is each used?
+- **Size scale**: What distinct text sizes appear? Try to infer the scale (e.g., 12/14/16/18/20/24/30/36 suggests a modular scale). Name them (xs through 6xl or similar).
+- **Weight usage**: Which weights appear? Where is bold vs medium vs regular used?
+- **Line height patterns**: Tight (headings), normal (body), relaxed (captions)?
+- **Letter spacing**: Any notable tracking differences (e.g., uppercase labels with wide tracking)?
+
+### 3. Spacing Scale
+This is commonly missed but critical for not-janky output:
+- **Base unit**: Does the UI use a 4px grid? 8px? Look at padding inside cards, gaps between elements, margins between sections.
+- **Scale**: What distinct spacing values appear? (e.g., 4, 8, 12, 16, 24, 32, 48, 64, 80, 96)
+- **Semantic spacing**: Differentiate between element-level spacing (gaps within a component), component-level spacing (padding inside a card), section-level spacing (margin between page sections).
+- **Consistent gutters**: What's the standard gap in grid layouts, card groups, nav items?
+
+### 4. Border Radius Vocabulary
+Another commonly missed detail that makes output look "off":
+- **How many distinct radius values** appear? (e.g., sharp=0, subtle=4px, medium=8px, large=12px, pill=9999px)
+- **Where is each used?** Cards, buttons, inputs, badges, avatars, modals — each typically has a consistent radius.
+- **Are there mixed patterns?** Some UIs use sharp corners on sections but rounded corners on interactive elements.
+
+### 5. Elevation / Shadow Patterns
+- **How many shadow levels?** (e.g., none, subtle, medium, large, overlay)
+- **Shadow characteristics**: Color (black at what opacity? colored shadows?), blur, spread, offset direction
+- **Usage patterns**: What gets elevated? Cards, modals, dropdowns, hover states?
+- **Alternatives to shadow**: Does the UI use borders, background shifts, or translucency for depth instead?
+
+### 6. Component Archetypes
+Identify recurring UI patterns — not as code, but as structural descriptions:
+- **Cards**: What varieties? (content card, action card, stat card, list item card) What's consistent across them?
+- **Buttons**: What variants exist? (filled, outlined, ghost, link, icon-only) What sizes?
+- **Navigation**: Top bar, sidebar, tabs, breadcrumbs — what patterns?
+- **Forms**: Input styles, label placement, error states, grouping patterns
+- **Progress indicators**: Bars, rings, badges, step indicators — what vocabulary?
+- **Badges/Labels**: How are categories, statuses, and types visually distinguished?
+- **Layout patterns**: How is content structured? (sidebar + main, stacked cards, grid, split view)
+
+### 7. Interaction & State Patterns (Inferred)
+Some states aren't visible in static screenshots, but you can infer patterns:
+- **Hover indicators**: Do elements use color shift, underline, glow, scale, shadow change?
+- **Active/selected states**: How is current selection shown? (background fill, border accent, bold weight)
+- **Disabled treatment**: Opacity reduction? Color desaturation?
+
+## Output Format
+
+Produce a structured JSON spec:
+
+\`\`\`json
+{
+  "colors": {
+    "primary": { "value": "hsl(48, 100%, 50%)", "role": "Primary CTAs, progress fills" },
+    "background": { "value": "hsl(40, 30%, 96%)", "role": "Page background" },
+    "surface": { "value": "hsl(0, 0%, 100%)", "role": "Card/panel backgrounds" },
+    "text": {
+      "heading": { "value": "hsl(240, 10%, 10%)", "weight": "bold" },
+      "body": { "value": "hsl(240, 5%, 30%)", "weight": "normal" },
+      "muted": { "value": "hsl(240, 5%, 55%)", "weight": "normal" }
+    },
+    "accent": { ... },
+    "feedback": { "success": "...", "error": "...", "warning": "...", "info": "..." }
+  },
+  "typography": {
+    "families": { "sans": "...", "mono": "..." },
+    "scale": {
+      "xs": { "size": "12px", "lineHeight": "16px" },
+      "sm": { "size": "14px", "lineHeight": "20px" },
+      ...
+    },
+    "weights": { "normal": 400, "medium": 500, "semibold": 600, "bold": 700 }
+  },
+  "spacing": {
+    "baseUnit": "4px",
+    "scale": { "xs": "4px", "sm": "8px", "md": "12px", "lg": "16px", "xl": "24px", "2xl": "32px", "3xl": "48px", "4xl": "64px" },
+    "semantic": {
+      "element": "8px",
+      "component": "16px",
+      "section": "48px",
+      "page": "64px"
+    }
+  },
+  "borderRadius": {
+    "none": "0px",
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "none": "none",
+    "subtle": "0 1px 2px rgba(0,0,0,0.05)",
+    "medium": "0 4px 12px rgba(0,0,0,0.1)",
+    ...
+  },
+  "components": {
+    "card": { "radius": "lg", "padding": "xl", "shadow": "subtle", "border": "1px solid hsl(0,0%,90%)" },
+    "button": {
+      "primary": { "bg": "primary", "text": "white", "radius": "md", "paddingX": "xl", "paddingY": "sm" },
+      "secondary": { ... }
+    },
+    ...
+  }
+}
+\`\`\`
+
+## Important
+
+- **Infer, don't guess.** If you can see 3 distinct text sizes, report 3 — don't fabricate a full 10-level scale.
+- **Be specific about what you observe vs. what you're inferring.** Mark inferred values with a note.
+- **Multiple screenshots = better signal.** Cross-reference the same component across screens to confirm values.
+- **This spec is the foundation** for Pass 2 (flow analysis or component generation). Accuracy here prevents jank downstream.`;
+}
+
+// ── Pass 2: Apply design spec to token system ─────────────────────────────
+
+function createApplyDesignSpecPrompt(
+  specJson: string,
+  presetName: string,
+): string {
+  return `You are converting an extracted design spec JSON into a \`DesignTokenOverrides\` object for the Proto Portal design token system.
+
+## Your Input
+
+**Target preset name**: \`${presetName}\`
+
+**Design spec JSON** (output of \`extract_design_spec\`):
+
+\`\`\`json
+${specJson}
+\`\`\`
+
+## Your Goal
+
+Produce a complete \`DesignTokenOverrides\` TypeScript object that can be added to \`presetOverrides\` in \`shared/design-tokens/index.ts\`. The object will be deep-merged over the base tokens, so you only need to include values that differ from the base.
+
+## Critical Format Rules
+
+1. **HSL values are space-separated triplets WITHOUT the \`hsl()\` wrapper**:
+   - Spec says \`"hsl(48, 100%, 50%)"\` → token value is \`"48 100% 50%"\`
+   - Spec says \`"#FFD300"\` → convert to HSL → \`"48 100% 50%"\`
+   - This format enables Tailwind's opacity modifier: \`hsl(var(--primary) / 0.5)\`
+
+2. **Gradients and shadows keep their full CSS syntax**:
+   - \`"linear-gradient(135deg, hsl(263, 55%, 50%), hsl(280, 80%, 60%))"\`
+   - \`"0 4px 12px hsl(220, 20%, 12% / 0.08)"\`
+
+3. **Spacing uses rem units** (divide px by 16):
+   - \`"4px"\` → \`"0.25rem"\`, \`"8px"\` → \`"0.5rem"\`, \`"16px"\` → \`"1rem"\`
+
+4. **The \`radius\` property is a string in rem**: \`"0.5rem"\`
+
+## Token Interface Mapping
+
+Map the spec's semantic categories to these exact TypeScript interfaces:
+
+### colors (ColorTokens) — Browse/light mode surfaces
+
+| Spec concept | Token property | Notes |
+|---|---|---|
+| Background page/cream | \`background\` | Main page background |
+| Card/surface white | \`card\` | Card backgrounds |
+| Card text | \`cardForeground\` | Text on cards |
+| Popover/modal bg | \`popover\` | Dropdown/modal backgrounds |
+| Popover text | \`popoverForeground\` | Text on popovers |
+| Heading text | \`foreground\` | Primary text color |
+| Primary action (often a brand color) | \`primary\` | Buttons, links, focus rings |
+| Text on primary bg | \`primaryForeground\` | Button text |
+| Secondary action | \`secondary\` | Secondary button backgrounds |
+| Text on secondary | \`secondaryForeground\` | |
+| Muted backgrounds | \`muted\` | Subtle backgrounds for de-emphasized areas |
+| Muted text | \`mutedForeground\` | Metadata, placeholder text |
+| Accent/CTA color | \`accent\` | Often a contrasting highlight (e.g., yellow) |
+| Text on accent | \`accentForeground\` | |
+| Error/destructive | \`destructive\` | Error states |
+| Text on destructive | \`destructiveForeground\` | |
+| Border color | \`border\` | Card/section borders |
+| Input border/bg | \`input\` | Form input backgrounds |
+| Focus ring color | \`ring\` | Focus indicator color |
+| Border radius base | \`radius\` | e.g., "0.5rem" |
+| Success color | \`success\` | |
+| Success text | \`successForeground\` | |
+| Warning color | \`warning\` | |
+| Warning text | \`warningForeground\` | |
+| Info color | \`info\` | |
+| Info text | \`infoForeground\` | |
+| Sidebar bg | \`sidebar.background\` | Navigation sidebar |
+| Sidebar text | \`sidebar.foreground\` | |
+| Sidebar active item | \`sidebar.primary\` | |
+| Sidebar active text | \`sidebar.primaryForeground\` | |
+| Sidebar hover bg | \`sidebar.accent\` | |
+| Sidebar hover text | \`sidebar.accentForeground\` | |
+| Sidebar border | \`sidebar.border\` | |
+| Sidebar focus ring | \`sidebar.ring\` | |
+
+### learningMode (LearningModeTokens) — Dark focus environment
+
+If the spec defines a separate dark/learning/editor mode (e.g., Codecademy's dark code environment), map it here:
+
+\`\`\`typescript
+interface LearningModeTokens {
+  background: string;    // Deep dark page bg (e.g., "230 40% 10%")
+  foreground: string;    // Light text (e.g., "0 0% 92%")
+  card: string;          // Dark card surfaces
+  cardForeground: string;
+  border: string;        // Subtle dark borders
+  muted: string;         // De-emphasized dark surface
+  mutedForeground: string; // Muted text
+  accent: string;        // CTA color in dark mode (often yellow)
+  accentForeground: string; // Text on accent
+  popover: string;       // Tooltip/popover dark bg
+  popoverForeground: string;
+  input: string;         // Dark input backgrounds
+  ring: string;          // Focus ring in dark mode
+}
+\`\`\`
+
+### progress (ProgressTokens)
+
+\`\`\`typescript
+interface ProgressTokens {
+  barFill: string;         // Progress bar fill color (often primary/accent)
+  barTrack: string;        // Progress bar empty track
+  circleStroke: string;    // Circular progress ring fill
+  circleTrack: string;     // Circular progress ring track
+  xpGain: string;          // XP gain indicator (often green)
+  xpText: string;          // XP label text color
+  segmentComplete: string; // Completed segment in multi-step (often green)
+  segmentActive: string;   // Current/active segment (often accent)
+  segmentPending: string;  // Pending/future segment (dark muted)
+}
+\`\`\`
+
+### codeEditor (CodeEditorTokens)
+
+\`\`\`typescript
+interface CodeEditorTokens {
+  background: string;      // Editor canvas bg
+  foreground: string;      // Default code text color
+  lineNumber: string;      // Line number gutter text
+  activeLine: string;      // Active line highlight bg
+  selection: string;       // Text selection highlight
+  cursor: string;          // Cursor color
+  gutterBackground: string; // Left gutter bg
+  gutterBorder: string;    // Gutter right-border
+}
+\`\`\`
+
+### quiz (QuizTokens)
+
+\`\`\`typescript
+interface QuizTokens {
+  optionBackground: string;         // Answer card bg
+  optionBorder: string;             // Default answer card border
+  optionHoverBorder: string;        // Hovered answer card border
+  optionSelectedBorder: string;     // Selected (before submit) border
+  optionSelectedBackground: string; // Selected (before submit) bg
+  optionCorrectBorder: string;      // Correct answer border
+  optionCorrectBackground: string;  // Correct answer bg
+  optionIncorrectBorder: string;    // Incorrect answer border
+  optionIncorrectBackground: string; // Incorrect answer bg
+}
+\`\`\`
+
+### celebration (CelebrationTokens)
+
+\`\`\`typescript
+interface CelebrationTokens {
+  background: string;      // Celebration screen bg
+  foreground: string;      // Celebration text
+  trophy: string;          // Trophy/achievement icon color
+  confettiPrimary: string; // Main confetti color
+  confettiSecondary: string; // Secondary confetti
+  confettiTertiary: string;  // Tertiary confetti
+  ctaBackground: string;   // "What's Next?" button bg
+  ctaForeground: string;   // CTA button text
+  checkmark: string;       // Completion checkmark color
+}
+\`\`\`
+
+### gradients (GradientTokens)
+
+\`\`\`typescript
+interface GradientTokens {
+  primary: string;    // Main brand gradient (CSS linear-gradient)
+  secondary: string;  // Secondary brand gradient
+  subtle: string;     // Subtle background gradient
+  hero: string;       // Hero section gradient
+  accent: string;     // Accent/highlight gradient
+}
+\`\`\`
+
+### shadows (ShadowTokens)
+
+\`\`\`typescript
+interface ShadowTokens {
+  glow: string;     // Glowing brand shadow for emphasis
+  elegant: string;  // Subtle elegant shadow
+  subtle: string;   // Very light shadow
+  medium: string;   // Standard card shadow
+  large: string;    // Modal/overlay shadow
+  primary: string;  // Primary-colored shadow
+}
+\`\`\`
+
+## How to Handle Design Decisions
+
+- **Two-mode systems** (light browse + dark learning): Map the light mode to \`colors\`, the dark mode to \`learningMode\`. The \`.learning-mode\` CSS class swaps variables automatically.
+- **If the spec has a single mode**: Just map to \`colors\`. Skip \`learningMode\` or set it to match the spec's dark mode if one exists.
+- **Accent vs Primary**: In our system, \`primary\` is the main interactive color (buttons, links, focus). \`accent\` is a secondary highlight. If the spec has a yellow CTA and a purple secondary, map yellow→\`accent\` and purple→\`primary\` (or the reverse depending on which is the dominant brand color used for buttons/links).
+- **Missing values**: Only include properties you can confidently map. The deep merge fills in base tokens for anything not overridden.
+- **Contrast verification**: After producing the override, recommend running \`review_contrast\` with the new preset to validate WCAG compliance.
+
+## Output Format
+
+Produce three things:
+
+### 1. The DesignTokenOverrides object
+
+\`\`\`typescript
+/**
+ * ${presetName} — [one-line description from spec]
+ * [Brief description of the design system's character]
+ */
+${presetName}: {
+  colors: {
+    // Browse mode
+    background: "...",
+    foreground: "...",
+    // ... all mapped values
+  },
+  gradients: {
+    primary: "linear-gradient(...)",
+    // ...
+  },
+  shadows: { ... },
+  learningMode: {
+    // Dark focus mode (if applicable)
+    background: "...",
+    // ...
+  },
+  progress: { ... },
+  codeEditor: { ... },
+  quiz: { ... },
+  celebration: { ... },
+} as DesignTokenOverrides,
+\`\`\`
+
+### 2. Mapping rationale
+
+A brief table showing key decisions:
+| Spec value | Token property | Rationale |
+|---|---|---|
+
+### 3. Recommended follow-up
+
+- Which \`review_contrast\` pairs to check
+- Any component registry updates needed (new variants, adjusted descriptions)
+- Any values that were ambiguous and should be verified against the source screenshots
+
+## Important
+
+- **Every HSL value must be space-separated without \`hsl()\` wrapper.** This is the #1 error to avoid.
+- **Don't over-map.** If the spec mentions 10 shadow levels but our system has 6, map only the closest 6.
+- **Include a JSDoc comment** above the preset explaining its origin and design philosophy.
+- **Verify your own output** — spot-check that foreground/background pairs seem like they'd pass WCAG AA (4.5:1 minimum for normal text).`;
+}
+
+// ── Pass 3: Flow analysis (two-pass approach) ────────────────────────────
+
+function createFlowAnalysisPrompt(persona: string, jtbd: string): string {
+  return `You are analyzing screenshots of a web flow for a specific persona and their job-to-be-done.
+
+## Persona
+${persona}
+
+## Job-to-Be-Done
+${jtbd}
+
+---
+
+## Prerequisite: Design Spec Extraction
+
+If you haven't already run the \`extract_design_spec\` prompt on these screenshots (or a representative set), do that first. Flow analysis without an extracted spec produces vague pixel-description ("the button is blue") instead of grounded system analysis ("the primary CTA uses the action color at full weight, consistent with the spec"). If you already have a spec, reference it throughout.
+
+---
+
+## 1. Information Hierarchy Analysis
+
+For each screenshot, evaluate:
+
+**Visual weight distribution** — What draws the eye within the first 2 seconds? Factors: size, color saturation/contrast, position (top-left anchor, center focal point), whitespace isolation. Is the highest-weight element the one that *should* be highest-weight for this persona's JTBD?
+
+**Reading flow** — Follow the natural F-pattern or Z-pattern scan. Does the content priority match the scan path? Are important elements placed where the eye naturally lands?
+
+**CTA prominence** — Rate each call-to-action:
+- **Primary** (unmissable): Full primary-action-color background, large size, isolated by whitespace, above fold
+- **Secondary** (findable): Outlined or muted color, visible but not competing
+- **Tertiary** (discoverable): Text links, footer actions, visible only on deliberate scan
+
+**Content density** — Over-packed (cognitive overload) or under-packed (wasted opportunity)? Reference the spacing spec — are section gaps consistent? Are components breathing or cramped?
+
+## 2. CTA-to-JTBD Mapping
+
+For each CTA identified:
+- **What action does it promise?** (e.g., "Start learning" vs. "Sign up")
+- **How does that action serve the persona's JTBD?** Draw a direct line.
+- **Is the label specific enough?** "Get Started" is weaker than "Start Your First AI Project."
+- **Is it positioned at the right moment?** A CTA needs enough preceding context for the persona to understand *why* they should act.
+- **Does the visual treatment match importance?** The most JTBD-aligned CTA should use the highest-weight visual treatment from the spec.
+
+## 3. Flow Coherence
+
+Across the full sequence:
+
+**Narrative arc** — Hook (why this matters to the persona) → Orient (what's available, what's the structure) → Activate (do the specific thing).
+
+**Visual consistency** — Are the same components rendered consistently across screens? Same border radius, same spacing scale, same color roles? Inconsistency signals an unfinished system.
+
+**Progressive disclosure** — Is complexity introduced gradually? First screen = simple and compelling. Details and configuration come later.
+
+**Dead ends** — Where might the persona abandon? Choice paralysis, missing back affordance, or content that doesn't match CTA promise.
+
+**Momentum** — Progress indicators, preview of what's next, small wins (checkmarks, unlocks).
+
+## 4. Reference Patterns (Codecademy)
+
+Compare against these proven patterns. Deviations should be intentional.
+
+**Landing page:** Urgency banner → Hero with rotating value props + primary yellow CTA → Value statement → Social proof → Content discovery cards
+
+**Dashboard:** "Resume learning" card (#1 prominence, yellow progress bar) → Weekly target (habit reinforcement) → Recommended courses (discovery secondary to continuation)
+
+**CTA patterns:** Yellow = primary action (always). Specific verbs ("Start learning", "Resume", "Practice") not generic ("Click here"). Full-width on mobile, sized by importance on desktop.
+
+**Design system specifics:** Yellow #FFD300 for all primary CTAs + progress fills. ~8px card radius, ~4px button radius, pill badges. 8px base grid. Cards use 1px border (not shadow), 24px padding. Progress bars: yellow fill on grey-200 track.
+
+## 5. Narrative Output Format
+
+\`\`\`markdown
+## Flow Overview
+What flow, who for, what JTBD.
+
+## Design Spec Reference
+(Key values from extract_design_spec, or inline extraction if not done separately)
+
+## Step-by-Step Analysis
+
+### Step 1: {step_label}
+- **First impression**: What draws the eye (reference spec values)
+- **Information hierarchy**: Ranked list with spec references
+- **CTAs**: Label, prominence, JTBD alignment, visual treatment vs spec
+- **Spec adherence**: Spacing, radius, color consistency observations
+- **Strengths**: What works for this persona
+- **Gaps**: What's missing or misaligned
+
+## Visual Consistency Audit
+Spec adherence across screens. Components that deviate from archetypes.
+
+## Flow Coherence
+Narrative arc, transitions, progressive disclosure, dead ends, momentum.
+
+## CTA Effectiveness Summary
+
+| CTA Label | Step | Visual Treatment | Prominence | JTBD Alignment | Verdict |
+|-----------|------|-----------------|------------|-----------------|---------|
+
+## Recommendations
+1. **What** — Specific, grounded in spec
+2. **Why** — Tied to persona JTBD
+3. **Spec value** — Which token/pattern to apply
+4. **Reference** — Proven pattern that demonstrates the principle
+5. **Impact** — High/Medium/Low
+\`\`\`
+
+After completing your analysis, call \`write_flow_narrative\` to persist the narrative to disk.`;
+}
+
 function createDesignReviewPrompt(componentCode: string, preset?: string): string {
   return `Audit this component for both **visual design quality** and **accessibility**, using the Proto Portal style guide.
 
@@ -299,6 +800,45 @@ export function registerPrompts(server: Server): void {
           },
         ],
       },
+      {
+        name: "extract_design_spec",
+        description:
+          "Two-pass design extraction from screenshots. Pass 1: infer the design system (color palette + semantic roles, typography scale, spacing scale, border radius vocabulary, elevation/shadow patterns, component archetypes) as structured JSON. Use this BEFORE generating components or analyzing flows — it prevents 'archaeological' output with hardcoded values. Feed representative screenshots, get a token spec back.",
+      },
+      {
+        name: "apply_design_spec",
+        description:
+          "Convert an extracted design spec JSON (from extract_design_spec) into a DesignTokenOverrides object for the Proto Portal token system. Maps spec colors, typography, spacing, shadows, and component patterns to the exact token interfaces (ColorTokens, LearningModeTokens, ProgressTokens, CodeEditorTokens, QuizTokens, CelebrationTokens, etc.). Outputs ready-to-paste TypeScript for shared/design-tokens/index.ts presetOverrides.",
+        arguments: [
+          {
+            name: "spec_json",
+            description: "The full design spec JSON string (output of extract_design_spec or a manually created spec file)",
+            required: true,
+          },
+          {
+            name: "preset_name",
+            description: "Target preset name (e.g., 'codeDojo', 'myNewTheme'). Will be used as the key in presetOverrides.",
+            required: true,
+          },
+        ],
+      },
+      {
+        name: "flow_analysis",
+        description:
+          "Framework for analyzing web flow screenshots. Evaluates information hierarchy, CTA mapping to persona JTBD, and flow coherence. Best used AFTER extract_design_spec so analysis is grounded in the extracted system, not vague pixel descriptions. Use with capture_flow screenshots.",
+        arguments: [
+          {
+            name: "persona",
+            description: "Target persona description (e.g., 'Aspiring AI builder who wants to learn by doing')",
+            required: true,
+          },
+          {
+            name: "jtbd",
+            description: "Job-to-be-done (e.g., 'Find a structured path from zero to shipping an AI-powered app')",
+            required: true,
+          },
+        ],
+      },
     ],
   }));
 
@@ -359,6 +899,63 @@ export function registerPrompts(server: Server): void {
               content: {
                 type: "text" as const,
                 text: createComponentStylesPrompt(componentName, variant, preset),
+              },
+            },
+          ],
+        };
+      }
+
+      case "extract_design_spec":
+        return {
+          messages: [
+            {
+              role: "user" as const,
+              content: {
+                type: "text" as const,
+                text: createExtractDesignSpecPrompt(),
+              },
+            },
+          ],
+        };
+
+      case "apply_design_spec": {
+        const specJson = (args as Record<string, string> | undefined)?.spec_json;
+        if (!specJson) {
+          throw new Error("spec_json argument is required");
+        }
+        const presetName = (args as Record<string, string>).preset_name;
+        if (!presetName) {
+          throw new Error("preset_name argument is required");
+        }
+        return {
+          messages: [
+            {
+              role: "user" as const,
+              content: {
+                type: "text" as const,
+                text: createApplyDesignSpecPrompt(specJson, presetName),
+              },
+            },
+          ],
+        };
+      }
+
+      case "flow_analysis": {
+        const persona = (args as Record<string, string> | undefined)?.persona;
+        if (!persona) {
+          throw new Error("persona argument is required");
+        }
+        const jtbd = (args as Record<string, string>).jtbd;
+        if (!jtbd) {
+          throw new Error("jtbd argument is required");
+        }
+        return {
+          messages: [
+            {
+              role: "user" as const,
+              content: {
+                type: "text" as const,
+                text: createFlowAnalysisPrompt(persona, jtbd),
               },
             },
           ],
