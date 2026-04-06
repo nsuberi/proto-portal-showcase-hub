@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { tokens, devlogSectionMeta } from "@/design-system/tokens";
+import { devlogSectionMeta } from "@/design-system/tokens";
 import type { DevlogSections, DevlogSectionKey } from "@/design-system/tokens";
 import { cn } from "@/lib/utils";
 
@@ -31,70 +31,60 @@ export function DevlogEntry({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-border-warm bg-shelter-white",
+        "overflow-hidden rounded-xl bg-surface-container-low",
         className,
       )}
     >
       {/* Header */}
-      <div className="flex items-start justify-between p-4 pb-2">
-        <h3 className="text-[15px] font-semibold text-deep-space">{title}</h3>
-        <span className="shrink-0 font-mono text-[11px] text-dust">{date}</span>
+      <div className="flex items-start justify-between p-5 pb-2">
+        <h3 className="font-headline text-[15px] font-semibold text-on-surface">{title}</h3>
+        <span className="shrink-0 font-label text-[11px] text-on-primary-container">{date}</span>
       </div>
 
       {/* Author */}
       {author && (
-        <p className="px-4 pb-3 text-[12px] text-dust">by {author}</p>
+        <p className="px-5 pb-3 font-body text-[12px] italic text-on-surface-variant">by {author}</p>
       )}
       {!author && <div className="pb-1" />}
 
-      {/* Accordion sections */}
+      {/* Accordion sections — no border dividers, use spacing */}
       {sectionKeys.length > 0 && (
-        <div className="border-t border-border-warm">
+        <div className="flex flex-col gap-1 px-3 pb-3">
           {sectionKeys.map((key) => {
             const meta = devlogSectionMeta[key];
             const isExpanded = expandedSection === key;
 
             return (
-              <div key={key} className="border-b border-border-warm last:border-b-0">
+              <div key={key}>
                 <button
                   type="button"
                   className={cn(
-                    "flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors",
-                    "text-[13px] text-dark-text hover:bg-regolith",
-                  )}
-                  style={
+                    "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left transition-colors",
+                    "font-label text-[13px] text-on-surface",
                     isExpanded
-                      ? {
-                          backgroundColor: tokens.color.instrumentBlue + "0D",
-                          borderColor: tokens.color.instrumentBlue + "40",
-                        }
-                      : undefined
-                  }
+                      ? "bg-primary-container text-primary"
+                      : "hover:bg-surface-container-highest",
+                  )}
                   onClick={() => toggleSection(key)}
                   aria-expanded={isExpanded}
                 >
-                  <span className="w-4 text-center text-[14px] leading-none text-dust">
+                  <span className="material-symbols-outlined w-5 text-center text-[18px] text-on-primary-container">
                     {meta.icon}
                   </span>
                   <span className="flex-1 font-medium">{meta.label}</span>
                   <span
                     className={cn(
-                      "text-[10px] text-dust transition-transform duration-200",
+                      "material-symbols-outlined text-[16px] text-on-primary-container transition-transform duration-200",
                       isExpanded && "rotate-180",
                     )}
                   >
-                    ▾
+                    expand_more
                   </span>
                 </button>
 
                 {isExpanded && (
-                  <div
-                    className="px-4 pb-3 pt-2"
-                    style={{
-                      borderTop: `1px solid ${tokens.color.instrumentBlue}40`,
-                    }}
-                  >
-                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-dark-text">
+                  <div className="rounded-b-lg bg-surface-container-lowest px-4 pb-3 pt-2">
+                    <p className="whitespace-pre-wrap font-body text-[13px] leading-relaxed text-on-surface">
                       {sections[key]}
                     </p>
                   </div>

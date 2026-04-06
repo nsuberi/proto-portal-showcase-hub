@@ -1,19 +1,58 @@
 :root {
-  /* Colors */
-  --color-deep-space: #0F1B2D;
-  --color-orbital-blue: #1E3A5F;
-  --color-instrument-blue: #3B82C4;
-  --color-signal-orange: #D4763A;
-  --color-atmosphere-teal: #2A9D8F;
-  --color-regolith: #F4F1EC;
-  --color-shelter-white: #FAFAF8;
-  --color-sediment: #E8E3DA;
-  --color-dust: #8B8178;
-  --color-dark-text: #2D2926;
-  --color-border-warm: #D5CEC4;
-  --color-phase-1: #1E3A5F;
-  --color-phase-2: #2A9D8F;
-  --color-phase-3: #D4A03A;
+  /* Surface hierarchy (dark, layered glass sheets) */
+  --color-surface: #121317;
+  --color-surface-dim: #121317;
+  --color-surface-bright: #38393e;
+  --color-surface-container-lowest: #0d0e12;
+  --color-surface-container-low: #1a1b20;
+  --color-surface-container: #1f1f24;
+  --color-surface-container-high: #292a2e;
+  --color-surface-container-highest: #343439;
+  --color-surface-variant: #343439;
+
+  /* Primary (cool blue-silver) */
+  --color-primary: #bbc6e2;
+  --color-primary-container: #0f1a2e;
+  --color-primary-fixed: #d7e2ff;
+  --color-primary-fixed-dim: #bbc6e2;
+  --color-on-primary: #263046;
+  --color-on-primary-container: #78839c;
+  --color-on-primary-fixed: #101b30;
+
+  /* Secondary (terracotta) */
+  --color-secondary: #ffb4a5;
+  --color-secondary-container: #802918;
+  --color-on-secondary: #611205;
+  --color-on-secondary-container: #ff9a85;
+
+  /* Tertiary (amber) */
+  --color-tertiary: #ffba38;
+  --color-tertiary-container: #261700;
+  --color-on-tertiary: #432c00;
+  --color-on-tertiary-container: #ad7900;
+
+  /* Text / surface roles */
+  --color-on-surface: #e3e2e8;
+  --color-on-surface-variant: #c4c6cc;
+  --color-on-background: #e3e2e8;
+  --color-inverse-surface: #e3e2e8;
+  --color-inverse-on-surface: #2f3035;
+  --color-inverse-primary: #545e76;
+
+  /* Borders */
+  --color-outline: #8e9196;
+  --color-outline-variant: #44474c;
+
+  /* Error */
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  /* Phase accents */
+  --color-phase-1: #bbc6e2;
+  --color-phase-2: #ffba38;
+  --color-phase-3: #ffb4a5;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -25,13 +64,15 @@
   --spacing-3xl: 48px;
 
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
   /* Font Families */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Newsreader", serif;
+  --font-label: "Inter", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
 }

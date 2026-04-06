@@ -1,4 +1,3 @@
-import { tokens } from "@/design-system/tokens";
 import type { RoomStatus } from "@/design-system/tokens";
 import { cn } from "@/lib/utils";
 
@@ -22,30 +21,23 @@ export function LiveRoomCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-shelter-white px-4 py-3",
-        !isLive && "border-border-warm",
+        "rounded-xl bg-surface-container-low px-5 py-4",
+        isLive && "ring-1 ring-secondary/30",
         className,
       )}
-      style={
-        isLive
-          ? { borderWidth: "1px", borderColor: `${tokens.color.signalOrange}60` }
-          : undefined
-      }
     >
       <div className="flex items-center justify-between">
         {/* Left side: theme + meta */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             {isLive && (
-              <span
-                className="inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-signal-orange animate-live-pulse"
-              />
+              <span className="inline-block h-[7px] w-[7px] shrink-0 rounded-full bg-secondary animate-live-pulse" />
             )}
-            <span className="text-[13px] font-semibold text-dark-text">
+            <span className="font-headline text-[13px] font-semibold text-on-surface">
               {theme}
             </span>
           </div>
-          <span className="text-[11px] text-dust">
+          <span className="font-label text-[11px] text-on-primary-container">
             {time} · {attendees} attendee{attendees !== 1 ? "s" : ""}
           </span>
         </div>
@@ -53,14 +45,14 @@ export function LiveRoomCard({
         {/* Right side: action button */}
         {isLive ? (
           <button
-            className="rounded-md bg-signal-orange px-3 py-1.5 text-[11px] font-semibold text-shelter-white transition-opacity hover:opacity-90"
+            className="rounded-lg bg-gradient-to-br from-primary to-on-primary-container px-4 py-2 font-label text-[11px] font-bold uppercase tracking-widest text-on-primary-fixed transition-all hover:brightness-110 active:scale-95"
             type="button"
           >
             Join now
           </button>
         ) : (
           <button
-            className="rounded-md border border-border-warm bg-transparent px-3 py-1.5 text-[11px] font-semibold text-dust transition-colors hover:border-instrument-blue hover:text-instrument-blue"
+            className="rounded-lg bg-transparent px-4 py-2 font-label text-[11px] font-semibold text-on-primary-container ring-1 ring-outline-variant/20 transition-colors hover:text-primary hover:ring-primary/30"
             type="button"
           >
             RSVP

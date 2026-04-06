@@ -5,7 +5,6 @@ import { showcaseEntries } from "@/data/showcase";
 export default function ShowcasePage() {
   const [activeTag, setActiveTag] = useState<string>("All");
 
-  // Collect unique tags from all entries
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     showcaseEntries.forEach((entry) => {
@@ -14,7 +13,6 @@ export default function ShowcasePage() {
     return ["All", ...Array.from(tagSet).sort()];
   }, []);
 
-  // Filter entries by active tag
   const filteredEntries = useMemo(() => {
     if (activeTag === "All") return showcaseEntries;
     return showcaseEntries.filter((entry) => entry.tags.includes(activeTag));
@@ -24,10 +22,10 @@ export default function ShowcasePage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-deep-space">
+        <h1 className="font-headline text-xl font-bold text-on-surface">
           What people are building
         </h1>
-        <p className="mt-1 text-sm text-dust">
+        <p className="mt-1 font-body text-sm text-on-surface-variant">
           Real work from the community — running code, visible reasoning, peer
           feedback.
         </p>
@@ -42,10 +40,10 @@ export default function ShowcasePage() {
               key={tag}
               type="button"
               onClick={() => setActiveTag(tag)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-full px-3 py-1 font-label text-xs font-medium transition-colors ${
                 isActive
-                  ? "bg-instrument-blue/10 text-instrument-blue border-instrument-blue"
-                  : "border-border-warm text-dust hover:border-instrument-blue hover:text-instrument-blue"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-surface-container-highest text-on-surface-variant hover:text-on-surface"
               }`}
             >
               {tag}
@@ -68,15 +66,14 @@ export default function ShowcasePage() {
           ))}
         </div>
       ) : (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-16">
-          <p className="text-sm text-dust mb-3">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-surface-container py-16">
+          <p className="mb-3 font-body text-sm text-on-surface-variant">
             No work matches this filter.
           </p>
           <button
             type="button"
             onClick={() => setActiveTag("All")}
-            className="rounded-full border border-instrument-blue px-4 py-1.5 text-xs font-medium text-instrument-blue hover:bg-instrument-blue/10 transition-colors"
+            className="rounded-full bg-surface-container-highest px-4 py-1.5 font-label text-xs font-medium text-primary transition-colors hover:bg-primary/10"
           >
             Reset filter
           </button>

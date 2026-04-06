@@ -2,15 +2,15 @@ import { Link } from "react-router-dom";
 
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen bg-regolith flex items-center justify-center text-center">
+    <div className="flex min-h-screen items-center justify-center bg-surface text-center">
       <div>
-        <p className="text-8xl font-bold text-sediment mb-4">404</p>
-        <h1 className="text-2xl font-bold text-deep-space mb-2">Lost in Space</h1>
-        <p className="text-dust text-sm mb-1">You've drifted off course.</p>
-        <p className="text-dust/60 text-xs mb-6">The coordinates don't match any known location.</p>
+        <p className="font-headline text-8xl font-bold text-surface-container-highest mb-4">404</p>
+        <h1 className="font-headline text-2xl font-bold text-on-surface mb-2">Lost in Space</h1>
+        <p className="font-body text-sm text-on-surface-variant mb-1">You've drifted off course.</p>
+        <p className="font-body text-xs text-on-primary-container mb-6">The coordinates don't match any known location.</p>
         <Link
           to="/"
-          className="inline-block px-4 py-2 bg-instrument-blue text-shelter-white rounded-md text-sm font-medium hover:bg-instrument-blue/90 transition-colors"
+          className="inline-block rounded-lg bg-gradient-to-br from-primary to-on-primary-container px-5 py-2 font-label text-sm font-bold uppercase tracking-widest text-on-primary-fixed transition-all hover:brightness-110 active:scale-95"
         >
           Return to basecamp
         </Link>

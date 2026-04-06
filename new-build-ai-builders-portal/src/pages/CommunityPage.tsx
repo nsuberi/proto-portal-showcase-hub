@@ -42,18 +42,19 @@ export default function CommunityPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-deep-space mb-1">Community</h1>
-        <p className="text-sm text-dust">
+        <h1 className="mb-1 font-headline text-xl font-bold text-on-surface">Community</h1>
+        <p className="font-body text-sm text-on-surface-variant">
           Basecamp sessions — where you return after exploring, share what you
           found, and plan the next expedition.
         </p>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-sm font-semibold text-deep-space uppercase tracking-wider mb-4">
+        <h2 className="mb-4 font-headline text-sm font-semibold uppercase tracking-wider text-on-primary-container">
+          <span className="material-symbols-outlined mr-1 align-middle text-[16px] text-tertiary">radar</span>
           Live Rooms
         </h2>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {mockRooms.map((room) => (
             <LiveRoomCard
               key={room.id}
@@ -66,11 +67,11 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border-thin border-border-warm bg-shelter-white p-6 text-center">
-        <p className="text-sm font-semibold text-deep-space mb-1">
+      <div className="astro-glass rounded-xl p-6 text-center">
+        <p className="font-headline text-sm font-semibold text-on-surface mb-1">
           More community features coming soon
         </p>
-        <p className="text-xs text-dust">
+        <p className="font-body text-xs text-on-surface-variant">
           Threaded feedback on presentations, cohort views, and async
           presentation reviews.
         </p>

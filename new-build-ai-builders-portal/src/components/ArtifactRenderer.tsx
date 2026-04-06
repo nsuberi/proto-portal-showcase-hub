@@ -15,19 +15,19 @@ const artifactStatusColors: Record<
   { bg: string; color: string; label: string }
 > = {
   running: {
-    bg: "#D8F0E8",
-    color: tokens.color.atmosphereTeal,
-    label: "● Running",
+    bg: tokens.color.tertiaryContainer,
+    color: tokens.color.tertiary,
+    label: "Running",
   },
   building: {
-    bg: "#E0F0FA",
-    color: tokens.color.instrumentBlue,
-    label: "◌ Building…",
+    bg: tokens.color.primaryContainer,
+    color: tokens.color.primary,
+    label: "Building...",
   },
   error: {
-    bg: "#FDE8D8",
-    color: "#C0442A",
-    label: "● Error",
+    bg: tokens.color.errorContainer,
+    color: tokens.color.error,
+    label: "Error",
   },
 };
 
@@ -43,37 +43,22 @@ export function ArtifactRenderer({
   return (
     <div
       className={cn(
-        "bg-deep-space rounded-lg overflow-hidden border-thin border-orbital-blue",
+        "overflow-hidden rounded-xl bg-surface-container-lowest shadow-ambient",
         className,
       )}
     >
       {/* Top bar */}
-      <div
-        className="flex items-center justify-between px-4 py-2"
-        style={{ backgroundColor: "#0A1420" }}
-      >
+      <div className="flex items-center justify-between bg-[#0d0e12] px-4 py-2">
         <div className="flex items-center gap-3">
           {/* Traffic light dots */}
           <div className="flex items-center gap-1.5">
-            <span
-              className="block w-3 h-3 rounded-full"
-              style={{ backgroundColor: "#FF5F56" }}
-            />
-            <span
-              className="block w-3 h-3 rounded-full"
-              style={{ backgroundColor: "#FFBD2E" }}
-            />
-            <span
-              className="block w-3 h-3 rounded-full"
-              style={{ backgroundColor: "#27C93F" }}
-            />
+            <span className="block h-3 w-3 rounded-full bg-[#FF5F56]" />
+            <span className="block h-3 w-3 rounded-full bg-[#FFBD2E]" />
+            <span className="block h-3 w-3 rounded-full bg-[#27C93F]" />
           </div>
 
           {/* Filename */}
-          <span
-            className="font-mono text-xs"
-            style={{ color: "#6B8BA4" }}
-          >
+          <span className="font-label text-xs text-on-primary-container">
             {title}
             {language ? `.${language}` : ""}
           </span>
@@ -82,7 +67,7 @@ export function ArtifactRenderer({
         {/* Status pill */}
         {statusCfg && (
           <span
-            className="text-xs font-mono px-2 py-0.5 rounded-full"
+            className="rounded-full px-2 py-0.5 font-label text-xs"
             style={{
               backgroundColor: statusCfg.bg,
               color: statusCfg.color,
@@ -96,10 +81,7 @@ export function ArtifactRenderer({
       {/* Code area */}
       <div className="p-4" style={{ minHeight: 120 }}>
         <pre className="m-0 overflow-x-auto">
-          <code
-            className="font-mono text-sm leading-relaxed whitespace-pre-wrap"
-            style={{ color: "#B8CDE0" }}
-          >
+          <code className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-primary">
             {code}
           </code>
         </pre>

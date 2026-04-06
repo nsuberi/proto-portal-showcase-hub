@@ -50,8 +50,8 @@ export default function ChallengesPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-deep-space">Challenges</h1>
-        <p className="mt-1 text-sm text-dust">
+        <h1 className="font-headline text-xl font-bold text-on-surface">Challenges</h1>
+        <p className="mt-1 font-body text-sm text-on-surface-variant">
           Bounded units of work that build real capability.
         </p>
       </div>
@@ -70,10 +70,10 @@ export default function ChallengesPage() {
                 setFilter("phase", f.value !== null ? String(f.value) : null)
               }
               className={cn(
-                "rounded-full border-thin border-border-warm px-3 py-2 text-xs font-medium transition-colors cursor-pointer",
+                "rounded-full px-3 py-2 font-label text-xs font-medium transition-colors cursor-pointer",
                 isActive
-                  ? "bg-instrument-blue/10 text-instrument-blue border-instrument-blue/40"
-                  : "bg-shelter-white text-dust hover:text-dark-text",
+                  ? "bg-primary/10 text-primary"
+                  : "bg-surface-container-highest text-on-surface-variant hover:text-on-surface",
               )}
             >
               {f.label}
@@ -82,7 +82,7 @@ export default function ChallengesPage() {
         })}
 
         {/* Separator */}
-        <span className="mx-1 h-4 w-px bg-border-warm" />
+        <span className="mx-1 h-4 w-px bg-outline-variant/20" />
 
         {/* Status filters */}
         {statusFilters.map((f) => {
@@ -94,10 +94,10 @@ export default function ChallengesPage() {
               type="button"
               onClick={() => setFilter("status", f.value)}
               className={cn(
-                "rounded-full border-thin border-border-warm px-3 py-2 text-xs font-medium transition-colors cursor-pointer",
+                "rounded-full px-3 py-2 font-label text-xs font-medium transition-colors cursor-pointer",
                 isActive
-                  ? "bg-instrument-blue/10 text-instrument-blue border-instrument-blue/40"
-                  : "bg-shelter-white text-dust hover:text-dark-text",
+                  ? "bg-primary/10 text-primary"
+                  : "bg-surface-container-highest text-on-surface-variant hover:text-on-surface",
               )}
             >
               {f.label}
@@ -124,14 +124,14 @@ export default function ChallengesPage() {
         </div>
       ) : (
         /* Empty state */
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="mb-4 text-sm text-dust">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-surface-container py-16 text-center">
+          <p className="mb-4 font-body text-sm text-on-surface-variant">
             No challenges match your filters.
           </p>
           <button
             type="button"
             onClick={() => setSearchParams({})}
-            className="rounded-full border-thin border-border-warm bg-shelter-white px-4 py-1.5 text-xs font-medium text-instrument-blue transition-colors hover:bg-regolith cursor-pointer"
+            className="rounded-full bg-surface-container-highest px-4 py-1.5 font-label text-xs font-medium text-primary transition-colors hover:bg-primary/10 cursor-pointer"
           >
             Reset filters
           </button>
