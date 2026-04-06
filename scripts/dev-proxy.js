@@ -21,7 +21,7 @@ const SERVICES = {
   "learning-path": { port: 3006, buildPath: "prototypes/learning-path/dist" },
   api: { port: 3004 },
   "ai-evals": { port: process.env.AI_EVALS_PORT || 5000 },
-  "code-dojo": { port: process.env.CODE_DOJO_PORT || 5002 },
+  "ai-builders": { port: 3008, buildPath: "apps/ai-builders-portal/dist" },
 };
 
 console.log("Starting Multi-SPA Development Proxy Server...");
@@ -109,32 +109,20 @@ docker compose up -d --build      # Docker, port 5001</pre>
   }),
 );
 
-// Code Dojo proxy — rewrite /code-dojo to / for the Flask app
-console.log(`  /code-dojo/*          ->  localhost:${SERVICES["code-dojo"].port}`);
+// AI Builders Portal proxy — forward to Vite dev server (keeps /ai-builders prefix; Vite expects it via base)
+console.log(`  /ai-builders/*        ->  localhost:${SERVICES["ai-builders"].port}`);
 app.use(
-  "/code-dojo",
+  "/ai-builders",
   createProxyMiddleware({
-    target: `http://localhost:${SERVICES["code-dojo"].port}`,
+    target: `http://localhost:${SERVICES["ai-builders"].port}`,
     changeOrigin: true,
-    pathRewrite: { "^/code-dojo": "" },
+    pathRewrite: (p, req) => req.originalUrl,
     onError: (err, req, res) => {
-      console.log(`[code-dojo] Server not running (${err.code})`);
-      res.status(503).send(`
-        <html>
-          <head><title>Code Dojo Not Running</title></head>
-          <body style="font-family: system-ui; padding: 2rem; background: #f5f5f5;">
-            <h1>Code Dojo App Not Running</h1>
-            <p>Start it with:</p>
-            <pre>cd apps/code-dojo
-python3 app.py                        # direct, port 5002
-# or
-docker compose up -d --build          # Docker, port 5002</pre>
-          </body>
-        </html>
-      `);
+      console.log(`[ai-builders] Server not running (${err.code})`);
+      serveFallbackSPA(req, res, "ai-builders");
     },
     onProxyRes: (proxyRes, req) => {
-      console.log(`[code-dojo] ${proxyRes.statusCode} ${req.url}`);
+      console.log(`[ai-builders] ${proxyRes.statusCode} ${req.url}`);
     },
   }),
 );
@@ -197,7 +185,7 @@ Routes:
   http://localhost:${PORT}/prototypes/learning-path/              -> Learning Path (${SERVICES["learning-path"].port})
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
   http://localhost:${PORT}/ai-evals/                              -> AI Evals Flask (${SERVICES["ai-evals"].port})
-  http://localhost:${PORT}/code-dojo/                              -> Code Dojo Flask (${SERVICES["code-dojo"].port})
+  http://localhost:${PORT}/ai-builders/                             -> AI Builders (${SERVICES["ai-builders"].port})
 
 Start all services: yarn dev:all
   `);

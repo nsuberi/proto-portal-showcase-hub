@@ -52,12 +52,6 @@ export default {
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
       },
-      boxShadow: {
-        ambient: "0 20px 40px -5px rgba(227, 226, 232, 0.05)",
-        "ambient-lg": "0 30px 60px -5px rgba(227, 226, 232, 0.05)",
-        "glow-tertiary": "0 0 20px rgba(255, 186, 56, 0.3)",
-        "glow-primary": "0 0 20px rgba(187, 198, 226, 0.3)",
-      },
       keyframes: {
         "live-pulse": {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(255, 180, 165, 0.4)" },
