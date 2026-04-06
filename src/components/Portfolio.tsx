@@ -7,11 +7,19 @@ import thisIsMe from "@/assets/this-is-me.jpg";
 const Portfolio = () => {
   const implementedPrototypes = [
     {
-      title: "Accepting AI: A Testing Adventure",
+      title: "AI Builders Portal: Community of Practice",
       description:
-        "Ready to embrace AI as an AI Builder? Follow Acme Widget Co's journey from idea to production through 5 educational phases: Interview & Requirements → Solution Design → Implementation → Pre-Production Evaluation → Production Monitoring. Learn where AI evals fit in your testing pyramid alongside unit, integration, and E2E tests. Explore grounding checks, hallucination detection, and behavioral evals. Watch a real support chatbot evolve from verbose to hallucinating to reliably accurate—with full governance tracking. Your testing pyramid just got a shiny new AI-powered top!",
-      link: "/ai-evals/",
-      tags: ["Accepting AI", "Testing Pyramid", "Evals", "SDLC", "Governance"],
+        "A community-of-practice platform for professionals learning to build with AI. Progress through three phases — Developing Intuition, Exercising Judgment, and Navigating Independently — with scaffolded challenges, live community sessions, a showcase gallery of member work, and peer feedback. Built around the idea that becoming an AI builder is about developing professional judgment, not just learning syntax.",
+      link: "/prototypes/ai-builders/",
+      tags: ["Community of Practice", "AI Builder", "Professional Development", "Challenges"],
+      status: "Live Demo Available",
+    },
+    {
+      title: "AI Testing Resource: Governance-First Development",
+      description:
+        "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",
+      link: "/prototypes/ai-evals/",
+      tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
       status: "Live Demo Available",
     },
     {
@@ -44,22 +52,6 @@ const Portfolio = () => {
         "Peek behind the curtain at how AI agents are configured to build this portfolio. Four color-coded layers float around you: amber Memories (persistent cross-session context), violet Skills (/breadboarding, /new-prototype), blue MCP Tools (the proto-mcp CLI and design-tokens server giving Claude live queryable access to project data), and teal Concepts explaining how they all fit together. Click any item to read its full content. The invisible configuration layer, made visible.",
       link: "/prototypes/documentation-explorer/",
       tags: ["Agent Memory", "Skills", "MCP Tools", "AI Configuration"],
-      status: "Live Demo Available",
-    },
-    {
-      title: "Code Dojo: Become an AI Builder",
-      description:
-        "Ever wondered how people actually build software? Code Dojo is your training ground for developing the intuition you need to go from curious beginner to AI-powered builder. Work through hands-on diagnosis exercises where you learn to read code, spot bugs, and understand how the pieces fit together — the same skills that let you collaborate with AI to build real things. No prior experience needed, just curiosity and a willingness to tinker.",
-      link: "/code-dojo/",
-      tags: ["AI Builder", "Learn to Code", "Diagnosis Exercises", "Hands-On"],
-      status: "Live Demo Available",
-    },
-    {
-      title: "AI Testing Resource: Governance-First Development",
-      description:
-        "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",
-      link: "/ai-evals/",
-      tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
       status: "Live Demo Available",
     },
   ];
