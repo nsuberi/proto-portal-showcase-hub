@@ -21,6 +21,7 @@ Portfolio monorepo: interactive prototypes (React/Vite) + AI Evals app (Flask/EC
 | API Server | 3004 | `/api/v1/` |
 | Dev Proxy | 8082 | (routes all) |
 | AI Builders (Vite) | 3008 | `/prototypes/ai-builders/` |
+| AI Evals (Flask) | 5000 | `/prototypes/ai-evals/` |
 | Neo4j | 7474/7687 | - |
 
 ## Design Rules
@@ -67,6 +68,13 @@ AI Evals tests: see `apps/ai-evals-in-context/.claude/CLAUDE.md`
 ./scripts/deploy.sh             # Full deploy (Terraform + build + S3 + CDN invalidation)
 ./scripts/deploy-infrastructure.sh
 ./scripts/deploy-site.sh        # Site content only
+```
+
+**IAM Role:** Local deploys require assuming the `terraform-cooking-up-ideas` role first:
+```bash
+eval $(aws sts assume-role --role-arn "arn:aws:iam::671388079324:role/terraform-cooking-up-ideas" \
+  --role-session-name "deploy-session" --output json \
+  | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')")
 ```
 
 **ARM64:** ECS uses Graviton. Do NOT add `--platform linux/amd64` to Docker builds. CI uses ARM64 runners.

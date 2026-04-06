@@ -78,14 +78,14 @@ app.use(
   }),
 );
 
-// AI Evals proxy — rewrite /ai-evals to / for the Flask app
-console.log(`  /ai-evals/*          ->  localhost:${SERVICES["ai-evals"].port}`);
+// AI Evals proxy — rewrite /prototypes/ai-evals to / for the Flask app
+console.log(`  /prototypes/ai-evals/*  ->  localhost:${SERVICES["ai-evals"].port}`);
 app.use(
-  "/ai-evals",
+  "/prototypes/ai-evals",
   createProxyMiddleware({
     target: `http://localhost:${SERVICES["ai-evals"].port}`,
     changeOrigin: true,
-    pathRewrite: { "^/ai-evals": "" },
+    pathRewrite: { "^/prototypes/ai-evals": "" },
     onError: (err, req, res) => {
       console.log(`[ai-evals] Server not running (${err.code})`);
       res.status(503).send(`
@@ -166,7 +166,7 @@ Routes:
   http://localhost:${PORT}/prototypes/documentation-explorer/     -> Docs Explorer (${SERVICES["documentation-explorer"].port})
   http://localhost:${PORT}/prototypes/learning-path/              -> Learning Path (${SERVICES["learning-path"].port})
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
-  http://localhost:${PORT}/ai-evals/                              -> AI Evals Flask (${SERVICES["ai-evals"].port})
+  http://localhost:${PORT}/prototypes/ai-evals/                    -> AI Evals Flask (${SERVICES["ai-evals"].port})
   http://localhost:${PORT}/prototypes/ai-builders/                  -> AI Builders (${SERVICES["ai-builders"].port})
 
 Start all services: yarn dev:all
