@@ -26,7 +26,7 @@ EXPOSE 5000
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5000/api/tsr/stats || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 # Use entrypoint script for runtime initialization
 COPY scripts/entrypoint.sh /app/entrypoint.sh
