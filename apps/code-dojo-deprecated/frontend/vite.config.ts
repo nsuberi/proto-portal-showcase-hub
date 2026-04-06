@@ -12,14 +12,17 @@ export default defineConfig({
       "/code-dojo/api": {
         target: "http://localhost:5002",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/code-dojo/, ""),
       },
       "/code-dojo/submissions": {
         target: "http://localhost:5002",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/code-dojo/, ""),
       },
       "/code-dojo/schedule": {
         target: "http://localhost:5002",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/code-dojo/, ""),
       },
     },
   },

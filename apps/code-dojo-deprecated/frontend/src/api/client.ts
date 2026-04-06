@@ -53,12 +53,24 @@ export const authApi = {
 
 // ── Modules ──
 
+export interface AreaSummary {
+  slug: string;
+  title: string;
+  color: string;
+  icon_name: string;
+}
+
 export interface ModuleSummary {
   id: number;
   title: string;
   description: string;
   order: number;
   goal_count: number;
+  curriculum_area_id: number | null;
+  estimated_hours: number | null;
+  difficulty_level: number;
+  status: "published" | "coming_soon" | "draft";
+  area?: AreaSummary;
 }
 
 export interface GoalSummary {
@@ -103,9 +115,10 @@ export interface SubmissionSummary {
 export const modulesApi = {
   list: () => api<{ modules: ModuleSummary[] }>("/api/modules"),
   get: (id: number) =>
-    api<{ module: { id: number; title: string; description: string }; goals: GoalSummary[] }>(
-      `/api/modules/${id}`
-    ),
+    api<{
+      module: ModuleSummary & { id: number; title: string; description: string };
+      goals: GoalSummary[];
+    }>(`/api/modules/${id}`),
   getGoal: (moduleId: number, goalId: number) =>
     api<{
       module: { id: number; title: string };
@@ -115,6 +128,75 @@ export const modulesApi = {
       core_learning_goals: CoreLearningGoal[];
       challenge_rubric: { id: number; rubric: unknown } | null;
     }>(`/api/modules/${moduleId}/goals/${goalId}`),
+};
+
+// ── Curriculum Areas ──
+
+export interface CurriculumArea {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  icon_name: string;
+  color: string;
+  order: number;
+  module_count: number;
+  published_count: number;
+  user_progress: {
+    modules_started: number;
+    modules_completed: number;
+    total: number;
+  } | null;
+}
+
+export interface AreaProgress {
+  slug: string;
+  title: string;
+  icon_name: string;
+  color: string;
+  progress_percent: number;
+  modules_started: number;
+  modules_completed: number;
+  modules_total: number;
+}
+
+export interface RecommendedModule {
+  module_id: number;
+  title: string;
+  area_slug: string;
+  area_title: string;
+  difficulty_level: number;
+  estimated_hours: number;
+}
+
+export const areasApi = {
+  list: () => api<{ areas: CurriculumArea[] }>("/api/areas"),
+  get: (slug: string) =>
+    api<{
+      area: CurriculumArea;
+      modules: (ModuleSummary & { goals: { id: number; title: string; order: number }[] })[];
+    }>(`/api/areas/${slug}`),
+};
+
+export const catalogApi = {
+  list: (params?: { area?: string; difficulty?: string; status?: string }) => {
+    const qs = params
+      ? new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([, v]) => v))
+        ).toString()
+      : "";
+    return api<{ modules: ModuleSummary[] }>(`/api/catalog${qs ? `?${qs}` : ""}`);
+  },
+};
+
+export const pathApi = {
+  progress: () =>
+    api<{
+      overall_progress: number;
+      total_xp: number;
+      areas: AreaProgress[];
+      recommended_next: RecommendedModule[];
+    }>("/api/path/progress"),
 };
 
 // ── Admin ──

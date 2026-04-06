@@ -14,6 +14,7 @@ Usage:
 
 import sys
 import json
+from sqlalchemy import text as sa_text
 from app import app, db
 from models.user import User
 from models.module import LearningModule
@@ -21,6 +22,7 @@ from models.goal import LearningGoal
 from models.anatomy_topic import AnatomyTopic
 from models.core_learning_goal import CoreLearningGoal
 from models.challenge_rubric import ChallengeRubric
+from models.curriculum_area import CurriculumArea
 
 # Challenge description for the API Auth challenge (Updated Section 1)
 API_AUTH_CHALLENGE = """
@@ -1125,6 +1127,660 @@ def seed_challenge_rubric():
     print(f"Created {created_count} challenge rubric(s) successfully!")
 
 
+def seed_curriculum_and_catalog():
+    """Seed 9 curriculum areas with 27 modules (9 published + 18 coming_soon).
+
+    Published modules get 2 goals each with placeholder challenge content.
+    The existing Flask API Auth module is linked to the Architecture area.
+    """
+    print("Seeding curriculum areas and catalog...")
+
+    if CurriculumArea.query.first():
+        print("Curriculum areas already exist. Skipping.")
+        return
+
+    # ── 9 Curriculum Areas ────────────────────────────────────────────
+
+    areas_data = [
+        {
+            "slug": "community-of-practice",
+            "title": "Community of Practice",
+            "description": "Learn through community engagement — from following directions "
+            "to presenting your own work. Build skills in legitimate "
+            "peripheral participation and grow into a contributor.",
+            "icon_name": "users",
+            "color": "violet",
+            "order": 1,
+        },
+        {
+            "slug": "architecture",
+            "title": "Architecture",
+            "description": "Understand the infrastructure that powers modern applications. "
+            "From hosts and servers to proxies, networking, and authentication "
+            "across human, application, and agent identities.",
+            "icon_name": "server",
+            "color": "blue",
+            "order": 2,
+        },
+        {
+            "slug": "building",
+            "title": "Building",
+            "description": "Master the craft of building software with AI. Debug with logs, "
+            "write meaningful tests, manage API versions, coordinate multiple "
+            "agents, and deploy with confidence.",
+            "icon_name": "hammer",
+            "color": "amber",
+            "order": 3,
+        },
+        {
+            "slug": "data-modeling",
+            "title": "Data Modeling",
+            "description": "Design schemas, manipulate data, and build reliable APIs. "
+            "Learn idempotency, data privacy classifications, and PII "
+            "cleansing for responsible data handling.",
+            "icon_name": "database",
+            "color": "emerald",
+            "order": 4,
+        },
+        {
+            "slug": "discovery-and-design",
+            "title": "Discovery & Design",
+            "description": "Use prototypes to learn, shape problems before solving them, "
+            "and apply design systems effectively. Practice spec-driven "
+            "development and product briefs.",
+            "icon_name": "lightbulb",
+            "color": "pink",
+            "order": 5,
+        },
+        {
+            "slug": "navigating-org",
+            "title": "Navigating your Organization",
+            "description": "Find teams doing complementary work, pitch partnerships, "
+            "scope doable pieces of work, and balance people's attention "
+            "with your innovation efforts.",
+            "icon_name": "compass",
+            "color": "cyan",
+            "order": 6,
+        },
+        {
+            "slug": "auto-didactic",
+            "title": "Auto-didactic",
+            "description": "Develop self-learning skills and learn to respond to feedback "
+            "effectively. Build the meta-skills that accelerate everything else.",
+            "icon_name": "brain",
+            "color": "orange",
+            "order": 7,
+        },
+        {
+            "slug": "ai-design-principles",
+            "title": "AI Design Principles",
+            "description": "Design AI interactions that actually help. Learn conversational "
+            "AI patterns, human-in-the-loop design, context engineering, "
+            "caching strategies, and latency/cost tradeoffs.",
+            "icon_name": "bot",
+            "color": "purple",
+            "order": 8,
+        },
+        {
+            "slug": "go-to-market",
+            "title": "Go-to-Market",
+            "description": "Communicate your work effectively. Record compelling demo "
+            "videos, create 1-pager presentations, and pitch to "
+            "stakeholders with confidence.",
+            "icon_name": "rocket",
+            "color": "red",
+            "order": 9,
+        },
+    ]
+
+    areas = {}
+    for data in areas_data:
+        area = CurriculumArea(**data)
+        db.session.add(area)
+        db.session.flush()
+        areas[data["slug"]] = area
+
+    # ── Link existing module to Architecture area ─────────────────────
+
+    existing_module = LearningModule.query.filter_by(
+        title="Flask API Authentication"
+    ).first()
+    if existing_module:
+        existing_module.curriculum_area_id = areas["architecture"].id
+        existing_module.estimated_hours = 3.0
+        existing_module.difficulty_level = 2
+        existing_module.status = "published"
+        print(f"  Linked existing module '{existing_module.title}' to Architecture")
+
+    # ── Modules per area (published + coming_soon) ────────────────────
+
+    catalog = {
+        "architecture": {
+            "coming_soon": [
+                {
+                    "title": "Deploying with Docker & Reverse Proxies",
+                    "description": "Containerize your application and route traffic through "
+                    "Nginx. Learn about Docker networking, health checks, "
+                    "and reverse proxy configuration.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 4.0,
+                },
+                {
+                    "title": "Hot Module Reload & Dev Proxies",
+                    "description": "Set up a smooth development workflow with HMR, "
+                    "dev proxies, and live reload across frontend and backend.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+            ],
+        },
+        "building": {
+            "published": {
+                "title": "Debugging with AI: Logs, Traces & Observability",
+                "description": "Learn to read logs, set up traces, and use observability "
+                "tools to debug AI-powered applications. Understand when "
+                "AI builds slop and how to catch it.",
+                "difficulty_level": 2,
+                "estimated_hours": 3.0,
+                "goals": [
+                    {
+                        "title": "Set Up Structured Logging in Flask",
+                        "challenge_md": "## Challenge: Add Structured Logging\n\n"
+                        "Your Flask app currently uses `print()` for debugging. "
+                        "Replace it with structured logging that captures context, "
+                        "request IDs, and timing information.\n\n"
+                        "### Requirements\n"
+                        "1. Use Python's `logging` module with JSON formatter\n"
+                        "2. Add a request ID to every log entry\n"
+                        "3. Log request/response timing\n"
+                        "4. Create different log levels for different scenarios",
+                        "difficulty_level": 2,
+                        "category_tags": ["debugging", "logging", "flask", "observability"],
+                    },
+                    {
+                        "title": "Trace AI Calls with LangSmith",
+                        "challenge_md": "## Challenge: Add Tracing to AI Calls\n\n"
+                        "Your app makes calls to Claude but you can't see what's "
+                        "happening inside. Add LangSmith tracing to capture "
+                        "every LLM interaction.\n\n"
+                        "### Requirements\n"
+                        "1. Configure LangSmith environment variables\n"
+                        "2. Add @traceable decorator to AI functions\n"
+                        "3. Include metadata (model, tokens, latency)\n"
+                        "4. Group related traces by session",
+                        "difficulty_level": 3,
+                        "category_tags": ["ai", "observability", "langsmith", "tracing"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Automated Testing & AI Evals",
+                    "description": "Write tests that actually catch bugs, including AI-specific "
+                    "evaluation patterns. Learn to communicate what's been tested.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 4.0,
+                },
+                {
+                    "title": "Multi-Agent Coordination",
+                    "description": "Coordinate multiple AI agents working in parallel. "
+                    "Handle shared state, conflict resolution, and work distribution.",
+                    "difficulty_level": 4,
+                    "estimated_hours": 5.0,
+                },
+            ],
+        },
+        "data-modeling": {
+            "published": {
+                "title": "Schema Design & Idempotent APIs",
+                "description": "Design database schemas that evolve gracefully and build "
+                "APIs that are safe to retry. Learn idempotency patterns "
+                "and data migration strategies.",
+                "difficulty_level": 2,
+                "estimated_hours": 3.0,
+                "goals": [
+                    {
+                        "title": "Design a Schema with Migration Support",
+                        "challenge_md": "## Challenge: Evolving a Database Schema\n\n"
+                        "Your app needs a new feature that requires schema changes. "
+                        "Add columns and tables without losing existing data.\n\n"
+                        "### Requirements\n"
+                        "1. Write an Alembic migration for the new schema\n"
+                        "2. Handle the case where data already exists\n"
+                        "3. Make the migration reversible\n"
+                        "4. Test with both empty and populated databases",
+                        "difficulty_level": 2,
+                        "category_tags": ["database", "schema", "migration", "alembic"],
+                    },
+                    {
+                        "title": "Build an Idempotent API Endpoint",
+                        "challenge_md": "## Challenge: Safe-to-Retry API\n\n"
+                        "Build a POST endpoint that produces the same result "
+                        "whether called once or multiple times with the same input.\n\n"
+                        "### Requirements\n"
+                        "1. Implement an idempotency key pattern\n"
+                        "2. Return the cached result for duplicate requests\n"
+                        "3. Handle concurrent requests safely\n"
+                        "4. Clean up expired idempotency keys",
+                        "difficulty_level": 3,
+                        "category_tags": ["api", "idempotency", "database", "patterns"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Data Privacy & PII Cleansing",
+                    "description": "Classify data by sensitivity, implement PII detection, "
+                    "and build cleansing pipelines for responsible data handling.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 3.0,
+                },
+                {
+                    "title": "Building Data APIs",
+                    "description": "Design and implement RESTful data APIs with pagination, "
+                    "filtering, and access control patterns.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 3.0,
+                },
+            ],
+        },
+        "discovery-and-design": {
+            "published": {
+                "title": "Prototyping to Learn",
+                "description": "Use quick prototypes as a learning tool — not to build "
+                "production features, but to discover what questions to ask. "
+                "Kill your darlings and avoid tool anchoring.",
+                "difficulty_level": 1,
+                "estimated_hours": 2.0,
+                "goals": [
+                    {
+                        "title": "Build a Throwaway Prototype",
+                        "challenge_md": "## Challenge: Prototype to Discover\n\n"
+                        "You have a vague product idea. Build a quick prototype "
+                        "NOT to ship, but to learn what questions you should be asking.\n\n"
+                        "### Requirements\n"
+                        "1. Spend no more than 2 hours building\n"
+                        "2. Document 3 things you learned from building it\n"
+                        "3. Identify 3 questions that the prototype surfaced\n"
+                        "4. Explain what you would do differently now",
+                        "difficulty_level": 1,
+                        "category_tags": ["prototyping", "discovery", "design"],
+                    },
+                    {
+                        "title": "Write a 1-Pager Product Brief",
+                        "challenge_md": "## Challenge: Spec-Driven Design\n\n"
+                        "Take what you learned from prototyping and write a concise "
+                        "product brief that someone else could build from.\n\n"
+                        "### Requirements\n"
+                        "1. Problem statement (1 paragraph)\n"
+                        "2. Proposed solution (1 paragraph)\n"
+                        "3. Key user flows (3-5 bullet points)\n"
+                        "4. Success criteria (measurable)",
+                        "difficulty_level": 2,
+                        "category_tags": ["design", "product", "spec", "writing"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Design Critique & Killing Darlings",
+                    "description": "Practice giving and receiving design feedback. "
+                    "Learn when to let go of ideas you love.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+                {
+                    "title": "Spec-Driven Development",
+                    "description": "Write specs before code. Use OpenAPI, JSON Schema, "
+                    "and contract testing to build reliable interfaces.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 4.0,
+                },
+            ],
+        },
+        "community-of-practice": {
+            "published": {
+                "title": "Your First Show & Tell",
+                "description": "Present technical work to a small group. Practice "
+                "explaining what you built, why you built it that way, "
+                "and what you'd do differently.",
+                "difficulty_level": 1,
+                "estimated_hours": 1.5,
+                "goals": [
+                    {
+                        "title": "Prepare a 5-Minute Demo",
+                        "challenge_md": "## Challenge: Show Your Work\n\n"
+                        "Prepare a 5-minute demonstration of something you built. "
+                        "The focus is on clarity, not polish.\n\n"
+                        "### Requirements\n"
+                        "1. Structure: Context → Demo → Learnings\n"
+                        "2. Show the running application (not just slides)\n"
+                        "3. Highlight one design decision you're proud of\n"
+                        "4. Share one thing you'd change",
+                        "difficulty_level": 1,
+                        "category_tags": ["community", "presentation", "communication"],
+                    },
+                    {
+                        "title": "Give Constructive Feedback on a Peer's Work",
+                        "challenge_md": "## Challenge: Feedback as Practice\n\n"
+                        "Review a peer's demo and provide structured feedback "
+                        "that's specific, kind, and actionable.\n\n"
+                        "### Requirements\n"
+                        "1. Identify one thing that works well (be specific)\n"
+                        "2. Ask one clarifying question about a design choice\n"
+                        "3. Suggest one improvement with reasoning\n"
+                        "4. Keep it under 3 minutes",
+                        "difficulty_level": 1,
+                        "category_tags": ["community", "feedback", "communication"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Presenting Technical Work",
+                    "description": "Level up from demos to presentations. Structure "
+                    "technical narratives for different audiences.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+                {
+                    "title": "Running a Community Session",
+                    "description": "Facilitate a learning session for your peers. "
+                    "Design exercises, manage discussion, and create space.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 2.0,
+                },
+            ],
+        },
+        "navigating-org": {
+            "published": {
+                "title": "Finding Complementary Teams",
+                "description": "Discover teams doing work that aligns with yours. "
+                "Practice pitching mutually beneficial partnerships and "
+                "scoping doable pieces of collaboration.",
+                "difficulty_level": 2,
+                "estimated_hours": 2.0,
+                "goals": [
+                    {
+                        "title": "Map Your Organization's AI Landscape",
+                        "challenge_md": "## Challenge: Find Your Allies\n\n"
+                        "Map out teams in your org that are working on AI "
+                        "or could benefit from AI capabilities.\n\n"
+                        "### Requirements\n"
+                        "1. Identify at least 3 teams working with AI\n"
+                        "2. Describe what each team does and their pain points\n"
+                        "3. Identify one overlap with your own work\n"
+                        "4. Draft a 2-sentence pitch for collaboration",
+                        "difficulty_level": 2,
+                        "category_tags": ["organization", "strategy", "collaboration"],
+                    },
+                    {
+                        "title": "Scope a Cross-Team Proof of Concept",
+                        "challenge_md": "## Challenge: Small Bets, Big Partnerships\n\n"
+                        "Take the overlap you identified and scope a proof "
+                        "of concept small enough to ship in one sprint.\n\n"
+                        "### Requirements\n"
+                        "1. Define the PoC in one paragraph\n"
+                        "2. List what each team contributes\n"
+                        "3. Define success criteria (measurable)\n"
+                        "4. Identify the biggest risk and a mitigation",
+                        "difficulty_level": 2,
+                        "category_tags": ["organization", "scoping", "collaboration"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Scoping & Socializing Work",
+                    "description": "Break big ideas into shippable chunks and get "
+                    "buy-in without burning political capital.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+                {
+                    "title": "Balancing Innovation with BAU",
+                    "description": "Protect time for innovation while keeping the "
+                    "lights on. Manage stakeholder expectations.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 2.0,
+                },
+            ],
+        },
+        "auto-didactic": {
+            "published": {
+                "title": "Learning How to Learn with AI",
+                "description": "Develop meta-learning skills using AI as a tutor. "
+                "Learn to prompt for understanding, not just answers, "
+                "and build a feedback response practice.",
+                "difficulty_level": 1,
+                "estimated_hours": 2.0,
+                "goals": [
+                    {
+                        "title": "Use AI to Explain a Concept You Don't Understand",
+                        "challenge_md": "## Challenge: AI as Tutor\n\n"
+                        "Pick a technical concept you're shaky on. Use an AI "
+                        "assistant to build understanding — not just get an answer.\n\n"
+                        "### Requirements\n"
+                        "1. Start with 'Help me understand...' not 'What is...'\n"
+                        "2. Ask at least 3 follow-up questions\n"
+                        "3. Rephrase the concept in your own words\n"
+                        "4. Identify one thing the AI explained poorly",
+                        "difficulty_level": 1,
+                        "category_tags": ["learning", "ai", "self-directed"],
+                    },
+                    {
+                        "title": "Build a Learning Log from Feedback",
+                        "challenge_md": "## Challenge: Feedback → Growth\n\n"
+                        "Take feedback you've received (code review, demo, etc.) "
+                        "and turn it into a structured learning plan.\n\n"
+                        "### Requirements\n"
+                        "1. Collect 3 pieces of feedback from recent work\n"
+                        "2. For each: what was said, what it means, what to do\n"
+                        "3. Identify patterns across the feedback\n"
+                        "4. Set 1 concrete goal for next week",
+                        "difficulty_level": 1,
+                        "category_tags": ["learning", "feedback", "self-directed"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Responding to Feedback",
+                    "description": "Practice receiving feedback without defensiveness. "
+                    "Build a growth mindset through structured reflection.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+                {
+                    "title": "Building Your Learning Portfolio",
+                    "description": "Create a living portfolio that demonstrates "
+                    "your learning journey and growth over time.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 3.0,
+                },
+            ],
+        },
+        "ai-design-principles": {
+            "published": {
+                "title": "Human-in-the-Loop AI Patterns",
+                "description": "Design AI interactions that keep humans in control. "
+                "Learn when AI reduces cognitive load vs. adds to it, "
+                "and build visibility and control levers.",
+                "difficulty_level": 2,
+                "estimated_hours": 3.0,
+                "goals": [
+                    {
+                        "title": "Design a Conversational AI Interface",
+                        "challenge_md": "## Challenge: Help Me Understand\n\n"
+                        "Build an AI chat interface that helps users understand "
+                        "a concept, not just get answers.\n\n"
+                        "### Requirements\n"
+                        "1. The AI should ask clarifying questions\n"
+                        "2. Include a 'show me an example' action\n"
+                        "3. Let the user rate if the explanation helped\n"
+                        "4. Reduce cognitive load with progressive disclosure",
+                        "difficulty_level": 2,
+                        "category_tags": ["ai", "design", "ux", "conversational"],
+                    },
+                    {
+                        "title": "Add Control Levers to an AI Feature",
+                        "challenge_md": "## Challenge: Visibility & Control\n\n"
+                        "Take an AI-powered feature and add controls that let "
+                        "users adjust the AI's behavior.\n\n"
+                        "### Requirements\n"
+                        "1. Show what the AI is doing (transparency)\n"
+                        "2. Let users adjust strictness/creativity\n"
+                        "3. Add an 'undo' or 'try again' option\n"
+                        "4. Show confidence indicators where appropriate",
+                        "difficulty_level": 2,
+                        "category_tags": ["ai", "design", "ux", "control"],
+                    },
+                    {
+                        "title": "Evaluate Cognitive Load in an AI Interaction",
+                        "challenge_md": "## Challenge: Less is More\n\n"
+                        "Analyze an existing AI feature and identify where it "
+                        "adds cognitive load instead of reducing it.\n\n"
+                        "### Requirements\n"
+                        "1. Identify 3 moments of unnecessary complexity\n"
+                        "2. Propose simplifications for each\n"
+                        "3. Test with a peer and get their reaction\n"
+                        "4. Document the before/after",
+                        "difficulty_level": 3,
+                        "category_tags": ["ai", "design", "cognitive-load", "evaluation"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "Context Engineering & Caching",
+                    "description": "Master the art of providing the right context to AI. "
+                    "Learn caching strategies to reduce latency and cost.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 4.0,
+                },
+                {
+                    "title": "Latency, Cost & Prototyping Tradeoffs",
+                    "description": "Make informed decisions about model selection, "
+                    "caching, and architecture based on real constraints.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 3.0,
+                },
+            ],
+        },
+        "go-to-market": {
+            "published": {
+                "title": "Recording a Compelling Demo Video",
+                "description": "Learn to record short, compelling videos that "
+                "communicate what your work does and why it matters. "
+                "Focus on clarity and narrative over production value.",
+                "difficulty_level": 1,
+                "estimated_hours": 2.0,
+                "goals": [
+                    {
+                        "title": "Record a 2-Minute Demo",
+                        "challenge_md": "## Challenge: Show, Don't Tell\n\n"
+                        "Record a 2-minute video demonstrating something you built. "
+                        "The video should make someone want to try it.\n\n"
+                        "### Requirements\n"
+                        "1. Hook in the first 10 seconds (what problem does it solve?)\n"
+                        "2. Show the product in action, not slides\n"
+                        "3. End with what's next or how to get involved\n"
+                        "4. Keep it under 2 minutes",
+                        "difficulty_level": 1,
+                        "category_tags": ["video", "communication", "go-to-market"],
+                    },
+                    {
+                        "title": "Create a 1-Pager Leave-Behind",
+                        "challenge_md": "## Challenge: The 1-Pager\n\n"
+                        "Create a single-page document that someone can share "
+                        "after seeing your demo.\n\n"
+                        "### Requirements\n"
+                        "1. Problem and solution in 2 sentences each\n"
+                        "2. One screenshot or diagram\n"
+                        "3. 3 bullet points of key capabilities\n"
+                        "4. One clear call to action",
+                        "difficulty_level": 1,
+                        "category_tags": ["writing", "communication", "go-to-market"],
+                    },
+                ],
+            },
+            "coming_soon": [
+                {
+                    "title": "The 1-Pager: Leave-Behind Presentations",
+                    "description": "Master the art of concise written communication. "
+                    "Create documents that sell your ideas.",
+                    "difficulty_level": 2,
+                    "estimated_hours": 2.0,
+                },
+                {
+                    "title": "Pitching to Stakeholders",
+                    "description": "Craft and deliver pitches tailored to different "
+                    "audiences — executives, engineers, and users.",
+                    "difficulty_level": 3,
+                    "estimated_hours": 2.0,
+                },
+            ],
+        },
+    }
+
+    modules_created = 0
+    goals_created = 0
+
+    for area_slug, area_content in catalog.items():
+        area = areas[area_slug]
+
+        # Create published module with goals (if not the existing one)
+        if "published" in area_content:
+            pub = area_content["published"]
+            module = LearningModule(
+                title=pub["title"],
+                description=pub["description"],
+                curriculum_area_id=area.id,
+                difficulty_level=pub["difficulty_level"],
+                estimated_hours=pub["estimated_hours"],
+                status="published",
+                order=1,
+            )
+            db.session.add(module)
+            db.session.flush()
+            modules_created += 1
+
+            for i, goal_data in enumerate(pub.get("goals", []), start=1):
+                goal = LearningGoal(
+                    module_id=module.id,
+                    title=goal_data["title"],
+                    challenge_md=goal_data["challenge_md"],
+                    video_url="",
+                    starter_repo="",
+                    order=i,
+                    difficulty_level=goal_data.get("difficulty_level", 1),
+                    category_tags_json=json.dumps(
+                        goal_data.get("category_tags", [])
+                    ),
+                )
+                db.session.add(goal)
+                goals_created += 1
+
+        # Create coming_soon modules (no goals)
+        for i, cs in enumerate(area_content.get("coming_soon", []), start=2):
+            module = LearningModule(
+                title=cs["title"],
+                description=cs["description"],
+                curriculum_area_id=area.id,
+                difficulty_level=cs["difficulty_level"],
+                estimated_hours=cs["estimated_hours"],
+                status="coming_soon",
+                order=i + 1 if "published" in area_content else i,
+            )
+            db.session.add(module)
+            modules_created += 1
+
+    db.session.commit()
+    print(f"Created {len(areas_data)} curriculum areas")
+    print(f"Created {modules_created} modules ({goals_created} goals)")
+    print("Catalog seeding complete!")
+
+
 def check_database_health():
     """
     Check if database needs seeding.
@@ -1171,6 +1827,7 @@ def print_database_status():
     print("DATABASE STATUS")
     print("=" * 60)
 
+    print(f"Curriculum Areas:  {CurriculumArea.query.count():3d}")
     print(f"Users:             {User.query.count():3d}")
     print(f"Learning Modules:  {LearningModule.query.count():3d}")
     print(f"Learning Goals:    {LearningGoal.query.count():3d}")
@@ -1181,8 +1838,51 @@ def print_database_status():
     print("=" * 60 + "\n")
 
 
+def _ensure_schema():
+    """Ensure all tables and columns exist (handles upgrades)."""
+    print("Ensuring schema is up to date...")
+    db.create_all()
+    # Add new columns to learning_modules if they don't exist yet
+    # (db.create_all creates new tables but doesn't ALTER existing ones)
+    dialect = db.engine.dialect.name  # "sqlite" or "postgresql"
+    migrations = {
+        "curriculum_area_id": "ALTER TABLE learning_modules ADD COLUMN curriculum_area_id INTEGER REFERENCES curriculum_areas(id)",
+        "estimated_hours": "ALTER TABLE learning_modules ADD COLUMN estimated_hours REAL",
+        "difficulty_level": "ALTER TABLE learning_modules ADD COLUMN difficulty_level INTEGER DEFAULT 1",
+        "status": "ALTER TABLE learning_modules ADD COLUMN status VARCHAR(20) DEFAULT 'published'",
+    }
+    try:
+        with db.engine.connect() as conn:
+            # Get existing columns (works for both SQLite and PostgreSQL)
+            if dialect == "sqlite":
+                rows = conn.execute(
+                    sa_text("PRAGMA table_info(learning_modules)")
+                ).fetchall()
+                existing = [row[1] for row in rows]
+            else:
+                rows = conn.execute(
+                    sa_text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name = 'learning_modules'"
+                    )
+                ).fetchall()
+                existing = [row[0] for row in rows]
+
+            for col, sql in migrations.items():
+                if col not in existing:
+                    conn.execute(sa_text(sql))
+                    print(f"  Migration: added learning_modules.{col}")
+            conn.commit()
+            print(f"  Schema is up to date ({dialect}).")
+    except Exception as e:
+        print(f"  Warning: schema migration failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def smart_seed():
     """Intelligently seed only missing data."""
+    _ensure_schema()
     health = check_database_health()
 
     if health["needs_full_seed"]:
@@ -1190,12 +1890,18 @@ def smart_seed():
         seed_database()
         seed_core_learning_goals()
         seed_challenge_rubric()
+        seed_curriculum_and_catalog()
     elif health["needs_rubrics"]:
         print("CoreLearningGoals missing. Seeding rubrics...")
         seed_core_learning_goals()
         seed_challenge_rubric()
+        seed_curriculum_and_catalog()
     else:
-        print("Database is healthy - no seeding needed.")
+        # Always try to seed curriculum if missing
+        if not CurriculumArea.query.first():
+            seed_curriculum_and_catalog()
+        else:
+            print("Database is healthy - no seeding needed.")
 
 
 if __name__ == "__main__":
@@ -1211,10 +1917,13 @@ if __name__ == "__main__":
                 seed_core_learning_goals()
             elif arg == "--challenge-rubric":
                 seed_challenge_rubric()
+            elif arg == "--catalog":
+                seed_curriculum_and_catalog()
             elif arg == "--all":
                 seed_database()
                 seed_core_learning_goals()
                 seed_challenge_rubric()
+                seed_curriculum_and_catalog()
             elif arg == "--check":
                 print_database_status()
             elif arg == "--smart":

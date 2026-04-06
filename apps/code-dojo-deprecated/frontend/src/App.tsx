@@ -3,6 +3,10 @@ import { useAuth } from "@/hooks/use-auth";
 import BrowseLayout from "@/layouts/BrowseLayout";
 import LearningLayout from "@/layouts/LearningLayout";
 import HomePage from "@/pages/HomePage";
+import CatalogPage from "@/pages/CatalogPage";
+import AreaDetailPage from "@/pages/AreaDetailPage";
+import LearningPathPage from "@/pages/LearningPathPage";
+import OnboardingPage from "@/pages/OnboardingPage";
 import ModuleDetailPage from "@/pages/ModuleDetailPage";
 import GoalPage from "@/pages/GoalPage";
 import LoginPage from "@/pages/LoginPage";
@@ -22,6 +26,9 @@ export default function App() {
       {/* Browse mode — cream surfaces */}
       <Route element={<BrowseLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/catalog/:areaSlug" element={<AreaDetailPage />} />
+        <Route path="/path" element={<LearningPathPage />} />
         <Route path="/modules/:moduleId" element={<ModuleDetailPage />} />
         <Route
           path="/account"
@@ -31,6 +38,11 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+      </Route>
+
+      {/* Onboarding — cream, no sidebar */}
+      <Route element={<BrowseLayout showSidebar={false} />}>
+        <Route path="/onboarding" element={<OnboardingPage />} />
       </Route>
 
       {/* Auth pages — cream, no sidebar */}
