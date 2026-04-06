@@ -38,7 +38,7 @@ export default function PortfolioPage() {
       {/* Content */}
       <div className="relative z-10">
         {/* Frosted header bar */}
-        <header className="flex items-center justify-between bg-surface/70 px-6 py-3 backdrop-blur-xl shadow-[0_0_40px_rgba(227,226,232,0.05)]">
+        <header className="flex items-center justify-between bg-surface/70 px-6 py-3 backdrop-blur-xl">
           <span className="font-headline text-sm font-semibold tracking-wide text-on-surface">
             AI Builders Portal
           </span>

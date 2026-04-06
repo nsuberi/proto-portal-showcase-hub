@@ -127,7 +127,7 @@ export default function CommunityPage() {
                       className={cn(
                         "relative z-10 rounded-full transition-colors",
                         isLive
-                          ? "h-4 w-4 bg-secondary shadow-[0_0_15px_rgba(255,180,165,0.6)]"
+                          ? "h-4 w-4 bg-secondary"
                           : "h-3 w-3 bg-primary group-hover:bg-tertiary",
                       )}
                     />
@@ -201,7 +201,7 @@ export default function CommunityPage() {
                     className={cn(
                       "mt-1 h-3 w-3 shrink-0 rounded-full",
                       isLive
-                        ? "bg-secondary shadow-[0_0_10px_rgba(255,180,165,0.5)]"
+                        ? "bg-secondary"
                         : "bg-primary",
                     )}
                   />
