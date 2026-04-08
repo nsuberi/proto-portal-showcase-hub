@@ -1,0 +1,35 @@
+@import "./design-system/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .astro-glass {
+    background: rgba(52, 52, 57, 0.6);
+    backdrop-filter: blur(20px);
+  }
+
+  .astro-glass-heavy {
+    background: rgba(18, 19, 23, 0.7);
+    backdrop-filter: blur(40px);
+  }
+}
+
+@layer base {
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    display: inline-block;
+    line-height: 1;
+  }
+}

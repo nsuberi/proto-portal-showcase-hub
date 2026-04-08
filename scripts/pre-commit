@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Git pre-commit hook — runs fast lint checks on staged files
+# Install: ./scripts/setup-hooks.sh
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Running pre-commit lint checks..."
+
+ERRORS=0
+
+# Get list of staged files
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' | head -50)
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACMR -- '*.py' | head -50)
+
+# 1. ESLint on staged TS/TSX files (fast — only checks changed files)
+if [ -n "$STAGED_TS" ]; then
+  echo "  ESLint ($(echo "$STAGED_TS" | wc -l | tr -d ' ') files)..."
+  if ! npx eslint $STAGED_TS 2>/dev/null; then
+    echo -e "  ${RED}ESLint failed. Fix errors before committing.${NC}"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
+# 2. Design token lint (fast — only checks for hex/rgb in staged files)
+if [ -n "$STAGED_TS" ]; then
+  HEX_VIOLATIONS=$(echo "$STAGED_TS" | xargs grep -n "'#[0-9a-fA-F]\{3,8\}'\|\"#[0-9a-fA-F]\{3,8\}\"" 2>/dev/null \
+    | grep -v 'hslToHex\|design-token-lint-ignore' || true)
+  if [ -n "$HEX_VIOLATIONS" ]; then
+    echo -e "  ${YELLOW}Design token warning: hardcoded hex colors in staged files:${NC}"
+    echo "$HEX_VIOLATIONS" | head -5
+    echo "  (Use hslToHex() or add // design-token-lint-ignore)"
+  fi
+fi
+
+# 3. Python lint on staged .py files
+if [ -n "$STAGED_PY" ]; then
+  EVALS_DIR="apps/ai-evals-in-context/ai-testing-resource"
+
+  # Find Python interpreter
+  if [ -f "$EVALS_DIR/.venv/bin/python3" ]; then
+    PY="$EVALS_DIR/.venv/bin/python3"
+  elif command -v python3 &>/dev/null; then
+    PY="python3"
+  else
+    PY=""
+  fi
+
+  if [ -n "$PY" ]; then
+    # black --check on staged Python files
+    if "$PY" -m black --version &>/dev/null 2>&1; then
+      echo "  black --check ($(echo "$STAGED_PY" | wc -l | tr -d ' ') files)..."
+      if ! "$PY" -m black --check $STAGED_PY 2>/dev/null; then
+        echo -e "  ${RED}Python formatting errors. Run 'yarn lint:python --fix' to auto-format.${NC}"
+        ERRORS=$((ERRORS + 1))
+      fi
+    fi
+
+    # flake8 on staged Python files
+    if "$PY" -m flake8 --version &>/dev/null 2>&1; then
+      echo "  flake8 ($(echo "$STAGED_PY" | wc -l | tr -d ' ') files)..."
+      if ! "$PY" -m flake8 --max-line-length 120 --extend-ignore E501,W503 $STAGED_PY 2>/dev/null; then
+        echo -e "  ${RED}flake8 errors. Fix before committing.${NC}"
+        ERRORS=$((ERRORS + 1))
+      fi
+    fi
+  fi
+fi
+
+if [ "$ERRORS" -gt 0 ]; then
+  echo ""
+  echo -e "${RED}Pre-commit checks failed. Fix the errors above, then try again.${NC}"
+  echo "To bypass (emergency only): git commit --no-verify"
+  exit 1
+else
+  echo -e "${GREEN}Pre-commit checks passed.${NC}"
+fi

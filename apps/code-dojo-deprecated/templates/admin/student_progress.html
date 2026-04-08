@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.email }} - Digi-Trainer Progress{% endblock %}
+
+{% block content %}
+<div class="student-progress-page">
+    <div class="page-header">
+        <a href="{{ url_for('admin.dashboard') }}" class="back-link">&larr; Back to Dashboard</a>
+        <h1>{{ student.email }}</h1>
+        <span class="subtitle">Digi-Trainer Progress</span>
+    </div>
+
+    <div class="engagement-summary">
+        <div class="stats-row">
+            <div class="stat">
+                <span class="icon">💎</span>
+                <span class="count">{{ gems }}</span>
+                <span class="label">Mastered</span>
+            </div>
+            <div class="stat">
+                <span class="icon">💡</span>
+                <span class="count">{{ lightbulbs }}</span>
+                <span class="label">Needs Work</span>
+            </div>
+            <div class="stat">
+                <span class="icon">🔵</span>
+                <span class="count">{{ engaged }}</span>
+                <span class="label">Engaged</span>
+            </div>
+            <div class="stat">
+                <span class="icon">📊</span>
+                <span class="count">{{ total }}</span>
+                <span class="label">Total Topics</span>
+            </div>
+        </div>
+
+        <div class="meeting-status">
+            {% if meeting_scheduled %}
+                <span class="badge success">📅 Meeting Scheduled</span>
+            {% else %}
+                <span class="badge warning">No meeting scheduled</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <section class="topic-breakdown">
+        <h2>Topic Breakdown</h2>
+        {% if progress_list %}
+            <table class="table progress-table">
+                <thead>
+                    <tr>
+                        <th>Challenge</th>
+                        <th>Topic</th>
+                        <th>Status</th>
+                        <th>Attempts</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in progress_list %}
+                    <tr>
+                        <td>{{ p.learning_goal.title if p.learning_goal else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.topic_conversation', user_id=student.id, core_goal_id=p.core_goal_id) }}">
+                                {{ p.core_goal.title if p.core_goal else 'N/A' }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="status-icon status-{{ p.status }}">
+                                {% if p.is_expired() %}⟳{% elif p.status == 'passed' %}💎{% elif p.status == 'needs_work' %}💡{% elif p.status == 'engaged' %}🔵{% elif p.status == 'in_progress' %}⚪{% else %}○{% endif %}
+                            </span>
+                            <span class="status-text">{{ p.status | replace('_', ' ') | title }}</span>
+                        </td>
+                        <td>{{ p.attempts or 0 }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.topic_conversation', user_id=student.id, core_goal_id=p.core_goal_id) }}"
+                               class="btn btn-sm">View Conversation</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">No progress records yet for this student.</p>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+    .student-progress-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .back-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .back-link:hover {
+        color: var(--primary-color);
+    }
+
+    .page-header h1 {
+        margin: 0.5rem 0 0.25rem;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+    }
+
+    .engagement-summary {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stat {
+        text-align: center;
+        min-width: 100px;
+    }
+
+    .stat .icon {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat .count {
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: block;
+    }
+
+    .stat .label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .meeting-status {
+        text-align: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .badge.success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge.warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .topic-breakdown h2 {
+        margin-bottom: 1rem;
+    }
+
+    .progress-table {
+        width: 100%;
+    }
+
+    .progress-table td a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .progress-table td a:hover {
+        text-decoration: underline;
+    }
+
+    .status-icon {
+        margin-right: 0.5rem;
+    }
+
+    .status-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}

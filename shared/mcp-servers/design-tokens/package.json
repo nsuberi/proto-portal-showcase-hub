@@ -1,0 +1,25 @@
+{
+  "name": "@proto-portal/mcp-server-design-tokens",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server exposing Proto Portal design tokens, themes, and usage guidance",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/__tests__/*.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@proto-portal/design-tokens": "workspace:*",
+    "playwright": "^1.54.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}

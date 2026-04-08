@@ -1,0 +1,125 @@
+name: Code Dojo CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/code-dojo/**'
+      - 'shared/design-tokens/**'
+      - 'shared/ui-components/**'
+      - '.github/workflows/code-dojo-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm  # ARM64 runner — matches ECS Fargate Graviton architecture
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Docker images
+        working-directory: ./apps/code-dojo
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml build
+
+      - name: Start Docker Compose services
+        working-directory: ./apps/code-dojo
+        run: |
+          cp .env.docker .env
+          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --no-build
+
+      - name: Show initial container logs
+        if: always()
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "=== Container Status ==="
+          docker compose ps
+          echo ""
+          echo "=== App Container Logs (last 50 lines) ==="
+          docker compose logs --tail=50 app || true
+          echo ""
+          echo "=== Waiting 10 seconds for startup ==="
+          sleep 10
+          echo "=== App Container Logs After 10s (last 100 lines) ==="
+          docker compose logs --tail=100 app || true
+
+      - name: Wait for services to be healthy
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "Waiting for app to be healthy..."
+          timeout 90 bash -c 'until docker compose ps --format json | jq -r "select(.Health == \"healthy\") | .Name" | grep -q code-dojo; do echo "Waiting..."; docker compose ps; sleep 5; done'
+          echo "App is healthy!"
+          docker compose ps
+
+      - name: Run tests in container
+        working-directory: ./apps/code-dojo
+        run: |
+          echo "Running pytest in container..."
+          docker compose exec -T app pytest tests/ \
+            -m "not playwright" \
+            -v \
+            --tb=short
+
+      - name: Cleanup
+        if: always()
+        working-directory: ./apps/code-dojo
+        run: docker compose down -v
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm  # ARM64 — matches ECS Fargate Graviton
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::671388079324:role/terraform-cooking-up-ideas
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Terraform (for outputs)
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Get ECR repository URL from Terraform
+        id: tf
+        run: |
+          cd terraform
+          terraform init -reconfigure -input=false
+          echo "ECR_URL=$(terraform output -raw code_dojo_ecr_repository_url)" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          docker build -f apps/code-dojo/Dockerfile \
+                        -t ${{ steps.tf.outputs.ECR_URL }}:latest \
+                        -t ${{ steps.tf.outputs.ECR_URL }}:${{ github.sha }} .
+          docker push ${{ steps.tf.outputs.ECR_URL }}:latest
+          docker push ${{ steps.tf.outputs.ECR_URL }}:${{ github.sha }}
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ai-testing-resource-prod \
+            --service code-dojo-prod \
+            --force-new-deployment
+
+      - name: Wait for deployment stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ai-testing-resource-prod \
+            --services code-dojo-prod
+          echo "Code Dojo deployment complete!"

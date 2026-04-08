@@ -54,3 +54,45 @@ output "api_gateway_id" {
   description = "API Gateway REST API ID"
   value       = aws_api_gateway_rest_api.ai_api_gateway.id
 }
+
+# AI Evals in Context Outputs
+output "ai_evals_alb_dns_name" {
+  description = "AI Evals ALB DNS name"
+  value       = module.ai_evals.alb_dns_name
+}
+
+output "ai_evals_ecr_repository_url" {
+  description = "AI Evals ECR repository URL"
+  value       = module.ai_evals.ecr_repository_url
+}
+
+output "ai_evals_ecs_cluster_name" {
+  description = "AI Evals ECS cluster name"
+  value       = module.ai_evals.ecs_cluster_name
+}
+
+output "ai_evals_ecs_service_name" {
+  description = "AI Evals ECS service name"
+  value       = module.ai_evals.ecs_service_name
+}
+
+output "ai_evals_rds_endpoint" {
+  description = "AI Evals RDS endpoint"
+  value       = module.ai_evals.rds_endpoint
+}
+
+output "ai_evals_api_gateway_url" {
+  description = "AI Evals API Gateway URL"
+  value       = module.ai_evals.api_gateway_url
+}
+
+# Code Dojo Outputs
+output "code_dojo_ecr_repository_url" {
+  description = "Code Dojo ECR repository URL"
+  value       = module.code_dojo.ecr_repository_url
+}
+
+output "code_dojo_ecs_service_name" {
+  description = "Code Dojo ECS service name"
+  value       = module.code_dojo.ecs_service_name
+}

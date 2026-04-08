@@ -7,11 +7,19 @@ import thisIsMe from "@/assets/this-is-me.jpg";
 const Portfolio = () => {
   const implementedPrototypes = [
     {
-      title: "Accepting AI: A Testing Adventure",
+      title: "AI Builders Portal: Community of Practice",
       description:
-        "Ready to embrace AI as an AI Builder? Follow Acme Widget Co's journey from idea to production through 5 educational phases: Interview & Requirements → Solution Design → Implementation → Pre-Production Evaluation → Production Monitoring. Learn where AI evals fit in your testing pyramid alongside unit, integration, and E2E tests. Explore grounding checks, hallucination detection, and behavioral evals. Watch a real support chatbot evolve from verbose to hallucinating to reliably accurate—with full governance tracking. Your testing pyramid just got a shiny new AI-powered top!",
-      link: "/ai-evals/",
-      tags: ["Accepting AI", "Testing Pyramid", "Evals", "SDLC", "Governance"],
+        "A community-of-practice platform for professionals learning to build with AI. Progress through three phases — Developing Intuition, Exercising Judgment, and Navigating Independently — with scaffolded challenges, live community sessions, a showcase gallery of member work, and peer feedback. Built around the idea that becoming an AI builder is about developing professional judgment, not just learning syntax.",
+      link: "/prototypes/ai-builders/",
+      tags: ["Community of Practice", "AI Builder", "Professional Development", "Challenges"],
+      status: "Live Demo Available",
+    },
+    {
+      title: "AI Testing Resource: Governance-First Development",
+      description:
+        "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",
+      link: "/prototypes/ai-evals/",
+      tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
       status: "Live Demo Available",
     },
     {
@@ -36,14 +44,6 @@ const Portfolio = () => {
         "Get a behind-the-scenes peek at the home loan journey! Explore interactive process maps, discover who's involved at each step, and learn what documents you'll need. Test your knowledge with fun quiz cards. For educational purposes only - your actual mortgage adventure may vary!",
       link: "/prototypes/home-lending-learning/",
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
-      status: "Live Demo Available",
-    },
-    {
-      title: "Interactive Documentation Explorer",
-      description:
-        "Navigate the codebase like never before! Ask questions in plain English and get direct links to the relevant code. Watch documentation files float in the background - click them to explore their content, then copy and search to find related implementations. It's your intelligent guide to understanding any codebase, starting with this portfolio itself!",
-      link: "/prototypes/documentation-explorer/",
-      tags: ["Documentation", "Code Navigation", "AI Assistant", "Interactive Learning"],
       status: "Live Demo Available",
     },
   ];

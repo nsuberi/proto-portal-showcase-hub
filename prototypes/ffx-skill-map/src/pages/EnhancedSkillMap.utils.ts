@@ -3,36 +3,54 @@
 
 import { expertSphereNodes, expertSphereEdges } from '../services/expertSphereData'
 
+// Sigma.js requires hex strings — convert design token HSL values
+const hslToHex = (h: number, s: number, l: number): string => {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+// Semantic hex colors derived from design tokens for Sigma.js rendering
+const COLORS = {
+  label:     hslToHex(240, 10, 10),   // --foreground
+  highlight: hslToHex(48, 96, 53),     // --warning
+  danger:    hslToHex(0, 84.2, 60.2),  // --destructive
+  special:   hslToHex(263, 70, 60),    // --primary
+  dark:      hslToHex(240, 10, 20),    // darker foreground
+  muted:     hslToHex(240, 5, 64.9),   // --muted-foreground
+  info:      hslToHex(213, 94, 68),    // --info
+  emphasis:  hslToHex(240, 10, 5),     // near-black for emphasis
+};
+
 // New functions for Expert Sphere Grid data
 export function getExpertSphereGraphNodes(masteredSkills: string[]) {
   return expertSphereNodes.map(node => {
     const isMastered = masteredSkills.includes(node.id);
     const hasEmployeeSelected = masteredSkills.length > 0;
-    
+
     return {
       ...node,
-      // Convert x,y from 0-1 range to actual coordinates
       x: (node.x - 0.5) * 800,
       y: (node.y - 0.5) * 800,
-      // Use standard Sigma.js node type
       type: 'circle',
-      // Store original type as custom property
       nodeType: node.type,
       isMastered,
       hasEmployeeSelected,
       zIndex: isMastered ? 2 : 1,
-      
-      // Enhanced properties for mastered skills border display
+
       borderWidth: isMastered ? 3 : (node.type === 'core' ? 2 : 1),
-      borderColor: isMastered ? '#F39C12' : (node.type === 'core' ? '#E74C3C' : node.type === 'pathway' ? '#8E44AD' : '#34495E'),
-      
-      // Label styling
+      borderColor: isMastered ? COLORS.highlight : (node.type === 'core' ? COLORS.danger : node.type === 'pathway' ? COLORS.special : COLORS.dark),
+
       labelSize: node.type === 'core' ? 14 : (node.type === 'cluster_center' ? 12 : 10),
-      labelColor: '#2C3E50',
+      labelColor: COLORS.label,
       labelWeight: node.type === 'core' ? 'bold' : 'normal',
-      
-      // Hover effects
-      hoverColor: '#F39C12',
+
+      hoverColor: COLORS.highlight,
       hoverSize: node.size * 1.2
     };
   });
@@ -41,12 +59,10 @@ export function getExpertSphereGraphNodes(masteredSkills: string[]) {
 export function getExpertSphereGraphEdges() {
   return expertSphereEdges.map(edge => ({
     ...edge,
-    // Use standard Sigma.js edge type
     type: edge.type === 'curve' ? 'curved' : 'straight',
-    // Enhanced edge styling
     opacity: 0.7,
     hoverOpacity: 1.0,
-    hoverColor: '#3498DB',
+    hoverColor: COLORS.info,
     hoverSize: edge.size * 1.5,
   }));
 }
@@ -191,7 +207,7 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
     const y = (position.y - 0.5) * scaleFactor;
     
     // Determine node visual properties based on type and category
-    let nodeType = position.type;
+    const nodeType = position.type;
     
     // Set uniform size for all non-mastered nodes
     const nodeSize = 8;
@@ -222,8 +238,8 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
       // Set node type to 'border' for mastered skills and goal path skills to use NodeBorderProgram
       type: (isMastered || isOnGoalPath) ? 'border' : 'circle',
       
-      // Border styling - black for goal path, mastered skills, and different colors for node types
-      borderColor: (isMastered || isOnGoalPath) ? '#000000' : (nodeType === 'core' ? '#E74C3C' : (nodeType === 'pathway' ? '#8E44AD' : '#34495E')),
+      // Border styling - emphasis for goal path/mastered, semantic colors for node types
+      borderColor: (isMastered || isOnGoalPath) ? COLORS.emphasis : (nodeType === 'core' ? COLORS.danger : (nodeType === 'pathway' ? COLORS.special : COLORS.dark)),
       
       // Additional properties for enhanced styling
       sphere_cost: skill.sphere_cost || 1,
@@ -233,17 +249,17 @@ export function getEnhancedGraphNodes(skills: any[], masteredSkills: string[], c
       // Visual enhancement properties - unmastered goal node gets extra thick border
       borderWidth: (isGoalNode && !isMastered) ? (console.log('🔧 Setting goal node border width to 10 for:', skill.name), 10) : (!isMastered && !isOnGoalPath ? (nodeType === 'core' ? 3 : (nodeType === 'cluster_center' ? 2 : 1)) : (isOnGoalPath && !isMastered ? 2 : undefined)),
       
-      // Shadow and glow effects for important nodes
+      // Shadow and glow effects for important nodes // design-token-lint-ignore
       shadowSize: nodeType === 'core' ? 4 : (nodeType === 'cluster_center' ? 2 : 0),
-      shadowColor: nodeType === 'core' ? 'rgba(231, 76, 60, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-      
+      shadowColor: nodeType === 'core' ? `${COLORS.danger}4D` : 'rgba(0, 0, 0, 0.2)', // design-token-lint-ignore
+
       // Label styling
       labelSize: nodeType === 'core' ? 14 : (nodeType === 'cluster_center' ? 12 : 10),
-      labelColor: '#2C3E50',
+      labelColor: COLORS.label,
       labelWeight: nodeType === 'core' ? 'bold' : 'normal',
-      
+
       // Hover effects
-      hoverColor: '#F39C12',
+      hoverColor: COLORS.highlight,
       hoverSize: nodeSize * 1.2
     });
   });
@@ -258,20 +274,18 @@ export function getEnhancedGraphEdges(connections: any[]) {
     source: conn.from,
     target: conn.to,
     size: 2,
-    color: '#95A5A6',
+    color: COLORS.muted,
     type: 'line',
-    
-    // Enhanced edge styling
+
     opacity: 0.7,
     hoverOpacity: 1.0,
-    hoverColor: '#3498DB',
+    hoverColor: COLORS.info,
     hoverSize: 3,
-    
-    // Arrow styling for directed connections
+
     arrow: {
       enabled: true,
       size: 6,
-      color: '#7F8C8D'
+      color: COLORS.muted
     }
   }));
 }

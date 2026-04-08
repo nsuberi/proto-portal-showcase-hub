@@ -1,0 +1,52 @@
+services:
+  # Flask application with SQLite
+  app:
+    build:
+      context: ../..
+      dockerfile: apps/code-dojo/Dockerfile
+    container_name: code-dojo-app
+    environment:
+      # Flask
+      FLASK_DEBUG: "False"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-dev-secret-key-change-in-production}
+      # Database (SQLite inside container)
+      DATABASE_URL: sqlite:///code_dojo.db
+      # URL prefix (for testing with /code-dojo prefix locally)
+      APPLICATION_ROOT: ${APPLICATION_ROOT:-}
+      # AI Configuration
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: claude-sonnet-4-20250514
+      # GitHub
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # LangSmith (optional)
+      LANGCHAIN_TRACING_V2: ${LANGCHAIN_TRACING_V2:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGCHAIN_PROJECT: ${LANGCHAIN_PROJECT:-code-dojo}
+    volumes:
+      - ./static:/app/static
+      - code_dojo_data:/app/instance
+    ports:
+      - "5002:5002"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - code-dojo-network
+    command: >
+      sh -c "
+        echo 'Initializing database...' &&
+        python3 seed_data.py --smart &&
+        echo 'Starting Flask application...' &&
+        python3 app.py
+      "
+
+volumes:
+  code_dojo_data:
+    driver: local
+
+networks:
+  code-dojo-network:
+    driver: bridge

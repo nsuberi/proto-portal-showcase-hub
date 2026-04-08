@@ -1,0 +1,79 @@
+:root {
+  /* Surface hierarchy (dark, layered glass sheets) */
+  --color-surface: #121317;
+  --color-surface-dim: #121317;
+  --color-surface-bright: #38393e;
+  --color-surface-container-lowest: #0d0e12;
+  --color-surface-container-low: #1a1b20;
+  --color-surface-container: #1f1f24;
+  --color-surface-container-high: #292a2e;
+  --color-surface-container-highest: #343439;
+  --color-surface-variant: #343439;
+
+  /* Primary (cool blue-silver) */
+  --color-primary: #bbc6e2;
+  --color-primary-container: #0f1a2e;
+  --color-primary-fixed: #d7e2ff;
+  --color-primary-fixed-dim: #bbc6e2;
+  --color-on-primary: #263046;
+  --color-on-primary-container: #78839c;
+  --color-on-primary-fixed: #101b30;
+
+  /* Secondary (terracotta) */
+  --color-secondary: #ffb4a5;
+  --color-secondary-container: #802918;
+  --color-on-secondary: #611205;
+  --color-on-secondary-container: #ff9a85;
+
+  /* Tertiary (amber) */
+  --color-tertiary: #ffba38;
+  --color-tertiary-container: #261700;
+  --color-on-tertiary: #432c00;
+  --color-on-tertiary-container: #ad7900;
+
+  /* Text / surface roles */
+  --color-on-surface: #e3e2e8;
+  --color-on-surface-variant: #c4c6cc;
+  --color-on-background: #e3e2e8;
+  --color-inverse-surface: #e3e2e8;
+  --color-inverse-on-surface: #2f3035;
+  --color-inverse-primary: #545e76;
+
+  /* Borders */
+  --color-outline: #8e9196;
+  --color-outline-variant: #44474c;
+
+  /* Error */
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  /* Phase accents */
+  --color-phase-1: #bbc6e2;
+  --color-phase-2: #ffba38;
+  --color-phase-3: #ffb4a5;
+  --color-phase-4: #a8d5ba;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Font Families */
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Newsreader", serif;
+  --font-label: "Inter", sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+}

@@ -1,0 +1,43 @@
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+extend-exclude = '''
+/(
+    \.venv
+  | __pycache__
+  | \.eggs
+  | build
+  | dist
+)/
+'''
+
+[tool.flake8]
+max-line-length = 120
+exclude = [".venv", "__pycache__", ".eggs", "build", "dist"]
+# E501 handled by black; W503 conflicts with black's formatting
+extend-ignore = ["E501", "W503"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [".venv", "__pycache__"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [".venv", "__pycache__", ".eggs", "build", "dist"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
