@@ -24,7 +24,7 @@ Analyze a brownfield codebase using Claude skills across three angles: the data 
 Build your own sample application using the same structural patterns as the brownfield project analyzed in Submission 1, guided by a product one-pager. Discovery and building are intentionally mixed — you're applying what you learned from the analysis to a new build.
 
 **Submission 3 — Discovery and Prototype Pitch:**
-Interview colleagues in your work or life. Process findings independently. Each builder pitches a prototype idea based on what they learned.
+Interview colleagues in your work or life. Process findings independently and with peers. Each builder pitches a prototype idea based on what they learned.
 
 **Submission 4 — Prototype and Updated Product Definition:**
 The completed prototype build and an updated product definition that reflects what you learned during the build. The product definition evolves — it is not the same document you started with.
