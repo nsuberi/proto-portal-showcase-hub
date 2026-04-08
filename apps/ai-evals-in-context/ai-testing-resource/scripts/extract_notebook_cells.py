@@ -24,7 +24,7 @@ def syntax_highlight(code: str, language: str = "python") -> str:
         lexer = get_lexer_by_name(language)
     except Exception:
         lexer = PythonLexer()
-    formatter = HtmlFormatter(nowrap=True, cssclass="highlight")
+    formatter = HtmlFormatter(nowrap=True, cssclass="highlight-dark")
     return _pygments_highlight(code, lexer, formatter)
 
 

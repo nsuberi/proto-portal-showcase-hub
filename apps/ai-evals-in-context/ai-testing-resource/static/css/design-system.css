@@ -3488,10 +3488,64 @@ body {
   width: 100%;
 }
 
+/* Dark code canvas (Codecademy-inspired) for workshop */
+.code-canvas--dark {
+  background: #101420;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.code-canvas--dark:hover {
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.5);
+}
+
+.code-canvas--dark .code-canvas__header {
+  background: #1a1f2e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.code-canvas--dark .code-canvas__filename {
+  color: #94a3b8;
+}
+
+.code-canvas--dark .code-canvas__badge {
+  background: #6366f1;
+  color: #e2e8f0;
+}
+
+.code-canvas--dark .code-canvas__gutter {
+  background: #0d1117;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.code-canvas--dark .gutter__line {
+  color: #3b4252;
+}
+
+.code-canvas--dark .gutter__line:hover {
+  color: #636e83;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.code-canvas--dark .code-canvas__code {
+  color: #e2e8f0;
+  background: #101420;
+}
+
+.code-canvas--dark .run-button {
+  background: #6366f1;
+}
+
+.code-canvas--dark .run-button:hover {
+  background: #818cf8;
+}
+
 /* Code canvas output area (dark terminal below code) */
 .code-canvas__output {
-  border-top: 1px solid var(--color-canvas-border);
-  background: #1e1e2e;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0d1117;
   color: #cdd6f4;
   font-family: var(--font-code);
   font-size: 13px;
