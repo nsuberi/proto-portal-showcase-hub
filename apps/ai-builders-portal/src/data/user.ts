@@ -42,7 +42,7 @@ export const mockUser: UserProfile = {
 
 export const mockGoals: Goal[] = [
   { date: "Jan 2026", text: "Learn to build AI apps" },
-  { date: "Feb 2026", text: "Build a chatbot for my team" },
+  { date: "Feb 2026", text: "Build a chatbot for my work" },
   {
     date: "Mar 2026",
     text: "Prototype a document triage tool that reduces initial review time for loan applications",
@@ -61,21 +61,21 @@ export const mockJourneyPhases: JourneyPhase[] = [
     complete: true,
   },
   {
-    title: "Guided building",
+    title: "Early building",
     insight:
       "Your devlog used \u2018trade-off\u2019 for the first time here \u2014 a shift from describing what to articulating why.",
     complete: true,
   },
   {
-    title: "Constrained project",
+    title: "Structured project",
     insight:
       "Pipeline architecture decision shows systems thinking. You chose testability over simplicity \u2014 and explained the reasoning.",
     complete: true,
   },
   {
-    title: "Organizational navigation",
+    title: "Real-world navigation",
     insight:
-      "Compliance team meeting was a turning point \u2014 your later devlogs reference governance sources directly.",
+      "Compliance review was a turning point \u2014 your later devlogs reference governance sources directly.",
     complete: true,
   },
   {
@@ -104,11 +104,11 @@ export const mockDevlogs: DevlogData[] = [
       design:
         "Replaced the results table with individual document cards that show the PII classification as a color-coded badge. The badge uses our design tokens \u2014 CONFIDENTIAL gets signal orange, INTERNAL gets instrument blue. Users said the table felt like a spreadsheet; the cards feel like they\u2019re reviewing actual documents.",
       organization:
-        "Met with the compliance team to validate our PII classification mapping. They flagged that RESTRICTED was added in v2.3 of the governance policy but wasn\u2019t in our config.",
+        "Reviewed our PII classification mapping against the governance policy. Flagged that RESTRICTED was added in v2.3 but wasn\u2019t in our config.",
       learned:
-        "The pipeline pattern made testing dramatically easier \u2014 I could write unit tests for each stage independently. Also learned that our compliance team maintains a classification matrix that I should have found earlier.",
+        "The pipeline pattern made testing dramatically easier \u2014 I could write unit tests for each stage independently. Also learned that there\u2019s a compliance classification matrix that I should have found earlier.",
       change:
-        "I would start with the compliance team conversation first, not after building the initial prototype.",
+        "I would start with the compliance review first, not after building the initial prototype.",
     },
   },
   {

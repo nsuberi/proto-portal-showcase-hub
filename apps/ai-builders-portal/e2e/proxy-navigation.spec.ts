@@ -21,17 +21,18 @@ test.describe("AI Builders Portal via dev proxy", () => {
     await expect(page.getByText("Rate lock dashboard")).toBeVisible();
     await expect(page.getByText("Compliance checker")).toBeVisible();
 
-    // Three phases
+    // Four levels
     await expect(
-      page.getByRole("heading", { name: "Three phases of development" }),
+      page.getByRole("heading", { name: "Four levels of development" }),
     ).toBeVisible();
-    await expect(page.getByText("Developing Intuition")).toBeVisible();
-    await expect(page.getByText("Exercising Judgment")).toBeVisible();
-    await expect(page.getByText("Navigating Independently")).toBeVisible();
+    await expect(page.getByText("Curiosity")).toBeVisible();
+    await expect(page.getByText("Clarity")).toBeVisible();
+    await expect(page.getByText("Capability")).toBeVisible();
+    await expect(page.getByText("Consistency")).toBeVisible();
 
-    // Four foundations
+    // Four practices
     await expect(
-      page.getByRole("heading", { name: "Four foundations" }),
+      page.getByRole("heading", { name: "Four practices" }),
     ).toBeVisible();
 
     // Featured challenge
@@ -75,8 +76,8 @@ test.describe("AI Builders Portal via dev proxy", () => {
       await expect(page.getByText(title)).toBeVisible();
     }
 
-    // Filter by "Guided" phase
-    await page.getByRole("button", { name: "Guided", exact: true }).click();
+    // Filter by "Curiosity" phase
+    await page.getByRole("button", { name: "Curiosity", exact: true }).click();
     await expect(
       page.getByText("Walk the terrain: Your first deployment"),
     ).toBeVisible();
@@ -171,11 +172,11 @@ test.describe("AI Builders Portal via dev proxy", () => {
     // Filter by AI tag
     await page.getByRole("button", { name: "AI", exact: true }).click();
     await expect(page.getByText("Loan document classifier")).toBeVisible();
-    await expect(page.getByText("Team onboarding wizard")).not.toBeVisible();
+    await expect(page.getByText("Onboarding wizard")).not.toBeVisible();
 
     // Reset
     await page.getByRole("button", { name: "All" }).click();
-    await expect(page.getByText("Team onboarding wizard")).toBeVisible();
+    await expect(page.getByText("Onboarding wizard")).toBeVisible();
   });
 
   test("sidebar navigation works across all pages", async ({ page }) => {

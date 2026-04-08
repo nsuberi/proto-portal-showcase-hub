@@ -26,6 +26,7 @@ export const tokens = {
     phase1: "#bbc6e2",
     phase2: "#ffba38",
     phase3: "#ffb4a5",
+    phase4: "#a8d5ba",
   },
   radius: {
     sm: "0.25rem",
@@ -51,7 +52,7 @@ export const tokens = {
   },
 } as const;
 
-export type Phase = 1 | 2 | 3;
+export type Phase = 1 | 2 | 3 | 4;
 export type ChallengeStatus = "not-started" | "in-progress" | "submitted" | "reviewed";
 export type ArtifactStatus = "running" | "building" | "error";
 export type RoomStatus = "upcoming" | "live";
@@ -59,9 +60,10 @@ export type DevlogSectionKey = "architecture" | "design" | "organization" | "lea
 export type DevlogSections = Partial<Record<DevlogSectionKey, string>>;
 
 export const phaseConfig = {
-  1: { accent: tokens.color.phase1, bg: "#0f1a2e", label: "Guided" },
-  2: { accent: tokens.color.phase2, bg: "#261700", label: "Constrained" },
-  3: { accent: tokens.color.phase3, bg: "#3e0500", label: "Discovery" },
+  1: { accent: tokens.color.phase1, bg: "#0f1a2e", label: "Curiosity" },
+  2: { accent: tokens.color.phase2, bg: "#261700", label: "Clarity" },
+  3: { accent: tokens.color.phase3, bg: "#3e0500", label: "Capability" },
+  4: { accent: tokens.color.phase4, bg: "#0a2016", label: "Consistency" },
 } as const;
 
 export const statusConfig = {
@@ -74,7 +76,7 @@ export const statusConfig = {
 export const devlogSectionMeta: Record<DevlogSectionKey, { label: string; icon: string }> = {
   architecture: { label: "Architecture decisions", icon: "deployed_code" },
   design: { label: "Design decisions", icon: "palette" },
-  organization: { label: "Organizational context", icon: "workspaces" },
+  organization: { label: "Context", icon: "workspaces" },
   learned: { label: "What I learned", icon: "school" },
   change: { label: "What I'd change", icon: "sync" },
 };

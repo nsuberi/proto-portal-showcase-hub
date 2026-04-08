@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 
 const phaseFilters: Array<{ label: string; value: Phase | null }> = [
   { label: "All", value: null },
-  { label: "Guided", value: 1 },
-  { label: "Constrained", value: 2 },
-  { label: "Discovery", value: 3 },
+  { label: "Curiosity", value: 1 },
+  { label: "Clarity", value: 2 },
+  { label: "Capability", value: 3 },
+  { label: "Consistency", value: 4 },
 ];
 
 const statusFilters: Array<{ label: string; value: ChallengeStatus | null }> = [
