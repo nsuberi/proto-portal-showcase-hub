@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loan Document Classifier</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #121317;
+    color: #e3e2e8;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .drop-zone {
+    border: 2px dashed #44474c;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 20px;
+  }
+  .drop-zone:hover, .drop-zone.active {
+    border-color: #bbc6e2;
+    background: rgba(187, 198, 226, 0.05);
+  }
+  .drop-zone p { font-size: 13px; color: #8e9196; }
+  .drop-zone .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+  .results { display: flex; flex-direction: column; gap: 10px; }
+  .doc-card {
+    background: #1a1b20;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease-out both;
+  }
+  .doc-card:nth-child(2) { animation-delay: 0.1s; }
+  .doc-card:nth-child(3) { animation-delay: 0.2s; }
+  .doc-card:nth-child(4) { animation-delay: 0.3s; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .doc-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .doc-info { flex: 1; min-width: 0; }
+  .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-type { font-size: 11px; color: #8e9196; margin-top: 2px; }
+  .confidence {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .high { background: #0f2e1a; color: #27C93F; }
+  .medium { background: #261700; color: #ffba38; }
+  .low { background: #2e0f0f; color: #ffb4ab; }
+  .progress-bar {
+    height: 3px; background: #292a2e; border-radius: 2px; overflow: hidden; margin-top: 6px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 2px;
+    animation: fill 1.2s ease-out both;
+  }
+  @keyframes fill { from { width: 0; } }
+  .btn {
+    background: #0f1a2e; color: #bbc6e2; border: 1px solid #44474c;
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background: #1a2640; border-color: #bbc6e2; }
+</style>
+</head>
+<body>
+  <h2>Document Classifier</h2>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">&#128196;</div>
+    <p>Drop documents here or click to classify</p>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <script>
+    const docTypes = [
+      { name: "W-2 Tax Form", type: "Income Verification", icon: "&#128203;", iconBg: "#0f1a2e", conf: 97, level: "high" },
+      { name: "Bank Statement Q4", type: "Asset Documentation", icon: "&#127974;", iconBg: "#261700", conf: 94, level: "high" },
+      { name: "Property Appraisal", type: "Collateral Valuation", icon: "&#127968;", iconBg: "#2e0f1a", conf: 88, level: "medium" },
+      { name: "Employment Letter", type: "Income Verification", icon: "&#128188;", iconBg: "#0f2e1a", conf: 72, level: "medium" },
+      { name: "Insurance Certificate", type: "Risk Documentation", icon: "&#128220;", iconBg: "#1a0f2e", conf: 61, level: "low" },
+    ];
+
+    const dropZone = document.getElementById("dropZone");
+    const results = document.getElementById("results");
+    let shown = false;
+
+    dropZone.addEventListener("click", () => {
+      if (shown) {
+        results.innerHTML = "";
+        shown = false;
+        dropZone.classList.remove("active");
+        return;
+      }
+      shown = true;
+      dropZone.classList.add("active");
+      results.innerHTML = "";
+
+      docTypes.forEach((doc, i) => {
+        const card = document.createElement("div");
+        card.className = "doc-card";
+        card.innerHTML = `
+          <div class="doc-icon" style="background:${doc.iconBg}">${doc.icon}</div>
+          <div class="doc-info">
+            <div class="doc-name">${doc.name}</div>
+            <div class="doc-type">${doc.type}</div>
+            <div class="progress-bar">
+              <div class="progress-fill ${doc.level}" style="width:${doc.conf}%;background:${doc.level === 'high' ? '#27C93F' : doc.level === 'medium' ? '#ffba38' : '#ffb4ab'}"></div>
+            </div>
+          </div>
+          <span class="confidence ${doc.level}">${doc.conf}%</span>
+        `;
+        results.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html>

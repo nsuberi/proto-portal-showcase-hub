@@ -60,6 +60,7 @@ resource "aws_route53_record" "portfolio" {
 
 # AAAA record for IPv6 support
 resource "aws_route53_record" "portfolio_ipv6" {
+  zone_id = data.aws_route53_zone.main.zone_id
   name    = "portfolio.cookinupideas.com"
   type    = "AAAA"
 

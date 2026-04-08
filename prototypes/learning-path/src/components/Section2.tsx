@@ -59,11 +59,8 @@ export default function Section2({ selectedRecipe, recipeProgress, onToggleProgr
                             ? "text-primary"
                             : "text-slate-800 hover:bg-slate-50"
                         )}
-                        onClick={() => {
-                          onSelectRecipe(r);
-                          onToggleProgress(r.name);
-                        }}
-                        title={`Click to increment progress for ${r.name}`}
+                        onClick={() => onSelectRecipe(r)}
+                        title={`View details for ${r.name}`}
                       >
                         {r.name}
                       </button>

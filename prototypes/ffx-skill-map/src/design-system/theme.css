@@ -64,6 +64,13 @@
     --skill-default-border: 240 3.7% 15.9%;
     --skill-default-text: 240 5% 64.9%;
     --skill-default-solid: 240 5% 64.9%;
+
+    /* FFX chart color overrides */
+    --chart-1: hsl(213, 94%, 58%);
+    --chart-2: hsl(142, 76%, 36%);
+    --chart-3: hsl(0, 84%, 50%);
+    --chart-4: hsl(263, 70%, 55%);
+    --chart-5: hsl(48, 96%, 43%);
   }
 
   * {
@@ -80,14 +87,12 @@
       radial-gradient(circle at 75% 75%, hsl(var(--info) / 0.02) 0%, transparent 50%);
   }
 
-  /* Prevent dark mode activation - force light theme */
-  .dark {
-    /* Override to use light theme even if dark class is present */
-    --background: var(--background);
-    --foreground: var(--foreground);
-    --card: var(--card);
-    --card-foreground: var(--card-foreground);
-  }
+  /*
+   * Dark mode policy: this prototype is light-only.
+   * The :root block above sets all CSS variables to light values,
+   * which takes precedence over the base tokens.css .dark selector.
+   * No .dark override needed — the theme is enforced at the variable level.
+   */
 }
 
 /* FFX-specific component utilities that extend the shared design system */

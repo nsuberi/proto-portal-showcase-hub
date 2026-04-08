@@ -1,0 +1,30 @@
+.venv/
+test_venv*/
+*venv*/
+.pytest_cache/
+__pycache__/
+*.pyc
+chroma_db/
+chroma/
+*.db
+.env
+.env.docker
+
+# AWS credentials - NEVER commit
+.aws/
+aws-credentials.env
+*.pem
+*.key
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.plan
+terraform/*.tfvars
+!terraform/*.tfvars.example
+terraform/.terraform.lock.hcl
+terraform/crash.log
+
+# DeepEval
+.deepeval/

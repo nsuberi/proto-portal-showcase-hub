@@ -1,0 +1,522 @@
+{
+  "_meta": {
+    "source": "Codecademy web Nov 2025 — 405 screenshots sampled",
+    "extractedDate": "2026-04-05",
+    "notes": "Two distinct modes: light (marketing/browse/settings) and dark (learning environment/code editor/quizzes). The platform uses a warm, approachable light mode with a serious, focused dark mode for active learning."
+  },
+
+  "colors": {
+    "primary": {
+      "value": "hsl(48, 100%, 50%)",
+      "hex": "#FFD300",
+      "role": "Primary CTAs, progress bars, active indicators, countdown timers, promo banners. The signature Codecademy yellow."
+    },
+    "secondary": {
+      "value": "hsl(252, 100%, 44%)",
+      "hex": "#5533CC",
+      "role": "Secondary actions (Sign Up buttons, filled buttons), category accents, social auth highlight (Facebook), certification badges, course type indicators. Deep indigo-violet."
+    },
+    "tertiary": {
+      "value": "hsl(252, 60%, 55%)",
+      "hex": "#6B52AE",
+      "role": "Skill tracking headers, sidebar active indicators, lighter purple accents on skill/subskill pages."
+    },
+
+    "background": {
+      "light": {
+        "page": { "value": "hsl(30, 60%, 95%)", "hex": "#FBF3EA", "role": "Main page background — warm cream/beige, not stark white" },
+        "surface": { "value": "hsl(0, 0%, 100%)", "hex": "#FFFFFF", "role": "Card backgrounds, form containers, modal backgrounds" },
+        "elevated": { "value": "hsl(30, 40%, 97%)", "hex": "#FDF7F2", "role": "Slightly raised sections, alternating content blocks" },
+        "muted": { "value": "hsl(30, 20%, 92%)", "hex": "#F0ECE7", "role": "Input field backgrounds, disabled areas" }
+      },
+      "dark": {
+        "page": { "value": "hsl(222, 40%, 14%)", "hex": "#151B2B", "role": "Primary dark mode background — deep navy, not pure black" },
+        "surface": { "value": "hsl(222, 35%, 18%)", "hex": "#1B2236", "role": "Card/panel backgrounds in dark mode, sidebar, kanban columns" },
+        "elevated": { "value": "hsl(222, 30%, 22%)", "hex": "#242D42", "role": "Hover states, active items, elevated cards in dark mode" },
+        "editor": { "value": "hsl(222, 45%, 10%)", "hex": "#0E1420", "role": "Code editor background — darker than page" },
+        "overlay": { "value": "hsl(222, 50%, 12%)", "hex": "#101828", "role": "Quiz backgrounds, celebration screens, focus overlays" }
+      }
+    },
+
+    "text": {
+      "light": {
+        "heading": { "value": "hsl(0, 0%, 7%)", "hex": "#111111", "role": "Page titles, section headings — near-black" },
+        "body": { "value": "hsl(0, 0%, 20%)", "hex": "#333333", "role": "Body text, descriptions, form labels" },
+        "muted": { "value": "hsl(0, 0%, 45%)", "hex": "#737373", "role": "Metadata, timestamps, secondary info, placeholder text" },
+        "link": { "value": "hsl(252, 100%, 44%)", "hex": "#5533CC", "role": "Inline links, navigation links" }
+      },
+      "dark": {
+        "heading": { "value": "hsl(0, 0%, 100%)", "hex": "#FFFFFF", "role": "Headings and titles in dark mode" },
+        "body": { "value": "hsl(220, 15%, 75%)", "hex": "#B4BCC8", "role": "Body text in dark mode" },
+        "muted": { "value": "hsl(220, 10%, 55%)", "hex": "#838D9E", "role": "Secondary text, metadata in dark mode" },
+        "link": { "value": "hsl(48, 100%, 50%)", "hex": "#FFD300", "role": "Links in dark mode use primary yellow" },
+        "code": {
+          "keyword": { "value": "hsl(330, 80%, 65%)", "hex": "#E85D9C", "role": "HTML tags, CSS properties — pink/magenta" },
+          "string": { "value": "hsl(80, 70%, 55%)", "hex": "#A3C944", "role": "String literals — yellow-green" },
+          "attribute": { "value": "hsl(35, 90%, 60%)", "hex": "#E8A33D", "role": "Attribute names — orange" },
+          "comment": { "value": "hsl(220, 10%, 50%)", "hex": "#777F8E", "role": "Comments — muted gray" },
+          "value": { "value": "hsl(180, 60%, 55%)", "hex": "#40B5B5", "role": "Values, numbers — teal/cyan" }
+        }
+      }
+    },
+
+    "accent": {
+      "purple": { "value": "hsl(252, 100%, 44%)", "role": "Courses, certifications, 'Pro' features" },
+      "yellow": { "value": "hsl(48, 100%, 50%)", "role": "Primary actions, progress, streaks, free content" },
+      "orange": { "value": "hsl(25, 95%, 55%)", "role": "Illustrations, decorative elements, quiz personality results" },
+      "teal": { "value": "hsl(175, 60%, 45%)", "role": "Success states, completion indicators, review complete text" },
+      "blue": { "value": "hsl(210, 70%, 50%)", "role": "Informational, quiz option borders, selected states in dark mode" },
+      "green": { "value": "hsl(145, 60%, 42%)", "role": "Success badges, completed tasks, correct answers" }
+    },
+
+    "feedback": {
+      "success": { "value": "hsl(145, 60%, 42%)", "hex": "#2B9B4E", "role": "Correct answers, completed steps, success messages" },
+      "error": { "value": "hsl(0, 75%, 55%)", "hex": "#D94444", "role": "Form validation errors, incorrect answers, password warnings" },
+      "warning": { "value": "hsl(38, 95%, 55%)", "hex": "#F0A830", "role": "Caution states, 'Stuck?' prompts" },
+      "info": { "value": "hsl(210, 70%, 50%)", "hex": "#3080CC", "role": "Hints, informational banners, tooltips" }
+    },
+
+    "interactive": {
+      "hover": "Slight darkening of fill color or subtle background shift (observed on nav items, buttons)",
+      "focus": "Visible outline — appears to use browser default or thin dark outline (inferred)",
+      "active": "Background fill for selected nav items, bold weight for active sidebar links, left border accent for active settings items",
+      "disabled": "Reduced opacity (~0.5) and desaturated colors (inferred from grayed-out pricing features)"
+    }
+  },
+
+  "typography": {
+    "families": {
+      "sans": "'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "mono": "'Fira Mono', 'Source Code Pro', 'Menlo', monospace",
+      "notes": "Headings use a slightly heavier geometric sans (possibly Apercu or custom). Body uses Graphik or similar grotesque. Code editor uses a dedicated monospace. All inferred — exact font names may differ."
+    },
+    "scale": {
+      "xs": { "size": "11px", "lineHeight": "16px", "usage": "Badge labels, tiny metadata, countdown timer digits" },
+      "sm": { "size": "13px", "lineHeight": "18px", "usage": "Card metadata, footer links, breadcrumbs, form hints" },
+      "base": { "size": "15px", "lineHeight": "22px", "usage": "Body text, form labels, nav items, descriptions" },
+      "md": { "size": "17px", "lineHeight": "24px", "usage": "Card titles, subheadings, sidebar items" },
+      "lg": { "size": "20px", "lineHeight": "28px", "usage": "Section headings, course titles in cards" },
+      "xl": { "size": "24px", "lineHeight": "32px", "usage": "Page section headings ('Start learning', 'Key Features')" },
+      "2xl": { "size": "30px", "lineHeight": "38px", "usage": "Page titles ('Checkout', 'Mail Settings', 'Explore the catalog')" },
+      "3xl": { "size": "36px", "lineHeight": "44px", "usage": "Hero headings, completion celebration titles" },
+      "4xl": { "size": "48px", "lineHeight": "56px", "usage": "Landing page hero ('Develop your /skills'), pricing ($14.99)" },
+      "5xl": { "size": "56px", "lineHeight": "64px", "usage": "Large display text on marketing pages (inferred)" }
+    },
+    "weights": {
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800,
+      "usage": {
+        "400": "Body text, descriptions, metadata",
+        "500": "Nav items, card subtitles, form labels",
+        "600": "Card titles, button labels, sidebar active items",
+        "700": "Page headings, section titles, prices",
+        "800": "Hero text, marketing headlines"
+      }
+    },
+    "letterSpacing": {
+      "tight": "-0.02em — used on large display headings (hero text)",
+      "normal": "0 — body text",
+      "wide": "0.02em — uppercase badge labels, 'SAVE $100', skill level labels (inferred)"
+    }
+  },
+
+  "spacing": {
+    "baseUnit": "4px",
+    "scale": {
+      "0": "0px",
+      "1": "4px",
+      "2": "8px",
+      "3": "12px",
+      "4": "16px",
+      "5": "20px",
+      "6": "24px",
+      "8": "32px",
+      "10": "40px",
+      "12": "48px",
+      "16": "64px",
+      "20": "80px",
+      "24": "96px"
+    },
+    "semantic": {
+      "element": {
+        "gap": "8px",
+        "notes": "Gap between icon and label, between badge items, between inline elements"
+      },
+      "component": {
+        "paddingX": "16px",
+        "paddingY": "12px",
+        "gap": "12px",
+        "notes": "Internal padding of cards, buttons, form inputs"
+      },
+      "card": {
+        "padding": "24px",
+        "gap": "16px",
+        "notes": "Card content padding, gap between card sections"
+      },
+      "section": {
+        "gap": "32px",
+        "margin": "48px",
+        "notes": "Between page sections (e.g., 'Start learning' to course cards)"
+      },
+      "page": {
+        "paddingX": "24px",
+        "paddingXDesktop": "64px",
+        "maxWidth": "1200px",
+        "notes": "Page-level horizontal padding, content max-width"
+      }
+    },
+    "grid": {
+      "cardGap": "16px",
+      "columnGap": "24px",
+      "sidebarWidth": "240px",
+      "notes": "Card grids use 16px gap. Sidebar + main layout with ~240px sidebar."
+    }
+  },
+
+  "borderRadius": {
+    "none": "0px",
+    "xs": "2px",
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "2xl": "24px",
+    "full": "9999px",
+    "usage": {
+      "0px": "Sharp corners on some section dividers, table borders",
+      "4px": "Small badges, tags, code inline blocks, checkboxes",
+      "8px": "Buttons, form inputs, cards, modals, dropdowns — the primary radius",
+      "12px": "Larger cards, pricing panels, course detail hero cards",
+      "16px": "Promo banners, featured content cards",
+      "24px": "Social auth buttons, countdown timer container",
+      "9999px": "Pill badges ('New', 'Pro'), avatar circles, progress dots, toggle switches"
+    }
+  },
+
+  "shadows": {
+    "none": "none",
+    "subtle": {
+      "value": "0 1px 3px rgba(0, 0, 0, 0.06)",
+      "usage": "Cards on light backgrounds — very subtle, relying more on border than shadow"
+    },
+    "medium": {
+      "value": "0 4px 12px rgba(0, 0, 0, 0.08)",
+      "usage": "Dropdowns, tooltips, AI assistant chat panel"
+    },
+    "large": {
+      "value": "0 8px 24px rgba(0, 0, 0, 0.12)",
+      "usage": "Modals, share dialogs, interview builder overlay"
+    },
+    "notes": "Codecademy uses shadows sparingly in light mode — most depth is created through background color contrast (cream page bg vs white card bg) and thin borders. Dark mode uses no visible shadows; depth is from background luminance tiers."
+  },
+
+  "borders": {
+    "thin": {
+      "value": "1px solid hsl(30, 15%, 85%)",
+      "usage": "Card borders on light backgrounds, form input borders, table dividers, footer separator"
+    },
+    "medium": {
+      "value": "2px solid hsl(30, 15%, 80%)",
+      "usage": "Active/focused input borders, selected card emphasis"
+    },
+    "accent": {
+      "value": "3px solid hsl(252, 100%, 44%)",
+      "usage": "Active sidebar item left-border indicator, selected filter highlight"
+    },
+    "dark": {
+      "value": "1px solid hsl(222, 25%, 25%)",
+      "usage": "Card borders in dark mode, quiz option borders, dividers in editor"
+    },
+    "darkAccent": {
+      "value": "1px solid hsl(210, 60%, 45%)",
+      "usage": "Selected quiz option border in dark mode — lighter blue"
+    }
+  },
+
+  "components": {
+    "navbar": {
+      "light": {
+        "background": "surface (white)",
+        "height": "56px",
+        "borderBottom": "1px solid hsl(30, 15%, 85%)",
+        "logoStyle": "Outlined bracket wordmark with code brackets: [code]cademy",
+        "navItems": "text-base, medium weight, dropdown arrows on Catalog/Resources/Community/Pricing",
+        "rightSide": "Search icon, notification bell (logged in), avatar (logged in) OR 'Log In' text + 'Sign Up' filled button (logged out)"
+      },
+      "promoBanner": {
+        "background": "primary yellow",
+        "textColor": "dark/black",
+        "height": "40px",
+        "position": "Above main navbar, dismissible (x)",
+        "contains": "Countdown timer (days:hours:min:sec in bordered segments) + promo text + CTA button"
+      }
+    },
+
+    "card": {
+      "course": {
+        "background": "surface",
+        "border": "thin",
+        "radius": "md (8px)",
+        "padding": "card (24px)",
+        "structure": "Optional colored top-bar accent | Title (semibold) | Description (body text, 2-3 lines) | Footer: [difficulty badge] [duration] [certificate icon]",
+        "topAccent": "Some cards have a colored top border (yellow for free, purple for pro courses)"
+      },
+      "event": {
+        "background": "surface",
+        "border": "thin",
+        "radius": "md (8px)",
+        "padding": "card (24px)",
+        "structure": "Title (bold) | Date + time | Description (truncated) | Attendee count bottom-right",
+        "notes": "Grid layout, 4 columns on desktop"
+      },
+      "pricing": {
+        "background": "surface or primary yellow (featured plan)",
+        "border": "thin or 2px solid dark (featured)",
+        "radius": "lg (12px)",
+        "padding": "32px",
+        "structure": "Plan name | Price ($XX.99/mo, 4xl) | Billing note | Feature list with check/x icons"
+      },
+      "kanbanTask": {
+        "background": "dark.elevated",
+        "border": "none (uses background contrast)",
+        "radius": "md (8px)",
+        "padding": "component (16px)",
+        "structure": "Checkbox icon (purple when done) | Title (semibold) | Description (muted, truncated)"
+      }
+    },
+
+    "button": {
+      "primary": {
+        "background": "primary yellow hsl(48, 100%, 50%)",
+        "text": "hsl(0, 0%, 7%) — dark/black text on yellow",
+        "radius": "md (8px)",
+        "paddingX": "24px",
+        "paddingY": "12px",
+        "fontWeight": 600,
+        "fontSize": "base",
+        "border": "none",
+        "usage": "Start, Get Started, What's Next?, Explore Bootcamps, Start 7-day free trial, Reserve your seat"
+      },
+      "secondary": {
+        "background": "secondary purple hsl(252, 100%, 44%)",
+        "text": "white",
+        "radius": "md (8px)",
+        "paddingX": "24px",
+        "paddingY": "12px",
+        "fontWeight": 600,
+        "usage": "Sign Up, Submit answer, Sign Up (in navbar), Evaluate, Resume, Learn"
+      },
+      "outline": {
+        "background": "transparent",
+        "text": "hsl(0, 0%, 7%)",
+        "border": "2px solid hsl(0, 0%, 7%)",
+        "radius": "md (8px)",
+        "paddingX": "24px",
+        "paddingY": "10px",
+        "fontWeight": 600,
+        "usage": "Learn More, Save and exit, I do not know, Back, Compare plans, View path"
+      },
+      "ghost": {
+        "background": "transparent",
+        "text": "secondary purple",
+        "border": "none",
+        "textDecoration": "underline on hover",
+        "usage": "Skip personalization, View Your Certificate, inline text links acting as buttons"
+      },
+      "dark": {
+        "background": "primary yellow",
+        "text": "dark/black",
+        "radius": "md (8px)",
+        "usage": "CTAs on dark backgrounds (same yellow but contextual — What's Next?, Save + Run)"
+      },
+      "sizes": {
+        "sm": { "paddingX": "16px", "paddingY": "8px", "fontSize": "sm" },
+        "md": { "paddingX": "24px", "paddingY": "12px", "fontSize": "base" },
+        "lg": { "paddingX": "32px", "paddingY": "14px", "fontSize": "md" }
+      }
+    },
+
+    "formInput": {
+      "background": "surface (white)",
+      "border": "thin — 1px solid hsl(30, 15%, 85%)",
+      "borderFocus": "2px solid hsl(0, 0%, 20%) (inferred)",
+      "radius": "sm (4px)",
+      "padding": "12px 16px",
+      "fontSize": "base",
+      "labelPosition": "above",
+      "labelWeight": 600,
+      "errorColor": "feedback.error",
+      "errorPosition": "Below input, small text"
+    },
+
+    "sidebar": {
+      "authenticated": {
+        "background": "surface (white) or light.elevated",
+        "width": "240px",
+        "items": "Icon + label, base size, medium weight",
+        "activeIndicator": "Left border accent (3px purple), bold weight, possibly light purple bg tint",
+        "sections": ["Dashboard", "My learning", "Skill tracking (New badge)", "Events", "Projects", "Workspaces"]
+      },
+      "settings": {
+        "background": "page bg",
+        "items": "Text only, base size",
+        "activeIndicator": "Left border accent (3px purple/dark), bold weight",
+        "sections": ["Account", "Goal Settings", "Mail Settings", "Payment and Plan", "Linked Accounts", "Delete Account"]
+      }
+    },
+
+    "codeEditor": {
+      "layout": "Three-panel: left sidebar (file tree) | center (code + tabs) | right (preview/output)",
+      "fileTree": {
+        "background": "dark.surface",
+        "activeFile": "primary yellow background tint",
+        "textColor": "white"
+      },
+      "editorPane": {
+        "background": "dark.editor",
+        "lineNumbers": "muted gray, right-aligned",
+        "activeLine": "subtle highlight row",
+        "tabBar": "File name tabs at top, close button, active tab highlighted"
+      },
+      "previewPane": {
+        "background": "white (renders HTML output)",
+        "toolbar": "URL bar with localhost:8000, back/forward/reload, expand buttons"
+      },
+      "toolbar": {
+        "topBar": "dark.surface bg, centered breadcrumb (my_directory / ProjectName), right side: Get Unstuck, Tools, Share (green outline), Avatar",
+        "saveRun": "Primary yellow 'Save + Run' button, bottom-right of editor pane"
+      }
+    },
+
+    "progressIndicators": {
+      "lessonProgress": {
+        "type": "Segmented colored bar (in lesson nav header)",
+        "colors": "Green/yellow segments for completed, gray for pending",
+        "height": "4px thin bars"
+      },
+      "xpBar": {
+        "type": "Horizontal filled bar",
+        "fill": "primary yellow",
+        "background": "muted gray",
+        "height": "8px"
+      },
+      "stepIndicator": {
+        "type": "Numbered circles (1, 2, 3) in onboarding quiz",
+        "active": "Dark fill with white number",
+        "inactive": "Outline only"
+      },
+      "taskCheckbox": {
+        "type": "Circular checkbox",
+        "completed": "Filled purple with white check",
+        "incomplete": "Outline circle"
+      },
+      "pagination": {
+        "type": "Centered 'X / Y' counter with thin progress bar below",
+        "usage": "Quiz questions, lesson steps"
+      }
+    },
+
+    "badge": {
+      "level": {
+        "variants": ["Beginner Friendly", "Intermediate", "Advanced"],
+        "style": "Outlined pill, small text, icon prefix (person/chart icon)",
+        "radius": "full (pill)"
+      },
+      "tag": {
+        "style": "Outlined rectangle, small text, border-radius sm",
+        "usage": "Topic tags on course/subskill pages: 'HTML & CSS', 'Mobile development', 'Web design'",
+        "colors": "Light: dark text on white bg with dark border. Dark: muted text on transparent with muted border"
+      },
+      "status": {
+        "new": { "background": "secondary purple", "text": "white", "shape": "pill" },
+        "pro": { "background": "secondary purple", "text": "white", "shape": "pill" },
+        "free": { "background": "transparent", "text": "body", "border": "thin", "shape": "pill" }
+      },
+      "xp": {
+        "style": "Inline '64 XP' or '+100 XP' with yellow text in dark mode",
+        "shape": "inline text, no container"
+      }
+    },
+
+    "modal": {
+      "background": "surface (white)",
+      "radius": "lg (12px)",
+      "padding": "32px",
+      "closeButton": "Top-right X icon",
+      "overlay": "rgba(0, 0, 0, 0.5) backdrop",
+      "shadow": "large",
+      "maxWidth": "560px"
+    },
+
+    "footer": {
+      "background": "page bg (cream) with top border",
+      "layout": "6-column grid: Company, Resources, Plans, Subjects, Languages, Career building + Community",
+      "linkStyle": "sm text, muted color, no underline until hover",
+      "bottomBar": "Social icons (X, Facebook, Instagram, YouTube) + App Store / Google Play badges"
+    },
+
+    "chatPanel": {
+      "position": "Fixed bottom-right overlay",
+      "background": "surface (white)",
+      "radius": "lg (12px)",
+      "shadow": "large",
+      "header": "Gradient purple top bar with 'AI Learning Assistant' label",
+      "messageStyle": "Chat bubbles — user right-aligned, AI left-aligned",
+      "inputBar": "Bottom text input with send button"
+    },
+
+    "tabs": {
+      "style": "Underline tabs — text with bottom border accent on active",
+      "activeColor": "secondary purple underline, bold text",
+      "inactiveColor": "muted text, no underline",
+      "usage": "Catalog filters (All, Languages, Subjects), event filters (Upcoming, Your events, Past events), code editor file tabs"
+    },
+
+    "countdown": {
+      "background": "dark/black",
+      "digits": "White text in individually bordered segments (days:hours:min:sec)",
+      "separators": "Colon between segments",
+      "radius": "sm (4px) per digit container"
+    }
+  },
+
+  "layout": {
+    "patterns": {
+      "marketingHero": "Full-width dark/image background, centered or left-aligned heading + CTA, optional right-side image/illustration",
+      "browseGrid": "Sidebar filters (left) + main content area with card grid (2-4 columns responsive)",
+      "courseDetail": "Full-width colored header (purple/yellow accent) + white content below, right-side 'This course includes' card",
+      "learningEnvironment": "Dark mode, three-panel: left instruction sidebar + center code editor + right preview",
+      "settingsPage": "Left nav sidebar + right content area, clean form layouts",
+      "dashboardHome": "Left nav sidebar + main area with stacked sections: promo banner, recommended courses grid, progress cards",
+      "quizFullscreen": "Dark mode, centered content, question + answer options stacked, bottom pagination"
+    },
+    "breakpoints": {
+      "mobile": "< 640px — single column, hamburger nav, stacked cards",
+      "tablet": "640px - 1024px — 2-column grids, sidebar may collapse",
+      "desktop": "1024px+ — full sidebar, 3-4 column grids, three-panel editor",
+      "notes": "Inferred from page structure, not measured"
+    },
+    "maxContentWidth": "1200px",
+    "gutters": {
+      "mobile": "16px",
+      "desktop": "24px"
+    }
+  },
+
+  "illustrations": {
+    "style": "Flat vector with limited palette — yellow, orange, navy, white. Geometric shapes. Pencil/book/laptop/trophy motifs.",
+    "celebrationScreen": "Confetti particles (multicolor small shapes) on dark navy background with large yellow trophy icon",
+    "personalityQuiz": "Large orange geometric shapes (triangles) for personality result illustrations",
+    "onboarding": "Simple flat icons — book, mobile device, certificate — in yellow/orange/navy"
+  },
+
+  "animation": {
+    "notes": "Inferred from static screenshots only",
+    "textRotation": "Hero 'Develop your /skills' appears to cycle through words (skills, career, etc.) — typewriter/rotation effect",
+    "confetti": "Celebration screen likely uses animated confetti particles",
+    "transitions": "Hover states likely use ~150-200ms ease transitions on buttons and cards (standard practice)"
+  }
+}

@@ -72,6 +72,12 @@ export const baseTailwindConfig: Partial<Config> = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Chart colors from design tokens
+        "chart-1": "var(--chart-1)",
+        "chart-2": "var(--chart-2)",
+        "chart-3": "var(--chart-3)",
+        "chart-4": "var(--chart-4)",
+        "chart-5": "var(--chart-5)",
       },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
@@ -87,6 +93,12 @@ export const baseTailwindConfig: Partial<Config> = {
         medium: "var(--shadow-medium)",
         large: "var(--shadow-large)",
         primary: "var(--shadow-primary)",
+      },
+      dropShadow: {
+        "glow-memory": "var(--glow-memory)",
+        "glow-skill": "var(--glow-skill)",
+        "glow-tool": "var(--glow-tool)",
+        "glow-concept": "var(--glow-concept)",
       },
       transitionTimingFunction: {
         smooth: "var(--transition-smooth)",
@@ -123,10 +135,40 @@ export const baseTailwindConfig: Partial<Config> = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "slide-up": {
+          from: { transform: "translateY(12px)" },
+          to: { transform: "translateY(0)" },
+        },
+        "slide-down": {
+          from: { transform: "translateY(-12px)" },
+          to: { transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { transform: "scale(0.9)" },
+          to: { transform: "scale(1)" },
+        },
+        "fade-slide-up": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both",
+        "slide-down": "slide-down 0.4s cubic-bezier(0.4, 0, 0.2, 1) both",
+        "scale-in": "scale-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) both",
+        "fade-slide-up": "fade-slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both",
+        "fade-scale-in": "fade-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both",
       },
     },
   },

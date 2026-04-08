@@ -28,11 +28,11 @@
     --input: 25 19% 85%;
     --ring: 207 51% 22%;
     --radius: 0.5rem;
-    --chart-1: 207 51% 22%; /* #1B3C53 */
-    --chart-2: 212 31% 39%; /* #456882 */
-    --chart-3: 25 19% 77%; /* #D2C1B6 */
-    --chart-4: 25 44% 96%; /* #F9F3EF */
-    --chart-5: 207 51% 30%; /* Slightly lighter dark blue */
+    --chart-1: hsl(207, 51%, 22%);
+    --chart-2: hsl(212, 31%, 39%);
+    --chart-3: hsl(25, 19%, 77%);
+    --chart-4: hsl(25, 44%, 96%);
+    --chart-5: hsl(207, 51%, 30%);
   }
 
   .dark {

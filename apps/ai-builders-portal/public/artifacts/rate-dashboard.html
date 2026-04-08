@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rate Lock Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #121317;
+    color: #e3e2e8;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .rate-card {
+    background: #1a1b20;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .rate-card:hover { transform: translateY(-2px); }
+  .rate-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #8e9196; margin-bottom: 6px; }
+  .rate-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
+  .rate-delta { font-size: 11px; margin-top: 4px; }
+  .up { color: #27C93F; }
+  .down { color: #ffb4ab; }
+  .chart-container {
+    background: #1a1b20;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .chart-title { font-size: 12px; font-weight: 500; }
+  .chart-pills { display: flex; gap: 6px; }
+  .pill {
+    font-size: 10px; padding: 3px 10px; border-radius: 20px;
+    background: #292a2e; color: #8e9196; cursor: pointer; border: none;
+    transition: all 0.2s;
+  }
+  .pill.active { background: #0f1a2e; color: #bbc6e2; }
+  svg { width: 100%; height: 120px; }
+  .grid-line { stroke: #292a2e; stroke-width: 1; }
+  .line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .area { opacity: 0.1; }
+  .dot { r: 3; transition: r 0.2s; }
+  .dot:hover { r: 5; }
+  .legend { display: flex; gap: 16px; margin-top: 10px; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8e9196; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <h2>Rate Lock Dashboard</h2>
+
+  <div class="cards">
+    <div class="rate-card">
+      <div class="rate-label">30-yr Fixed</div>
+      <div class="rate-value" style="color:#bbc6e2">6.87%</div>
+      <div class="rate-delta down">&#9660; 0.03</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-label">15-yr Fixed</div>
+      <div class="rate-value" style="color:#ffba38">6.12%</div>
+      <div class="rate-delta up">&#9650; 0.01</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-label">5/1 ARM</div>
+      <div class="rate-value" style="color:#ffb4a5">5.94%</div>
+      <div class="rate-delta down">&#9660; 0.05</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <span class="chart-title">Rate Trends</span>
+      <div class="chart-pills">
+        <button class="pill active" onclick="setRange(this)">1W</button>
+        <button class="pill" onclick="setRange(this)">1M</button>
+        <button class="pill" onclick="setRange(this)">3M</button>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 400 120" preserveAspectRatio="none"></svg>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#bbc6e2"></div>30-yr</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffba38"></div>15-yr</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffb4a5"></div>5/1 ARM</div>
+    </div>
+  </div>
+
+  <script>
+    const data30 = [6.92, 6.95, 6.90, 6.88, 6.91, 6.89, 6.87];
+    const data15 = [6.08, 6.10, 6.14, 6.11, 6.09, 6.13, 6.12];
+    const dataARM = [6.01, 5.98, 5.95, 5.99, 5.96, 5.97, 5.94];
+
+    function drawChart() {
+      const svg = document.getElementById("chart");
+      const w = 400, h = 120, pad = 10;
+      const all = [...data30, ...data15, ...dataARM];
+      const min = Math.min(...all) - 0.05;
+      const max = Math.max(...all) + 0.05;
+
+      let html = "";
+      // grid lines
+      for (let i = 0; i < 4; i++) {
+        const y = pad + (i / 3) * (h - pad * 2);
+        html += `<line class="grid-line" x1="${pad}" y1="${y}" x2="${w - pad}" y2="${y}" />`;
+      }
+
+      const colors = ["#bbc6e2", "#ffba38", "#ffb4a5"];
+      [data30, data15, dataARM].forEach((series, si) => {
+        const points = series.map((v, i) => {
+          const x = pad + (i / (series.length - 1)) * (w - pad * 2);
+          const y = pad + ((max - v) / (max - min)) * (h - pad * 2);
+          return `${x},${y}`;
+        });
+        const pathD = "M" + points.join(" L");
+        const areaD = pathD + ` L${w - pad},${h - pad} L${pad},${h - pad} Z`;
+        html += `<path class="area" d="${areaD}" fill="${colors[si]}" />`;
+        html += `<path class="line" d="${pathD}" stroke="${colors[si]}" style="stroke-dasharray:${w};stroke-dashoffset:${w};animation:draw 1.5s ease-out ${si * 0.2}s forwards" />`;
+        series.forEach((v, i) => {
+          const x = pad + (i / (series.length - 1)) * (w - pad * 2);
+          const y = pad + ((max - v) / (max - min)) * (h - pad * 2);
+          html += `<circle class="dot" cx="${x}" cy="${y}" fill="${colors[si]}" style="opacity:0;animation:fadeIn 0.3s ${0.8 + si * 0.2 + i * 0.05}s forwards" />`;
+        });
+      });
+
+      svg.innerHTML = html;
+    }
+
+    // inject animation keyframes
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes draw { to { stroke-dashoffset: 0; } }
+      @keyframes fadeIn { to { opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+
+    function setRange(btn) {
+      document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      drawChart();
+    }
+
+    drawChart();
+  </script>
+</body>
+</html>

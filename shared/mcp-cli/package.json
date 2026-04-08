@@ -1,0 +1,26 @@
+{
+  "name": "@proto-portal/mcp-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CLI to discover and run MCP servers in the Proto Portal monorepo",
+  "main": "dist/cli.js",
+  "types": "dist/cli.d.ts",
+  "bin": {
+    "proto-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@proto-portal/mcp-server-design-tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}

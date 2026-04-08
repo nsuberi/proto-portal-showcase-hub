@@ -89,12 +89,12 @@ function handler(event) {
     // Handle SPA routing within prototypes
     if (uri.startsWith('/prototypes/')) {
         var pathParts = uri.split('/');
-        
+
         // If accessing a prototype subdirectory without file extension, serve the prototype's index.html
         if (pathParts.length >= 3 && !uri.includes('.')) {
             var prototypeName = pathParts[2];
             // Only handle known prototypes
-            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path') {
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'ai-builders') {
                 request.uri = '/prototypes/' + prototypeName + '/index.html';
             }
         }
@@ -225,6 +225,41 @@ EOT
 #   provider = aws.us-east-1
 # }
 
+# AI Evals in Context module
+module "ai_evals" {
+  source = "./modules/ai-evals"
+
+  environment       = "prod"
+  app_name          = "ai-testing-resource"
+  anthropic_api_key = var.ai_evals_anthropic_api_key
+  certificate_arn   = aws_acm_certificate.portfolio.arn
+}
+
+# Code Dojo module — co-hosted on ai-evals infrastructure
+module "code_dojo" {
+  source = "./modules/code-dojo"
+
+  # Shared infrastructure from ai-evals
+  vpc_id                 = module.ai_evals.vpc_id
+  public_subnet_ids      = module.ai_evals.public_subnet_ids
+  ecs_cluster_arn        = module.ai_evals.ecs_cluster_arn
+  ecs_security_group_id  = module.ai_evals.ecs_security_group_id
+  alb_https_listener_arn = module.ai_evals.alb_https_listener_arn
+  alb_security_group_id  = module.ai_evals.alb_security_group_id
+
+  # Shared database
+  db_host                = module.ai_evals.rds_endpoint
+  db_port                = module.ai_evals.db_port
+  db_password_secret_arn = module.ai_evals.db_password_secret_arn
+
+  # Code Dojo secrets
+  anthropic_api_key = var.code_dojo_anthropic_api_key
+  github_token      = var.code_dojo_github_token
+  openai_api_key    = var.code_dojo_openai_api_key
+  langsmith_api_key = var.code_dojo_langsmith_api_key
+  flask_secret_key  = var.code_dojo_flask_secret_key
+}
+
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "website" {
   origin {
@@ -232,9 +267,47 @@ resource "aws_cloudfront_distribution" "website" {
     origin_id   = "S3-${var.bucket_name}"
   }
 
+  origin {
+    domain_name = module.ai_evals.alb_dns_name
+    origin_id   = "ai-evals-api"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
+
+  # Code Dojo cache behavior — routes /code-dojo/* to the shared ECS ALB
+  ordered_cache_behavior {
+    path_pattern           = "/code-dojo/*"
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ai-evals-api"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
+
+  # AI Evals cache behavior — routes /prototypes/ai-evals/* to the ECS ALB
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/ai-evals/*"
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ai-evals-api"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
 
   # FFX Skill Map cache behavior
   ordered_cache_behavior {
@@ -317,6 +390,32 @@ resource "aws_cloudfront_distribution" "website" {
   # Learning Path cache behavior
   ordered_cache_behavior {
     path_pattern           = "/prototypes/learning-path/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
+  # AI Builders cache behavior
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/ai-builders/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-${var.bucket_name}"
