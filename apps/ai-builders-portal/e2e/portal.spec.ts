@@ -33,7 +33,7 @@ test.describe("Landing page discovery", () => {
 
     // Featured challenge card
     await expect(
-      page.getByText("Walk the terrain: Your first deployment"),
+      page.getByText("Brownfield analysis"),
     ).toBeVisible();
 
     // Click "Start your journey" CTA and verify navigation to /onboarding
@@ -123,23 +123,19 @@ test.describe("Challenge browsing and detail", () => {
 
     // Verify page heading
     await expect(
-      page.getByRole("heading", { name: "Challenges" }),
+      page.getByRole("heading", { name: "Submissions & Challenges" }),
     ).toBeVisible();
 
-    // Verify 6 challenge cards are visible (each card has a title in an h3)
-    const challengeCards = page.locator(
-      'div[role="button"] h3, div:not([role="button"]) > div > .p-4 h3',
-    );
-    // More reliable: count the known challenge titles
-    const challengeTitles = [
-      "Walk the terrain: Your first deployment",
-      "Design a data privacy layer",
-      "Discovery: Find and shape your own problem",
+    // Verify key submission titles are visible
+    const submissionTitles = [
+      "Brownfield analysis",
+      "Sample application build",
+      "Discovery and prototype pitch",
       "Map the authentication landscape",
       "Build an AI evaluation harness",
       "Customize a design system",
     ];
-    for (const title of challengeTitles) {
+    for (const title of submissionTitles) {
       await expect(page.getByText(title)).toBeVisible();
     }
 
@@ -148,7 +144,7 @@ test.describe("Challenge browsing and detail", () => {
 
     // Phase 1 challenges (should be visible)
     await expect(
-      page.getByText("Walk the terrain: Your first deployment"),
+      page.getByText("Brownfield analysis"),
     ).toBeVisible();
     await expect(
       page.getByText("Map the authentication landscape"),
@@ -156,10 +152,10 @@ test.describe("Challenge browsing and detail", () => {
 
     // Phase 2 and 3 challenges (should not be visible)
     await expect(
-      page.getByText("Design a data privacy layer"),
+      page.getByText("Sample application build"),
     ).not.toBeVisible();
     await expect(
-      page.getByText("Discovery: Find and shape your own problem"),
+      page.getByText("Discovery and prototype pitch"),
     ).not.toBeVisible();
 
     // Click "All" to reset
@@ -167,16 +163,16 @@ test.describe("Challenge browsing and detail", () => {
       .getByRole("button", { name: "All" })
       .first()
       .click();
-    // All 6 should be back
-    for (const title of challengeTitles) {
+    // All should be back
+    for (const title of submissionTitles) {
       await expect(page.getByText(title)).toBeVisible();
     }
 
     // Click the first challenge card to navigate to detail
     await page
-      .getByText("Walk the terrain: Your first deployment")
+      .getByText("Brownfield analysis")
       .click();
-    await expect(page).toHaveURL(/\/challenges\/deploy-first-app$/);
+    await expect(page).toHaveURL(/\/challenges\/brownfield-analysis$/);
 
     // Verify "Back to challenges" link exists
     await expect(

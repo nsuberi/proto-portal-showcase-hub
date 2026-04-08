@@ -2,6 +2,13 @@ import { phaseConfig, statusConfig } from "@/design-system/tokens";
 import type { Phase, ChallengeStatus } from "@/design-system/tokens";
 import { cn } from "@/lib/utils";
 
+const practiceColors: Record<string, { bg: string; text: string }> = {
+  Discovery: { bg: "rgba(187,198,226,0.12)", text: "var(--color-phase-1)" },
+  Building: { bg: "rgba(255,186,56,0.12)", text: "var(--color-phase-2)" },
+  Security: { bg: "rgba(255,180,165,0.12)", text: "var(--color-phase-3)" },
+  Storytelling: { bg: "rgba(168,213,186,0.12)", text: "var(--color-phase-4)" },
+};
+
 interface ChallengeCardProps {
   phase?: Phase;
   title: string;
@@ -9,6 +16,8 @@ interface ChallengeCardProps {
   deliverables?: string[];
   status?: ChallengeStatus;
   tags?: string[];
+  practices?: string[];
+  submission?: number;
   className?: string;
   onClick?: () => void;
 }
@@ -20,6 +29,8 @@ export function ChallengeCard({
   deliverables = [],
   status,
   tags = [],
+  practices = [],
+  submission,
   className,
   onClick,
 }: ChallengeCardProps) {
@@ -79,6 +90,24 @@ export function ChallengeCard({
           )}
         </div>
 
+        {/* Practices */}
+        {practices.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {practices.map((practice) => {
+              const colors = practiceColors[practice];
+              return (
+                <span
+                  key={practice}
+                  className="rounded-full px-2 py-0.5 font-label text-[10px] font-semibold"
+                  style={colors ? { backgroundColor: colors.bg, color: colors.text } : undefined}
+                >
+                  {practice}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         {/* Tags */}
         {tags.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -95,6 +124,11 @@ export function ChallengeCard({
 
         {/* Title */}
         <h3 className="mb-1 font-headline text-base font-semibold text-on-surface">
+          {submission && (
+            <span className="mr-1.5 font-label text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
+              S{submission}
+            </span>
+          )}
           {title}
         </h3>
 

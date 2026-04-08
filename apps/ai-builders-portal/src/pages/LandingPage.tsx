@@ -307,14 +307,17 @@ export default function LandingPage() {
         <div className="max-w-2xl">
           <ChallengeCard
             phase={1}
-            title="Walk the terrain: Your first deployment"
-            description="Follow a guided walkthrough to deploy a simple Flask application with hot module reload. You'll learn how your dev environment works — proxy configuration, log access, and what happens when things break."
+            title="Brownfield analysis"
+            submission={1}
+            description="Analyze a brownfield codebase across three angles: data architecture, proxy/deployment networking, and testing coverage against inferred product intent."
             deliverables={[
-              "Running application deployed to dev",
-              "Screenshot of successful log inspection",
+              "Data architecture analysis",
+              "Deployment/networking analysis",
+              "Test coverage gap analysis",
             ]}
             status="not-started"
-            tags={["Architecture", "Building"]}
+            tags={["Architecture", "Analysis"]}
+            practices={["Discovery"]}
           />
         </div>
         <div className="mt-6">
