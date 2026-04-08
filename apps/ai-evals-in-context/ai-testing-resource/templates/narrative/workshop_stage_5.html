@@ -29,6 +29,7 @@
       {{ code_canvas(
           cells.multi_turn.code_html,
           cells.multi_turn.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -47,6 +48,7 @@
           runnable=True,
           test_id="tsr_builder",
           mock_output=cells.tsr_builder.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>

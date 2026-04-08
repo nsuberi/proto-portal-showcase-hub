@@ -1,5 +1,5 @@
-{% macro code_canvas(code, filename, test_type=None, runnable=False, test_id=None, result=None, secondary=False, show_line_numbers=True, file_path=None, mock_output=None) %}
-<div class="code-canvas {% if secondary %}code-canvas--secondary{% endif %}"
+{% macro code_canvas(code, filename, test_type=None, runnable=False, test_id=None, result=None, secondary=False, show_line_numbers=True, file_path=None, mock_output=None, dark=False) %}
+<div class="code-canvas {% if secondary %}code-canvas--secondary{% endif %}{% if dark %} code-canvas--dark{% endif %}"
      {% if test_id %}data-test-id="{{ test_id }}"{% endif %}
      {% if file_path %}data-file="{{ file_path }}"{% endif %}
      {% if mock_output %}data-mock-output="{{ mock_output | e }}"{% endif %}>
@@ -28,10 +28,10 @@
       <div class="gutter__line" data-line="{{ i }}">{{ i }}</div>
       {% endfor %}
     </div>
-    <pre class="code-canvas__code"><code>{{ code | safe }}</code></pre>
+    <pre class="code-canvas__code"><code{% if dark %} class="highlight-dark"{% endif %}>{{ code | safe }}</code></pre>
   </div>
   {% else %}
-  <pre class="code-canvas__code"><code>{{ code | safe }}</code></pre>
+  <pre class="code-canvas__code"><code{% if dark %} class="highlight-dark"{% endif %}>{{ code | safe }}</code></pre>
   {% endif %}
   {% if result %}
   <div class="code-canvas__result code-canvas__result--{{ result.status }}">
