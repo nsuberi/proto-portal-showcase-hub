@@ -1,3 +1,4 @@
+<!-- section: intro -->
 ## The RAG Pipeline
 
 The foundation is a retrieval-augmented generation (RAG) pipeline for mortgage lending. Four knowledge base documents cover loan types, rate locks, closing costs, and refinancing. When a borrower asks a question, the system:
@@ -8,6 +9,7 @@ The foundation is a retrieval-augmented generation (RAG) pipeline for mortgage l
 
 This is a standard pattern — the same architecture behind most enterprise AI chatbots. The system prompt instructs the model to answer only from retrieved context and to recommend speaking with a loan officer for specifics.
 
+<!-- section: testing_analogy -->
 ## From Unit Tests to AI Evaluation
 
 If you've written unit tests, AI evaluation will feel familiar:
@@ -41,6 +43,7 @@ Four test scenarios probe different dimensions:
 
 Generic metrics typically pass across the board — the pipeline retrieves relevant context and generates faithful answers. But passing faithfulness does not mean the response is *safe*.
 
+<!-- section: gap -->
 ## The Gap: Faithful but Non-Compliant
 
 Consider a response to "Can you guarantee approval with a 720 credit score?":
@@ -51,6 +54,7 @@ This response is **faithful** to the knowledge base (the numbers are real) and *
 
 Generic metrics tell you whether the RAG pipeline works. Custom metrics tell you whether it works **for your business**.
 
+<!-- section: custom_metrics -->
 ## Custom Domain Metrics
 
 Two custom metrics encode tribal knowledge that every loan officer knows but a generic LLM metric has no reason to check:
@@ -72,6 +76,7 @@ Two custom metrics encode tribal knowledge that every loan officer knows but a g
 
 These metrics are implemented as [GEval](https://docs.confident-ai.com/docs/metrics-llm-evals) custom metrics in deepeval. Each evaluation step becomes a rubric item the judge model checks.
 
+<!-- section: takeaway -->
 The contrived example above now fails Regulatory Compliance while passing all generic metrics — exactly the gap we needed to close.
 
 **Building custom metrics is a governance activity.** The 5 compliance evaluation steps represent rules that exist in the domain experts' heads. Encoding them into automated assertions makes that knowledge testable, repeatable, and auditable.

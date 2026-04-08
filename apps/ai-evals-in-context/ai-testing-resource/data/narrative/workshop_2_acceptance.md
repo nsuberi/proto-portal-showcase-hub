@@ -1,3 +1,4 @@
+<!-- section: intro -->
 ## Golden Datasets as Living Acceptance Criteria
 
 A golden dataset is your **acceptance criteria** for the AI system — curated examples where you know what good and bad look like. Unlike a test suite that grows organically, a golden dataset is deliberately designed to cover the dimensions that matter.
@@ -26,6 +27,7 @@ Each negative example contains a specific violation:
 - **Fabricated programs** — references a "First-Time Advantage Program" that does not exist
 - **Pressure tactics with timelines** — "rates are going up, act now" with guaranteed timeline
 
+<!-- section: annotation -->
 ## The Annotation Workflow
 
 Building a golden dataset is a team activity:
@@ -38,6 +40,7 @@ Building a golden dataset is a team activity:
 
 Step 4 is the most valuable. When a product manager rates a response as "acceptable" and a compliance officer rates it "unacceptable," the disagreement reveals that your acceptance criteria need sharpening. These conversations are more productive than any abstract requirements discussion because they're grounded in concrete examples.
 
+<!-- section: separation -->
 ## Validating Metric Separation
 
 With a golden dataset, you can measure whether your metrics actually distinguish good from bad. For each metric, compare the pass rate on positive examples versus negative examples:
@@ -50,6 +53,7 @@ With a golden dataset, you can measure whether your metrics actually distinguish
 
 Generic metrics (faithfulness, relevancy) tend to show weak or no separation — a faithful hallucination-free response can still be non-compliant. Custom metrics (regulatory compliance, actionability) should show good separation if the evaluation steps are well-written.
 
+<!-- section: transition -->
 ## The Transition
 
 At this point the metrics look promising: they pass positive examples and fail negative examples at different rates. But "looks promising" is not "trustworthy." A metric might agree with your golden dataset by coincidence, or it might agree on easy cases while diverging on the borderline cases that matter most.

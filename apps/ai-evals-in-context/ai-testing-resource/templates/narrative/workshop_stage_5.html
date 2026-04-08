@@ -1,0 +1,70 @@
+{% extends "narrative/base_narrative.html" %}
+{% from "components/code_canvas.html" import code_canvas %}
+
+{% block title %}Stage 5: Reporting — AI Evaluation Workshop{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/workshop_mock.js') }}" defer></script>
+{% endblock %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+<div class="narrative-content">
+
+  {# ── Section: Multi-turn conversations ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.intro | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.multi_turn.code_html,
+          cells.multi_turn.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Test Summary Report ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.tsr | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.tsr_builder.code_html,
+          cells.tsr_builder.filename,
+          test_type=cells.tsr_builder.test_type,
+          runnable=True,
+          test_id="tsr_builder",
+          mock_output=cells.tsr_builder.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: CI integration ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.ci | safe }}
+    </div>
+  </section>
+
+  {# ── Section: Audit trail ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.audit | safe }}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

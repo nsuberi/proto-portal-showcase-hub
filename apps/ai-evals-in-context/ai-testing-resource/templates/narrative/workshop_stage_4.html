@@ -1,0 +1,98 @@
+{% extends "narrative/base_narrative.html" %}
+{% from "components/code_canvas.html" import code_canvas %}
+
+{% block title %}Stage 4: Improvement — AI Evaluation Workshop{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/workshop_mock.js') }}" defer></script>
+{% endblock %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+<div class="narrative-content">
+
+  {# ── Section: Improvement loop intro ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.intro | safe }}
+    </div>
+  </section>
+
+  {# ── Section: Diagnosis ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.diagnosis | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.diagnosis.code_html,
+          cells.diagnosis.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Prompt improvement ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.prompt_improvement | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.prompt_diff.code_html,
+          cells.prompt_diff.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Re-evaluation ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.reevaluation | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.before_after.code_html,
+          cells.before_after.filename,
+          test_type=cells.before_after.test_type,
+          runnable=True,
+          test_id="before_after",
+          mock_output=cells.before_after.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Judge improvement ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.judge_improvement | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.judge_v2.code_html,
+          cells.judge_v2.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Summary ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.summary | safe }}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
