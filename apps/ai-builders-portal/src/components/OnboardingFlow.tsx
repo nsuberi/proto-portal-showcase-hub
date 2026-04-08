@@ -33,7 +33,7 @@ const steps: Step[] = [
   },
   {
     question:
-      "What's a problem you see in your work that you wish you could solve?",
+      "What's a problem in your work or life that you wish you could solve?",
     type: "textarea",
     followUp:
       "We'll use this to seed your first challenge. You'll start building something meaningful from day one.",

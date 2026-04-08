@@ -108,6 +108,18 @@ export const challenges: Challenge[] = [
         content:
           "A prototype exists to learn, not to ship. If you've learned what you needed to learn, the prototype did its job — even if you throw it away.",
       },
+      {
+        title: "The gap between what people say and what they need",
+        category: "design",
+        content:
+          "In interviews, people describe solutions they've already imagined — not the underlying problem. Your job is to listen past the feature request to the friction that prompted it. Ask 'why' more than 'what'.",
+      },
+      {
+        title: "Structuring a pitch around a problem, not a solution",
+        category: "building",
+        content:
+          "A strong pitch starts with a problem someone recognizes. If your audience doesn't feel the problem, no amount of solution detail will land. Lead with the pain, then bridge to what you'd build.",
+      },
     ],
   },
   /* ── Submission 4 ── */
@@ -129,6 +141,26 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Building", "Design"],
     practices: ["Building", "Discovery"],
+    references: [
+      {
+        title: "The README is part of the product",
+        category: "building",
+        content:
+          "If the application launcher can't render your app from your README alone, the app isn't shippable. A README that requires tribal knowledge to follow is a deployment risk.",
+      },
+      {
+        title: "Architecture decisions are bets — document why you made them",
+        category: "architecture",
+        content:
+          "Future you needs to know what you were thinking. Record the alternatives you considered and why you chose one over another. The decision matters more than the diagram.",
+      },
+      {
+        title: "When your product definition changes mid-build",
+        category: "design",
+        content:
+          "Your product definition should evolve as you build. If it's the same document at the end as it was at the start, you didn't learn anything. Updating it isn't failure — it's the point.",
+      },
+    ],
   },
   /* ── Submission 5 ── */
   {
@@ -148,6 +180,26 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Security", "AI"],
     practices: ["Security", "Building"],
+    references: [
+      {
+        title: "Credentials in environment variables are not hidden",
+        category: "architecture",
+        content:
+          "Env vars show up in logs, process listings, crash dumps, and container inspection output. Treat them as 'not in source code' — not as 'secret'. Know where your secrets actually live at rest and in transit.",
+      },
+      {
+        title: "LLM-as-Judge is only as good as your rubric",
+        category: "building",
+        content:
+          "The quality of automated evaluation depends entirely on how precisely you define what 'good' means. A vague rubric produces vague scores. Invest the time in criteria before you invest the time in infrastructure.",
+      },
+      {
+        title: "Writing for someone who wasn't in the room",
+        category: "design",
+        content:
+          "A test summary report needs to be legible to people who didn't run the tests. State the goal, the method, and the conclusion up front — then let the supporting data follow for those who want to dig in.",
+      },
+    ],
   },
   /* ── Submission 6 ── */
   {
@@ -167,6 +219,26 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Observability", "Planning"],
     practices: ["Security"],
+    references: [
+      {
+        title: "Not all log data is signal",
+        category: "data",
+        content:
+          "The first step in log analysis is figuring out what to ignore. Most log volume is healthy heartbeat noise. Develop filters for the normal so the abnormal stands out.",
+      },
+      {
+        title: "Feedback loops need a recipient, not just a dashboard",
+        category: "architecture",
+        content:
+          "A dashboard nobody checks is worse than no dashboard — it creates the illusion of observability. Design your feedback loops around who will act on the information, not just where it's displayed.",
+      },
+      {
+        title: "Tailoring insights to your audience",
+        category: "design",
+        content:
+          "What a data scientist needs from log analysis is different from what a product manager needs. The same underlying data should produce different artifacts for different audiences — same truth, different lenses.",
+      },
+    ],
   },
   /* ── Submission 7 ── */
   {
@@ -186,6 +258,26 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Communication", "Presentation"],
     practices: ["Storytelling"],
+    references: [
+      {
+        title: "The 30-second version of your story",
+        category: "design",
+        content:
+          "If you can't explain what you built and why it matters in 30 seconds, the 4-minute video won't land either. Start by nailing the elevator pitch — the rest is elaboration.",
+      },
+      {
+        title: "Dev logs are for your future self, not your current audience",
+        category: "building",
+        content:
+          "Write what you wish you had known when you started. Capture the dead ends and the reasoning behind pivots — not just the wins. The most useful dev log entry is the one that saves someone two hours.",
+      },
+      {
+        title: "Feedback is data — collect it like data",
+        category: "data",
+        content:
+          "Structured feedback tells you something; 'looks good' tells you nothing. Prepare specific questions before your presentation. What you ask shapes what you learn.",
+      },
+    ],
   },
   /* ── Additional Challenges ── */
   {
@@ -201,6 +293,20 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Architecture"],
     practices: ["Discovery", "Security"],
+    references: [
+      {
+        title: "Identity is not authentication",
+        category: "architecture",
+        content:
+          "Authentication proves who you are. Authorization determines what you can do. Identity ties them together. Conflating these three concepts leads to access control bugs that are hard to find and harder to fix.",
+      },
+      {
+        title: "Session tokens are bearer credentials",
+        category: "architecture",
+        content:
+          "Anyone who holds a session token IS the user, from the server's perspective. This is why token storage, expiry, and rotation matter — a leaked token is a compromised account until it expires.",
+      },
+    ],
   },
   {
     id: "ai-eval-tool",
@@ -217,6 +323,20 @@ export const challenges: Challenge[] = [
     status: "not-started",
     tags: ["Building", "AI"],
     practices: ["Building", "Security"],
+    references: [
+      {
+        title: "Eval metrics must match user value",
+        category: "data",
+        content:
+          "A model can score 95% on your benchmark and still be useless if the benchmark doesn't reflect what users actually care about. Start with what 'good' looks like to a human, then work backward to a metric.",
+      },
+      {
+        title: "Deterministic tests for non-deterministic systems",
+        category: "building",
+        content:
+          "LLM outputs vary between runs. Your test framework needs to handle this gracefully — test for properties and ranges, not exact strings. A flaky eval suite teaches you nothing.",
+      },
+    ],
   },
   {
     id: "design-system-custom",
@@ -232,6 +352,20 @@ export const challenges: Challenge[] = [
     status: "submitted",
     tags: ["Building", "Design"],
     practices: ["Building"],
+    references: [
+      {
+        title: "Tokens are decisions, not values",
+        category: "design",
+        content:
+          "A token named 'primary' carries semantic meaning; a hex code does not. The value can change — the decision persists. When you define a token, you're encoding a design intention that outlives any single color choice.",
+      },
+      {
+        title: "Constraint enables creativity",
+        category: "design",
+        content:
+          "A design system with 4 spacing values is more useful than one with 40. Constraints force you to make deliberate choices instead of nudging pixels until something 'looks right'. The system does the remembering so you can do the designing.",
+      },
+    ],
   },
 ];
 
