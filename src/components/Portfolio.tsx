@@ -46,14 +46,6 @@ const Portfolio = () => {
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
       status: "Live Demo Available",
     },
-    {
-      title: "Agent Memory, Skills & Tools Explorer",
-      description:
-        "Peek behind the curtain at how AI agents are configured to build this portfolio. Four color-coded layers float around you: amber Memories (persistent cross-session context), violet Skills (/breadboarding, /new-prototype), blue MCP Tools (the proto-mcp CLI and design-tokens server giving Claude live queryable access to project data), and teal Concepts explaining how they all fit together. Click any item to read its full content. The invisible configuration layer, made visible.",
-      link: "/prototypes/documentation-explorer/",
-      tags: ["Agent Memory", "Skills", "MCP Tools", "AI Configuration"],
-      status: "Live Demo Available",
-    },
   ];
 
   const prototypeIdeas = [
