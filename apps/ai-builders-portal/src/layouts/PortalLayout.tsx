@@ -97,7 +97,7 @@ export default function PortalLayout() {
       </header>
 
       {/* Main content area */}
-      <main className="relative z-10 min-h-screen pt-[72px] md:ml-20">
+      <main className="relative z-10 min-h-screen pt-[72px] pb-24 md:pb-0 md:ml-20">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
           <Outlet />
         </div>

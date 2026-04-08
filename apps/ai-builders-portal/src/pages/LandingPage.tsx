@@ -1,6 +1,9 @@
-import { Link } from "react-router-dom";
+import { Suspense, createElement } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { ShowcaseGalleryItem } from "@/components/ShowcaseGalleryItem";
+import { AppLoggerProvider } from "@/components/AppLogger";
+import { artifactComponents } from "@/artifacts/registry";
 import { cn } from "@/lib/utils";
 
 const showcaseItems = [
@@ -9,20 +12,21 @@ const showcaseItems = [
     author: "Jordan R.",
     tags: ["data", "AI"],
     reactions: "12 reactions",
-    artifactUrl: "/artifacts/loan-classifier.html",
+    artifactRouteId: "loan-classifier",
   },
   {
     title: "Rate lock dashboard",
     author: "Priya K.",
     tags: ["design", "API"],
     reactions: "8 reactions",
-    artifactUrl: "/artifacts/rate-dashboard.html",
+    artifactRouteId: "rate-dashboard",
   },
   {
-    title: "Compliance checker",
-    author: "Marcus T.",
-    tags: ["eval", "risk"],
-    reactions: "15 reactions",
+    title: "AI meeting summarizer",
+    author: "Rachel F.",
+    tags: ["AI", "productivity"],
+    reactions: "9 reactions",
+    artifactRouteId: "meeting-summarizer",
   },
 ];
 
@@ -54,6 +58,7 @@ const levels = [
 ];
 
 export default function LandingPage() {
+  const navigate = useNavigate();
   return (
     <div>
       {/* ── Hero Section ── */}
@@ -101,9 +106,28 @@ export default function LandingPage() {
           feedback.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {showcaseItems.map((item) => (
-            <ShowcaseGalleryItem key={item.title} {...item} />
-          ))}
+          {showcaseItems.map((item) => {
+            const Comp = artifactComponents[item.artifactRouteId];
+            return (
+              <ShowcaseGalleryItem
+                key={item.title}
+                title={item.title}
+                author={item.author}
+                tags={item.tags}
+                reactions={item.reactions}
+                previewContent={
+                  Comp ? (
+                    <AppLoggerProvider>
+                      <Suspense fallback={null}>
+                        {createElement(Comp)}
+                      </Suspense>
+                    </AppLoggerProvider>
+                  ) : undefined
+                }
+                onClick={() => navigate(`/artifacts/${item.artifactRouteId}`)}
+              />
+            );
+          })}
         </div>
         <div className="mt-6">
           <Link
@@ -121,20 +145,20 @@ export default function LandingPage() {
           Four levels of development
         </h2>
 
-        {/* Horizontal star timeline — no bounding box */}
+        {/* Star timeline — vertical on mobile, horizontal on md+ */}
         <div className="relative">
-          {/* Connecting line */}
-          <div className="absolute top-[20px] left-[12%] right-[12%] h-[1.5px] bg-outline-variant/20" />
+          {/* Connecting line — vertical on mobile, horizontal on md+ */}
+          <div className="absolute left-[20px] top-[12%] bottom-[12%] w-[1.5px] bg-outline-variant/20 md:left-[12%] md:right-[12%] md:top-[20px] md:bottom-auto md:h-[1.5px] md:w-auto" />
 
-          <div className="relative flex justify-between">
+          <div className="relative flex flex-col gap-6 md:flex-row md:gap-0 md:justify-between">
             {levels.map((level, index) => (
               <div
                 key={level.name}
-                className="group relative flex flex-col items-center gap-3 px-2"
+                className="group relative flex items-start gap-4 md:flex-col md:items-center md:gap-3 md:px-2"
                 style={{ flex: "1 1 0" }}
               >
                 {/* Star point */}
-                <div className="relative flex h-10 w-10 items-center justify-center">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
                   {/* Hover ring */}
                   <div
                     className="absolute h-8 w-8 rounded-full border transition-transform duration-500 group-hover:scale-150"
@@ -152,15 +176,17 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* Level name */}
-                <h3 className="font-headline text-[14px] font-bold text-on-surface text-center transition-colors group-hover:text-tertiary">
-                  {level.name}
-                </h3>
+                <div className="flex flex-col md:items-center">
+                  {/* Level name */}
+                  <h3 className="font-headline text-[14px] font-bold text-on-surface md:text-center transition-colors group-hover:text-tertiary">
+                    {level.name}
+                  </h3>
 
-                {/* Description */}
-                <p className="max-w-[280px] text-center font-body text-[12px] leading-relaxed text-on-surface-variant">
-                  {level.description}
-                </p>
+                  {/* Description */}
+                  <p className="max-w-[280px] md:text-center font-body text-[12px] leading-relaxed text-on-surface-variant">
+                    {level.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -172,10 +198,10 @@ export default function LandingPage() {
         <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
           Four practices
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           {[
             { name: "Discovering and Shaping Problems", icon: "search_insights", submissions: "Brownfield analysis, sample application, discovery pitch" },
-            { name: "Building with AI", icon: "code_blocks", submissions: "Sample application, prototype build" },
+            { name: "Building with AI", icon: "code_blocks", submissions: "Agentic coding tools and harnesses, prototype build" },
             { name: "Security and Continuous Improvement", icon: "security", submissions: "Credential review, improvement plan" },
             { name: "Storytelling", icon: "campaign", submissions: "Dev log, video, communications package" },
           ].map((f) => (
