@@ -197,6 +197,108 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Practices × Levels Matrix ── */}
+      <section className="py-12 sm:py-16">
+        <h2 className="mb-2 font-headline text-[20px] font-semibold text-on-surface">
+          How you're assessed
+        </h2>
+        <p className="mb-6 font-body text-[13px] text-on-surface-variant">
+          Each practice is observed across four levels of development. You don't
+          move through levels sequentially — you may show Capability in one
+          practice while still building Clarity in another.
+        </p>
+
+        {/* Matrix table — scrollable on mobile */}
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[600px] border-collapse">
+            <thead>
+              <tr>
+                <th className="w-[180px] p-3 text-left font-label text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant" />
+                {levels.map((level, i) => (
+                  <th
+                    key={level.name}
+                    className="p-3 text-center font-headline text-[13px] font-bold"
+                  >
+                    <span
+                      className={cn(
+                        i === 0 && "text-phase-1",
+                        i === 1 && "text-phase-2",
+                        i === 2 && "text-phase-3",
+                        i === 3 && "text-phase-4",
+                      )}
+                    >
+                      {level.name}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  practice: "Discovering and Shaping",
+                  cells: [
+                    "Explores the codebase, asks questions",
+                    "Distinguishes intent from behavior",
+                    "Connects discovery to buildable solutions",
+                    "Repeatable analysis across contexts",
+                  ],
+                },
+                {
+                  practice: "Building with AI",
+                  cells: [
+                    "Experiments with tools, submits PRs",
+                    "Traces data end to end, explains choices",
+                    "Defensible architecture, refined design",
+                    "Reliable quality, elevates others' work",
+                  ],
+                },
+                {
+                  practice: "Security and Improvement",
+                  cells: [
+                    "Engages with security concepts",
+                    "Understands why feedback loops matter",
+                    "Implements credential management",
+                    "Security practices are habitual",
+                  ],
+                },
+                {
+                  practice: "Storytelling",
+                  cells: [
+                    "Shares work, presents to others",
+                    "Explains why it matters, attributes others",
+                    "Creates artifacts others can learn from",
+                    "Storytelling strengthens the community",
+                  ],
+                },
+              ].map((row, rowIndex) => (
+                <tr
+                  key={row.practice}
+                  className={cn(
+                    "transition-colors",
+                    rowIndex % 2 === 0
+                      ? "bg-surface-container-lowest"
+                      : "bg-surface-container-low/50",
+                  )}
+                >
+                  <td className="p-3 font-headline text-[12px] font-semibold text-on-surface">
+                    {row.practice}
+                  </td>
+                  {row.cells.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className="p-3 font-body text-[11px] leading-snug text-on-surface-variant"
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {/* ── Featured Challenge ── */}
       <section className="py-12 sm:py-16">
         <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
