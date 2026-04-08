@@ -1,14 +1,19 @@
-{% macro code_canvas(code, filename, test_type=None, runnable=False, test_id=None, result=None, secondary=False, show_line_numbers=True, file_path=None) %}
+{% macro code_canvas(code, filename, test_type=None, runnable=False, test_id=None, result=None, secondary=False, show_line_numbers=True, file_path=None, mock_output=None) %}
 <div class="code-canvas {% if secondary %}code-canvas--secondary{% endif %}"
      {% if test_id %}data-test-id="{{ test_id }}"{% endif %}
-     {% if file_path %}data-file="{{ file_path }}"{% endif %}>
+     {% if file_path %}data-file="{{ file_path }}"{% endif %}
+     {% if mock_output %}data-mock-output="{{ mock_output | e }}"{% endif %}>
   <div class="code-canvas__header">
     <span class="code-canvas__filename">{{ filename }}</span>
     <div style="display: flex; align-items: center; gap: 0.5rem;">
       {% if test_type %}
       <span class="code-canvas__badge">{{ test_type }}</span>
       {% endif %}
-      {% if runnable %}
+      {% if runnable and mock_output %}
+      <button class="run-button" onclick="runMockTest('{{ test_id }}')">
+        <span>&#9654;</span> Run
+      </button>
+      {% elif runnable %}
       <button class="run-button" onclick="runTest('{{ test_id }}')">
         <span>&#9654;</span> Run
       </button>
@@ -32,6 +37,9 @@
   <div class="code-canvas__result code-canvas__result--{{ result.status }}">
     {{ result.output }}
   </div>
+  {% endif %}
+  {% if runnable and mock_output %}
+  <div class="code-canvas__output" id="output-{{ test_id }}"></div>
   {% endif %}
 </div>
 {% endmacro %}

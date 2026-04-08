@@ -1,3 +1,4 @@
+<!-- section: intro -->
 ## Multi-Turn Conversations
 
 Real users don't ask a single question and leave. They have conversations. The mortgage assistant's `chat_mortgage_assistant` function extends the RAG pipeline with a `history` parameter — a list of previous messages that gives the model conversational context.
@@ -23,26 +24,7 @@ Everything built so far — per-turn faithfulness, compliance metrics, IRR metho
 
 All turns in a conversation share a `thread_id` passed through LangSmith metadata, linking them in the LangSmith Threads view.
 
-## Trace Validation
-
-Before building a report, validate that the traces you're reporting on are complete and well-structured.
-
-### Version Diffs
-
-Compare system prompt V1 vs V2 and judge evaluation steps V1 vs V2 using `difflib.unified_diff`. Word-level diffs make it clear exactly what changed — a reviewer doesn't need to read both versions in full, just the highlighted additions and removals.
-
-### Pipeline Hierarchy Verification
-
-Each `ask_mortgage_assistant` trace should have exactly two child spans: `chromadb_retrieval` (the tool call to the vector store) and `ChatAnthropic` (the LLM generation). Building a parent-child hierarchy DataFrame confirms that every pipeline invocation completed all stages.
-
-### Evaluation Trace Completeness
-
-Query LangSmith for all evaluation traces (`deepeval_generic_metrics`, `deepeval_golden_dataset`, `deepeval_irr_evaluation`) and confirm metric scores were recorded. Filter by `prompt_version` metadata to distinguish V1 from V2 pipeline evaluations.
-
-### Thread Integrity
-
-For multi-turn conversations, verify that all turns are linked to their `thread_id`, each turn has the expected child spans, and input token counts increase monotonically (confirming conversation history is being passed correctly).
-
+<!-- section: tsr -->
 ## The Test Summary Report
 
 The Test Summary Report (TSR) is the acceptance artifact for a pull request. It answers five questions:
@@ -64,16 +46,7 @@ The TSR is a JSON document with these sections:
 - **`regressions_introduced`** — array of cases where V2 is worse than V1
 - **`acceptance`** — machine-generated recommendation with reasoning
 
-### Prompt Traceability
-
-Two approaches for linking traces back to the prompts that produced them:
-
-**Manual metadata** (used in the workshop): Version prompts as Python variables (`SYSTEM_PROMPT_V1`, `SYSTEM_PROMPT_V2`), pass `prompt_version` through `langsmith_extra` metadata on every call. This works but requires discipline at every call site.
-
-**Prompt Hub** (production alternative): Store prompts as named repositories with Git-like commit history. Tags (`dev`, `staging`, `prod`) point to specific commits. LangSmith auto-links traces to prompt commit hashes when prompts are pulled from the Hub. CI can resolve the exact prompt text from its hash without reading Python source.
-
-Both approaches achieve the same goal: a reviewer can go from a TSR to the exact prompt text that produced a specific trace, and from there to the metric results and human annotations.
-
+<!-- section: ci -->
 ## CI Integration
 
 The TSR connects evaluation to the merge workflow:
@@ -100,6 +73,17 @@ The TSR connects evaluation to the merge workflow:
 
 If the TSR recommendation is not ACCEPT, the merge is blocked. The reviewer sees the TSR as a PR artifact — failure modes, regressions, and the exact prompt changes — and can make an informed decision.
 
+### Prompt Traceability
+
+Two approaches for linking traces back to the prompts that produced them:
+
+**Manual metadata** (used in the workshop): Version prompts as Python variables (`SYSTEM_PROMPT_V1`, `SYSTEM_PROMPT_V2`), pass `prompt_version` through `langsmith_extra` metadata on every call. This works but requires discipline at every call site.
+
+**Prompt Hub** (production alternative): Store prompts as named repositories with Git-like commit history. Tags (`dev`, `staging`, `prod`) point to specific commits. LangSmith auto-links traces to prompt commit hashes when prompts are pulled from the Hub. CI can resolve the exact prompt text from its hash without reading Python source.
+
+Both approaches achieve the same goal: a reviewer can go from a TSR to the exact prompt text that produced a specific trace, and from there to the metric results and human annotations.
+
+<!-- section: audit -->
 ## The Audit Trail
 
 Each merged PR accumulates a TSR as a build artifact. Over time, this creates an auditable history:

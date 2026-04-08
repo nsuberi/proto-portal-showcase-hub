@@ -1,3 +1,4 @@
+<!-- section: intro -->
 ## The Medical Diagnostic Analogy
 
 Before trusting an automated diagnostic test, clinicians validate it against expert judgment. AI evaluation is no different:
@@ -31,6 +32,7 @@ The interpretation scale:
 
 **Target: kappa >= 0.6** (substantial agreement) before trusting the automated judge for production decisions.
 
+<!-- section: annotation_set -->
 ## The Annotation Set
 
 Twenty mortgage responses are annotated by both a human expert and the automated LLM judge:
@@ -41,6 +43,7 @@ Twenty mortgage responses are annotated by both a human expert and the automated
 
 The borderline cases are the test. Any metric can handle the extremes. What matters is how the judge behaves on ambiguous responses — the "helpful but insufficiently hedged" answer, the response that cites real numbers but frames them too definitively.
 
+<!-- section: confusion_matrix -->
 ## Reading the Confusion Matrix
 
 The 2x2 confusion matrix (Human label vs. LLM Judge label) reveals the judge's personality:
@@ -51,6 +54,7 @@ The 2x2 confusion matrix (Human label vs. LLM Judge label) reveals the judge's p
 
 Each disagreement tells you something specific. A false negative (judge rejects what humans accept) suggests evaluation steps are too broad. A false positive (judge accepts what humans reject) suggests missing evaluation steps.
 
+<!-- section: multi_rater -->
 ## Multi-Rater Dynamics
 
 In practice, "the human expert" is a team of people with legitimately different priorities:
@@ -76,6 +80,7 @@ The disagreement pattern in traces 9-12 is the most informative. Compliance flag
 
 **Fleiss' kappa** extends to 3+ raters simultaneously, answering: across all raters, is there more agreement than chance? It's computed from the distribution of ratings per trace rather than pairwise comparisons.
 
+<!-- section: action -->
 ## From Agreement to Action
 
 | Agreement Pattern | Action |

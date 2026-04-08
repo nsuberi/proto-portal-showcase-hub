@@ -1,0 +1,96 @@
+{% extends "narrative/base_narrative.html" %}
+{% from "components/code_canvas.html" import code_canvas %}
+
+{% block title %}Stage 1: Foundation — AI Evaluation Workshop{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/workshop_mock.js') }}" defer></script>
+{% endblock %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+<div class="narrative-content">
+
+  {# ── Section: RAG Pipeline intro ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.intro | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.knowledge_base.code_html,
+          cells.knowledge_base.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Testing analogy + Generic metrics ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.testing_analogy | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.rag_pipeline.code_html,
+          cells.rag_pipeline.filename,
+          test_type=cells.rag_pipeline.test_type,
+          runnable=True,
+          test_id="rag_pipeline",
+          mock_output=cells.rag_pipeline.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: The Gap ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.gap | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.contrived_failure.code_html,
+          cells.contrived_failure.filename,
+          test_type=cells.contrived_failure.test_type,
+          runnable=True,
+          test_id="contrived_failure",
+          mock_output=cells.contrived_failure.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Custom Metrics ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.custom_metrics | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.custom_metrics.code_html,
+          cells.custom_metrics.filename,
+          test_type=cells.custom_metrics.test_type,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Takeaway ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.takeaway | safe }}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
