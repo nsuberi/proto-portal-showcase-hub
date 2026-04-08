@@ -36,6 +36,7 @@
       {{ code_canvas(
           cells.annotated_traces.code_html,
           cells.annotated_traces.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -47,6 +48,7 @@
           runnable=True,
           test_id="cohens_kappa",
           mock_output=cells.cohens_kappa.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -61,6 +63,7 @@
       {{ code_canvas(
           cells.confusion_matrix.code_html,
           cells.confusion_matrix.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
       {# Static chart image from notebook output #}
@@ -86,6 +89,7 @@
           runnable=True,
           test_id="fleiss_kappa",
           mock_output=cells.fleiss_kappa.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>

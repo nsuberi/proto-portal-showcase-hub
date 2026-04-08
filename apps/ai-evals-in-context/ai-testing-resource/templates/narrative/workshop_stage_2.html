@@ -29,6 +29,7 @@
       {{ code_canvas(
           cells.golden_dataset.code_html,
           cells.golden_dataset.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -54,6 +55,7 @@
           runnable=True,
           test_id="eval_golden",
           mock_output=cells.eval_golden.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -61,6 +63,7 @@
       {{ code_canvas(
           cells.separation.code_html,
           cells.separation.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>

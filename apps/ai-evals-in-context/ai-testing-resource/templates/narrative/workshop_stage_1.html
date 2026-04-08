@@ -29,6 +29,7 @@
       {{ code_canvas(
           cells.knowledge_base.code_html,
           cells.knowledge_base.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -47,6 +48,7 @@
           runnable=True,
           test_id="rag_pipeline",
           mock_output=cells.rag_pipeline.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -65,6 +67,7 @@
           runnable=True,
           test_id="contrived_failure",
           mock_output=cells.contrived_failure.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -80,6 +83,7 @@
           cells.custom_metrics.code_html,
           cells.custom_metrics.filename,
           test_type=cells.custom_metrics.test_type,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>

@@ -36,6 +36,7 @@
       {{ code_canvas(
           cells.diagnosis.code_html,
           cells.diagnosis.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -50,6 +51,7 @@
       {{ code_canvas(
           cells.prompt_diff.code_html,
           cells.prompt_diff.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -68,6 +70,7 @@
           runnable=True,
           test_id="before_after",
           mock_output=cells.before_after.mock_output | tojson,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
@@ -82,6 +85,7 @@
       {{ code_canvas(
           cells.judge_v2.code_html,
           cells.judge_v2.filename,
+          dark=True,
           show_line_numbers=True
       ) }}
     </div>
