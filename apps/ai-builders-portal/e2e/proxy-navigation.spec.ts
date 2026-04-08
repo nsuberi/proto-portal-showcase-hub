@@ -37,7 +37,7 @@ test.describe("AI Builders Portal via dev proxy", () => {
 
     // Featured challenge
     await expect(
-      page.getByText("Walk the terrain: Your first deployment"),
+      page.getByText("Brownfield analysis"),
     ).toBeVisible();
   });
 
@@ -60,34 +60,34 @@ test.describe("AI Builders Portal via dev proxy", () => {
     await page.goto(`${BASE}/ai-builders/challenges`);
 
     await expect(
-      page.getByRole("heading", { name: "Challenges" }),
+      page.getByRole("heading", { name: "Submissions & Challenges" }),
     ).toBeVisible();
 
-    // All 6 challenge titles visible
-    const challengeTitles = [
-      "Walk the terrain: Your first deployment",
-      "Design a data privacy layer",
-      "Discovery: Find and shape your own problem",
+    // Key submission titles visible
+    const submissionTitles = [
+      "Brownfield analysis",
+      "Sample application build",
+      "Discovery and prototype pitch",
       "Map the authentication landscape",
       "Build an AI evaluation harness",
       "Customize a design system",
     ];
-    for (const title of challengeTitles) {
+    for (const title of submissionTitles) {
       await expect(page.getByText(title)).toBeVisible();
     }
 
     // Filter by "Curiosity" phase
     await page.getByRole("button", { name: "Curiosity", exact: true }).click();
     await expect(
-      page.getByText("Walk the terrain: Your first deployment"),
+      page.getByText("Brownfield analysis"),
     ).toBeVisible();
     await expect(
-      page.getByText("Design a data privacy layer"),
+      page.getByText("Sample application build"),
     ).not.toBeVisible();
 
     // Reset filter
     await page.getByRole("button", { name: "All" }).first().click();
-    for (const title of challengeTitles) {
+    for (const title of submissionTitles) {
       await expect(page.getByText(title)).toBeVisible();
     }
   });
@@ -96,9 +96,9 @@ test.describe("AI Builders Portal via dev proxy", () => {
     await page.goto(`${BASE}/ai-builders/challenges`);
 
     await page
-      .getByText("Walk the terrain: Your first deployment")
+      .getByText("Brownfield analysis")
       .click();
-    await expect(page).toHaveURL(/\/ai-builders\/challenges\/deploy-first-app$/);
+    await expect(page).toHaveURL(/\/ai-builders\/challenges\/brownfield-analysis$/);
 
     // Detail page content
     await expect(

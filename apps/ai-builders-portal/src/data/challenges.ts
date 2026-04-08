@@ -1,5 +1,7 @@
 import type { Phase, ChallengeStatus } from "@/design-system/tokens";
 
+export type Practice = "Discovery" | "Building" | "Security" | "Storytelling";
+
 export interface Challenge {
   id: string;
   phase: Phase;
@@ -9,24 +11,30 @@ export interface Challenge {
   deliverables: string[];
   status: ChallengeStatus;
   tags: string[];
+  practices: Practice[];
+  submission?: number;
   references?: Array<{ title: string; content: string; category: string }>;
 }
 
 export const challenges: Challenge[] = [
+  /* ── Submission 1 ── */
   {
-    id: "deploy-first-app",
+    id: "brownfield-analysis",
     phase: 1,
-    title: "Walk the terrain: Your first deployment",
+    title: "Brownfield analysis",
+    submission: 1,
     description:
-      "Follow a guided walkthrough to deploy a simple Flask application with hot module reload. You'll learn how your dev environment works — proxy configuration, log access, and what happens when things break.",
+      "Analyze a brownfield codebase across three angles: data architecture, proxy/deployment networking, and testing coverage against inferred product intent.",
     fullDescription:
-      "This challenge walks you through deploying a Flask application behind a development proxy with hot module reload enabled. You'll configure Vite to proxy API requests, inspect logs to understand the request lifecycle, and intentionally break things to see how errors surface. By the end, you'll have a mental model of how your development environment works — not just how to use it, but how to debug it when something goes wrong.",
+      "Use Claude skills to explore an existing codebase you didn't write. Analyze the data architecture of the application itself, the proxy and deployment architecture of how the app is accessed from a browser, and the testing coverage — assessed against what the product is supposed to do, not just what's been tested. Identify gaps between intent and behavior.",
     deliverables: [
-      "Running application deployed to dev",
-      "Screenshot of successful log inspection",
+      "Data architecture analysis",
+      "Deployment/networking analysis",
+      "Test coverage gap analysis",
     ],
     status: "reviewed",
-    tags: ["Architecture", "Building"],
+    tags: ["Architecture", "Analysis"],
+    practices: ["Discovery"],
     references: [
       {
         title: "How proxies interact with hot module reload",
@@ -42,21 +50,24 @@ export const challenges: Challenge[] = [
       },
     ],
   },
+  /* ── Submission 2 ── */
   {
-    id: "data-privacy-layer",
+    id: "sample-application",
     phase: 2,
-    title: "Design a data privacy layer",
+    title: "Sample application build",
+    submission: 2,
     description:
-      "Given a schema with mixed PII classifications, design and implement a cleansing pipeline that handles each classification appropriately. You choose the approach — justify your trade-offs in your devlog.",
+      "Build your own sample application using the same structural patterns as the brownfield project, guided by a product one-pager. Discovery and building are intentionally mixed.",
     fullDescription:
-      "Imagine a data governance policy with multiple PII classification levels. In this challenge, you'll work with a schema that mixes PUBLIC, INTERNAL, CONFIDENTIAL, and RESTRICTED data. Design a cleansing pipeline that routes each field through the appropriate redaction or encryption handler based on its classification. Document your architectural decisions — why you chose this pipeline structure, what trade-offs you made, and how you'd handle a new classification level being added.",
+      "Apply what you learned from the brownfield analysis to a new build. Use a product one-pager to guide your decisions. You're not just building — you're practicing the cycle of discovering what the code needs to do and building it. Track your data model, use the design system, write tests that follow the evolving problem definition, and produce a README that the application launcher can use to render your app.",
     deliverables: [
-      "Working pipeline artifact",
+      "Working application",
+      "README that launches the app",
       "Devlog with architecture and design sections",
-      "2-min video walkthrough",
     ],
     status: "in-progress",
-    tags: ["Data Modeling"],
+    tags: ["Building", "Data Modeling"],
+    practices: ["Discovery", "Building"],
     references: [
       {
         title: "PII classification levels and cleansing requirements",
@@ -72,22 +83,24 @@ export const challenges: Challenge[] = [
       },
     ],
   },
+  /* ── Submission 3 ── */
   {
-    id: "discovery-problem",
-    phase: 3,
-    title: "Discovery: Find and shape your own problem",
+    id: "discovery-pitch",
+    phase: 2,
+    title: "Discovery and prototype pitch",
+    submission: 3,
     description:
-      "Identify a real problem in your work or life through conversations. Create a prototype that drives the conversation about how to prioritize, resource, and solve it.",
+      "Interview colleagues in your work or life. Process findings independently and with peers. Pitch a prototype idea based on what you learned.",
     fullDescription:
-      "This is where everything comes together. Go into your work or community and find a problem worth solving. Talk to people, understand the constraints, and shape a solution. Build a prototype — not to ship, but to drive a conversation. Record a presentation walking through your discovery process, the problem you found, and why your proposed solution is worth investing in. Present to the community for feedback before taking it to leadership.",
+      "This submission is about learning to discover real problems through conversation. Interview people, listen for what they actually need (not just what they say they want), and process what you heard — both on your own and with peers. Then pitch a prototype idea that connects your findings to something buildable. The pitch should reflect genuine learning, not assumptions.",
     deliverables: [
-      "1-pager product brief",
-      "Working prototype",
-      "Presentation recording",
-      "Devlog",
+      "Interview notes",
+      "Prototype pitch",
+      "1-pager connecting findings to solution",
     ],
     status: "not-started",
-    tags: ["Discovery", "Go-to-Market"],
+    tags: ["Discovery", "Communication"],
+    practices: ["Discovery"],
     references: [
       {
         title: "Killing your darlings — when to abandon a prototype",
@@ -97,6 +110,84 @@ export const challenges: Challenge[] = [
       },
     ],
   },
+  /* ── Submission 4 ── */
+  {
+    id: "prototype-build",
+    phase: 3,
+    title: "Prototype and updated product definition",
+    submission: 4,
+    description:
+      "Build the prototype you pitched. Update your product definition to reflect what you learned during the build — it should not be the same document you started with.",
+    fullDescription:
+      "The completed prototype and an updated product definition that reflects what you learned during the build. The product definition evolves — it is not the same document you started with. Your architecture decisions should be defensible, your data model tracked deliberately, and your README complete enough for the application launcher to render the app.",
+    deliverables: [
+      "Working prototype",
+      "Updated product definition",
+      "Devlog",
+      "README that launches the app",
+    ],
+    status: "not-started",
+    tags: ["Building", "Design"],
+    practices: ["Building", "Discovery"],
+  },
+  /* ── Submission 5 ── */
+  {
+    id: "security-review",
+    phase: 2,
+    title: "Security review and test summary report",
+    submission: 5,
+    description:
+      "Demonstrate that your application doesn't expose credentials or sensitive data. Build LLM-as-Judge experiments and format them into a test summary report others can act on.",
+    fullDescription:
+      "Review your application for credential exposure and sensitive data leaks. Then design and run LLM-as-Judge experiments — automated evaluations of your AI-generated outputs. Format the results into a test summary report that someone outside the program could read and understand. The report bridges the gap between technical evaluation and practical review.",
+    deliverables: [
+      "Security review evidence",
+      "LLM-as-Judge experiment results",
+      "Test summary report",
+    ],
+    status: "not-started",
+    tags: ["Security", "AI"],
+    practices: ["Security", "Building"],
+  },
+  /* ── Submission 6 ── */
+  {
+    id: "continuous-improvement",
+    phase: 3,
+    title: "Continuous improvement plan",
+    submission: 6,
+    description:
+      "Access production log data, develop methods for analyzing it, and create a plan for feeding insights back to different colleagues — data science, engineering, product.",
+    fullDescription:
+      "With access to production log data, develop sample methods for analyzing that data — what patterns to look for, what signals matter, what noise to filter out. Then create a plan for how you feed those insights back to different colleagues in data science, engineering, and product. The plan should be specific enough that someone could follow it.",
+    deliverables: [
+      "Log analysis methods",
+      "Feedback loop design",
+      "Continuous improvement plan",
+    ],
+    status: "not-started",
+    tags: ["Observability", "Planning"],
+    practices: ["Security"],
+  },
+  /* ── Submission 7 ── */
+  {
+    id: "communications-package",
+    phase: 3,
+    title: "Communications package",
+    submission: 7,
+    description:
+      "Create a dev log, a video under 4 minutes introducing your product, and collect feedback from presenting your idea to peers and leaders.",
+    fullDescription:
+      "This is your storytelling submission. Create a dev log that documents your journey. Record a video under 4 minutes that introduces your product — what it does, why it matters, and who it's for. Present your work to peers and leaders and collect their feedback. Your storytelling should make the work legible to people outside the program.",
+    deliverables: [
+      "Dev log",
+      "Product video (under 4 minutes)",
+      "Collected feedback from presentations",
+    ],
+    status: "not-started",
+    tags: ["Communication", "Presentation"],
+    practices: ["Storytelling"],
+  },
+  /* ── Additional Challenges ── */
   {
     id: "auth-flow",
     phase: 1,
@@ -109,6 +200,7 @@ export const challenges: Challenge[] = [
     ],
     status: "not-started",
     tags: ["Architecture"],
+    practices: ["Discovery", "Security"],
   },
   {
     id: "ai-eval-tool",
@@ -124,6 +216,7 @@ export const challenges: Challenge[] = [
     ],
     status: "not-started",
     tags: ["Building", "AI"],
+    practices: ["Building", "Security"],
   },
   {
     id: "design-system-custom",
@@ -138,6 +231,7 @@ export const challenges: Challenge[] = [
     ],
     status: "submitted",
     tags: ["Building", "Design"],
+    practices: ["Building"],
   },
 ];
 

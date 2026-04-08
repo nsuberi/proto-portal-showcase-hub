@@ -51,9 +51,9 @@ export default function ChallengesPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-headline text-xl font-bold text-on-surface">Challenges</h1>
+        <h1 className="font-headline text-xl font-bold text-on-surface">Submissions &amp; Challenges</h1>
         <p className="mt-1 font-body text-sm text-on-surface-variant">
-          Bounded units of work that build real capability.
+          Seven submissions span all four practices. Additional challenges let you go deeper.
         </p>
       </div>
 
@@ -119,6 +119,8 @@ export default function ChallengesPage() {
               deliverables={challenge.deliverables}
               status={challenge.status}
               tags={challenge.tags}
+              practices={challenge.practices}
+              submission={challenge.submission}
               onClick={() => navigate(`/challenges/${challenge.id}`)}
             />
           ))}
