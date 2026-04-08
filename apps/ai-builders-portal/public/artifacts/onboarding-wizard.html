@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Onboarding Wizard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #121317;
+    color: #e3e2e8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .wizard {
+    width: 100%;
+    max-width: 360px;
+  }
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #292a2e;
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: #bbc6e2; width: 24px; border-radius: 4px; }
+  .step-dot.done { background: #27C93F; }
+  .step-connector {
+    width: 20px; height: 2px; background: #292a2e;
+    transition: background 0.3s;
+  }
+  .step-connector.done { background: #27C93F; }
+
+  /* Card */
+  .card {
+    background: #1a1b20;
+    border-radius: 14px;
+    padding: 28px 24px;
+    animation: fadeUp 0.3s ease-out;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .card p { font-size: 12px; color: #8e9196; margin-bottom: 20px; line-height: 1.5; }
+
+  /* Form elements */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; font-weight: 500; color: #c4c6cc; margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%;
+    background: #121317;
+    border: 1px solid #44474c;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #e3e2e8;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: #bbc6e2; }
+  .field select { appearance: none; cursor: pointer; }
+
+  /* Option grid */
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .option {
+    background: #121317;
+    border: 1px solid #44474c;
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+  }
+  .option:hover { border-color: #8e9196; }
+  .option.selected { border-color: #bbc6e2; background: #0f1a2e; }
+  .option .emoji { font-size: 22px; display: block; margin-bottom: 6px; }
+
+  /* Buttons */
+  .actions { display: flex; gap: 8px; margin-top: 20px; }
+  .btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-secondary { background: #292a2e; color: #c4c6cc; }
+  .btn-secondary:hover { background: #343439; }
+  .btn-primary { background: #bbc6e2; color: #0f1a2e; }
+  .btn-primary:hover { background: #d7e2ff; }
+
+  /* Complete state */
+  .complete {
+    text-align: center;
+    padding: 40px 24px;
+  }
+  .checkmark {
+    width: 48px; height: 48px;
+    background: #0f2e1a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+    animation: pop 0.4s ease-out;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+  <div class="wizard">
+    <div class="steps" id="stepIndicator"></div>
+    <div class="card" id="cardContent"></div>
+  </div>
+
+  <script>
+    const steps = [
+      {
+        title: "Welcome aboard!",
+        desc: "Let's get you set up. We'll walk through a few quick steps.",
+        html: `
+          <div class="field"><label>Full name</label><input type="text" placeholder="Jordan Rivera" /></div>
+          <div class="field"><label>Role</label>
+            <select><option>Engineer</option><option>Designer</option><option>Product Manager</option><option>Data Scientist</option></select>
+          </div>
+        `
+      },
+      {
+        title: "Your focus area",
+        desc: "What are you most excited to work on?",
+        html: `
+          <div class="options">
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#129302;</span>AI/ML</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#127912;</span>Frontend</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#9881;&#65039;</span>Platform</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#128202;</span>Data</div>
+          </div>
+        `
+      },
+      {
+        title: "Almost done",
+        desc: "Pick your preferred tools to get started.",
+        html: `
+          <div class="options">
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#128187;</span>VS Code</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#9889;</span>Cursor</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#128421;&#65039;</span>Terminal</div>
+            <div class="option" onclick="toggleOpt(this)"><span class="emoji">&#127760;</span>Cloud IDE</div>
+          </div>
+        `
+      }
+    ];
+
+    let current = 0;
+    const total = steps.length;
+
+    function toggleOpt(el) {
+      el.classList.toggle("selected");
+    }
+
+    function renderIndicator() {
+      const ind = document.getElementById("stepIndicator");
+      let html = "";
+      for (let i = 0; i < total; i++) {
+        const cls = i < current ? "done" : i === current ? "active" : "";
+        html += `<div class="step-dot ${cls}"></div>`;
+        if (i < total - 1) {
+          html += `<div class="step-connector ${i < current ? 'done' : ''}"></div>`;
+        }
+      }
+      ind.innerHTML = html;
+    }
+
+    function render() {
+      const card = document.getElementById("cardContent");
+      renderIndicator();
+
+      if (current >= total) {
+        card.innerHTML = `
+          <div class="complete">
+            <div class="checkmark">&#10003;</div>
+            <h3>You're all set!</h3>
+            <p style="margin-top:8px">Your workspace is being configured. You'll receive an invite in your inbox shortly.</p>
+            <div class="actions" style="margin-top:20px">
+              <button class="btn btn-primary" onclick="current=0;render()">Start over</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const step = steps[current];
+      card.innerHTML = `
+        <h3>${step.title}</h3>
+        <p>${step.desc}</p>
+        ${step.html}
+        <div class="actions">
+          ${current > 0 ? '<button class="btn btn-secondary" onclick="current--;render()">Back</button>' : ""}
+          <button class="btn btn-primary" onclick="current++;render()">${current === total - 1 ? "Finish" : "Continue"}</button>
+        </div>
+      `;
+      // Re-trigger animation
+      card.style.animation = "none";
+      card.offsetHeight;
+      card.style.animation = "";
+    }
+
+    render();
+  </script>
+</body>
+</html>

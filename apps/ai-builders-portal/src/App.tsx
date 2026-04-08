@@ -11,6 +11,7 @@ import ShowcasePage from "@/pages/ShowcasePage";
 import CommunityPage from "@/pages/CommunityPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import StarChartPage from "@/pages/StarChartPage";
+import ArtifactPage from "@/pages/ArtifactPage";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
       <Route element={<OnboardingLayout />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
       </Route>
+      <Route path="/artifacts/:id" element={<ArtifactPage />} />
       <Route path="/portfolio/:userId" element={<PortfolioPage />} />
       <Route path="/screens/star-chart" element={<StarChartPage />} />
       <Route path="*" element={<NotFoundPage />} />

@@ -12,6 +12,10 @@ export interface ShowcaseEntry {
   artifactTitle?: string;
   /** URL to a self-contained HTML artifact for live preview */
   artifactUrl?: string;
+  /** Route ID for the full React artifact app */
+  artifactRouteId?: string;
+  /** Associated challenge/submission ID */
+  challengeId?: string;
   videoUrl?: string;
   devlogSummary?: DevlogSections;
 }
@@ -27,6 +31,8 @@ export const showcaseEntries: ShowcaseEntry[] = [
     reactions: "12 reactions",
     artifactTitle: "classifier/app.tsx",
     artifactUrl: "/artifacts/loan-classifier.html",
+    artifactRouteId: "loan-classifier",
+    challengeId: "brownfield-analysis",
     artifactCode:
       "import { classifyDocument } from './classifier';\n\nexport default function App({ documents }) {\n  return documents.map(doc => (\n    <DocumentCard key={doc.id}\n      classification={classifyDocument(doc)}\n    />\n  ));\n}",
     devlogSummary: {
@@ -46,6 +52,8 @@ export const showcaseEntries: ShowcaseEntry[] = [
     reactions: "8 reactions",
     artifactTitle: "dashboard/RateLock.tsx",
     artifactUrl: "/artifacts/rate-dashboard.html",
+    artifactRouteId: "rate-dashboard",
+    challengeId: "sample-application",
     artifactCode:
       "import { useQuery } from '@tanstack/react-query';\nimport { RateCard, TrendChart } from './components';\n\nexport default function RateLockDashboard() {\n  const { data: rates } = useQuery({ queryKey: ['rates'] });\n  return (\n    <div className=\"grid grid-cols-3 gap-4\">\n      {rates?.map(r => <RateCard key={r.id} {...r} />)}\n    </div>\n  );\n}",
     devlogSummary: {
@@ -79,6 +87,8 @@ export const showcaseEntries: ShowcaseEntry[] = [
     reactions: "6 reactions",
     artifactTitle: "onboarding/Wizard.tsx",
     artifactUrl: "/artifacts/onboarding-wizard.html",
+    artifactRouteId: "onboarding-wizard",
+    challengeId: "prototype-build",
     artifactCode:
       "export default function OnboardingWizard({ steps }) {\n  const [current, setCurrent] = useState(0);\n  return (\n    <StepContainer>\n      <StepIndicator total={steps.length} current={current} />\n      <StepContent step={steps[current]} />\n    </StepContainer>\n  );\n}",
   },
@@ -132,6 +142,8 @@ export const showcaseEntries: ShowcaseEntry[] = [
     reactions: "9 reactions",
     artifactTitle: "summarizer/app.py",
     artifactUrl: "/artifacts/meeting-summarizer.html",
+    artifactRouteId: "meeting-summarizer",
+    challengeId: "communications-package",
     artifactCode:
       "from flask import Flask, request\nfrom anthropic import Anthropic\n\napp = Flask(__name__)\nclient = Anthropic()\n\n@app.route('/summarize', methods=['POST'])\ndef summarize():\n    transcript = request.json['transcript']\n    response = client.messages.create(\n        model='claude-sonnet-4-20250514',\n        messages=[{'role': 'user', 'content': f'Summarize: {transcript}'}]\n    )\n    return {'summary': response.content[0].text}",
   },

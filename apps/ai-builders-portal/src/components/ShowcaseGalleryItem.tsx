@@ -1,3 +1,4 @@
+import { Suspense, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface ShowcaseGalleryItemProps {
@@ -7,6 +8,8 @@ interface ShowcaseGalleryItemProps {
   reactions: string;
   /** URL to a self-contained HTML artifact for the live preview thumbnail */
   artifactUrl?: string;
+  /** React content to render as the preview (takes priority over artifactUrl) */
+  previewContent?: ReactNode;
   className?: string;
   onClick?: () => void;
 }
@@ -17,13 +20,14 @@ export function ShowcaseGalleryItem({
   tags,
   reactions,
   artifactUrl,
+  previewContent,
   className,
   onClick,
 }: ShowcaseGalleryItemProps) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl bg-surface-container-low",
+        "overflow-hidden rounded-sm bg-surface-container-low",
         "cursor-pointer transition-colors duration-200 hover:bg-surface-container",
         className,
       )}
@@ -42,7 +46,19 @@ export function ShowcaseGalleryItem({
       }
     >
       {/* Preview area */}
-      {artifactUrl ? (
+      {previewContent ? (
+        <div className="relative h-[140px] overflow-hidden bg-surface-container-lowest">
+          <div className="pointer-events-none absolute left-0 top-0 h-[560px] w-[400%] origin-top-left scale-[0.25]">
+            <Suspense fallback={null}>{previewContent}</Suspense>
+          </div>
+          {/* Hover overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 hover:bg-black/30">
+            <span className="material-symbols-outlined text-xl text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              open_in_full
+            </span>
+          </div>
+        </div>
+      ) : artifactUrl ? (
         <div className="relative h-[140px] overflow-hidden bg-surface-container-lowest">
           <iframe
             src={artifactUrl}
@@ -85,7 +101,7 @@ export function ShowcaseGalleryItem({
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-surface-container-highest px-2 py-0.5 font-label text-[9px] uppercase tracking-wider text-on-surface-variant"
+                className="rounded-full bg-surface-container-highest px-2 py-0.5 font-label text-[11px] uppercase tracking-wider text-on-surface-variant"
               >
                 {tag}
               </span>

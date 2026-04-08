@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Meeting Summarizer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #121317;
+    color: #e3e2e8;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+
+  .input-area {
+    background: #1a1b20;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #e3e2e8;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    min-height: 80px;
+  }
+  textarea::placeholder { color: #44474c; }
+  .input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .char-count { font-size: 10px; color: #44474c; }
+  .btn {
+    background: #bbc6e2; color: #0f1a2e;
+    border: none; border-radius: 8px;
+    padding: 8px 18px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background: #d7e2ff; }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* Output */
+  .output { display: none; }
+  .output.visible { display: block; }
+
+  .section {
+    background: #1a1b20;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.4s ease-out both;
+  }
+  .section:nth-child(2) { animation-delay: 0.15s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.45s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .section-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .section-title { font-size: 12px; font-weight: 600; }
+
+  .summary-text { font-size: 12px; line-height: 1.6; color: #c4c6cc; }
+  .action-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0;
+  }
+  .action-check {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid #44474c; flex-shrink: 0;
+    margin-top: 1px; cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .action-check.checked { background: #27C93F; border-color: #27C93F; }
+  .action-check.checked::after { content: "\\2713"; font-size: 10px; color: #121317; font-weight: 700; }
+  .action-text { font-size: 12px; color: #c4c6cc; line-height: 1.4; }
+  .action-owner {
+    font-size: 10px; color: #8e9196;
+    margin-top: 2px;
+  }
+
+  .sentiment {
+    display: flex; gap: 12px;
+  }
+  .sentiment-bar {
+    flex: 1; text-align: center;
+  }
+  .bar-track {
+    height: 6px; background: #292a2e; border-radius: 3px;
+    overflow: hidden; margin-bottom: 6px;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 3px;
+    animation: grow 0.8s ease-out both;
+  }
+  @keyframes grow { from { width: 0; } }
+  .bar-label { font-size: 10px; color: #8e9196; }
+  .bar-value { font-size: 11px; font-weight: 600; margin-top: 2px; }
+
+  .typing {
+    display: inline-flex; gap: 3px; padding: 4px 0;
+  }
+  .typing span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #bbc6e2;
+    animation: bounce 1.4s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+</style>
+</head>
+<body>
+  <h2>Meeting Summarizer</h2>
+
+  <div class="input-area">
+    <textarea id="transcript" placeholder="Paste meeting transcript here...">Sarah: Let's review the Q4 launch timeline. The API integration is on track but we need to finalize the auth flow by Friday.
+
+Marcus: I can have the OAuth implementation ready by Wednesday. The token refresh logic is the last piece.
+
+Priya: Design review for the dashboard is done. I'll share the updated Figma link after this call. One concern — the mobile breakpoints need another pass.
+
+Sarah: Good. Marcus, loop in the security team on the OAuth spec. Priya, can you pair with Jordan on mobile?
+
+Priya: Sure, we'll sync tomorrow morning.
+
+Sarah: Last thing — the load testing results came back. P95 latency is at 240ms, which is under our 300ms target. Ship it.</textarea>
+    <div class="input-footer">
+      <span class="char-count" id="charCount">0 chars</span>
+      <button class="btn" id="summarizeBtn" onclick="summarize()">Summarize</button>
+    </div>
+  </div>
+
+  <div id="loading" style="display:none;text-align:center;padding:20px">
+    <div class="typing"><span></span><span></span><span></span></div>
+    <p style="font-size:11px;color:#8e9196;margin-top:8px">Analyzing transcript...</p>
+  </div>
+
+  <div class="output" id="output">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:#0f1a2e">&#128221;</div>
+        <span class="section-title">Summary</span>
+      </div>
+      <p class="summary-text">Q4 launch review — API integration on track, OAuth auth flow due Wednesday with security review. Dashboard design complete, mobile breakpoints need refinement. Load testing passed (P95 240ms < 300ms target). Team aligned to ship.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:#261700">&#9989;</div>
+        <span class="section-title">Action Items</span>
+      </div>
+      <div class="action-item">
+        <div class="action-check" onclick="this.classList.toggle('checked')"></div>
+        <div>
+          <div class="action-text">Complete OAuth implementation with token refresh</div>
+          <div class="action-owner">Marcus &middot; Due Wednesday</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-check" onclick="this.classList.toggle('checked')"></div>
+        <div>
+          <div class="action-text">Loop security team in on OAuth spec review</div>
+          <div class="action-owner">Marcus &middot; This week</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-check" onclick="this.classList.toggle('checked')"></div>
+        <div>
+          <div class="action-text">Share updated Figma dashboard link</div>
+          <div class="action-owner">Priya &middot; Today</div>
+        </div>
+      </div>
+      <div class="action-item">
+        <div class="action-check" onclick="this.classList.toggle('checked')"></div>
+        <div>
+          <div class="action-text">Pair on mobile breakpoint refinements</div>
+          <div class="action-owner">Priya + Jordan &middot; Tomorrow AM</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon" style="background:#0f2e1a">&#128200;</div>
+        <span class="section-title">Tone & Sentiment</span>
+      </div>
+      <div class="sentiment">
+        <div class="sentiment-bar">
+          <div class="bar-track"><div class="bar-fill" style="width:85%;background:#27C93F"></div></div>
+          <div class="bar-label">Productive</div>
+          <div class="bar-value" style="color:#27C93F">85%</div>
+        </div>
+        <div class="sentiment-bar">
+          <div class="bar-track"><div class="bar-fill" style="width:72%;background:#bbc6e2"></div></div>
+          <div class="bar-label">Aligned</div>
+          <div class="bar-value" style="color:#bbc6e2">72%</div>
+        </div>
+        <div class="sentiment-bar">
+          <div class="bar-track"><div class="bar-fill" style="width:15%;background:#ffba38"></div></div>
+          <div class="bar-label">Concern</div>
+          <div class="bar-value" style="color:#ffba38">15%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const textarea = document.getElementById("transcript");
+    const charCount = document.getElementById("charCount");
+
+    function updateCount() {
+      charCount.textContent = textarea.value.length + " chars";
+    }
+    textarea.addEventListener("input", updateCount);
+    updateCount();
+
+    function summarize() {
+      const btn = document.getElementById("summarizeBtn");
+      const loading = document.getElementById("loading");
+      const output = document.getElementById("output");
+
+      btn.disabled = true;
+      output.classList.remove("visible");
+      loading.style.display = "block";
+
+      setTimeout(() => {
+        loading.style.display = "none";
+        output.classList.add("visible");
+        btn.disabled = false;
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
