@@ -22,6 +22,7 @@ from .iteration_timeline import (
     get_failure_modes,
     get_architecture_context,
 )
+from .workshop_cells import get_stage_cells
 
 narrative_bp = Blueprint("narrative", __name__)
 
@@ -486,6 +487,38 @@ def load_narrative_content(filename):
     return None
 
 
+def load_narrative_sections(filename):
+    """Load markdown and split into named sections.
+
+    Markdown files use <!-- section: name --> comments as delimiters.
+    Returns a dict mapping section names to rendered HTML strings.
+    """
+    import re
+
+    project_root = Path(__file__).parent.parent
+    content_path = project_root / "data" / "narrative" / filename
+
+    if not content_path.exists():
+        return {}
+
+    with open(content_path, "r") as f:
+        raw = f.read()
+
+    sections = {}
+    parts = re.split(r"<!--\s*section:\s*(\w+)\s*-->", raw)
+
+    # parts alternates: [pre-text, name1, content1, name2, content2, ...]
+    # parts[0] is text before first marker (usually empty)
+    i = 1
+    while i < len(parts) - 1:
+        name = parts[i].strip()
+        content = parts[i + 1].strip()
+        sections[name] = markdown.markdown(content, extensions=["tables", "fenced_code"])
+        i += 2
+
+    return sections
+
+
 def get_phase_context(phase_id):
     """Get navigation context for a phase"""
     phase = PHASES.get(phase_id)
@@ -808,10 +841,12 @@ def workshop_landing():
 def workshop_1():
     """Workshop Stage 1: Foundation - RAG pipeline and metrics"""
     context = get_workshop_context("workshop_1")
-    content = load_narrative_content("workshop_1_foundation.md")
+    sections = load_narrative_sections("workshop_1_foundation.md")
+    cells = get_stage_cells(1)
     return render_template(
-        "narrative/workshop_stage.html",
-        content=content,
+        "narrative/workshop_stage_1.html",
+        sections=sections,
+        cells=cells,
         **context,
     )
 
@@ -820,10 +855,12 @@ def workshop_1():
 def workshop_2():
     """Workshop Stage 2: Acceptance - Golden datasets"""
     context = get_workshop_context("workshop_2")
-    content = load_narrative_content("workshop_2_acceptance.md")
+    sections = load_narrative_sections("workshop_2_acceptance.md")
+    cells = get_stage_cells(2)
     return render_template(
-        "narrative/workshop_stage.html",
-        content=content,
+        "narrative/workshop_stage_2.html",
+        sections=sections,
+        cells=cells,
         **context,
     )
 
@@ -832,10 +869,12 @@ def workshop_2():
 def workshop_3():
     """Workshop Stage 3: Validation - Inter-rater reliability"""
     context = get_workshop_context("workshop_3")
-    content = load_narrative_content("workshop_3_validation.md")
+    sections = load_narrative_sections("workshop_3_validation.md")
+    cells = get_stage_cells(3)
     return render_template(
-        "narrative/workshop_stage.html",
-        content=content,
+        "narrative/workshop_stage_3.html",
+        sections=sections,
+        cells=cells,
         **context,
     )
 
@@ -844,10 +883,12 @@ def workshop_3():
 def workshop_4():
     """Workshop Stage 4: Improvement - Dual refinement loops"""
     context = get_workshop_context("workshop_4")
-    content = load_narrative_content("workshop_4_improvement.md")
+    sections = load_narrative_sections("workshop_4_improvement.md")
+    cells = get_stage_cells(4)
     return render_template(
-        "narrative/workshop_stage.html",
-        content=content,
+        "narrative/workshop_stage_4.html",
+        sections=sections,
+        cells=cells,
         **context,
     )
 
@@ -856,9 +897,11 @@ def workshop_4():
 def workshop_5():
     """Workshop Stage 5: Reporting - TSR and CI integration"""
     context = get_workshop_context("workshop_5")
-    content = load_narrative_content("workshop_5_reporting.md")
+    sections = load_narrative_sections("workshop_5_reporting.md")
+    cells = get_stage_cells(5)
     return render_template(
-        "narrative/workshop_stage.html",
-        content=content,
+        "narrative/workshop_stage_5.html",
+        sections=sections,
+        cells=cells,
         **context,
     )

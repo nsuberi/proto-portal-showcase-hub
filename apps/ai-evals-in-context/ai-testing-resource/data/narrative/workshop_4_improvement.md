@@ -1,3 +1,4 @@
+<!-- section: intro -->
 ## The Improvement Loop
 
 With metrics, a golden dataset, and validated inter-rater reliability, improvement becomes systematic instead of guesswork. The loop:
@@ -6,6 +7,7 @@ With metrics, a golden dataset, and validated inter-rater reliability, improveme
 
 Each pass through the loop produces measurable evidence of whether the change helped, hurt, or had no effect. This is what makes AI development auditable.
 
+<!-- section: diagnosis -->
 ## Diagnosing the Pipeline (Step 1)
 
 Start with the metric results from Stage 1. Count failures per metric across all test scenarios. The pattern tells you where to look:
@@ -16,6 +18,7 @@ Start with the metric results from Stage 1. Count failures per metric across all
 
 In the workshop's mortgage assistant, the compliance metric produced the most failures. The system prompt (V1) was a single paragraph with inline guidance — enough for a capable model to usually comply, but not structured enough to prevent edge-case violations.
 
+<!-- section: prompt_improvement -->
 ## Improving the System Prompt (Step 2)
 
 The V1 system prompt was conversational: "You are a helpful mortgage assistant. Answer questions based on the provided context. Be professional."
@@ -37,6 +40,7 @@ You are a mortgage lending assistant. Follow these rules strictly:
 
 The key changes: numbered rules instead of prose, explicit prohibitions (NEVER), and a mandatory disclaimer. These give the model unambiguous constraints rather than aspirational guidance.
 
+<!-- section: reevaluation -->
 ## Re-Evaluating (Step 3)
 
 The same four test scenarios from Stage 1 are run through the V2 pipeline with all five metrics. Each evaluation carries `prompt_version: "v2"` metadata so traces can be filtered by version in LangSmith.
@@ -53,6 +57,7 @@ Re-evaluating the original four scenarios is necessary but not sufficient. The g
 
 This catches an important failure mode: a prompt change that fixes the original test scenarios but breaks behavior on cases that were previously working. The golden dataset acts as a regression suite.
 
+<!-- section: judge_improvement -->
 ## Improving the Judge
 
 The pipeline is only half the system. The automated judge also needs improvement.
@@ -75,10 +80,7 @@ V2 evaluation steps make key distinctions:
 
 The core change: V2 distinguishes general information (acceptable) from personal guarantees (unacceptable). This matches how human experts actually evaluate — a loan officer wouldn't flag "FHA loans require 580 credit for 3.5% down" as non-compliant.
 
-### Re-Measuring Kappa
-
-Run the V2 judge on the same 20 annotated traces from Stage 3. Compute new kappa, confusion matrix, and diagnostic statistics. Compare V1 and V2 side by side.
-
+<!-- section: summary -->
 ## Two Parallel Loops
 
 The key insight: pipeline improvement and judge improvement are parallel loops that reinforce each other.

@@ -1,0 +1,102 @@
+{% extends "narrative/base_narrative.html" %}
+{% from "components/code_canvas.html" import code_canvas %}
+
+{% block title %}Stage 3: Validation — AI Evaluation Workshop{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/workshop_mock.js') }}" defer></script>
+{% endblock %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+<div class="narrative-content">
+
+  {# ── Section: Medical analogy + Cohen's kappa ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.intro | safe }}
+    </div>
+  </section>
+
+  {# ── Section: Annotation set ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.annotation_set | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.annotated_traces.code_html,
+          cells.annotated_traces.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+    <div class="workshop-section__code" style="margin-top: var(--space-md);">
+      {{ code_canvas(
+          cells.cohens_kappa.code_html,
+          cells.cohens_kappa.filename,
+          test_type=cells.cohens_kappa.test_type,
+          runnable=True,
+          test_id="cohens_kappa",
+          mock_output=cells.cohens_kappa.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Confusion matrix ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.confusion_matrix | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.confusion_matrix.code_html,
+          cells.confusion_matrix.filename,
+          show_line_numbers=True
+      ) }}
+      {# Static chart image from notebook output #}
+      {% if cells.confusion_matrix.mock_output %}
+      <div class="mock-chart" style="margin-top: var(--space-md);">
+        <img src="{{ url_for('static', filename=cells.confusion_matrix.mock_output.image_path) }}"
+             alt="Confusion matrix: Human vs LLM Judge">
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# ── Section: Multi-rater dynamics ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.multi_rater | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.fleiss_kappa.code_html,
+          cells.fleiss_kappa.filename,
+          test_type=cells.fleiss_kappa.test_type,
+          runnable=True,
+          test_id="fleiss_kappa",
+          mock_output=cells.fleiss_kappa.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: From agreement to action ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.action | safe }}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

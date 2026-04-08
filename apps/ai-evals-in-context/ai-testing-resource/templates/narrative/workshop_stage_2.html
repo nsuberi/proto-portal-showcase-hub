@@ -1,0 +1,77 @@
+{% extends "narrative/base_narrative.html" %}
+{% from "components/code_canvas.html" import code_canvas %}
+
+{% block title %}Stage 2: Acceptance — AI Evaluation Workshop{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/workshop_mock.js') }}" defer></script>
+{% endblock %}
+
+{% block phase_header %}
+<header class="phase-header">
+  <div class="phase-header__content">
+    <span class="phase-header__number">Stage {{ phase.number }}</span>
+    <h1 class="phase-header__title">{{ phase.title }}</h1>
+    <p class="phase-header__subtitle">{{ phase.subtitle }}</p>
+  </div>
+</header>
+{% endblock %}
+
+{% block phase_content %}
+<div class="narrative-content">
+
+  {# ── Section: Golden dataset intro + examples ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.intro | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.golden_dataset.code_html,
+          cells.golden_dataset.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Annotation workflow ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.annotation | safe }}
+    </div>
+  </section>
+
+  {# ── Section: Validating metric separation ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.separation | safe }}
+    </div>
+    <div class="workshop-section__code">
+      {{ code_canvas(
+          cells.eval_golden.code_html,
+          cells.eval_golden.filename,
+          test_type=cells.eval_golden.test_type,
+          runnable=True,
+          test_id="eval_golden",
+          mock_output=cells.eval_golden.mock_output | tojson,
+          show_line_numbers=True
+      ) }}
+    </div>
+    <div class="workshop-section__code" style="margin-top: var(--space-md);">
+      {{ code_canvas(
+          cells.separation.code_html,
+          cells.separation.filename,
+          show_line_numbers=True
+      ) }}
+    </div>
+  </section>
+
+  {# ── Section: Transition to next stage ── #}
+  <section class="workshop-section">
+    <div class="workshop-section__narrative">
+      {{ sections.transition | safe }}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
