@@ -39,6 +39,7 @@ export default {
         "phase-1": "var(--color-phase-1)",
         "phase-2": "var(--color-phase-2)",
         "phase-3": "var(--color-phase-3)",
+        "phase-4": "var(--color-phase-4)",
       },
       fontFamily: {
         headline: ["var(--font-headline)"],

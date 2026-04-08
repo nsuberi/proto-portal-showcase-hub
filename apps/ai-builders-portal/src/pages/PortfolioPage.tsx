@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { phaseConfig, GALAXY_BG_URL } from "@/design-system/tokens";
-import { ArtifactRenderer } from "@/components/ArtifactRenderer";
+import { ArtifactViewer } from "@/components/ArtifactViewer";
 import { VideoViewer } from "@/components/VideoViewer";
 import { DevlogEntry } from "@/components/DevlogEntry";
 import { mockUser, mockDevlogs } from "@/data/user";
@@ -113,10 +113,13 @@ export default function PortfolioPage() {
                   className="overflow-hidden rounded-xl bg-surface-container-low"
                 >
                   {devlog.id === "devlog-1" && (
-                    <ArtifactRenderer
-                      title="classifier/pipeline.py"
+                    <ArtifactViewer
+                      title="classifier/pipeline"
+                      language="py"
+                      src="/artifacts/loan-classifier.html"
                       code={`# Document triage pipeline — iteration 2\nfrom pipeline import extract, classify, redact\n\ndef process(doc):\n    extracted = extract(doc)\n    classified = classify(extracted)\n    return redact(classified)`}
                       status="running"
+                      height={360}
                       className="rounded-none"
                     />
                   )}

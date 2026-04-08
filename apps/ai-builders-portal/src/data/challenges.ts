@@ -32,7 +32,7 @@ export const challenges: Challenge[] = [
         title: "How proxies interact with hot module reload",
         category: "architecture",
         content:
-          "When your dev server runs behind a corporate proxy, WebSocket connections for HMR need special handling. The proxy must forward the Upgrade header for the WebSocket handshake. If your changes aren't reflecting in the browser, this is the first place to look.",
+          "When your dev server runs behind a proxy, WebSocket connections for HMR need special handling. The proxy must forward the Upgrade header for the WebSocket handshake. If your changes aren't reflecting in the browser, this is the first place to look.",
       },
       {
         title: "Reading and understanding log output",
@@ -49,7 +49,7 @@ export const challenges: Challenge[] = [
     description:
       "Given a schema with mixed PII classifications, design and implement a cleansing pipeline that handles each classification appropriately. You choose the approach — justify your trade-offs in your devlog.",
     fullDescription:
-      "Your organization has a data governance policy with multiple PII classification levels. In this challenge, you'll work with a schema that mixes PUBLIC, INTERNAL, CONFIDENTIAL, and RESTRICTED data. Design a cleansing pipeline that routes each field through the appropriate redaction or encryption handler based on its classification. Document your architectural decisions — why you chose this pipeline structure, what trade-offs you made, and how you'd handle a new classification level being added.",
+      "Imagine a data governance policy with multiple PII classification levels. In this challenge, you'll work with a schema that mixes PUBLIC, INTERNAL, CONFIDENTIAL, and RESTRICTED data. Design a cleansing pipeline that routes each field through the appropriate redaction or encryption handler based on its classification. Document your architectural decisions — why you chose this pipeline structure, what trade-offs you made, and how you'd handle a new classification level being added.",
     deliverables: [
       "Working pipeline artifact",
       "Devlog with architecture and design sections",
@@ -62,7 +62,7 @@ export const challenges: Challenge[] = [
         title: "PII classification levels and cleansing requirements",
         category: "data",
         content:
-          "Your organization's data governance policy defines classification levels. Don't invent your own — find the canonical source. Each level has specific handling requirements.",
+          "A data governance policy defines classification levels. Don't invent your own — find the canonical source. Each level has specific handling requirements.",
       },
       {
         title: "When to use mock data vs. real data flows",
@@ -77,9 +77,9 @@ export const challenges: Challenge[] = [
     phase: 3,
     title: "Discovery: Find and shape your own problem",
     description:
-      "Identify a real problem in your organization through stakeholder conversations. Create a prototype that drives the conversation about how to prioritize, resource, and solve it.",
+      "Identify a real problem in your work or life through conversations. Create a prototype that drives the conversation about how to prioritize, resource, and solve it.",
     fullDescription:
-      "This is where everything comes together. Go into your organization and find a problem worth solving. Talk to stakeholders, understand the constraints, and shape a solution. Build a prototype — not to ship, but to drive a conversation. Record a presentation walking through your discovery process, the problem you found, and why your proposed solution is worth investing in. Present to the community for feedback before taking it to leadership.",
+      "This is where everything comes together. Go into your work or community and find a problem worth solving. Talk to people, understand the constraints, and shape a solution. Build a prototype — not to ship, but to drive a conversation. Record a presentation walking through your discovery process, the problem you found, and why your proposed solution is worth investing in. Present to the community for feedback before taking it to leadership.",
     deliverables: [
       "1-pager product brief",
       "Working prototype",

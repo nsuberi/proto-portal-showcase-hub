@@ -22,13 +22,14 @@ test.describe("Landing page discovery", () => {
     await expect(page.getByText("Rate lock dashboard")).toBeVisible();
     await expect(page.getByText("Compliance checker")).toBeVisible();
 
-    // "Three phases of development" section
+    // "Four levels of development" section
     await expect(
-      page.getByRole("heading", { name: "Three phases of development" }),
+      page.getByRole("heading", { name: "Four levels of development" }),
     ).toBeVisible();
-    await expect(page.getByText("Developing Intuition")).toBeVisible();
-    await expect(page.getByText("Exercising Judgment")).toBeVisible();
-    await expect(page.getByText("Navigating Independently")).toBeVisible();
+    await expect(page.getByText("Curiosity")).toBeVisible();
+    await expect(page.getByText("Clarity")).toBeVisible();
+    await expect(page.getByText("Capability")).toBeVisible();
+    await expect(page.getByText("Consistency")).toBeVisible();
 
     // Featured challenge card
     await expect(
@@ -142,8 +143,8 @@ test.describe("Challenge browsing and detail", () => {
       await expect(page.getByText(title)).toBeVisible();
     }
 
-    // Click the "Guided" filter pill — only Phase 1 challenges should show
-    await page.getByRole("button", { name: "Guided", exact: true }).click();
+    // Click the "Curiosity" filter pill — only Phase 1 challenges should show
+    await page.getByRole("button", { name: "Curiosity", exact: true }).click();
 
     // Phase 1 challenges (should be visible)
     await expect(
@@ -214,7 +215,7 @@ test.describe("Profile page", () => {
       page.getByText("Learn to build AI apps"),
     ).toBeVisible();
     await expect(
-      page.getByText("Build a chatbot for my team"),
+      page.getByText("Build a chatbot for my work"),
     ).toBeVisible();
     await expect(
       page.getByText(/Prototype a document triage tool/),
@@ -286,7 +287,7 @@ test.describe("Portfolio and showcase", () => {
       "Loan document classifier",
       "Rate lock dashboard",
       "Compliance checker",
-      "Team onboarding wizard",
+      "Onboarding wizard",
       "Support ticket triage",
       "Internal doc search",
       "Project budget tracker",
@@ -305,7 +306,7 @@ test.describe("Portfolio and showcase", () => {
     await expect(page.getByText("AI meeting summarizer")).toBeVisible();
 
     // Non-AI items should not be visible
-    await expect(page.getByText("Team onboarding wizard")).not.toBeVisible();
+    await expect(page.getByText("Onboarding wizard")).not.toBeVisible();
     await expect(page.getByText("Internal doc search")).not.toBeVisible();
     await expect(page.getByText("Project budget tracker")).not.toBeVisible();
 

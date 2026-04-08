@@ -62,6 +62,7 @@ export default function ShowcasePage() {
               author={entry.author}
               tags={entry.tags}
               reactions={entry.reactions}
+              artifactUrl={entry.artifactUrl}
             />
           ))}
         </div>

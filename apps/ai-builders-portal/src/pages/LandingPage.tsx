@@ -9,12 +9,14 @@ const showcaseItems = [
     author: "Jordan R.",
     tags: ["data", "AI"],
     reactions: "12 reactions",
+    artifactUrl: "/artifacts/loan-classifier.html",
   },
   {
     title: "Rate lock dashboard",
     author: "Priya K.",
     tags: ["design", "API"],
     reactions: "8 reactions",
+    artifactUrl: "/artifacts/rate-dashboard.html",
   },
   {
     title: "Compliance checker",
@@ -24,24 +26,30 @@ const showcaseItems = [
   },
 ];
 
-const phases = [
+const levels = [
   {
-    name: "Developing Intuition",
+    name: "Curiosity",
     accent: "var(--color-phase-1)",
     description:
-      "Scaffolded challenges where you develop a feel for the environment. Follow guided walkthroughs, watch community sessions, and learn what building with AI actually looks like.",
+      "Engaging with the tools and concepts. Asking questions. Showing willingness to explore how AI development works and what's possible.",
   },
   {
-    name: "Exercising Judgment",
+    name: "Clarity",
     accent: "var(--color-phase-2)",
     description:
-      "Defined projects with real decisions about architecture, data, and design. Present your work, notice problems in your organization, and develop judgment about the choices you're making.",
+      "Understanding why things work, not just how. Distinguishing intent from behavior. Making connections between code, architecture, and product decisions.",
   },
   {
-    name: "Navigating Independently",
+    name: "Capability",
     accent: "var(--color-phase-3)",
     description:
-      "Independent discovery. Find problems, shape solutions, create prototypes, record presentations, and advocate for change in your organization.",
+      "Producing work that holds up under scrutiny. Making sound architectural and product decisions. Building things others can use and build on.",
+  },
+  {
+    name: "Consistency",
+    accent: "var(--color-phase-4)",
+    description:
+      "Reliably applying practices across contexts. Elevating others. Designing for sustainability and teaching what you've learned.",
   },
 ];
 
@@ -61,7 +69,7 @@ export default function LandingPage() {
               <span className="text-primary">Show your work.</span> Grow with a community.
             </h1>
             <p className="mx-auto mb-8 max-w-xl font-body text-[14px] leading-relaxed text-on-surface-variant sm:text-[16px]">
-              A community of practice for enterprise professionals developing the
+              A community of practice for people developing the
               capability to discover problems, prototype solutions, and advocate
               for change.
             </p>
@@ -110,18 +118,18 @@ export default function LandingPage() {
       {/* ── How It Works — Star chart phases ── */}
       <section className="py-12 sm:py-16">
         <h2 className="mb-10 font-headline text-[20px] font-semibold text-on-surface">
-          Three phases of development
+          Four levels of development
         </h2>
 
         {/* Horizontal star timeline — no bounding box */}
         <div className="relative">
           {/* Connecting line */}
-          <div className="absolute top-[20px] left-[16.6%] right-[16.6%] h-[1.5px] bg-outline-variant/20" />
+          <div className="absolute top-[20px] left-[12%] right-[12%] h-[1.5px] bg-outline-variant/20" />
 
           <div className="relative flex justify-between">
-            {phases.map((phase, index) => (
+            {levels.map((level, index) => (
               <div
-                key={phase.name}
+                key={level.name}
                 className="group relative flex flex-col items-center gap-3 px-2"
                 style={{ flex: "1 1 0" }}
               >
@@ -130,7 +138,7 @@ export default function LandingPage() {
                   {/* Hover ring */}
                   <div
                     className="absolute h-8 w-8 rounded-full border transition-transform duration-500 group-hover:scale-150"
-                    style={{ borderColor: `${phase.accent}40` }}
+                    style={{ borderColor: `${level.accent}40` }}
                   />
                   {/* Star core */}
                   <div
@@ -139,18 +147,19 @@ export default function LandingPage() {
                       index === 0 && "bg-phase-1",
                       index === 1 && "bg-phase-2",
                       index === 2 && "bg-phase-3",
+                      index === 3 && "bg-phase-4",
                     )}
                   />
                 </div>
 
-                {/* Phase name */}
+                {/* Level name */}
                 <h3 className="font-headline text-[14px] font-bold text-on-surface text-center transition-colors group-hover:text-tertiary">
-                  {phase.name}
+                  {level.name}
                 </h3>
 
                 {/* Description */}
                 <p className="max-w-[280px] text-center font-body text-[12px] leading-relaxed text-on-surface-variant">
-                  {phase.description}
+                  {level.description}
                 </p>
               </div>
             ))}
@@ -158,17 +167,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Four Foundations ── */}
+      {/* ── Four Practices ── */}
       <section className="py-12 sm:py-16">
         <h2 className="mb-6 font-headline text-[20px] font-semibold text-on-surface">
-          Four foundations
+          Four practices
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { name: "Tools and Platforms", icon: "construction" },
-            { name: "Discovery and Problem Shaping", icon: "search_insights" },
-            { name: "Building", icon: "code_blocks" },
-            { name: "Scaling and Sustaining", icon: "trending_up" },
+            { name: "Discovering and Shaping Problems", icon: "search_insights", submissions: "Brownfield analysis, sample application, discovery pitch" },
+            { name: "Building with AI", icon: "code_blocks", submissions: "Sample application, prototype build" },
+            { name: "Security and Continuous Improvement", icon: "security", submissions: "Credential review, improvement plan" },
+            { name: "Storytelling", icon: "campaign", submissions: "Dev log, video, communications package" },
           ].map((f) => (
             <div
               key={f.name}
@@ -179,6 +188,9 @@ export default function LandingPage() {
               </span>
               <span className="font-headline text-[13px] font-semibold leading-tight text-on-surface">
                 {f.name}
+              </span>
+              <span className="font-body text-[11px] leading-snug text-on-surface-variant">
+                {f.submissions}
               </span>
             </div>
           ))}

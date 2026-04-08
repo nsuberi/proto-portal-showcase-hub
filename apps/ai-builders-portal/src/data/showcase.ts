@@ -10,6 +10,8 @@ export interface ShowcaseEntry {
   reactions: string;
   artifactCode?: string;
   artifactTitle?: string;
+  /** URL to a self-contained HTML artifact for live preview */
+  artifactUrl?: string;
   videoUrl?: string;
   devlogSummary?: DevlogSections;
 }
@@ -24,13 +26,14 @@ export const showcaseEntries: ShowcaseEntry[] = [
     tags: ["data", "AI"],
     reactions: "12 reactions",
     artifactTitle: "classifier/app.tsx",
+    artifactUrl: "/artifacts/loan-classifier.html",
     artifactCode:
       "import { classifyDocument } from './classifier';\n\nexport default function App({ documents }) {\n  return documents.map(doc => (\n    <DocumentCard key={doc.id}\n      classification={classifyDocument(doc)}\n    />\n  ));\n}",
     devlogSummary: {
       architecture:
         "Pipeline pattern with separate extraction, classification, and redaction stages.",
       learned:
-        "The compliance team's classification matrix was the key document I should have found earlier.",
+        "The compliance classification matrix was the key document I should have found earlier.",
     },
   },
   {
@@ -42,6 +45,7 @@ export const showcaseEntries: ShowcaseEntry[] = [
     tags: ["design", "API"],
     reactions: "8 reactions",
     artifactTitle: "dashboard/RateLock.tsx",
+    artifactUrl: "/artifacts/rate-dashboard.html",
     artifactCode:
       "import { useQuery } from '@tanstack/react-query';\nimport { RateCard, TrendChart } from './components';\n\nexport default function RateLockDashboard() {\n  const { data: rates } = useQuery({ queryKey: ['rates'] });\n  return (\n    <div className=\"grid grid-cols-3 gap-4\">\n      {rates?.map(r => <RateCard key={r.id} {...r} />)}\n    </div>\n  );\n}",
     devlogSummary: {
@@ -62,18 +66,19 @@ export const showcaseEntries: ShowcaseEntry[] = [
       architecture:
         "Built as a series of rule evaluators that each return pass/fail with evidence.",
       organization:
-        "Partnered with the risk team who needed this exact capability — mutual benefit.",
+        "Partnered with a risk colleague who needed this exact capability — mutual benefit.",
     },
   },
   {
     id: "onboarding-flow",
-    title: "Team onboarding wizard",
+    title: "Onboarding wizard",
     author: "Sarah L.",
     authorId: "sarah-lee",
     phase: 1,
     tags: ["UX", "building"],
     reactions: "6 reactions",
     artifactTitle: "onboarding/Wizard.tsx",
+    artifactUrl: "/artifacts/onboarding-wizard.html",
     artifactCode:
       "export default function OnboardingWizard({ steps }) {\n  const [current, setCurrent] = useState(0);\n  return (\n    <StepContainer>\n      <StepIndicator total={steps.length} current={current} />\n      <StepContent step={steps[current]} />\n    </StepContainer>\n  );\n}",
   },
@@ -87,7 +92,7 @@ export const showcaseEntries: ShowcaseEntry[] = [
     reactions: "10 reactions",
     devlogSummary: {
       architecture:
-        "Classification model routes tickets to the right team with confidence scores.",
+        "Classification model routes tickets to the right person with confidence scores.",
       learned:
         "False positives are more expensive than false negatives in this domain — better to escalate than miss.",
     },
@@ -112,7 +117,7 @@ export const showcaseEntries: ShowcaseEntry[] = [
     videoUrl: "https://www.loom.com/share/abc123def456",
     devlogSummary: {
       organization:
-        "Finance team co-owned the requirements — they had been waiting for someone to build this.",
+        "A finance colleague co-owned the requirements — they had been waiting for someone to build this.",
       change:
         "Would have started with their existing spreadsheet as the data model instead of designing from scratch.",
     },
@@ -126,6 +131,7 @@ export const showcaseEntries: ShowcaseEntry[] = [
     tags: ["AI", "productivity"],
     reactions: "9 reactions",
     artifactTitle: "summarizer/app.py",
+    artifactUrl: "/artifacts/meeting-summarizer.html",
     artifactCode:
       "from flask import Flask, request\nfrom anthropic import Anthropic\n\napp = Flask(__name__)\nclient = Anthropic()\n\n@app.route('/summarize', methods=['POST'])\ndef summarize():\n    transcript = request.json['transcript']\n    response = client.messages.create(\n        model='claude-sonnet-4-20250514',\n        messages=[{'role': 'user', 'content': f'Summarize: {transcript}'}]\n    )\n    return {'summary': response.content[0].text}",
   },
