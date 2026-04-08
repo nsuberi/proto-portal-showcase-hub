@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { GALAXY_BG_URL } from "@/design-system/tokens";
 
@@ -11,6 +12,10 @@ const navItems = [
 
 export default function PortalLayout() {
   const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
