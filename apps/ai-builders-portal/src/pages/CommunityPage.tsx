@@ -81,19 +81,19 @@ export default function CommunityPage() {
       </div>
 
       {/* Star chart timeline */}
-      <div className="mb-8 rounded-xl bg-surface-container-low px-4 py-8 sm:px-6 overflow-x-auto">
+      <div className="mb-8 rounded-xl bg-surface-container-low px-4 py-8 sm:px-6">
         <h2 className="mb-6 font-headline text-sm font-semibold uppercase tracking-wider text-on-primary-container flex items-center gap-2">
           <span className="material-symbols-outlined text-[16px] text-tertiary">radar</span>
           Upcoming Sessions
         </h2>
 
-        {/* Horizontal timeline */}
-        <div className="relative min-w-[600px]">
+        {/* Timeline — vertical on mobile, horizontal on md+ */}
+        <div className="relative">
           {/* Connecting line */}
-          <div className="absolute top-[20px] left-6 right-6 h-[1.5px] bg-outline-variant/20" />
+          <div className="absolute left-[20px] top-6 bottom-6 w-[1.5px] bg-outline-variant/20 md:left-6 md:right-6 md:top-[20px] md:bottom-auto md:h-[1.5px] md:w-auto" />
 
-          {/* Stars row */}
-          <div className="relative flex justify-between px-2">
+          {/* Stars */}
+          <div className="relative flex flex-col gap-4 md:flex-row md:justify-between md:gap-0 md:px-2">
             {mockRooms.map((room) => {
               const isLive = room.status === "live";
               const isExpanded = expandedId === room.id;
@@ -103,11 +103,11 @@ export default function CommunityPage() {
                   key={room.id}
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : room.id)}
-                  className="group relative flex flex-col items-center gap-2 border-0 bg-transparent cursor-pointer px-1"
+                  className="group relative flex items-start gap-3 border-0 bg-transparent cursor-pointer px-1 text-left md:flex-col md:items-center md:gap-2"
                   style={{ flex: "1 1 0" }}
                 >
                   {/* Star point */}
-                  <div className="relative flex h-10 w-10 items-center justify-center">
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
                     {/* Pulse ring — live only */}
                     {isLive && (
                       <div className="absolute h-10 w-10 rounded-full border border-secondary/30 animate-pulse" />
@@ -133,50 +133,52 @@ export default function CommunityPage() {
                     />
                   </div>
 
-                  {/* Date — large and obvious */}
-                  <span
-                    className={cn(
-                      "font-headline text-base font-bold tracking-tight transition-colors",
-                      isLive
-                        ? "text-secondary"
-                        : isExpanded
-                          ? "text-tertiary"
-                          : "text-on-surface group-hover:text-tertiary",
-                    )}
-                  >
-                    {room.date}
-                  </span>
+                  <div className="flex flex-col md:items-center">
+                    {/* Date */}
+                    <span
+                      className={cn(
+                        "font-headline text-base font-bold tracking-tight transition-colors",
+                        isLive
+                          ? "text-secondary"
+                          : isExpanded
+                            ? "text-tertiary"
+                            : "text-on-surface group-hover:text-tertiary",
+                      )}
+                    >
+                      {room.date}
+                    </span>
 
-                  {/* Time */}
-                  <span className="font-label text-[10px] uppercase tracking-widest text-on-primary-container">
-                    {room.time}
-                  </span>
+                    {/* Time */}
+                    <span className="font-label text-[10px] uppercase tracking-widest text-on-primary-container">
+                      {room.time}
+                    </span>
 
-                  {/* Title — always visible */}
-                  <span
-                    className={cn(
-                      "max-w-[140px] text-center font-headline text-[12px] font-semibold leading-tight transition-colors",
-                      isLive
-                        ? "text-on-surface"
-                        : "text-on-surface-variant group-hover:text-on-surface",
-                    )}
-                  >
-                    {room.theme}
-                  </span>
+                    {/* Title */}
+                    <span
+                      className={cn(
+                        "max-w-[240px] md:max-w-[140px] md:text-center font-headline text-[12px] font-semibold leading-tight transition-colors mt-1",
+                        isLive
+                          ? "text-on-surface"
+                          : "text-on-surface-variant group-hover:text-on-surface",
+                      )}
+                    >
+                      {room.theme}
+                    </span>
 
-                  {/* Attendee count */}
-                  <span className="flex items-center gap-1 font-label text-[10px] text-on-primary-container">
-                    <span className="material-symbols-outlined text-[12px]">group</span>
-                    {room.attendees}
-                  </span>
+                    {/* Attendee count */}
+                    <span className="flex items-center gap-1 font-label text-[10px] text-on-primary-container mt-1">
+                      <span className="material-symbols-outlined text-[12px]">group</span>
+                      {room.attendees}
+                    </span>
+                  </div>
 
                   {/* Expand hint */}
                   <span
                     className={cn(
-                      "material-symbols-outlined text-[14px] transition-all duration-200",
+                      "material-symbols-outlined text-[14px] transition-all duration-200 ml-auto md:ml-0",
                       isExpanded
                         ? "text-tertiary rotate-180"
-                        : "text-on-primary-container opacity-0 group-hover:opacity-100",
+                        : "text-on-primary-container md:opacity-0 md:group-hover:opacity-100",
                     )}
                   >
                     expand_more

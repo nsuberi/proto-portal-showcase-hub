@@ -1,21 +1,28 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense, createElement } from "react";
+import { useNavigate } from "react-router-dom";
 import { ShowcaseGalleryItem } from "@/components/ShowcaseGalleryItem";
+import { AppLoggerProvider } from "@/components/AppLogger";
 import { showcaseEntries } from "@/data/showcase";
+import { artifactComponents } from "@/artifacts/registry";
+
+/** Only show entries that have a connected React artifact app */
+const connectedEntries = showcaseEntries.filter((e) => e.artifactRouteId);
 
 export default function ShowcasePage() {
+  const navigate = useNavigate();
   const [activeTag, setActiveTag] = useState<string>("All");
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
-    showcaseEntries.forEach((entry) => {
+    connectedEntries.forEach((entry) => {
       entry.tags.forEach((tag) => tagSet.add(tag));
     });
     return ["All", ...Array.from(tagSet).sort()];
   }, []);
 
   const filteredEntries = useMemo(() => {
-    if (activeTag === "All") return showcaseEntries;
-    return showcaseEntries.filter((entry) => entry.tags.includes(activeTag));
+    if (activeTag === "All") return connectedEntries;
+    return connectedEntries.filter((entry) => entry.tags.includes(activeTag));
   }, [activeTag]);
 
   return (
@@ -55,16 +62,30 @@ export default function ShowcasePage() {
       {/* Gallery grid */}
       {filteredEntries.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredEntries.map((entry) => (
-            <ShowcaseGalleryItem
-              key={entry.id}
-              title={entry.title}
-              author={entry.author}
-              tags={entry.tags}
-              reactions={entry.reactions}
-              artifactUrl={entry.artifactUrl}
-            />
-          ))}
+          {filteredEntries.map((entry) => {
+            const Comp = entry.artifactRouteId
+              ? artifactComponents[entry.artifactRouteId]
+              : undefined;
+            return (
+              <ShowcaseGalleryItem
+                key={entry.id}
+                title={entry.title}
+                author={entry.author}
+                tags={entry.tags}
+                reactions={entry.reactions}
+                previewContent={
+                  Comp ? (
+                    <AppLoggerProvider>
+                      <Suspense fallback={null}>
+                        {createElement(Comp)}
+                      </Suspense>
+                    </AppLoggerProvider>
+                  ) : undefined
+                }
+                onClick={() => navigate(`/artifacts/${entry.artifactRouteId}`)}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-xl bg-surface-container py-16">

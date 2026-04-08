@@ -68,7 +68,7 @@ export function ProfileCard({
       </div>
 
       {/* Stats grid — no dividers, whitespace separation */}
-      <div className="grid grid-cols-4 gap-4 bg-surface-container px-3 py-4">
+      <div className="grid grid-cols-2 gap-4 bg-surface-container px-3 py-4 sm:grid-cols-4">
         {stats.map((stat, i) => (
           <div key={i} className="text-center">
             <p className="font-headline text-xl font-semibold text-primary">

@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
 import { phaseConfig, GALAXY_BG_URL } from "@/design-system/tokens";
 import { ArtifactViewer } from "@/components/ArtifactViewer";
+import { AppLoggerProvider } from "@/components/AppLogger";
 import { VideoViewer } from "@/components/VideoViewer";
 import { DevlogEntry } from "@/components/DevlogEntry";
 import { mockUser, mockDevlogs } from "@/data/user";
+import { artifactComponents } from "@/artifacts/registry";
 
 function getInitials(name: string): string {
   return name
@@ -85,7 +88,7 @@ export default function PortfolioPage() {
 
         {/* Stats bar — whitespace separation, no dividers */}
         <div className="bg-surface-container">
-          <div className="mx-auto grid max-w-3xl grid-cols-4 gap-4 px-3 py-4">
+          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4 px-3 py-4 sm:grid-cols-4">
             {user.stats.map((stat, i) => (
               <div key={i} className="text-center">
                 <p className="font-headline text-xl font-semibold text-primary">
@@ -112,17 +115,27 @@ export default function PortfolioPage() {
                   key={devlog.id}
                   className="overflow-hidden rounded-xl bg-surface-container-low"
                 >
-                  {devlog.id === "devlog-1" && (
-                    <ArtifactViewer
-                      title="classifier/pipeline"
-                      language="py"
-                      src="/artifacts/loan-classifier.html"
-                      code={`# Document triage pipeline — iteration 2\nfrom pipeline import extract, classify, redact\n\ndef process(doc):\n    extracted = extract(doc)\n    classified = classify(extracted)\n    return redact(classified)`}
-                      status="running"
-                      height={360}
-                      className="rounded-none"
-                    />
-                  )}
+                  {devlog.id === "devlog-1" && (() => {
+                    const LoanClassifier = artifactComponents["loan-classifier"];
+                    return (
+                      <AppLoggerProvider>
+                        <ArtifactViewer
+                          title="classifier/pipeline"
+                          language="py"
+                          previewContent={
+                            <Suspense fallback={null}>
+                              <LoanClassifier />
+                            </Suspense>
+                          }
+                          code={`# Document triage pipeline — iteration 2\nfrom pipeline import extract, classify, redact\n\ndef process(doc):\n    extracted = extract(doc)\n    classified = classify(extracted)\n    return redact(classified)`}
+                          status="running"
+                          height={360}
+                          className="rounded-none"
+                          artifactRoute="/artifacts/loan-classifier"
+                        />
+                      </AppLoggerProvider>
+                    );
+                  })()}
 
                   {devlog.id === "devlog-2" && (
                     <VideoViewer
