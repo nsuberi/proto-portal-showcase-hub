@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { tokens, phaseConfig } from "@/design-system/tokens";
 import type { Phase } from "@/design-system/tokens";
@@ -102,6 +102,7 @@ const mockComments: Comment[] = [
 
 export default function ArtifactPage() {
   const { id } = useParams<{ id: string }>();
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
   const meta = id ? artifacts[id] : undefined;
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState(mockComments);
