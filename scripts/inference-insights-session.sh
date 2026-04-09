@@ -18,12 +18,27 @@ log "=== Starting research session ==="
 # Ensure we're in the repo
 cd "$REPO_DIR"
 
+# Stash any local changes before pulling
+STASHED=false
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  log "Stashing local changes..."
+  git stash push -m "inference-insights-session-$(date +%s)" >> "$LOG_FILE" 2>> "$ERR_FILE"
+  STASHED=true
+fi
+
 # Pull latest changes
 log "Pulling latest from main..."
 git pull --rebase origin main >> "$LOG_FILE" 2>> "$ERR_FILE" || {
   err "git pull failed"
+  if [ "$STASHED" = true ]; then git stash pop >> "$LOG_FILE" 2>> "$ERR_FILE"; fi
   exit 1
 }
+
+# Restore stashed changes
+if [ "$STASHED" = true ]; then
+  log "Restoring stashed changes..."
+  git stash pop >> "$LOG_FILE" 2>> "$ERR_FILE" || log "Stash pop had conflicts — manual resolution needed"
+fi
 
 # Read feedback and memory
 FEEDBACK=$(cat prototypes/inference-insights/data/feedback.json 2>/dev/null || echo '{}')
