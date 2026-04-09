@@ -23,6 +23,14 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
+      title: "Inference Insights: AI Research Gallery",
+      description:
+        "An automated research gallery that runs Claude Code 4x daily, exploring inference engineering papers from arXiv and generating illustrated insights connecting distributed systems, music/signal processing, and architecture. Each insight pairs narrative prose with interactive code canvases demonstrating key concepts.",
+      link: "/prototypes/inference-insights/",
+      tags: ["Inference Engineering", "Automated Research", "arXiv", "Distributed Systems"],
+      status: "Live Demo Available",
+    },
+    {
       title: "Your Learning Adventure Map",
       description:
         "Ready to level up as a team? Set shared goals, share your personal growth dreams, and let AI be your career compass! Inspired by Final Fantasy X's Skill Sphere Grid, this interactive map helps you discover the perfect next skills to master, connects you with ideal mentors, and shows you who you could guide. It's like having a career GPS that knows where your team wants to go AND where your heart wants to grow. Adventure awaits!",
