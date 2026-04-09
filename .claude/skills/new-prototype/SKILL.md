@@ -1,6 +1,6 @@
 ---
 name: new-prototype
-description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', or any request to create something new in the portfolio."
+description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo, (5) Publish any new content, feature, or experience to the production site. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', 'I want an app on my site', 'publish to the site', 'create a gallery', 'add to my portfolio', or any description of a new publicly-visible experience on portfolio.cookinupideas.com — even if the user doesn't use the word 'prototype'."
 ---
 
 # New Prototype Launch Skill

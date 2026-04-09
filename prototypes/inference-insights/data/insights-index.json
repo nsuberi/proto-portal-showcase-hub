@@ -1,0 +1,53 @@
+[
+  {
+    "id": "2026-04-09-kv-cache-sharding",
+    "title": "KV Cache Sharding: From Database Partitions to Attention Memory",
+    "summary": "How PagedAttention mirrors distributed database partitioning — and what sub-band audio coding reveals about efficient head-group sharding.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-kv-cache-sharding.md",
+    "cellsPath": "content/insights/2026-04-09-kv-cache-sharding.cells.json",
+    "tags": ["KV Cache", "PagedAttention", "Memory Management", "vLLM"],
+    "domains": [
+      { "domain": "distributed", "note": "Partition locking at FINRA: date range × symbol range for independent parallel processing" },
+      { "domain": "music", "note": "Sub-band coding in MP3: split spectrogram into independent frequency bands" },
+      { "domain": "architecture", "note": "Suspension bridge cable load distribution as a sharding analogy" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2309.06180",
+    "sourceTitle": "Efficient Memory Management for Large Language Model Serving with PagedAttention"
+  },
+  {
+    "id": "2026-04-09-speculative-decoding",
+    "title": "Speculative Decoding: Draft Models as Scout Nodes",
+    "summary": "Using small draft models to predict tokens for large verifiers — the same predict-correct pattern as Kalman filters and EMR scout nodes.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-speculative-decoding.md",
+    "cellsPath": "content/insights/2026-04-09-speculative-decoding.cells.json",
+    "tags": ["Speculative Decoding", "Latency", "Draft Models", "Autoregressive"],
+    "domains": [
+      { "domain": "distributed", "note": "EMR scout nodes: fast-finishing nodes speculatively pre-compute future partitions" },
+      { "domain": "music", "note": "Linear Predictive Coding: predict the next sample cheaply, transmit only the residual" },
+      { "domain": "architecture", "note": "Flying buttresses speculatively distribute load, enabling thinner primary walls" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2302.01318",
+    "sourceTitle": "Fast Inference from Transformers via Speculative Decoding"
+  },
+  {
+    "id": "2026-04-09-continuous-batching",
+    "title": "Continuous Batching: From Static Partitions to Dynamic Streams",
+    "summary": "Why treating inference batches as dynamic streams (not fixed groups) mirrors the shift from static EMR partitions to work-stealing queues.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-continuous-batching.md",
+    "cellsPath": "content/insights/2026-04-09-continuous-batching.cells.json",
+    "tags": ["Batching", "Throughput", "GPU Utilization", "Scheduling"],
+    "domains": [
+      { "domain": "distributed", "note": "Dynamic work-stealing on EMR: nodes claim unstarted partitions instead of sitting idle" },
+      { "domain": "music", "note": "Orchestral polyphony: instruments enter/exit the texture independently, like requests in continuous batching" },
+      { "domain": "ml", "note": "2-10x throughput gains from continuous vs static batching depending on request variance" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2306.07527",
+    "sourceTitle": "Continuous Batching for Efficient Inference Serving"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "activeDirections": [
+    "KV cache optimization and sharding strategies for large-scale inference",
+    "Speculative decoding and draft model selection",
+    "Batching strategies for heterogeneous request workloads",
+    "Memory-efficient attention mechanisms (Flash Attention, PagedAttention)",
+    "Model weight distribution across heterogeneous hardware"
+  ],
+  "completedDirections": [],
+  "avoidTopics": [],
+  "personalContext": [
+    "Nathan worked as a Big Data ML Engineer at FINRA doing distributed inference on EMR clusters",
+    "Experience shipping model weight packages to each node in a cluster",
+    "Memory/CPU management for speed without OOM errors on large partitions",
+    "Built partition locking mechanism for versioned data output (lock on date range + symbol range)",
+    "Debugged dying nodes caused by large partitions using logging strategies to identify root cause by data characteristics",
+    "Cross-domain interests: music/signal processing (Fourier transforms, spectral analysis) and architecture (physical structures + software systems)"
+  ],
+  "lastSessionDate": "",
+  "totalSessions": 0
+}

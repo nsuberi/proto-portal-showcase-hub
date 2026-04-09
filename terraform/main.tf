@@ -94,7 +94,7 @@ function handler(event) {
         if (pathParts.length >= 3 && !uri.includes('.')) {
             var prototypeName = pathParts[2];
             // Only handle known prototypes
-            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'ai-builders') {
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'inference-insights' || prototypeName === 'ai-builders') {
                 request.uri = '/prototypes/' + prototypeName + '/index.html';
             }
         }
@@ -390,6 +390,32 @@ resource "aws_cloudfront_distribution" "website" {
   # Learning Path cache behavior
   ordered_cache_behavior {
     path_pattern           = "/prototypes/learning-path/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
+  # Inference Insights cache behavior
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/inference-insights/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-${var.bucket_name}"

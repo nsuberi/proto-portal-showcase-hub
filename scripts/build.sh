@@ -66,6 +66,18 @@ echo "📋 Copying Learning Path build to main dist..."
 mkdir -p dist/prototypes/learning-path
 cp -r prototypes/learning-path/dist/* dist/prototypes/learning-path/
 
+# Build Inference Insights prototype
+echo "🔬 Building Inference Insights prototype..."
+yarn workspace @proto-portal/inference-insights build
+
+echo "📋 Copying Inference Insights build to main dist..."
+mkdir -p dist/prototypes/inference-insights
+cp -r prototypes/inference-insights/dist/* dist/prototypes/inference-insights/
+
+# Copy data files needed at runtime
+cp -r prototypes/inference-insights/data dist/prototypes/inference-insights/
+cp -r prototypes/inference-insights/content dist/prototypes/inference-insights/ 2>/dev/null || true
+
 # Build AI Builders Portal
 echo "🏗️ Building AI Builders Portal..."
 yarn workspace @proto-portal/ai-builders-portal build
