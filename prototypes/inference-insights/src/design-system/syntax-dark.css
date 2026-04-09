@@ -1,0 +1,92 @@
+/* Codecademy-inspired dark syntax highlighting for code canvases
+   Ported from ai-evals-in-context syntax-themes.css */
+
+.highlight-dark {
+  background: transparent;
+}
+
+.highlight-dark pre {
+  margin: 0;
+  padding: 0;
+}
+
+/* Comments */
+.highlight-dark .c,
+.highlight-dark .c1,
+.highlight-dark .cm,
+.highlight-dark .cs { color: #6b7280; font-style: italic; }
+
+/* Keywords */
+.highlight-dark .k,
+.highlight-dark .kc,
+.highlight-dark .kd,
+.highlight-dark .kn,
+.highlight-dark .kp,
+.highlight-dark .kr,
+.highlight-dark .kt { color: #c084fc; font-weight: 500; }
+
+/* Names/Identifiers */
+.highlight-dark .n { color: #e2e8f0; }
+.highlight-dark .na { color: #67e8f9; }
+.highlight-dark .nb { color: #7dd3fc; }
+.highlight-dark .nc { color: #67e8f9; font-weight: 500; }
+.highlight-dark .nd { color: #fbbf24; }
+.highlight-dark .ne { color: #67e8f9; font-weight: 500; }
+.highlight-dark .nf { color: #67e8f9; }
+.highlight-dark .ni { color: #e2e8f0; }
+.highlight-dark .nl { color: #7dd3fc; }
+.highlight-dark .nn { color: #e2e8f0; }
+.highlight-dark .no { color: #7dd3fc; }
+.highlight-dark .nt { color: #34d399; }
+.highlight-dark .nv { color: #fb923c; }
+
+/* Strings */
+.highlight-dark .s,
+.highlight-dark .s1,
+.highlight-dark .s2,
+.highlight-dark .sa,
+.highlight-dark .sb,
+.highlight-dark .sc,
+.highlight-dark .se,
+.highlight-dark .sh,
+.highlight-dark .si,
+.highlight-dark .sr,
+.highlight-dark .ss,
+.highlight-dark .sx { color: #a3e635; }
+.highlight-dark .sd { color: #6b7280; font-style: italic; }
+
+/* Numbers */
+.highlight-dark .m,
+.highlight-dark .mi,
+.highlight-dark .mf,
+.highlight-dark .mh,
+.highlight-dark .mo,
+.highlight-dark .il { color: #fb923c; }
+
+/* Operators */
+.highlight-dark .o { color: #94a3b8; }
+.highlight-dark .ow { color: #c084fc; font-weight: 500; }
+
+/* Punctuation */
+.highlight-dark .p { color: #94a3b8; }
+
+/* Generic */
+.highlight-dark .gd { color: #fca5a5; }
+.highlight-dark .ge { font-style: italic; }
+.highlight-dark .gh { color: #7dd3fc; font-weight: 600; }
+.highlight-dark .gi { color: #86efac; }
+.highlight-dark .go { color: #6b7280; }
+.highlight-dark .gp { color: #6b7280; font-weight: 600; }
+.highlight-dark .gs { font-weight: 600; }
+.highlight-dark .gu { color: #c084fc; font-weight: 600; }
+
+/* Errors */
+.highlight-dark .err { color: #fca5a5; }
+
+/* Special */
+.highlight-dark .bp { color: #7dd3fc; }
+.highlight-dark .fm { color: #67e8f9; }
+.highlight-dark .vc,
+.highlight-dark .vg,
+.highlight-dark .vi,
+.highlight-dark .vm { color: #fb923c; }
