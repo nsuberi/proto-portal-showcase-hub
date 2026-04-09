@@ -23,10 +23,9 @@ export default function CodeCanvas({ cell }: Props) {
     <div className="rounded-lg border border-outline-variant/20 overflow-hidden bg-surface-container-lowest">
       {/* Code */}
       <div className="relative">
-        <div
-          className="p-4 font-mono text-sm leading-relaxed overflow-x-auto"
-          dangerouslySetInnerHTML={{ __html: cell.code_html }}
-        />
+        <pre className="highlight-dark p-4 font-mono text-sm leading-relaxed overflow-x-auto m-0">
+          <code dangerouslySetInnerHTML={{ __html: cell.code_html }} />
+        </pre>
         <button
           onClick={handleRun}
           disabled={isRunning}
