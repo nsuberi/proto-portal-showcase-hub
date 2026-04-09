@@ -482,11 +482,28 @@ resource "aws_cloudfront_distribution" "website" {
     min_ttl     = 0
     default_ttl = 3600
     max_ttl     = 86400
+
+    # Prototype router function handles:
+    # - trailing slash → append index.html
+    # - /prototypes/{name} (no slash) → rewrite to /prototypes/{name}/index.html
+    # - SPA deep-link routing within prototypes
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
   }
 
   # Main SPA routing - redirect 404s to index.html (for main site only)
   custom_error_response {
     error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  # S3 returns 403 for directory-like paths (e.g. /prototypes/inference-insights)
+  # The CloudFront function handles rewriting these, but as a safety net:
+  custom_error_response {
+    error_code         = 403
     response_code      = 200
     response_page_path = "/index.html"
   }
