@@ -162,15 +162,35 @@ mkdir -p dist/prototypes/{name}
 cp -r prototypes/{name}/dist/* dist/prototypes/{name}/
 ```
 
-#### CloudFront Function Update
+#### CloudFront / Terraform Updates
 
-In `terraform/main.tf`, add the new prototype name to the CloudFront Function's list:
+In `terraform/main.tf`, TWO changes are required:
+
+**1. Add prototype to the CloudFront Function's known-prototype list:**
 
 ```javascript
 if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' ||
     prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' ||
     prototypeName === '{name}') {
 ```
+
+**2. Add an `ordered_cache_behavior` block** for the new prototype (copy an existing one, change `path_pattern`):
+
+```terraform
+ordered_cache_behavior {
+  path_pattern           = "/prototypes/{name}/*"
+  allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+  cached_methods         = ["GET", "HEAD"]
+  target_origin_id       = "S3-${var.bucket_name}"
+  ...
+  function_association {
+    event_type   = "viewer-request"
+    function_arn = aws_cloudfront_function.prototype_router.arn
+  }
+}
+```
+
+**Important:** The `/*` path pattern does NOT match `/prototypes/{name}` (no trailing slash). The `default_cache_behavior` also has the CloudFront function attached to handle this case — do NOT remove it. Both the ordered behavior and the default behavior need the function for slash-agnostic routing to work.
 
 ### Phase 6: Write AGENTS.md
 
