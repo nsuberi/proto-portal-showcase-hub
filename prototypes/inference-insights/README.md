@@ -30,7 +30,7 @@ An automated research gallery that runs Claude Code 4x daily, exploring inferenc
 | Per session | ~10K input + ~6K output tokens ≈ **$0.24** (Opus 4.6 rates: $15/M in, $75/M out) |
 | Daily (4 sessions) | **~$0.96** |
 | Monthly | **~$29** |
-| Safety cap | `--max-budget-usd 0.50` per session |
+| Safety cap | `--max-budget-usd 2.00` per session |
 
 If using Claude Code Max subscription, sessions consume rate limit quota instead of per-token billing.
 
@@ -88,7 +88,7 @@ cat prototypes/inference-insights/data/memory.json | python3 -c "import json,sys
 |---------|------------|
 | Source restriction | **arXiv API only** — no open web search |
 | Tool restriction | `Read`, `Write`, `Edit`, `WebFetch` only — no `Bash`, no `WebSearch` |
-| Budget cap | `--max-budget-usd 0.50` per session |
+| Budget cap | `--max-budget-usd 2.00` per session |
 | File scope | Writes scoped to `content/` and `data/` directories only |
 | Credentials | No secrets in LaunchAgent plist; IAM role assumed in script |
 

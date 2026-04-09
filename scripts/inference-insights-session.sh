@@ -58,8 +58,8 @@ log "Running Claude Code research session..."
 # Run Claude Code in print mode with restricted tools
 claude -p \
   --allowedTools "Read,Write,Edit,WebFetch" \
-  --model claude-opus-4-6 \
-  --max-budget-usd 0.50 \
+  --model opus \
+  --max-budget-usd 2.00 \
   --system-prompt "$(cat scripts/inference-insights-prompt.md)" \
   "Run a research session. Generate 2-3 new inference engineering insights.
 
