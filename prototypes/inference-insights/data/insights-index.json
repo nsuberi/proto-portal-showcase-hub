@@ -49,5 +49,56 @@
     "status": "new",
     "sourceUrl": "https://arxiv.org/abs/2306.07527",
     "sourceTitle": "Continuous Batching for Efficient Inference Serving"
+  },
+  {
+    "id": "2026-04-09-flash-attention-tiling",
+    "title": "FlashAttention: Why Tiling Beats Brute Force in Attention and Everywhere Else",
+    "summary": "How IO-aware tiled attention avoids materializing the N\u00d7N matrix \u2014 the same chunked-processing pattern as STFT in audio and partition management on EMR.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-flash-attention-tiling.md",
+    "cellsPath": "content/insights/2026-04-09-flash-attention-tiling.cells.json",
+    "tags": ["FlashAttention", "Memory Hierarchy", "Tiling", "IO-Awareness"],
+    "domains": [
+      { "domain": "distributed", "note": "EMR partition chunking to avoid OOM: process in tiles that fit in fast memory" },
+      { "domain": "music", "note": "Short-Time Fourier Transform: window the signal into blocks instead of one massive FFT" },
+      { "domain": "architecture", "note": "Gothic cathedral bays: build in repeated self-supporting units, not all at once" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2205.14135",
+    "sourceTitle": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
+  },
+  {
+    "id": "2026-04-09-distributed-weight-parallelism",
+    "title": "Distributed Weight Parallelism: Shipping Experts On Demand",
+    "summary": "DWDP distributes MoE weights across GPUs and fetches missing experts on demand \u2014 the same pattern as shipping model weight packages to EMR nodes.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-distributed-weight-parallelism.md",
+    "cellsPath": "content/insights/2026-04-09-distributed-weight-parallelism.cells.json",
+    "tags": ["MoE", "Weight Distribution", "Parallelism", "Prefetching"],
+    "domains": [
+      { "domain": "distributed", "note": "Shipping model weight packages to EMR nodes with versioned S3 pulls per partition" },
+      { "domain": "music", "note": "Orchestral sample libraries: on-demand streaming with intelligent articulation prefetching" },
+      { "domain": "architecture", "note": "Just-in-time modular construction: ship prefab modules as needed, not all at once" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2604.01621",
+    "sourceTitle": "DWDP: Distributed Weight Data Parallelism for High-Performance LLM Inference on NVL72"
+  },
+  {
+    "id": "2026-04-09-pipeline-disaggregation",
+    "title": "Pipeline Disaggregation: Separating Prefill and Decode to Kill Bubbles",
+    "summary": "TD-Pipe separates compute-bound prefill from memory-bound decode for 2.73\u00d7 throughput \u2014 the same phase-separation logic as partition locking on EMR.",
+    "date": "2026-04-09",
+    "contentPath": "content/insights/2026-04-09-pipeline-disaggregation.md",
+    "cellsPath": "content/insights/2026-04-09-pipeline-disaggregation.cells.json",
+    "tags": ["Pipeline Parallelism", "Prefill-Decode", "Scheduling", "Throughput"],
+    "domains": [
+      { "domain": "distributed", "note": "Partition locking at FINRA: separate loading and scoring phases for independent scheduling" },
+      { "domain": "music", "note": "Multitrack recording: disaggregate rhythm section (prefill) from overdubs (decode) temporally" },
+      { "domain": "architecture", "note": "Construction phasing: excavation \u2192 foundation \u2192 framing, each with specialized crews and equipment" }
+    ],
+    "status": "new",
+    "sourceUrl": "https://arxiv.org/abs/2506.10470",
+    "sourceTitle": "TD-Pipe: Temporally-Disaggregated Pipeline Parallelism Architecture for High-Throughput LLM Inference"
   }
 ]
