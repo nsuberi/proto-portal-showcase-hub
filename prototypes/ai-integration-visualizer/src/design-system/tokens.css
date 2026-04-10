@@ -1,0 +1,46 @@
+/* AI Integration Visualizer — Design Tokens
+   This prototype uses a specialized dark palette for SVG sphere rendering.
+   Colors are defined as CSS custom properties for Tailwind integration. */
+
+:root {
+  /* Background */
+  --color-bg: #08080c;
+
+  /* Sphere node colors */
+  --color-amber-node: #d97706;
+  --color-amber-light: #f59e0b;
+  --color-amber-dark: #92400e;
+  --color-green-node: #10b981;
+  --color-green-light: #6ee7b7;
+  --color-green-dark: #14532d;
+
+  /* Active target halo */
+  --color-active: #60a5fa;
+  --color-active-soft: #3b82f6;
+  --color-active-glow: #2563eb;
+
+  /* Role colors */
+  --color-pm: #818cf8;
+  --color-eng: #f472b6;
+  --color-biz: #fbbf24;
+
+  /* Document packet */
+  --color-doc: #c4b5fd;
+
+  /* Structural */
+  --color-line: #27272a;
+  --color-dim-text: #3f3f46;
+  --color-mid-text: #52525b;
+  --color-bright-text: #a1a1aa;
+  --color-white: #f4f4f5;
+
+  /* Stage colors (subtle tints for progress bar) */
+  --color-stage-intake: #d97706;
+  --color-stage-transform: #8b5cf6;
+  --color-stage-decide: #3b82f6;
+  --color-stage-act: #10b981;
+
+  /* Typography */
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Outfit', sans-serif;
+}

@@ -2905,6 +2905,29 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@proto-portal/ai-integration-visualizer@workspace:prototypes/ai-integration-visualizer":
+  version: 0.0.0-use.local
+  resolution: "@proto-portal/ai-integration-visualizer@workspace:prototypes/ai-integration-visualizer"
+  dependencies:
+    "@proto-portal/design-tokens": "workspace:*"
+    "@types/node": "npm:^22.5.5"
+    "@types/react": "npm:^18.3.3"
+    "@types/react-dom": "npm:^18.3.0"
+    "@vitejs/plugin-react-swc": "npm:^3.5.0"
+    autoprefixer: "npm:^10.4.20"
+    clsx: "npm:^2.1.1"
+    lucide-react: "npm:^0.462.0"
+    postcss: "npm:^8.4.47"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    tailwind-merge: "npm:^2.5.2"
+    tailwindcss: "npm:^3.4.11"
+    tailwindcss-animate: "npm:^1.0.7"
+    typescript: "npm:^5.5.3"
+    vite: "npm:^5.4.1"
+  languageName: unknown
+  linkType: soft
+
 "@proto-portal/design-tokens@workspace:*, @proto-portal/design-tokens@workspace:shared/design-tokens":
   version: 0.0.0-use.local
   resolution: "@proto-portal/design-tokens@workspace:shared/design-tokens"

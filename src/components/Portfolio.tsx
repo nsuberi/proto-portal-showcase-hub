@@ -54,6 +54,14 @@ const Portfolio = () => {
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
       status: "Live Demo Available",
     },
+    {
+      title: "AI Integration Strategy Visualizer",
+      description:
+        "A leadership communication tool that visualizes three organizational strategies for integrating AI into existing business systems. Animated 3D sphere constellations show how different team structures operate on the same data pipeline, with progressive disclosure into the before/after data model at each stage.",
+      link: "/prototypes/ai-integration-visualizer/",
+      tags: ["AI Strategy", "Data Pipeline", "Visualization", "Organization Design"],
+      status: "Live Demo Available",
+    },
   ];
 
   const prototypeIdeas = [

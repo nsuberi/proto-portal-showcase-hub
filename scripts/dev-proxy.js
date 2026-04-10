@@ -23,6 +23,7 @@ const SERVICES = {
   api: { port: 3004 },
   "ai-evals": { port: process.env.AI_EVALS_PORT || 5000 },
   "ai-builders": { port: 3008, buildPath: "apps/ai-builders-portal/dist" },
+  "ai-integration-visualizer": { port: 3010, buildPath: "prototypes/ai-integration-visualizer/dist" },
 };
 
 console.log("Starting Multi-SPA Development Proxy Server...");
@@ -56,7 +57,7 @@ function createPrototypeProxy(name) {
 }
 
 // Prototype routes
-for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "ai-builders"]) {
+for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "ai-builders", "ai-integration-visualizer"]) {
   const svc = SERVICES[name];
   console.log(`  /prototypes/${name}  ->  localhost:${svc.port}`);
   app.use(`/prototypes/${name}`, createPrototypeProxy(name));
