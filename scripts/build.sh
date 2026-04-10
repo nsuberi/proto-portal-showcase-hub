@@ -87,6 +87,15 @@ echo "📋 Copying AI Builders build to main dist..."
 mkdir -p dist/prototypes/ai-builders
 cp -r apps/ai-builders-portal/dist/* dist/prototypes/ai-builders/
 
+# Build AI Integration Visualizer
+echo "🔮 Building AI Integration Visualizer..."
+yarn workspace @proto-portal/ai-integration-visualizer build
+
+# Copy AI Integration Visualizer build to main dist directory
+echo "📋 Copying AI Integration Visualizer build to main dist..."
+mkdir -p dist/prototypes/ai-integration-visualizer
+cp -r prototypes/ai-integration-visualizer/dist/* dist/prototypes/ai-integration-visualizer/
+
 # Create a prototypes index.html that redirects to ffx-skill-map
 echo "📋 Creating prototypes index redirect..."
 cat > dist/prototypes/index.html << 'EOF'
