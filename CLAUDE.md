@@ -21,7 +21,7 @@ Portfolio monorepo: interactive prototypes (React/Vite) + AI Evals app (Flask/EC
 | API Server | 3004 | `/api/v1/` |
 | Dev Proxy | 8082 | (routes all) |
 | AI Builders (Vite) | 3008 | `/prototypes/ai-builders/` |
-| Inference Insights | 3009 | `/prototypes/inference-insights/` |
+| Research Workspace | 3009 | `/prototypes/research-workspace/` |
 | AI Visualizer | 3010 | `/prototypes/ai-integration-visualizer/` |
 | AI Evals (Flask) | 5000 | `/prototypes/ai-evals/` |
 | Neo4j | 7474/7687 | - |

@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { aiAnalysisRoutes } from './routes/ai-analysis.js';
 import documentationRoutes from './routes/documentation.js';
 import inferenceInsightsRoutes from './routes/inference-insights.js';
+import researchWorkspaceRoutes from './routes/research-workspace.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handlers.js';
 import { logger } from './utils/logger.js';
 
@@ -41,7 +42,7 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
 ];
 app.use(cors({
   origin: corsOrigins,
-  methods: ['GET', 'POST', 'DELETE'],
+  methods: ['GET', 'POST', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Client-Key'],
   credentials: false // No cookies needed
 }));
@@ -94,6 +95,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1', aiAnalysisRoutes);
 app.use('/api/v1', documentationRoutes);
 app.use('/api/v1', inferenceInsightsRoutes);
+app.use('/api/v1/research-workspace', researchWorkspaceRoutes);
 
 // Error handling
 app.use(notFoundHandler);

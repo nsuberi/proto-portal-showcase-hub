@@ -1,0 +1,155 @@
+@import "./design-system/tokens.css";
+@import "./design-system/syntax-dark.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Workspace layout === */
+
+.workspace-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Milkdown editor overrides for dark workspace theme */
+.milkdown-editor-root .milkdown {
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  padding: 1rem 1.5rem;
+  min-height: 100%;
+}
+
+.milkdown-editor-root .milkdown .editor {
+  outline: none;
+}
+
+.milkdown-editor-root .milkdown h1,
+.milkdown-editor-root .milkdown h2,
+.milkdown-editor-root .milkdown h3,
+.milkdown-editor-root .milkdown h4,
+.milkdown-editor-root .milkdown h5,
+.milkdown-editor-root .milkdown h6 {
+  font-family: var(--font-headline);
+  color: var(--color-on-surface);
+}
+
+.milkdown-editor-root .milkdown h1 {
+  font-size: 1.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown h2 {
+  font-size: 1.35rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.milkdown-editor-root .milkdown h3 {
+  font-size: 1.15rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.milkdown-editor-root .milkdown p {
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown code {
+  font-family: var(--font-mono);
+  background: var(--color-surface-container-high);
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+}
+
+.milkdown-editor-root .milkdown pre {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.milkdown-editor-root .milkdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.milkdown-editor-root .milkdown blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1rem;
+  color: var(--color-on-surface-variant);
+  margin: 0.75rem 0;
+}
+
+.milkdown-editor-root .milkdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.milkdown-editor-root .milkdown ul,
+.milkdown-editor-root .milkdown ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown li {
+  margin-bottom: 0.25rem;
+}
+
+.milkdown-editor-root .milkdown hr {
+  border: none;
+  border-top: 1px solid var(--color-outline-variant);
+  margin: 1.5rem 0;
+}
+
+.milkdown-editor-root .milkdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+}
+
+.milkdown-editor-root .milkdown th,
+.milkdown-editor-root .milkdown td {
+  border: 1px solid var(--color-outline-variant);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.milkdown-editor-root .milkdown th {
+  background: var(--color-surface-container);
+  font-family: var(--font-label);
+  font-weight: 600;
+}
+
+/* xterm.js terminal container sizing */
+.xterm {
+  height: 100%;
+}
+
+.xterm-viewport {
+  overflow-y: auto !important;
+}
+
+/* react-resizable-panels resize handle area */
+[data-panel-resize-handle-id] {
+  background: transparent;
+}
+
+[data-panel-resize-handle-id]:hover {
+  background: var(--color-outline-variant);
+  opacity: 0.15;
+}

@@ -24,6 +24,7 @@ const SERVICES = {
   "ai-evals": { port: process.env.AI_EVALS_PORT || 5000 },
   "ai-builders": { port: 3008, buildPath: "apps/ai-builders-portal/dist" },
   "ai-integration-visualizer": { port: 3010, buildPath: "prototypes/ai-integration-visualizer/dist" },
+  "research-workspace": { port: 3011, buildPath: "prototypes/research-workspace/dist" },
 };
 
 console.log("Starting Multi-SPA Development Proxy Server...");
@@ -57,7 +58,7 @@ function createPrototypeProxy(name) {
 }
 
 // Prototype routes
-for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "ai-builders", "ai-integration-visualizer"]) {
+for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "research-workspace", "ai-builders", "ai-integration-visualizer"]) {
   const svc = SERVICES[name];
   console.log(`  /prototypes/${name}  ->  localhost:${svc.port}`);
   app.use(`/prototypes/${name}`, createPrototypeProxy(name));
@@ -168,6 +169,7 @@ Routes:
   http://localhost:${PORT}/prototypes/documentation-explorer/     -> Docs Explorer (${SERVICES["documentation-explorer"].port})
   http://localhost:${PORT}/prototypes/learning-path/              -> Learning Path (${SERVICES["learning-path"].port})
   http://localhost:${PORT}/prototypes/inference-insights/         -> Inference Insights (${SERVICES["inference-insights"].port})
+  http://localhost:${PORT}/prototypes/research-workspace/         -> Research Workspace (${SERVICES["research-workspace"].port})
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
   http://localhost:${PORT}/prototypes/ai-evals/                    -> AI Evals Flask (${SERVICES["ai-evals"].port})
   http://localhost:${PORT}/prototypes/ai-builders/                  -> AI Builders (${SERVICES["ai-builders"].port})

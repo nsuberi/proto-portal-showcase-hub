@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { C } from "./lib/colors";
 import { useAnimationFrame } from "./hooks/useAnimationFrame";
 import { SceneEmbedded } from "./components/scenes/SceneEmbedded";
@@ -45,7 +45,22 @@ export default function App() {
   const [teamMode, setTeamMode] = useState<TeamMode>("pillared");
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
+  const [svgHeight, setSvgHeight] = useState<number | undefined>(undefined);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
   const time = useAnimationFrame();
+
+  // Track the SVG container's rendered height so sidebars match exactly
+  useEffect(() => {
+    const el = svgContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setSvgHeight(entry.contentRect.height);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const totalSec = time / 1000;
   const { greenCount } = useConversion(totalSec, teamMode, CONVERSION_ORDER.length, 3);
@@ -361,17 +376,17 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main visualization area — flex row, height set by SVG, sidebars stretch to match */}
+      {/* Main visualization area */}
       <div
         className="main-viz-area"
         style={{
           position: "relative",
           display: "flex",
-          alignItems: "stretch",
+          alignItems: "flex-start",
         }}
       >
-        {/* Left sidebar: Remaining — stretches to SVG height, scrolls */}
-        <div className="sidebar-desktop">
+        {/* Left sidebar: height matches SVG exactly, scrolls */}
+        <div className="sidebar-desktop" style={svgHeight ? { height: svgHeight } : undefined}>
           <NodeListPanel
             side="remaining"
             greenSet={greenSet}
@@ -381,8 +396,8 @@ export default function App() {
           />
         </div>
 
-        {/* SVG visualization — renders at natural aspect ratio, sets row height */}
-        <div style={{ flex: 1, position: "relative" }}>
+        {/* SVG visualization — ref'd container determines sidebar height */}
+        <div ref={svgContainerRef} style={{ flex: 1, position: "relative" }}>
           <svg
             viewBox="0 0 700 420"
             width="100%"
@@ -397,8 +412,8 @@ export default function App() {
           </svg>
         </div>
 
-        {/* Right sidebar: Converted — stretches to SVG height, scrolls */}
-        <div className="sidebar-desktop">
+        {/* Right sidebar: height matches SVG exactly, scrolls */}
+        <div className="sidebar-desktop" style={svgHeight ? { height: svgHeight } : undefined}>
           <NodeListPanel
             side="converted"
             greenSet={greenSet}
@@ -408,9 +423,9 @@ export default function App() {
           />
         </div>
 
-        {/* Detail drawer — absolute, stretches full height of viz area */}
+        {/* Detail drawer: height matches SVG exactly */}
         {selectedNodeId != null && (
-          <div className="drawer-desktop">
+          <div className="drawer-desktop" style={svgHeight ? { height: svgHeight } : undefined}>
             <NodeDetailDrawer
               nodeId={selectedNodeId}
               isConverted={greenSet.has(selectedNodeId)}

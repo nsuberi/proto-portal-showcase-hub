@@ -33,12 +33,11 @@ body {
 }
 
 /* ── Desktop drawer wrapper ──
-   Absolute-positioned, stretches top-to-bottom of the viz area. */
+   Absolute-positioned, height set by JS to match SVG. */
 .drawer-desktop {
   position: absolute;
   top: 0;
   right: 0;
-  bottom: 0;
   width: 380px;
   z-index: 10;
   overflow-y: auto;
