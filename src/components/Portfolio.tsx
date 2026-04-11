@@ -23,11 +23,11 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
-      title: "Inference Insights: AI Research Gallery",
+      title: "Research Workspace: AI-Powered Knowledge Platform",
       description:
-        "An automated research gallery that runs Claude Code 4x daily, exploring inference engineering papers from arXiv and generating illustrated insights connecting distributed systems, music/signal processing, and architecture. Each insight pairs narrative prose with interactive code canvases demonstrating key concepts.",
-      link: "/prototypes/inference-insights/",
-      tags: ["Inference Engineering", "Automated Research", "arXiv", "Distributed Systems"],
+        "A multi-user research platform with a public gallery and authenticated workspaces. Set learning intentions to have Claude Code research arXiv papers, then synthesize findings into cross-article narratives and architecture diagrams. Built with code-server, Foam, and Claude Code on ECS Fargate with per-user EFS vaults and Cognito authentication.",
+      link: "/prototypes/research-workspace/",
+      tags: ["Research Platform", "Claude Code", "Knowledge Management", "Automated Research"],
       status: "Live Demo Available",
     },
     {

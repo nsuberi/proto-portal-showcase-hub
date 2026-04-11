@@ -62,13 +62,24 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "LambdaFunctionURLPermissions"
+        Sid = "LambdaPermissions"
         Effect = "Allow"
         Action = [
+          "lambda:CreateFunction",
+          "lambda:DeleteFunction",
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
           "lambda:CreateFunctionUrlConfig",
           "lambda:DeleteFunctionUrlConfig",
           "lambda:GetFunctionUrlConfig",
-          "lambda:UpdateFunctionUrlConfig"
+          "lambda:UpdateFunctionUrlConfig",
+          "lambda:TagResource",
+          "lambda:UntagResource",
+          "lambda:ListTags"
         ]
         Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
       },
@@ -331,4 +342,101 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
       }
     ]
   })
+}
+
+# Managed policy for research-workspace services (Cognito, EFS, DynamoDB, ELB rules)
+# Separate from inline policy to stay under the 10KB inline policy size limit.
+resource "aws_iam_policy" "research_workspace_permissions" {
+  name = "research-workspace-terraform-permissions"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "CognitoPermissions"
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:CreateUserPool",
+          "cognito-idp:DeleteUserPool",
+          "cognito-idp:DescribeUserPool",
+          "cognito-idp:UpdateUserPool",
+          "cognito-idp:CreateUserPoolClient",
+          "cognito-idp:DeleteUserPoolClient",
+          "cognito-idp:DescribeUserPoolClient",
+          "cognito-idp:UpdateUserPoolClient",
+          "cognito-idp:CreateUserPoolDomain",
+          "cognito-idp:DeleteUserPoolDomain",
+          "cognito-idp:DescribeUserPoolDomain",
+          "cognito-idp:CreateIdentityProvider",
+          "cognito-idp:DeleteIdentityProvider",
+          "cognito-idp:DescribeIdentityProvider",
+          "cognito-idp:UpdateIdentityProvider",
+          "cognito-idp:GetUserPoolMfaConfig",
+          "cognito-idp:SetUserPoolMfaConfig",
+          "cognito-idp:ListUserPoolClients",
+          "cognito-idp:ListIdentityProviders",
+          "cognito-idp:TagResource",
+          "cognito-idp:UntagResource",
+          "cognito-idp:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "EFSPermissions"
+        Effect = "Allow"
+        Action = [
+          "elasticfilesystem:CreateFileSystem",
+          "elasticfilesystem:DeleteFileSystem",
+          "elasticfilesystem:DescribeFileSystems",
+          "elasticfilesystem:CreateMountTarget",
+          "elasticfilesystem:DeleteMountTarget",
+          "elasticfilesystem:DescribeMountTargets",
+          "elasticfilesystem:DescribeMountTargetSecurityGroups",
+          "elasticfilesystem:CreateAccessPoint",
+          "elasticfilesystem:DeleteAccessPoint",
+          "elasticfilesystem:DescribeAccessPoints",
+          "elasticfilesystem:PutLifecycleConfiguration",
+          "elasticfilesystem:DescribeLifecycleConfiguration",
+          "elasticfilesystem:TagResource",
+          "elasticfilesystem:UntagResource",
+          "elasticfilesystem:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "DynamoDBPermissions"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:CreateTable",
+          "dynamodb:DeleteTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:UpdateTable",
+          "dynamodb:UpdateContinuousBackups",
+          "dynamodb:UpdateTimeToLive",
+          "dynamodb:TagResource",
+          "dynamodb:UntagResource",
+          "dynamodb:ListTagsOfResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "ELBListenerRulePermissions"
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:CreateRule",
+          "elasticloadbalancing:DeleteRule",
+          "elasticloadbalancing:DescribeRules",
+          "elasticloadbalancing:ModifyRule"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "research_workspace_permissions" {
+  role       = aws_iam_role.terraform_role.name
+  policy_arn = aws_iam_policy.research_workspace_permissions.arn
 }
