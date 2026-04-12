@@ -3,8 +3,8 @@
 
 locals {
   application_root  = "/prototypes/research-workspace/vault"
-  # code-server runs at root / — CloudFront Function strips the vault path prefix
-  health_check_path = "/"
+  # Express backend serves /healthz
+  health_check_path = "/healthz"
 }
 
 # --- ECR Repository ---
@@ -218,19 +218,19 @@ resource "aws_ecs_task_definition" "main" {
       mountPoints = [
         {
           sourceVolume  = "vault-storage"
-          containerPath = "/home/coder/vault"
+          containerPath = "/workspace"
           readOnly      = false
         }
       ]
 
       environment = [
         {
-          name  = "CODER_BASE_PATH"
-          value = "/prototypes/research-workspace/vault"
+          name  = "VAULT_ROOT"
+          value = "/workspace"
         },
         {
-          name  = "PASSWORD"
-          value = ""
+          name  = "PORT"
+          value = tostring(var.container_port)
         }
       ]
 
@@ -244,7 +244,7 @@ resource "aws_ecs_task_definition" "main" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -sf http://localhost:${var.container_port}/ || exit 1"]
+        command     = ["CMD-SHELL", "curl -sf http://localhost:${var.container_port}/healthz || exit 1"]
         interval    = 30
         timeout     = 10
         retries     = 3

@@ -7,7 +7,14 @@ import {
 import FileBrowser from "../file-browser/FileBrowser";
 import MarkdownEditor from "../editor/MarkdownEditor";
 import TerminalPanel from "../terminal/TerminalPanel";
-import { FileText } from "lucide-react";
+import {
+  FileText,
+  FolderOpen,
+  Terminal as TerminalIcon,
+} from "lucide-react";
+import { useIsMobile } from "../../hooks/useIsMobile";
+
+type MobileTab = "files" | "editor" | "terminal";
 
 function ResizeHandle({
   direction = "horizontal",
@@ -49,14 +56,71 @@ function WelcomeScreen() {
 
 export default function WorkspaceLayout() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("files");
+  const isMobile = useIsMobile();
 
   const handleSelectFile = useCallback((path: string) => {
     setSelectedFile(path);
   }, []);
 
+  const handleMobileSelectFile = useCallback((path: string) => {
+    setSelectedFile(path);
+    setMobileTab("editor");
+  }, []);
+
   const handleSave = useCallback(() => {
     // Could trigger tree refetch if needed
   }, []);
+
+  if (isMobile) {
+    const TABS: { id: MobileTab; icon: typeof FolderOpen; label: string }[] = [
+      { id: "files", icon: FolderOpen, label: "Files" },
+      { id: "editor", icon: FileText, label: "Editor" },
+      { id: "terminal", icon: TerminalIcon, label: "Terminal" },
+    ];
+
+    return (
+      <div className="workspace-layout h-screen bg-surface-container-lowest overflow-hidden flex flex-col">
+        {/* All panels stay mounted to preserve state and connections */}
+        <div className="flex-1 overflow-hidden relative">
+          <div className={`absolute inset-0 ${mobileTab === "files" ? "" : "hidden"}`}>
+            <FileBrowser
+              onSelectFile={handleMobileSelectFile}
+              selectedFile={selectedFile}
+            />
+          </div>
+          <div className={`absolute inset-0 ${mobileTab === "editor" ? "" : "hidden"}`}>
+            {selectedFile ? (
+              <MarkdownEditor filePath={selectedFile} onSave={handleSave} />
+            ) : (
+              <WelcomeScreen />
+            )}
+          </div>
+          <div className={`absolute inset-0 ${mobileTab === "terminal" ? "" : "hidden"}`}>
+            <TerminalPanel />
+          </div>
+        </div>
+
+        {/* Bottom tab bar */}
+        <div className="flex border-t border-outline-variant/20 bg-surface-container-low">
+          {TABS.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setMobileTab(id)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-label transition-colors ${
+                mobileTab === id
+                  ? "text-primary bg-primary/10"
+                  : "text-on-surface-variant/60"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="workspace-layout h-screen bg-surface-container-lowest overflow-hidden">
