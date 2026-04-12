@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs/promises';
@@ -310,6 +311,9 @@ const server = createServer(app);
 // Terminal WebSocket
 const wss = new WebSocketServer({ noServer: true });
 
+// Chat WebSocket (Claude Code integration)
+const chatWss = new WebSocketServer({ noServer: true });
+
 server.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   let pathname = url.pathname;
@@ -322,6 +326,10 @@ server.on('upgrade', (request, socket, head) => {
   if (pathname === `${API_PREFIX}/terminal`) {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
+    });
+  } else if (pathname === `${API_PREFIX}/chat`) {
+    chatWss.handleUpgrade(request, socket, head, (ws) => {
+      chatWss.emit('connection', ws, request);
     });
   } else {
     socket.destroy();
@@ -388,6 +396,188 @@ wss.on('connection', (ws) => {
 
   shell.onExit(() => {
     try { ws.close(); } catch (e) { /* already closed */ }
+  });
+});
+
+// --- Chat WebSocket Handler (Claude Code integration) ---
+
+chatWss.on('connection', (ws) => {
+  console.log('[chat] New chat session');
+  let sessionId = null;
+  let activeProcess = null;
+
+  function sendEvent(event) {
+    try {
+      if (ws.readyState === 1) { // WebSocket.OPEN
+        ws.send(JSON.stringify(event));
+      }
+    } catch {
+      // WebSocket closed
+    }
+  }
+
+  ws.on('message', (raw) => {
+    let msg;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch {
+      sendEvent({ type: 'error', message: 'Invalid JSON' });
+      return;
+    }
+
+    // Handle auth request — spawns `claude auth login` and captures the URL
+    if (msg.type === 'auth') {
+      if (activeProcess) {
+        sendEvent({ type: 'error', message: 'Please wait for the current operation to finish.' });
+        return;
+      }
+
+      console.log('[chat] Starting auth flow');
+      const authProc = spawn('claude', ['auth', 'login'], {
+        cwd: VAULT_ROOT,
+        env: { ...process.env, HOME: VAULT_ROOT },
+      });
+      activeProcess = authProc;
+
+      let authOutput = '';
+      authProc.stdout.on('data', (chunk) => {
+        authOutput += chunk.toString();
+        // Look for a URL in the output
+        const urlMatch = authOutput.match(/(https?:\/\/[^\s]+)/);
+        if (urlMatch) {
+          sendEvent({ type: 'auth_url', url: urlMatch[1] });
+        }
+      });
+      authProc.stderr.on('data', (chunk) => {
+        const text = chunk.toString();
+        authOutput += text;
+        const urlMatch = text.match(/(https?:\/\/[^\s]+)/);
+        if (urlMatch) {
+          sendEvent({ type: 'auth_url', url: urlMatch[1] });
+        }
+      });
+      authProc.on('close', (code) => {
+        activeProcess = null;
+        sendEvent({ type: 'auth_done', success: code === 0 });
+        console.log(`[chat] Auth flow completed with code ${code}`);
+      });
+      return;
+    }
+
+    if (msg.type !== 'message' || !msg.content) return;
+
+    if (activeProcess) {
+      sendEvent({ type: 'error', message: 'A message is already being processed. Please wait.' });
+      return;
+    }
+
+    const args = [
+      '-p', msg.content,
+      '--output-format', 'stream-json',
+      '--dangerously-skip-permissions',
+      '--max-budget-usd', '2',
+    ];
+
+    if (sessionId) {
+      args.push('--resume', sessionId);
+    }
+
+    console.log('[chat] Spawning claude with prompt:', msg.content.slice(0, 80));
+
+    const proc = spawn('claude', args, {
+      cwd: VAULT_ROOT,
+      env: { ...process.env, HOME: VAULT_ROOT },
+    });
+    activeProcess = proc;
+
+    let buffer = '';
+    let lastText = '';
+
+    proc.stdout.on('data', (chunk) => {
+      buffer += chunk.toString();
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete last line
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let event;
+        try {
+          event = JSON.parse(line);
+        } catch {
+          continue;
+        }
+
+        // Extract session ID from init
+        if (event.type === 'system' && event.subtype === 'init') {
+          sessionId = event.session_id;
+          sendEvent({ type: 'init', sessionId });
+          continue;
+        }
+
+        // Stream assistant text
+        if (event.type === 'assistant' && event.message?.content) {
+          const textBlocks = event.message.content.filter(b => b.type === 'text');
+          if (textBlocks.length > 0) {
+            const fullText = textBlocks.map(b => b.text).join('');
+            if (fullText !== lastText) {
+              lastText = fullText;
+              sendEvent({ type: 'assistant_text', content: fullText });
+            }
+          }
+
+          // Report tool use
+          const toolBlocks = event.message.content.filter(b => b.type === 'tool_use');
+          for (const tool of toolBlocks) {
+            sendEvent({ type: 'tool_use', tool: tool.name, input: tool.input || {} });
+          }
+          continue;
+        }
+
+        // Result (completion)
+        if (event.type === 'result') {
+          sessionId = event.session_id || sessionId;
+          sendEvent({ type: 'done', sessionId });
+          continue;
+        }
+      }
+    });
+
+    proc.stderr.on('data', (chunk) => {
+      console.error('[chat] stderr:', chunk.toString().trim());
+    });
+
+    proc.on('error', (err) => {
+      console.error('[chat] Process error:', err.message);
+      sendEvent({ type: 'error', message: `Failed to start Claude: ${err.message}` });
+      activeProcess = null;
+    });
+
+    proc.on('close', (code) => {
+      activeProcess = null;
+      // Flush remaining buffer
+      if (buffer.trim()) {
+        try {
+          const event = JSON.parse(buffer);
+          if (event.type === 'result') {
+            sessionId = event.session_id || sessionId;
+            sendEvent({ type: 'done', sessionId });
+          }
+        } catch {
+          // ignore
+        }
+      }
+      if (code !== 0) {
+        console.warn(`[chat] Claude process exited with code ${code}`);
+      }
+    });
+  });
+
+  ws.on('close', () => {
+    console.log('[chat] Session closed');
+    if (activeProcess) {
+      activeProcess.kill();
+      activeProcess = null;
+    }
   });
 });
 

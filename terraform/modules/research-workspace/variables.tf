@@ -72,13 +72,20 @@ variable "container_port" {
 }
 
 variable "container_cpu" {
-  description = "CPU units for the container (512 = 0.5 vCPU)"
+  description = "CPU units for the container (1024 = 1 vCPU)"
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "container_memory" {
   description = "Memory for the container in MB"
   type        = number
-  default     = 1024
+  default     = 2048
+}
+
+variable "anthropic_api_key" {
+  description = "Anthropic API key for Claude Code chat integration"
+  type        = string
+  default     = ""
+  sensitive   = true
 }
