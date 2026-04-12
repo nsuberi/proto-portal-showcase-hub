@@ -176,9 +176,26 @@ export function useChat(): UseChatResult {
   }, []);
 
   const submitAuthCode = useCallback((code: string) => {
+    const trimmed = code.trim();
     const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send(JSON.stringify({ type: "auth_code", code: code.trim() }));
+
+    // Try WebSocket first
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "auth_code", code: trimmed }));
+      return;
+    }
+
+    // Fallback to REST if WebSocket is disconnected
+    const baseUrl = import.meta.env.DEV
+      ? "http://localhost:8080"
+      : "/prototypes/research-workspace/vault";
+    fetch(`${baseUrl}/api/vault/auth-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: trimmed }),
+    }).catch(() => {
+      // ignore fetch errors
+    });
   }, []);
 
   return { messages, isStreaming, isConnected, authUrl, isAuthenticating, sendMessage, startAuth, submitAuthCode };
