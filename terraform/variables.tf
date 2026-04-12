@@ -68,6 +68,14 @@ variable "ai_evals_anthropic_api_key" {
   default     = ""
 }
 
+# Research Workspace Configuration
+variable "research_workspace_anthropic_api_key" {
+  description = "Anthropic API key for Research Workspace Claude chat"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Code Dojo Configuration
 variable "code_dojo_anthropic_api_key" {
   description = "Anthropic API key for Code Dojo"

@@ -6,15 +6,15 @@ import {
 } from "react-resizable-panels";
 import FileBrowser from "../file-browser/FileBrowser";
 import MarkdownEditor from "../editor/MarkdownEditor";
-import TerminalPanel from "../terminal/TerminalPanel";
+import ChatPanel from "../chat/ChatPanel";
 import {
   FileText,
   FolderOpen,
-  Terminal as TerminalIcon,
+  MessageCircle,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
-type MobileTab = "files" | "editor" | "terminal";
+type MobileTab = "files" | "editor" | "chat";
 
 function ResizeHandle({
   direction = "horizontal",
@@ -76,7 +76,7 @@ export default function WorkspaceLayout() {
     const TABS: { id: MobileTab; icon: typeof FolderOpen; label: string }[] = [
       { id: "files", icon: FolderOpen, label: "Files" },
       { id: "editor", icon: FileText, label: "Editor" },
-      { id: "terminal", icon: TerminalIcon, label: "Terminal" },
+      { id: "chat", icon: MessageCircle, label: "Claude" },
     ];
 
     return (
@@ -96,8 +96,8 @@ export default function WorkspaceLayout() {
               <WelcomeScreen />
             )}
           </div>
-          <div className={`absolute inset-0 ${mobileTab === "terminal" ? "" : "hidden"}`}>
-            <TerminalPanel />
+          <div className={`absolute inset-0 ${mobileTab === "chat" ? "" : "hidden"}`}>
+            <ChatPanel />
           </div>
         </div>
 
@@ -158,9 +158,9 @@ export default function WorkspaceLayout() {
 
             <ResizeHandle direction="vertical" />
 
-            {/* Bottom panel: Terminal */}
+            {/* Bottom panel: Claude Chat */}
             <Panel defaultSize={30} minSize={10}>
-              <TerminalPanel />
+              <ChatPanel />
             </Panel>
           </PanelGroup>
         </Panel>

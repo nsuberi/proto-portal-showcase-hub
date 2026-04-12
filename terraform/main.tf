@@ -297,6 +297,9 @@ module "research_workspace" {
   cognito_user_pool_arn       = aws_cognito_user_pool.research_workspace.arn
   cognito_user_pool_client_id = aws_cognito_user_pool_client.research_workspace.id
   cognito_domain              = aws_cognito_user_pool_domain.research_workspace.domain
+
+  # Claude Code integration
+  anthropic_api_key = var.research_workspace_anthropic_api_key
 }
 
 # CloudFront distribution
