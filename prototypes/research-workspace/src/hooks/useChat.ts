@@ -69,6 +69,23 @@ export function useChat(): UseChatResult {
             }
             return prev;
           });
+        } else if (data.type === "auth_required") {
+          // Claude couldn't authenticate — show the auth flow
+          setIsStreaming(false);
+          setMessages((prev) => {
+            // Remove the empty streaming assistant message
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && !last.content) {
+              return prev.slice(0, -1);
+            }
+            return prev;
+          });
+          // Auto-trigger the auth flow
+          const ws = wsRef.current;
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            setIsAuthenticating(true);
+            ws.send(JSON.stringify({ type: "auth" }));
+          }
         } else if (data.type === "auth_url") {
           setAuthUrl(data.url);
           setIsAuthenticating(true);
@@ -84,11 +101,21 @@ export function useChat(): UseChatResult {
           assistantIdRef.current = null;
         } else if (data.type === "error") {
           setIsStreaming(false);
+          // Update the existing assistant message or create a new one
           const id = assistantIdRef.current || crypto.randomUUID();
-          setMessages((prev) => [
-            ...prev,
-            { id, role: "assistant", content: `Error: ${data.message}` },
-          ]);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.id === id && last.role === "assistant") {
+              return [
+                ...prev.slice(0, -1),
+                { ...last, content: last.content || `Error: ${data.message}` },
+              ];
+            }
+            return [
+              ...prev,
+              { id, role: "assistant", content: `Error: ${data.message}` },
+            ];
+          });
           assistantIdRef.current = null;
         }
       } catch {

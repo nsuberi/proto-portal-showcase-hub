@@ -433,33 +433,47 @@ chatWss.on('connection', (ws) => {
       }
 
       console.log('[chat] Starting auth flow');
-      const authProc = spawn('claude', ['auth', 'login'], {
+      const authProc = spawn('claude', ['auth', 'login', '--claudeai'], {
         cwd: VAULT_ROOT,
         env: { ...process.env, HOME: VAULT_ROOT },
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
       activeProcess = authProc;
 
+      // Close stdin — auth login outputs a URL, no input needed
+      authProc.stdin.end();
+
       let authOutput = '';
+      const urlRegex = /(https?:\/\/[^\s\x1b\]]+)/g;
+
       authProc.stdout.on('data', (chunk) => {
-        authOutput += chunk.toString();
-        // Look for a URL in the output
-        const urlMatch = authOutput.match(/(https?:\/\/[^\s]+)/);
-        if (urlMatch) {
-          sendEvent({ type: 'auth_url', url: urlMatch[1] });
+        const text = chunk.toString();
+        authOutput += text;
+        console.log('[chat] auth stdout:', text.trim());
+        // Look for URLs in the output
+        const matches = text.match(urlRegex);
+        if (matches) {
+          for (const url of matches) {
+            sendEvent({ type: 'auth_url', url });
+          }
         }
       });
       authProc.stderr.on('data', (chunk) => {
         const text = chunk.toString();
         authOutput += text;
-        const urlMatch = text.match(/(https?:\/\/[^\s]+)/);
-        if (urlMatch) {
-          sendEvent({ type: 'auth_url', url: urlMatch[1] });
+        console.log('[chat] auth stderr:', text.trim());
+        const matches = text.match(urlRegex);
+        if (matches) {
+          for (const url of matches) {
+            sendEvent({ type: 'auth_url', url });
+          }
         }
       });
       authProc.on('close', (code) => {
         activeProcess = null;
-        sendEvent({ type: 'auth_done', success: code === 0 });
         console.log(`[chat] Auth flow completed with code ${code}`);
+        console.log('[chat] Auth output:', authOutput.replace(/\x1b\[[0-9;]*m/g, '').trim());
+        sendEvent({ type: 'auth_done', success: code === 0 });
       });
       return;
     }
@@ -474,6 +488,7 @@ chatWss.on('connection', (ws) => {
     const args = [
       '-p', msg.content,
       '--output-format', 'stream-json',
+      '--verbose',
       '--dangerously-skip-permissions',
       '--max-budget-usd', '2',
     ];
@@ -487,11 +502,16 @@ chatWss.on('connection', (ws) => {
     const proc = spawn('claude', args, {
       cwd: VAULT_ROOT,
       env: { ...process.env, HOME: VAULT_ROOT },
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
     activeProcess = proc;
 
+    // Close stdin immediately — we pass prompt via -p flag, not stdin
+    proc.stdin.end();
+
     let buffer = '';
     let lastText = '';
+    let stderrBuffer = '';
 
     proc.stdout.on('data', (chunk) => {
       buffer += chunk.toString();
@@ -543,7 +563,9 @@ chatWss.on('connection', (ws) => {
     });
 
     proc.stderr.on('data', (chunk) => {
-      console.error('[chat] stderr:', chunk.toString().trim());
+      const text = chunk.toString().trim();
+      stderrBuffer += text + '\n';
+      console.error('[chat] stderr:', text);
     });
 
     proc.on('error', (err) => {
@@ -561,6 +583,7 @@ chatWss.on('connection', (ws) => {
           if (event.type === 'result') {
             sessionId = event.session_id || sessionId;
             sendEvent({ type: 'done', sessionId });
+            return;
           }
         } catch {
           // ignore
@@ -568,6 +591,14 @@ chatWss.on('connection', (ws) => {
       }
       if (code !== 0) {
         console.warn(`[chat] Claude process exited with code ${code}`);
+        // Surface the error to the client
+        const cleanStderr = stderrBuffer.replace(/\x1b\[[0-9;]*m/g, '').trim();
+        const isAuthError = cleanStderr.includes('auth') || cleanStderr.includes('login') || cleanStderr.includes('credential') || cleanStderr.includes('API key');
+        if (isAuthError) {
+          sendEvent({ type: 'auth_required', message: cleanStderr });
+        } else {
+          sendEvent({ type: 'error', message: cleanStderr || `Claude exited with code ${code}` });
+        }
       }
     });
   });
