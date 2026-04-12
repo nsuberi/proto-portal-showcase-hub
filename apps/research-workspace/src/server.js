@@ -61,6 +61,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- Shared auth process reference (accessible from both WS and REST) ---
+let pendingAuthProcess = null;
+
 // --- Health Check ---
 
 app.get('/healthz', (req, res) => {
@@ -70,6 +73,20 @@ app.get('/healthz', (req, res) => {
 // Root: redirect to workspace SPA after Cognito auth completes
 app.get('/', (req, res) => {
   res.redirect('/prototypes/research-workspace/workspace');
+});
+
+// --- Auth Code REST endpoint (fallback when WebSocket drops) ---
+app.post(`${API_PREFIX}/auth-code`, (req, res) => {
+  const { code } = req.body || {};
+  if (!code) {
+    return res.status(400).json({ error: 'code is required' });
+  }
+  if (!pendingAuthProcess || !pendingAuthProcess.stdin.writable) {
+    return res.status(409).json({ error: 'No auth process waiting for a code. Start /login first.' });
+  }
+  console.log('[auth] Writing auth code via REST endpoint');
+  pendingAuthProcess.stdin.write(code.trim() + '\n');
+  res.json({ status: 'ok', message: 'Code submitted. Check auth status.' });
 });
 
 // --- Directory Tree ---
@@ -406,6 +423,15 @@ chatWss.on('connection', (ws) => {
   let sessionId = null;
   let activeProcess = null;
 
+  // Keep-alive ping every 30s to prevent ALB idle timeout
+  const pingInterval = setInterval(() => {
+    if (ws.readyState === 1) {
+      ws.ping();
+    }
+  }, 30000);
+
+  ws.on('pong', () => { /* connection alive */ });
+
   function sendEvent(event) {
     try {
       if (ws.readyState === 1) { // WebSocket.OPEN
@@ -439,6 +465,7 @@ chatWss.on('connection', (ws) => {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       activeProcess = authProc;
+      pendingAuthProcess = authProc; // Share ref for REST fallback
 
       // Keep stdin OPEN — the auth process needs to receive the code
       // after the user authenticates in the browser
@@ -470,6 +497,7 @@ chatWss.on('connection', (ws) => {
       });
       authProc.on('close', (code) => {
         activeProcess = null;
+        pendingAuthProcess = null;
         console.log(`[chat] Auth flow completed with code ${code}`);
         sendEvent({ type: 'auth_done', success: code === 0 });
       });
@@ -635,8 +663,14 @@ chatWss.on('connection', (ws) => {
 
   ws.on('close', () => {
     console.log('[chat] Session closed');
+    clearInterval(pingInterval);
     if (activeProcess) {
-      activeProcess.kill();
+      // Don't kill auth processes — the REST fallback can still submit the code
+      if (activeProcess === pendingAuthProcess) {
+        console.log('[chat] Auth process kept alive for REST fallback');
+      } else {
+        activeProcess.kill();
+      }
       activeProcess = null;
     }
   });
