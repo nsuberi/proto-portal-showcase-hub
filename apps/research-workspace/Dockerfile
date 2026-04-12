@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3 \
     curl \
+    ca-certificates \
+    unzip \
     jq \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -19,9 +21,8 @@ RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /t
 # Create workspace directory (EFS mount point)
 RUN mkdir -p /workspace
 
-# Create non-root user
-RUN groupadd -g 1000 coder && useradd -u 1000 -g coder -m coder
-RUN chown coder:coder /workspace
+# Use existing node user (uid/gid 1000 in node:20-slim)
+RUN chown node:node /workspace
 
 # App directory
 WORKDIR /app
@@ -32,10 +33,10 @@ COPY src/ src/
 
 # Bake in a vault README
 COPY vault-readme.md /workspace/README.md
-RUN chown coder:coder /workspace/README.md
+RUN chown node:node /workspace/README.md
 
 # Run as non-root user
-USER coder
+USER node
 
 ENV PORT=8080
 ENV VAULT_ROOT=/workspace
