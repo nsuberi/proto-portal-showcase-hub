@@ -11,7 +11,20 @@ const VAULT_ROOT = process.env.VAULT_ROOT || '/workspace';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const API_PREFIX = '/api/vault';
 
+// The ALB forwards the full CloudFront path to the container.
+// Strip this prefix so Express routes match (e.g. /healthz, /api/vault/*).
+const VAULT_BASE_PATH = '/prototypes/research-workspace/vault';
+
 const app = express();
+
+// Strip the vault base path prefix from incoming requests
+app.use((req, _res, next) => {
+  if (req.url.startsWith(VAULT_BASE_PATH)) {
+    req.url = req.url.slice(VAULT_BASE_PATH.length) || '/';
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.text({ type: 'text/*' }));
 
@@ -53,9 +66,9 @@ app.get('/healthz', (req, res) => {
   res.json({ status: 'ok', vault: VAULT_ROOT });
 });
 
-// Also respond at root for ALB health checks
+// Root: redirect to workspace SPA after Cognito auth completes
 app.get('/', (req, res) => {
-  res.json({ status: 'ok' });
+  res.redirect('/prototypes/research-workspace/workspace');
 });
 
 // --- Directory Tree ---
@@ -299,8 +312,14 @@ const wss = new WebSocketServer({ noServer: true });
 
 server.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
+  let pathname = url.pathname;
 
-  if (url.pathname === `${API_PREFIX}/terminal`) {
+  // Strip vault base path prefix for WebSocket upgrades too
+  if (pathname.startsWith(VAULT_BASE_PATH)) {
+    pathname = pathname.slice(VAULT_BASE_PATH.length) || '/';
+  }
+
+  if (pathname === `${API_PREFIX}/terminal`) {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
