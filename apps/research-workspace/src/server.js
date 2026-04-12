@@ -480,6 +480,17 @@ chatWss.on('connection', (ws) => {
 
     if (msg.type !== 'message' || !msg.content) return;
 
+    // Handle /login command typed in chat
+    if (msg.content.trim().toLowerCase() === '/login') {
+      if (activeProcess) {
+        sendEvent({ type: 'error', message: 'Please wait for the current operation to finish.' });
+        return;
+      }
+      // Reuse the auth handler
+      ws.emit('message', Buffer.from(JSON.stringify({ type: 'auth' })));
+      return;
+    }
+
     if (activeProcess) {
       sendEvent({ type: 'error', message: 'A message is already being processed. Please wait.' });
       return;
@@ -512,6 +523,7 @@ chatWss.on('connection', (ws) => {
     let buffer = '';
     let lastText = '';
     let stderrBuffer = '';
+    let gotAnyEvent = false;
 
     proc.stdout.on('data', (chunk) => {
       buffer += chunk.toString();
@@ -526,6 +538,8 @@ chatWss.on('connection', (ws) => {
         } catch {
           continue;
         }
+
+        gotAnyEvent = true;
 
         // Extract session ID from init
         if (event.type === 'system' && event.subtype === 'init') {
@@ -580,6 +594,7 @@ chatWss.on('connection', (ws) => {
       if (buffer.trim()) {
         try {
           const event = JSON.parse(buffer);
+          gotAnyEvent = true;
           if (event.type === 'result') {
             sessionId = event.session_id || sessionId;
             sendEvent({ type: 'done', sessionId });
@@ -590,15 +605,21 @@ chatWss.on('connection', (ws) => {
         }
       }
       if (code !== 0) {
-        console.warn(`[chat] Claude process exited with code ${code}`);
-        // Surface the error to the client
         const cleanStderr = stderrBuffer.replace(/\x1b\[[0-9;]*m/g, '').trim();
-        const isAuthError = cleanStderr.includes('auth') || cleanStderr.includes('login') || cleanStderr.includes('credential') || cleanStderr.includes('API key');
-        if (isAuthError) {
-          sendEvent({ type: 'auth_required', message: cleanStderr });
+        console.warn(`[chat] Claude exited with code ${code}, stderr: ${cleanStderr || '(empty)'}`);
+        const allOutput = cleanStderr || buffer.replace(/\x1b\[[0-9;]*m/g, '').trim();
+        const isAuthError = allOutput.includes('auth') || allOutput.includes('login')
+          || allOutput.includes('credential') || allOutput.includes('API key')
+          || allOutput.includes('not logged in') || allOutput.includes('token');
+        if (isAuthError || !gotAnyEvent) {
+          // If no events received at all, likely an auth issue
+          sendEvent({ type: 'auth_required', message: allOutput || 'Claude is not authenticated. Click "Connect Claude" to sign in.' });
         } else {
-          sendEvent({ type: 'error', message: cleanStderr || `Claude exited with code ${code}` });
+          sendEvent({ type: 'error', message: allOutput || `Claude exited with code ${code}` });
         }
+      } else if (!gotAnyEvent) {
+        // Process succeeded but produced no events
+        sendEvent({ type: 'done', sessionId });
       }
     });
   });
