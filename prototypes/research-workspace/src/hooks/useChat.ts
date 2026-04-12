@@ -15,6 +15,7 @@ export interface UseChatResult {
   isAuthenticating: boolean;
   sendMessage: (content: string) => void;
   startAuth: () => void;
+  submitAuthCode: (code: string) => void;
 }
 
 export function useChat(): UseChatResult {
@@ -174,7 +175,13 @@ export function useChat(): UseChatResult {
     ws.send(JSON.stringify({ type: "auth" }));
   }, []);
 
-  return { messages, isStreaming, isConnected, authUrl, isAuthenticating, sendMessage, startAuth };
+  const submitAuthCode = useCallback((code: string) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({ type: "auth_code", code: code.trim() }));
+  }, []);
+
+  return { messages, isStreaming, isConnected, authUrl, isAuthenticating, sendMessage, startAuth, submitAuthCode };
 }
 
 function formatToolUse(tool: string, input: Record<string, unknown>): string {
