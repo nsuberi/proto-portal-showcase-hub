@@ -466,9 +466,9 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   # Research Workspace vault — authenticated via ALB/Cognito
-  # Full path passes through to ALB (no rewriting) — code-server handles all paths
+  # Full path passes through to ALB (no rewriting) — Express backend handles all vault paths
   ordered_cache_behavior {
-    path_pattern           = "/prototypes/research-workspace/vault/*"
+    path_pattern           = "/prototypes/research-workspace/vault*"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "ai-evals-api"

@@ -58,7 +58,7 @@ export default function GalleryPage() {
       {/* Header */}
       <header className="border-b border-outline-variant/30 bg-surface-container-low/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div>
               <h1 className="font-headline text-2xl sm:text-3xl font-bold text-on-surface">
                 Research Workspace
@@ -67,7 +67,7 @@ export default function GalleryPage() {
                 Insights, syntheses &amp; architecture diagrams connecting inference engineering to distributed systems, music &amp; architecture
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-4">
+            <div className="flex items-center gap-4">
               <a
                 href="/prototypes/research-workspace/vault/"
                 className="inline-flex items-center gap-1.5 font-label text-sm text-tertiary hover:text-tertiary/80 transition-colors"
