@@ -440,8 +440,8 @@ chatWss.on('connection', (ws) => {
       });
       activeProcess = authProc;
 
-      // Close stdin — auth login outputs a URL, no input needed
-      authProc.stdin.end();
+      // Keep stdin OPEN — the auth process needs to receive the code
+      // after the user authenticates in the browser
 
       let authOutput = '';
       const urlRegex = /(https?:\/\/[^\s\x1b\]]+)/g;
@@ -449,8 +449,7 @@ chatWss.on('connection', (ws) => {
       authProc.stdout.on('data', (chunk) => {
         const text = chunk.toString();
         authOutput += text;
-        console.log('[chat] auth stdout:', text.trim());
-        // Look for URLs in the output
+        console.log('[chat] auth stdout:', text.replace(/\x1b\[[0-9;]*m/g, '').trim());
         const matches = text.match(urlRegex);
         if (matches) {
           for (const url of matches) {
@@ -461,7 +460,7 @@ chatWss.on('connection', (ws) => {
       authProc.stderr.on('data', (chunk) => {
         const text = chunk.toString();
         authOutput += text;
-        console.log('[chat] auth stderr:', text.trim());
+        console.log('[chat] auth stderr:', text.replace(/\x1b\[[0-9;]*m/g, '').trim());
         const matches = text.match(urlRegex);
         if (matches) {
           for (const url of matches) {
@@ -472,9 +471,19 @@ chatWss.on('connection', (ws) => {
       authProc.on('close', (code) => {
         activeProcess = null;
         console.log(`[chat] Auth flow completed with code ${code}`);
-        console.log('[chat] Auth output:', authOutput.replace(/\x1b\[[0-9;]*m/g, '').trim());
         sendEvent({ type: 'auth_done', success: code === 0 });
       });
+      return;
+    }
+
+    // Handle auth code — user pastes the code from the OAuth page
+    if (msg.type === 'auth_code' && msg.code) {
+      if (activeProcess && activeProcess.stdin.writable) {
+        console.log('[chat] Writing auth code to stdin');
+        activeProcess.stdin.write(msg.code + '\n');
+      } else {
+        sendEvent({ type: 'error', message: 'No auth process waiting for a code. Try /login again.' });
+      }
       return;
     }
 
