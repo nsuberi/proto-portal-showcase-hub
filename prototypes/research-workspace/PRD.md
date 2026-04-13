@@ -55,12 +55,14 @@ Each intention has:
 - Inline editing (expand card → edit title/description → auto-save)
 - Document selection (review type — multi-select vault files)
 
-### 3. Concurrent Background Runs (Shipped)
+### 3. Concurrent Interactive Runs (Shipped)
 
-- `POST /api/vault/runs` spawns `claude -p "..." --output-format stream-json --verbose --dangerously-skip-permissions`
-- Multiple runs execute simultaneously as separate processes
-- Each run gets its own terminal tab with ANSI-colored formatted output
-- Tool use events logged to `.tool-activity.jsonl` tagged with runId
+- `POST /api/vault/runs` spawns an interactive Claude Code PTY session (`claude --dangerously-skip-permissions`)
+- Research prompt is auto-injected after Claude Code starts (output-settle detection with 10s max wait)
+- Each run opens a fully interactive Claude Code terminal tab — users see the real TUI and can steer the session
+- Run WebSockets are bidirectional: input, resize, and output all flow between browser and PTY
+- Multiple runs execute simultaneously as separate PTY sessions
+- Tool use events logged via Claude Code hooks (`.claude/hooks/log-activity.sh`)
 - Run status tracking: running → completed/failed/cancelled
 - Output buffer (100KB rolling) for late-joining WebSocket clients
 
