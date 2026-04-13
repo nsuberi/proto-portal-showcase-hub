@@ -7,7 +7,7 @@ import {
   QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { authMiddleware } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 
@@ -141,6 +141,30 @@ router.get('/published', async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /published/:id/content — serve published markdown from S3 (public)
+// ---------------------------------------------------------------------------
+
+router.get('/published/:id/content', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const key = `published/${id}.md`;
+
+    const obj = await s3().send(new GetObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+    }));
+
+    const body = await obj.Body.transformToString('utf-8');
+    res.type('text/markdown; charset=utf-8').send(body);
+  } catch (err) {
+    if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
+      return res.status(404).json({ error: 'Content not found', code: 'NOT_FOUND' });
+    }
+    next(err);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /publish — publish content from vault to gallery (auth required)
 // ---------------------------------------------------------------------------
 
@@ -193,16 +217,16 @@ router.post('/publish', authMiddleware, async (req, res, next) => {
       })
     );
 
-    // TODO: Upload rendered content to S3
-    // await s3().send(new PutObjectCommand({
-    //   Bucket: S3_BUCKET,
-    //   Key: `published/${type}/${id}.json`,
-    //   Body: JSON.stringify({ title, summary, contentPath }),
-    //   ContentType: 'application/json',
-    // }));
-
-    // TODO: Invalidate CloudFront cache for the published content path
-    // This would use @aws-sdk/client-cloudfront CreateInvalidationCommand
+    // Upload markdown content to S3 if provided
+    if (req.body.markdown) {
+      await s3().send(new PutObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: `published/${id}.md`,
+        Body: req.body.markdown,
+        ContentType: 'text/markdown; charset=utf-8',
+      }));
+      item.s3ContentKey = `published/${id}.md`;
+    }
 
     logger.info('[research-workspace] Content published', { id, type, title: title.trim() });
 

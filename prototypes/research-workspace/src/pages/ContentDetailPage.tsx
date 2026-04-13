@@ -6,6 +6,7 @@ import MarkdownRenderer from "../components/MarkdownRenderer";
 import CodeCanvas from "../components/CodeCanvas";
 import MermaidRenderer from "../components/MermaidRenderer";
 import { useFeedback } from "../hooks/useFeedback";
+import { fetchPublishedEntry } from "../hooks/usePublishedContent";
 import { ArrowLeft, Star, X, ExternalLink, Lightbulb, Layers, GitBranch } from "lucide-react";
 
 const TYPE_BADGE_STYLES: Record<ContentType, string> = {
@@ -29,6 +30,19 @@ export default function ContentDetailPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // For published items, fetch from the vault server
+    if (id?.startsWith("pub-")) {
+      fetchPublishedEntry(id).then((entry) => {
+        if (entry) {
+          setItem(entry.item);
+          setMarkdown(entry.markdown);
+        }
+      });
+      return;
+    }
+
+    // Fall back to static content
     fetch(import.meta.env.BASE_URL + "data/content-index.json")
       .then((r) => r.json())
       .then((data: ContentItem[]) => {
@@ -39,6 +53,8 @@ export default function ContentDetailPage() {
 
   useEffect(() => {
     if (!item) return;
+    // Skip fetching for published content (markdown already loaded)
+    if (item.id.startsWith("pub-")) return;
 
     fetch(import.meta.env.BASE_URL + item.contentPath)
       .then((r) => r.text())

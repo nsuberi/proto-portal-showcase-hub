@@ -1,11 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useVaultFile, saveVaultFile } from "../../hooks/useVaultApi";
 import MilkdownEditor from "./MilkdownEditor";
-import { Save, Loader2, Check, AlertCircle, Keyboard } from "lucide-react";
+import PublishDialog from "./PublishDialog";
+import {
+  Save,
+  Loader2,
+  Check,
+  AlertCircle,
+  Keyboard,
+  Maximize2,
+  Minimize2,
+  Globe,
+} from "lucide-react";
 
 interface MarkdownEditorProps {
   filePath: string;
   onSave?: () => void;
+  isFullscreen?: boolean;
+  onFullscreen?: () => void;
 }
 
 type SaveStatus = "idle" | "unsaved" | "saving" | "saved" | "error";
@@ -24,10 +36,16 @@ const HOTKEYS = [
 export default function MarkdownEditor({
   filePath,
   onSave,
+  isFullscreen,
+  onFullscreen,
 }: MarkdownEditorProps) {
   const { content, loading, error } = useVaultFile(filePath);
   const [localContent, setLocalContent] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [publishStatus, setPublishStatus] = useState<
+    "idle" | "published"
+  >("idle");
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
@@ -131,10 +149,10 @@ export default function MarkdownEditor({
     <div className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="glass-header flex items-center justify-between px-4 py-1.5">
-        <span className="font-mono text-xs text-white/50 truncate">
+        <span className="font-mono text-xs text-white/50 truncate min-w-0">
           {filePath}
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <SaveStatusBadge status={saveStatus} />
           <button
             onClick={handleManualSave}
@@ -143,6 +161,41 @@ export default function MarkdownEditor({
           >
             <Save className="w-3.5 h-3.5" />
           </button>
+
+          {/* Publish */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (publishStatus !== "published") {
+                  setShowPublishDialog((v) => !v);
+                }
+              }}
+              className={`p-1 rounded transition-colors ${
+                publishStatus === "published"
+                  ? "text-domain-ml"
+                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.08]"
+              }`}
+              title="Publish to gallery"
+            >
+              {publishStatus === "published" ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Globe className="w-3.5 h-3.5" />
+              )}
+            </button>
+            {showPublishDialog && (
+              <PublishDialog
+                filePath={filePath}
+                markdown={localContent}
+                onClose={() => setShowPublishDialog(false)}
+                onPublished={() => {
+                  setShowPublishDialog(false);
+                  setPublishStatus("published");
+                  setTimeout(() => setPublishStatus("idle"), 2500);
+                }}
+              />
+            )}
+          </div>
 
           {/* Hotkey menu */}
           <div className="relative">
@@ -179,6 +232,21 @@ export default function MarkdownEditor({
               </div>
             )}
           </div>
+
+          {/* Fullscreen toggle */}
+          {onFullscreen && (
+            <button
+              onClick={onFullscreen}
+              className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/30 hover:text-white/70"
+              title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 

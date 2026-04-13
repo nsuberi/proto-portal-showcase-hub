@@ -1,10 +1,20 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useVaultFile, saveVaultFile } from "../../hooks/useVaultApi";
-import { Save, Loader2, Check, AlertCircle, Code2 } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Check,
+  AlertCircle,
+  Code2,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 
 interface CodeEditorProps {
   filePath: string;
   onSave?: () => void;
+  isFullscreen?: boolean;
+  onFullscreen?: () => void;
 }
 
 type SaveStatus = "idle" | "unsaved" | "saving" | "saved" | "error";
@@ -97,7 +107,12 @@ function HighlightedView({ content, lang }: { content: string; lang: string }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export default function CodeEditor({ filePath, onSave }: CodeEditorProps) {
+export default function CodeEditor({
+  filePath,
+  onSave,
+  isFullscreen,
+  onFullscreen,
+}: CodeEditorProps) {
   const { content, loading, error } = useVaultFile(filePath);
   const [localContent, setLocalContent] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -212,6 +227,19 @@ export default function CodeEditor({ filePath, onSave }: CodeEditorProps) {
           >
             <Save className="w-3.5 h-3.5" />
           </button>
+          {onFullscreen && (
+            <button
+              onClick={onFullscreen}
+              className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/30 hover:text-white/70"
+              title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
