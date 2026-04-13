@@ -431,6 +431,52 @@ resource "aws_iam_policy" "research_workspace_permissions" {
           "elasticloadbalancing:ModifyRule"
         ]
         Resource = "*"
+      },
+      {
+        Sid = "SNSPermissions"
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+          "sns:Subscribe",
+          "sns:Unsubscribe",
+          "sns:GetSubscriptionAttributes",
+          "sns:ListSubscriptionsByTopic",
+          "sns:TagResource",
+          "sns:UntagResource",
+          "sns:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "CloudWatchAlarmsPermissions"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid = "BudgetsPermissions"
+        Effect = "Allow"
+        Action = [
+          "budgets:CreateBudget",
+          "budgets:ModifyBudget",
+          "budgets:DeleteBudget",
+          "budgets:ViewBudget",
+          "budgets:DescribeBudget",
+          "budgets:ListTagsForResource",
+          "budgets:TagResource",
+          "budgets:UntagResource"
+        ]
+        Resource = "*"
       }
     ]
   })
