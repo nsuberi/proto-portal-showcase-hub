@@ -21,20 +21,16 @@ test.describe("Research Run Flow", () => {
     expect(configRes.status()).toBe(200);
     const config = await configRes.json();
 
-    // Verify hooks are present and use the correct nested format
-    // Each entry should have {matcher, hooks: [{type, command}]}
+    // Verify hooks are present and flattened for frontend consumption
+    // Each entry should have {matcher, command, filePath}
     if (config.hooks && Object.keys(config.hooks).length > 0) {
-      for (const [event, entries] of Object.entries(config.hooks)) {
+      for (const [, entries] of Object.entries(config.hooks)) {
         expect(Array.isArray(entries)).toBe(true);
         for (const entry of entries as Array<Record<string, unknown>>) {
-          // Must NOT have a bare 'command' — must have 'hooks' array
-          expect(entry).not.toHaveProperty("command");
-          expect(entry).toHaveProperty("hooks");
-          expect(Array.isArray(entry.hooks)).toBe(true);
-          for (const hook of entry.hooks as Array<Record<string, unknown>>) {
-            expect(hook).toHaveProperty("type");
-            expect(hook).toHaveProperty("command");
-          }
+          expect(entry).toHaveProperty("matcher");
+          expect(entry).toHaveProperty("command");
+          expect(typeof entry.command).toBe("string");
+          expect((entry.command as string).length).toBeGreaterThan(0);
         }
       }
     }

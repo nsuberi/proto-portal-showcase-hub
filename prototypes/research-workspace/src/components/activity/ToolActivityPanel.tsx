@@ -82,7 +82,7 @@ function summarizeInput(tool: string, input: Record<string, unknown>): string {
   }
 }
 
-function RunStatusBadge({ run, onStop, onSelect, isSelected }: { run: Run; onStop: () => void; onSelect: () => void; isSelected: boolean }) {
+function RunStatusBadge({ run, toolCount, onStop, onSelect, isSelected }: { run: Run; toolCount: number; onStop: () => void; onSelect: () => void; isSelected: boolean }) {
   const elapsed = run.finishedAt
     ? Math.round((new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()) / 1000)
     : Math.round((Date.now() - new Date(run.startedAt).getTime()) / 1000);
@@ -108,7 +108,7 @@ function RunStatusBadge({ run, onStop, onSelect, isSelected }: { run: Run; onSto
         {run.title}
       </span>
       <span className="font-mono text-[9px] text-white/25">{timeStr}</span>
-      <span className="font-label text-[9px] text-white/30">{run.toolCount} tools</span>
+      <span className="font-label text-[9px] text-white/30">{toolCount} tools</span>
       {run.status === "running" && (
         <span
           onClick={(e) => { e.stopPropagation(); onStop(); }}
@@ -364,6 +364,15 @@ export default function ToolActivityPanel() {
 
   const activeCount = runs.filter((r) => r.status === "running").length;
 
+  // Per-run tool counts computed from events (server field is unreliable)
+  const runToolCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const e of events) {
+      if (e.runId) counts[e.runId] = (counts[e.runId] || 0) + 1;
+    }
+    return counts;
+  }, [events]);
+
   // Tool summary counts for the filtered view
   const toolCounts = filteredEvents.reduce<Record<string, number>>((acc, e) => {
     acc[e.tool] = (acc[e.tool] || 0) + 1;
@@ -378,7 +387,7 @@ export default function ToolActivityPanel() {
           <div className="flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-on-surface-variant/60" />
             <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
-              Hooks &amp; Activity
+              Agent Audit
             </span>
           </div>
           {activeCount > 0 && (
@@ -432,6 +441,7 @@ export default function ToolActivityPanel() {
             <RunStatusBadge
               key={run.id}
               run={run}
+              toolCount={runToolCounts[run.id] || 0}
               isSelected={run.id === selectedRunId}
               onSelect={() => setSelectedRunId(run.id === selectedRunId ? null : run.id)}
               onStop={() => stopRun(run.id)}
@@ -468,7 +478,7 @@ export default function ToolActivityPanel() {
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <Shield className="w-8 h-8 text-white/10 mb-2" />
             <p className="font-label text-[10px] text-white/25">
-              PreToolUse hooks log tool activity here.
+              Agent tool use is audited here.
             </p>
             <p className="font-label text-[10px] text-white/15 mt-1">
               Click the play button on an intention to run it.

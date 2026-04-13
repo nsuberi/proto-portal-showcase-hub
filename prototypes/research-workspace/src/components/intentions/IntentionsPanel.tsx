@@ -17,6 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { useVaultTree, type VaultNode } from "../../hooks/useVaultApi";
+import { showToast } from "../ui/ToastContainer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,6 +39,7 @@ interface Intention {
   status: "pending" | "in_progress" | "completed";
   documents?: string[]; // file paths — for review type
   createdAt: string;
+  lastRunAt?: string;
 }
 
 const BASE_URL = import.meta.env.DEV
@@ -125,6 +127,16 @@ function formatSchedule(s: RecurringSchedule): string {
   return `${freq}, ongoing`;
 }
 
+function formatTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -168,27 +180,40 @@ async function checkOnboardingReady(): Promise<{ ready: boolean; reason?: string
 type SetupReason = "not_launched" | "not_onboarded" | "not_authenticated";
 
 /** Returns true if the run launched, or a reason string if setup is required. */
-async function triggerResearch(item: Intention): Promise<true | SetupReason> {
+type RunResult =
+  | { ok: true }
+  | { ok: false; setupReason: SetupReason }
+  | { ok: false; error: string };
+
+async function triggerResearch(item: Intention): Promise<RunResult> {
   // Pre-flight: ensure Claude Code onboarding is complete
   const status = await checkOnboardingReady();
   if (!status.ready) {
-    return (status.reason as SetupReason) || "not_launched";
+    return {
+      ok: false,
+      setupReason: (status.reason as SetupReason) || "not_launched",
+    };
   }
 
   const prompt = buildPrompt(item);
   // Spawn an interactive Claude Code PTY session via the server
-  const res = await fetch(`${RUN_BASE}/api/vault/runs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      prompt,
-      title: item.title,
-      intentionId: item.id,
-    }),
-  });
+  let res;
+  try {
+    res = await fetch(`${RUN_BASE}/api/vault/runs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        title: item.title,
+        intentionId: item.id,
+      }),
+    });
+  } catch (err) {
+    return { ok: false, error: `Network error: ${(err as Error).message}` };
+  }
   if (!res.ok) {
-    console.error("[run] Failed to start:", await res.text());
-    return true;
+    const text = await res.text().catch(() => "");
+    return { ok: false, error: `Failed to start run (${res.status}): ${text}` };
   }
   const data = await res.json();
   // Tell TerminalPanel to open a new tab for this run
@@ -197,7 +222,7 @@ async function triggerResearch(item: Intention): Promise<true | SetupReason> {
       detail: { runId: data.runId, title: item.title },
     })
   );
-  return true;
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -292,8 +317,14 @@ function IntentionCard({
   const handleRun = async () => {
     setLaunching(true);
     const result = await triggerResearch(item);
-    if (result !== true) {
-      onSetupNeeded(result);
+    if (!result.ok) {
+      if ("setupReason" in result) {
+        onSetupNeeded(result.setupReason);
+      } else {
+        showToast(result.error, "error");
+      }
+    } else {
+      showToast(`Run started: ${item.title}`, "success");
     }
     setTimeout(() => setLaunching(false), 2000);
   };
@@ -332,6 +363,11 @@ function IntentionCard({
                 <span className="flex items-center gap-0.5 font-label text-[9px] text-white/40">
                   <FileText className="w-2.5 h-2.5" />
                   {item.documents.length} docs
+                </span>
+              )}
+              {item.lastRunAt && (
+                <span className="font-label text-[9px] text-white/30">
+                  Last run: {formatTimeAgo(item.lastRunAt)}
                 </span>
               )}
             </div>

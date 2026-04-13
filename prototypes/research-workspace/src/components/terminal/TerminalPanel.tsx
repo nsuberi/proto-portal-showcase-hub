@@ -6,6 +6,7 @@ import { useTerminal } from "../../hooks/useTerminal";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import VoiceIndicator from "./VoiceIndicator";
 import { Terminal as TerminalIcon, Wifi, WifiOff, X, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { showToast } from "../ui/ToastContainer";
 import "@xterm/xterm/css/xterm.css";
 
 // ---------------------------------------------------------------------------
@@ -311,9 +312,18 @@ export default function TerminalPanel() {
   }, []);
 
   const updateTabStatus = useCallback((tabId: string, status: "completed" | "failed") => {
-    setRunTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, status } : t))
-    );
+    setRunTabs((prev) => {
+      const tab = prev.find((t) => t.id === tabId);
+      if (tab) {
+        showToast(
+          status === "completed"
+            ? `Finished: ${tab.title}`
+            : `Run failed: ${tab.title}`,
+          status === "completed" ? "success" : "error"
+        );
+      }
+      return prev.map((t) => (t.id === tabId ? { ...t, status } : t));
+    });
   }, []);
 
   const closeTab = useCallback((tabId: string) => {
