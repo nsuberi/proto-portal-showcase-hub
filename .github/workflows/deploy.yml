@@ -49,7 +49,7 @@ jobs:
 
     - name: Prepare workspaces for testing (ensure dev deps)
       run: |
-        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning @proto-portal/documentation-explorer @proto-portal/learning-path
+        yarn workspaces focus @proto-portal/ffx-skill-map @proto-portal/home-lending-learning @proto-portal/documentation-explorer @proto-portal/learning-path @proto-portal/research-workspace
 
     - name: Lint (JS + design tokens + Python)
       run: yarn lint
