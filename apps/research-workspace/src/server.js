@@ -367,13 +367,26 @@ app.patch(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
     if (!newPath) {
       return res.status(400).json({ error: 'newPath is required' });
     }
-    const absNewPath = sanitizePath(newPath);
+    const absNewPath = sanitizePath(req.userVault, newPath);
     if (!absNewPath) {
       return res.status(400).json({ error: 'Invalid new path' });
     }
     await fs.mkdir(path.dirname(absNewPath), { recursive: true });
     await fs.rename(req.vaultPath, absNewPath);
     res.json({ from: req.vaultRelPath, to: newPath });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Create empty folder
+app.post(`${API_PREFIX}/folders/*`, pathMiddleware, async (req, res, next) => {
+  try {
+    if (existsSync(req.vaultPath)) {
+      return res.status(409).json({ error: 'Folder already exists', path: req.vaultRelPath });
+    }
+    await fs.mkdir(req.vaultPath, { recursive: true });
+    res.status(201).json({ path: req.vaultRelPath, type: 'directory' });
   } catch (err) {
     next(err);
   }
@@ -629,7 +642,7 @@ server.on('upgrade', (request, socket, head) => {
   } else if (runWsMatch) {
     const runId = runWsMatch[1];
     runWss.handleUpgrade(request, socket, head, (ws) => {
-      runWss.emit('connection', ws, runId);
+      runWss.emit('connection', ws, runId, request);
     });
   } else if (pathname === `${API_PREFIX}/chat`) {
     chatWss.handleUpgrade(request, socket, head, (ws) => {
@@ -1005,44 +1018,46 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
   }
 
   // Hook script — logs tool use to .tool-activity.jsonl
+  // Always overwrite: this is server-generated, not user-customized.
   const hookScript = path.join(hooksDir, 'log-activity.sh');
-  if (!existsSync(hookScript)) {
-    await fs.mkdir(hooksDir, { recursive: true });
-    await fs.writeFile(hookScript, `#!/bin/bash
-# Claude Code PreToolUse hook — logs tool activity and enforces tool policy.
-# Enterprise controls: every tool invocation is audited. Blocked tools
-# are denied with a reason.
+  await fs.mkdir(hooksDir, { recursive: true });
+  await fs.writeFile(hookScript, `#!/bin/bash
+# Claude Code PreToolUse hook — audits tool activity and enforces tool policy.
+# Every tool invocation is logged with the run ID for session filtering.
+set -euo pipefail
 
 INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
-TOOL_INPUT=$(echo "$INPUT" | jq -c '.tool_input // {}')
+TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null) || TOOL="unknown"
+TOOL_INPUT=$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null) || TOOL_INPUT='{}'
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+RUN_ID="\${CLAUDE_RUN_ID:-}"
 DECISION="allow"
 REASON=""
 
 # Check tool policy (if policy file exists)
 POLICY_FILE="$HOME/.claude/tool-policy.json"
 if [ -f "$POLICY_FILE" ]; then
-  BLOCKED=$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null)
+  BLOCKED=$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null) || BLOCKED="0"
   if [ "$BLOCKED" != "0" ] && [ "$BLOCKED" != "" ]; then
     DECISION="block"
     REASON="Tool $TOOL is blocked by workspace policy"
   fi
 fi
 
-# Append to per-user activity log
-echo "{\\"timestamp\\":\\"$TIMESTAMP\\",\\"tool\\":\\"$TOOL\\",\\"input\\":$TOOL_INPUT,\\"decision\\":\\"$DECISION\\"}" >> "$HOME/.tool-activity.jsonl"
+# Append to per-user activity log (use jq to safely build JSON)
+jq -n --arg ts "$TIMESTAMP" --arg tool "$TOOL" --argjson input "$TOOL_INPUT" \
+  --arg decision "$DECISION" --arg runId "$RUN_ID" \
+  '{timestamp:$ts, tool:$tool, input:$input, decision:$decision, runId:$runId}' \
+  >> "$HOME/.tool-activity.jsonl" 2>/dev/null || true
 
-# Output decision
+# Output decision to stdout (only valid JSON goes here)
 if [ "$DECISION" = "block" ]; then
-  echo "{\\"decision\\":\\"block\\",\\"reason\\":\\"$REASON\\"}"
+  printf '{"decision":"block","reason":"%s"}\\n' "$REASON"
 else
-  echo '{"decision":"allow"}'
+  printf '{"decision":"allow"}\\n'
 fi
 `);
-    await fs.chmod(hookScript, 0o755);
-    console.log('[init] Created hook script');
-  }
+  await fs.chmod(hookScript, 0o755);
 
   // Claude Code settings with hook config — always write the correct format
   const settingsPath = path.join(claudeDir, 'settings.json');
@@ -1167,19 +1182,29 @@ app.get(`${API_PREFIX}/config`, async (req, res) => {
       }
     }
 
-    // Read hooks from settings.json — convert absolute command paths to vault-relative
+    // Read hooks from settings.json — flatten nested format and convert paths
     const settingsPath = path.join(claudeDir, 'settings.json');
     if (existsSync(settingsPath)) {
       const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
       if (settings.hooks) {
         const normalized = {};
         for (const [event, hookList] of Object.entries(settings.hooks)) {
-          normalized[event] = hookList.map(h => ({
-            ...h,
-            filePath: h.command.startsWith(userVault)
-              ? h.command.slice(userVault.length + 1)
-              : null,
-          }));
+          const flat = [];
+          for (const entry of hookList) {
+            // Flatten {matcher, hooks: [{type, command}]} → {matcher, command, filePath}
+            const innerHooks = entry.hooks || [];
+            for (const h of innerHooks) {
+              const cmd = h.command || '';
+              flat.push({
+                matcher: entry.matcher || '',
+                command: cmd,
+                filePath: cmd.startsWith(userVault)
+                  ? cmd.slice(userVault.length + 1)
+                  : null,
+              });
+            }
+          }
+          normalized[event] = flat;
         }
         result.hooks = normalized;
       }
@@ -1249,12 +1274,14 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
 
   let shell;
   try {
+    const runEnv = getCleanEnv(userVault);
+    runEnv.CLAUDE_RUN_ID = runId;
     shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
       name: 'xterm-256color',
       cols: 120,
       rows: 30,
       cwd: userVault,
-      env: getCleanEnv(userVault),
+      env: runEnv,
     });
   } catch (err) {
     console.error(`[run:${runId.slice(0,8)}] Failed to spawn PTY:`, err.message);
@@ -1326,6 +1353,35 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     }
   }, 10000);
 
+  // --- Task completion detection ---
+  // After the prompt is injected, monitor output for Claude's idle state.
+  // When output settles (3s silence after substantial output), send /exit.
+  let completionBytes = 0;
+  let completionTimer = null;
+  const MAX_RUN_DURATION = 30 * 60 * 1000; // 30 minutes
+
+  shell.onData((data) => {
+    if (!run.promptInjected || run.status !== 'running') return;
+    completionBytes += data.length;
+    // Wait for substantial output before considering "settle"
+    if (completionBytes < 500) return;
+    if (completionTimer) clearTimeout(completionTimer);
+    completionTimer = setTimeout(() => {
+      if (run.status === 'running') {
+        console.log(`[run:${runId.slice(0,8)}] Task complete (${completionBytes} bytes output), sending /exit`);
+        shell.write('/exit\r');
+      }
+    }, 3000);
+  });
+
+  // Max duration fallback — force-exit stuck runs
+  const maxRunTimer = setTimeout(() => {
+    if (run.status === 'running') {
+      console.log(`[run:${runId.slice(0,8)}] Max duration reached, forcing exit`);
+      shell.write('/exit\r');
+    }
+  }, MAX_RUN_DURATION);
+
   shell.onExit(({ exitCode }) => {
     run.status = exitCode === 0 ? 'completed' : 'failed';
     run.finishedAt = new Date().toISOString();
@@ -1335,9 +1391,11 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     for (const ws of run.clients) {
       try { ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`); } catch {}
     }
-    // Clean up injection listeners
+    // Clean up timers
     if (settleTimer) clearTimeout(settleTimer);
     if (maxTimer) clearTimeout(maxTimer);
+    if (completionTimer) clearTimeout(completionTimer);
+    clearTimeout(maxRunTimer);
     setTimeout(() => activeRuns.delete(runId), 1800000);
   });
 
@@ -1354,6 +1412,7 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
 app.get(`${API_PREFIX}/runs`, (req, res) => {
   const runs = [];
   for (const [, entry] of activeRuns) {
+    if (entry.userId !== req.userId) continue;
     runs.push({
       id: entry.id,
       intentionId: entry.intentionId,
@@ -1374,6 +1433,9 @@ app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
   if (!entry) {
     return res.status(404).json({ error: 'Run not found' });
   }
+  if (entry.userId !== req.userId) {
+    return res.status(403).json({ error: 'Not authorized' });
+  }
   if (entry.status === 'running' && entry.shell) {
     entry.shell.kill();
     entry.status = 'cancelled';
@@ -1385,10 +1447,18 @@ app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
 // --- Run Terminal WebSocket Handler ---
 // Bidirectional: streams PTY output to clients, relays client input to PTY.
 
-runWss.on('connection', (ws, runId) => {
+runWss.on('connection', (ws, runId, request) => {
   const run = activeRuns.get(runId);
   if (!run) {
     ws.send('\r\n\x1b[31m[Run not found]\x1b[0m\r\n');
+    ws.close();
+    return;
+  }
+
+  // Verify the connecting user owns this run
+  const identity = parseUserIdentity(request);
+  if (run.userId !== identity.userId) {
+    ws.send('\r\n\x1b[31m[Not authorized]\x1b[0m\r\n');
     ws.close();
     return;
   }
@@ -1457,6 +1527,224 @@ app.delete(`${API_PREFIX}/auth`, async (req, res) => {
   console.log(`[auth] Revoked ${revoked} credential files for user ${req.userId}`);
   res.json({ revoked, message: `Deleted ${revoked} credential file(s). Re-authenticate in the terminal.` });
 });
+
+// --- Scheduled Run Executor ---
+// Periodically checks intentions with recurring schedules and spawns runs.
+
+function buildServerPrompt(intention) {
+  const parts = [];
+  if (intention.type === 'research') {
+    parts.push(`Use the research skill to analyze: ${intention.title}.`);
+    if (intention.description) parts.push(intention.description);
+    parts.push('Save the review to reviews/ in the vault.');
+  } else if (intention.type === 'synthesis') {
+    parts.push(`Use the research skill to synthesize findings: ${intention.title}.`);
+    if (intention.description) parts.push(intention.description);
+    parts.push('Read existing reviews in reviews/, produce a synthesis in syntheses/. Include Mermaid architecture diagrams.');
+  } else if (intention.type === 'review') {
+    const docs = intention.documents?.join(', ') || 'all files in reviews/';
+    parts.push(`Use the research skill to review these documents: ${docs}.`);
+    parts.push(`Objective: ${intention.title}.`);
+    if (intention.description) parts.push(intention.description);
+    parts.push('Produce: comparative analysis, code assets in assets/, and Mermaid architecture diagrams.');
+  }
+  return parts.join(' ');
+}
+
+async function appendSchedulerLog(vaultDir, entry) {
+  const logPath = path.join(vaultDir, '.scheduler-log.jsonl');
+  await fs.appendFile(logPath, JSON.stringify(entry) + '\n').catch(() => {});
+}
+
+async function runScheduler() {
+  const vaultsDir = path.join(VAULT_ROOT, 'vaults');
+  if (!existsSync(vaultsDir)) return;
+
+  let userDirs;
+  try {
+    userDirs = await fs.readdir(vaultsDir, { withFileTypes: true });
+  } catch { return; }
+
+  for (const entry of userDirs) {
+    if (!entry.isDirectory()) continue;
+    const userId = entry.name;
+    const vaultDir = path.join(vaultsDir, userId);
+    const intentionsPath = path.join(vaultDir, '.intentions.json');
+
+    if (!existsSync(intentionsPath)) continue;
+
+    let intentions;
+    try {
+      intentions = JSON.parse(await fs.readFile(intentionsPath, 'utf-8'));
+    } catch { continue; }
+
+    if (!Array.isArray(intentions)) continue;
+
+    let changed = false;
+    for (const intention of intentions) {
+      if (!intention.schedule || !intention.schedule.timesPerDay) continue;
+
+      // Check end date
+      if (intention.schedule.endDate && new Date(intention.schedule.endDate) < new Date()) continue;
+
+      // Check if due
+      const intervalMs = (24 * 60 * 60 * 1000) / intention.schedule.timesPerDay;
+      const lastRun = intention.lastRunAt ? new Date(intention.lastRunAt).getTime() : 0;
+      const now = Date.now();
+
+      if ((now - lastRun) < intervalMs) continue;
+
+      // Due — spawn a run
+      if (!pty) {
+        console.warn(`[scheduler] Cannot spawn run — node-pty not available`);
+        continue;
+      }
+
+      const prompt = buildServerPrompt(intention);
+      const runId = randomUUID();
+
+      console.log(`[scheduler] Triggering run for ${userId}: "${intention.title}" (${runId.slice(0,8)})`);
+
+      try {
+        await ensureUserVault(userId);
+        const runEnv = getCleanEnv(vaultDir);
+        runEnv.CLAUDE_RUN_ID = runId;
+
+        const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
+          name: 'xterm-256color',
+          cols: 120,
+          rows: 30,
+          cwd: vaultDir,
+          env: runEnv,
+        });
+
+        const run = {
+          id: runId,
+          intentionId: intention.id || null,
+          title: `[Scheduled] ${intention.title}`,
+          status: 'running',
+          startedAt: new Date().toISOString(),
+          finishedAt: null,
+          toolCount: 0,
+          error: null,
+          userVault: vaultDir,
+          userId,
+          shell,
+          promptInjected: false,
+          clients: new Set(),
+          outputBuffer: '',
+        };
+        activeRuns.set(runId, run);
+
+        // Buffer output (same as manual runs)
+        const MAX_BUFFER = 100 * 1024;
+        function broadcast(text) {
+          run.outputBuffer += text;
+          if (run.outputBuffer.length > MAX_BUFFER) {
+            run.outputBuffer = run.outputBuffer.slice(-MAX_BUFFER);
+          }
+          for (const ws of run.clients) {
+            try { ws.send(text); } catch {}
+          }
+        }
+
+        shell.onData((data) => { broadcast(data); });
+
+        // Prompt injection (same settle pattern)
+        let settleT = null;
+        const maxT = setTimeout(() => {
+          if (!run.promptInjected) {
+            run.promptInjected = true;
+            shell.write(prompt + '\r');
+            console.log(`[scheduler:${runId.slice(0,8)}] Prompt injected`);
+          }
+        }, 10000);
+
+        shell.onData(() => {
+          if (run.promptInjected) return;
+          if (settleT) clearTimeout(settleT);
+          settleT = setTimeout(() => {
+            if (!run.promptInjected) {
+              run.promptInjected = true;
+              if (maxT) clearTimeout(maxT);
+              shell.write(prompt + '\r');
+              console.log(`[scheduler:${runId.slice(0,8)}] Prompt injected`);
+            }
+          }, 1500);
+        });
+
+        // Completion detection (same as manual runs)
+        let compBytes = 0;
+        let compTimer = null;
+        shell.onData((data) => {
+          if (!run.promptInjected || run.status !== 'running') return;
+          compBytes += data.length;
+          if (compBytes < 500) return;
+          if (compTimer) clearTimeout(compTimer);
+          compTimer = setTimeout(() => {
+            if (run.status === 'running') {
+              shell.write('/exit\r');
+              console.log(`[scheduler:${runId.slice(0,8)}] Task complete, sending /exit`);
+            }
+          }, 3000);
+        });
+
+        shell.onExit(({ exitCode }) => {
+          run.status = exitCode === 0 ? 'completed' : 'failed';
+          run.finishedAt = new Date().toISOString();
+          if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
+          console.log(`[scheduler:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
+          for (const ws of run.clients) {
+            try { ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`); } catch {}
+          }
+          if (settleT) clearTimeout(settleT);
+          clearTimeout(maxT);
+          if (compTimer) clearTimeout(compTimer);
+          appendSchedulerLog(vaultDir, {
+            timestamp: new Date().toISOString(),
+            intentionId: intention.id,
+            title: intention.title,
+            event: run.status,
+            runId,
+            error: run.error || undefined,
+          });
+          setTimeout(() => activeRuns.delete(runId), 1800000);
+        });
+
+        // Update lastRunAt
+        intention.lastRunAt = new Date().toISOString();
+        changed = true;
+
+        await appendSchedulerLog(vaultDir, {
+          timestamp: new Date().toISOString(),
+          intentionId: intention.id,
+          title: intention.title,
+          event: 'started',
+          runId,
+        });
+
+      } catch (err) {
+        console.error(`[scheduler] Failed to spawn run for ${userId}:`, err.message);
+        await appendSchedulerLog(vaultDir, {
+          timestamp: new Date().toISOString(),
+          intentionId: intention.id,
+          title: intention.title,
+          event: 'failed',
+          error: err.message,
+        });
+      }
+    }
+
+    if (changed) {
+      await fs.writeFile(intentionsPath, JSON.stringify(intentions, null, 2)).catch(() => {});
+    }
+  }
+}
+
+// Run scheduler every 60 seconds
+setInterval(runScheduler, 60000);
+// Also run once after startup (with a delay to let the server initialize)
+setTimeout(runScheduler, 5000);
 
 // --- Start Server ---
 
