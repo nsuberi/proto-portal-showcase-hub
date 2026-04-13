@@ -190,6 +190,33 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 
+# Grant the task role permission to mount EFS with IAM auth
+resource "aws_iam_role_policy" "ecs_task_efs" {
+  name = "${var.name_prefix}-efs-access"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite"
+        ]
+        Resource = "arn:aws:elasticfilesystem:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:file-system/${var.efs_file_system_id}"
+        Condition = {
+          StringEquals = {
+            "elasticfilesystem:AccessPointArn" = "arn:aws:elasticfilesystem:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:access-point/${var.efs_access_point_id}"
+          }
+        }
+      }
+    ]
+  })
+}
+
+data "aws_caller_identity" "current" {}
+
 # --- Secrets Manager for Anthropic API Key ---
 
 resource "aws_secretsmanager_secret" "anthropic_api_key" {
@@ -229,7 +256,7 @@ resource "aws_ecs_task_definition" "main" {
 
       authorization_config {
         access_point_id = var.efs_access_point_id
-        iam             = "DISABLED"
+        iam             = "ENABLED"
       }
     }
   }
