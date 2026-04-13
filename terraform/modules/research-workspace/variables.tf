@@ -102,3 +102,9 @@ variable "max_vault_size_bytes" {
   type        = number
   default     = 5368709120
 }
+
+variable "enable_monitoring" {
+  description = "Create CloudWatch alarms and SNS topic (requires SNS/CloudWatch permissions on deploy role)"
+  type        = bool
+  default     = false
+}
