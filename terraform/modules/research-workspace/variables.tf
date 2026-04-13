@@ -89,3 +89,16 @@ variable "anthropic_api_key" {
   default     = ""
   sensitive   = true
 }
+
+# Security & monitoring
+variable "alert_email" {
+  description = "Email for CloudWatch alarm and budget notifications"
+  type        = string
+  default     = ""
+}
+
+variable "max_vault_size_bytes" {
+  description = "EFS storage alarm threshold in bytes (default 5 GB)"
+  type        = number
+  default     = 5368709120
+}

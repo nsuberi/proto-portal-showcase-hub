@@ -277,6 +277,17 @@ resource "aws_security_group" "efs_research_workspace" {
   }
 }
 
+# Allow NFS from the research workspace sandbox SG (replaces shared ECS SG for these tasks)
+resource "aws_security_group_rule" "efs_from_sandbox" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = module.research_workspace.sandbox_security_group_id
+  security_group_id        = aws_security_group.efs_research_workspace.id
+  description              = "NFS from research workspace sandbox tasks"
+}
+
 # Initial EFS access point for Nathan (per-user isolation)
 resource "aws_efs_access_point" "nathan" {
   file_system_id = aws_efs_file_system.research_workspace.id
@@ -435,6 +446,54 @@ resource "aws_secretsmanager_secret_version" "research_workspace_deploy_creds" {
     secret_access_key = aws_iam_access_key.research_workspace_deploy.secret
     role_arn          = aws_iam_role.research_workspace_append_only.arn
   })
+}
+
+# --- AWS Budget (cost backstop) ---
+
+resource "aws_budgets_budget" "research_workspace" {
+  name         = "research-workspace-monthly"
+  budget_type  = "COST"
+  limit_amount = "100"
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  cost_filter {
+    name   = "TagKeyValue"
+    values = ["user:Name$research-workspace-vaults", "user:Name$research-workspace-prod-service"]
+  }
+
+  dynamic "notification" {
+    for_each = var.sandbox_alert_email != "" ? [1] : []
+    content {
+      comparison_operator        = "GREATER_THAN"
+      threshold                  = 80
+      threshold_type             = "PERCENTAGE"
+      notification_type          = "ACTUAL"
+      subscriber_email_addresses = [var.sandbox_alert_email]
+    }
+  }
+
+  dynamic "notification" {
+    for_each = var.sandbox_alert_email != "" ? [1] : []
+    content {
+      comparison_operator        = "GREATER_THAN"
+      threshold                  = 100
+      threshold_type             = "PERCENTAGE"
+      notification_type          = "ACTUAL"
+      subscriber_email_addresses = [var.sandbox_alert_email]
+    }
+  }
+
+  dynamic "notification" {
+    for_each = var.sandbox_alert_email != "" ? [1] : []
+    content {
+      comparison_operator        = "GREATER_THAN"
+      threshold                  = 50
+      threshold_type             = "PERCENTAGE"
+      notification_type          = "FORECASTED"
+      subscriber_email_addresses = [var.sandbox_alert_email]
+    }
+  }
 }
 
 # --- S3 Versioning ---

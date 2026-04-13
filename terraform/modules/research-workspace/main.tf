@@ -5,6 +5,7 @@ locals {
   application_root  = "/prototypes/research-workspace/vault"
   # Express backend serves /healthz
   health_check_path = "/healthz"
+  cluster_name      = split("/", var.ecs_cluster_arn)[1]
 }
 
 # --- ECR Repository ---
@@ -217,6 +218,71 @@ resource "aws_iam_role_policy" "ecs_task_efs" {
 
 data "aws_caller_identity" "current" {}
 
+# Explicit deny for cost-generating AWS actions.
+# Defense in depth: even if the task role gains new permissions via future changes,
+# high-cost actions are permanently blocked to prevent accidental or malicious spend.
+resource "aws_iam_role_policy" "ecs_task_deny_cost_generating" {
+  name = "${var.name_prefix}-deny-cost-generating"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DenyCostGeneratingActions"
+        Effect = "Deny"
+        Action = [
+          "ec2:RunInstances",
+          "ec2:RequestSpotInstances",
+          "ec2:RequestSpotFleet",
+          "ec2:StartInstances",
+          "lambda:CreateFunction",
+          "lambda:InvokeFunction",
+          "lambda:InvokeAsync",
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "sagemaker:Create*",
+          "sagemaker:Start*",
+          "ecs:RunTask",
+          "ecs:CreateService",
+          "ecs:UpdateService",
+          "rds:CreateDB*",
+          "rds:StartDB*",
+          "s3:CreateBucket",
+          "glue:*",
+          "emr:*",
+          "batch:*",
+          "comprehend:*",
+          "rekognition:*",
+          "textract:*",
+          "translate:*",
+          "polly:*",
+          "transcribe:*",
+          "kinesis:*",
+          "firehose:*",
+          "redshift:*",
+          "elasticmapreduce:*",
+          "es:*",
+          "opensearch:*",
+          "lightsail:*",
+          "gamelift:*",
+          "mediaconvert:*",
+          "mediapackage:*",
+          "medialive:*",
+          "eks:Create*",
+          "elasticache:Create*",
+          "dax:Create*",
+          "neptune:Create*",
+          "kafka:Create*",
+          "kinesisanalytics:Create*",
+          "athena:StartQueryExecution"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # --- Secrets Manager for Anthropic API Key ---
 
 resource "aws_secretsmanager_secret" "anthropic_api_key" {
@@ -228,6 +294,66 @@ resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
   count         = var.anthropic_api_key != "" ? 1 : 0
   secret_id     = aws_secretsmanager_secret.anthropic_api_key.id
   secret_string = var.anthropic_api_key
+}
+
+# --- Sandbox Security Group (restrictive egress) ---
+# Replaces the shared ECS SG for research-workspace tasks.
+# Only allows HTTPS, DNS, and NFS egress — blocks arbitrary outbound ports
+# to prevent reverse shells, C2 channels, and non-standard protocol abuse.
+
+resource "aws_security_group" "sandbox" {
+  name        = "${var.name_prefix}-sandbox-sg"
+  description = "Restrictive egress for research workspace sandbox"
+  vpc_id      = var.vpc_id
+
+  # Ingress: ALB to container on service port
+  ingress {
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = "tcp"
+    security_groups = [var.alb_security_group_id]
+    description     = "Allow traffic from ALB to research workspace"
+  }
+
+  # Egress: HTTPS only — covers npm, PyPI, GitHub, Anthropic API, AWS endpoints
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS for package registries and APIs"
+  }
+
+  # Egress: DNS (TCP)
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS resolution (TCP)"
+  }
+
+  # Egress: DNS (UDP)
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS resolution (UDP)"
+  }
+
+  # Egress: NFS for EFS vault storage
+  egress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "NFS for EFS vault storage"
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-sandbox-sg"
+  }
 }
 
 # --- ECS Task Definition (with EFS volume) ---
@@ -291,6 +417,19 @@ resource "aws_ecs_task_definition" "main" {
         {
           name  = "PORT"
           value = tostring(var.container_port)
+        },
+        {
+          name  = "MAX_VAULT_SIZE_MB"
+          value = "1024"
+        }
+      ]
+
+      # Restrict file descriptors to prevent resource exhaustion attacks
+      ulimits = [
+        {
+          name      = "nofile"
+          softLimit = 65536
+          hardLimit = 65536
         }
       ]
 
@@ -376,7 +515,7 @@ resource "aws_ecs_service" "main" {
 
   network_configuration {
     subnets          = var.public_subnet_ids
-    security_groups  = [var.ecs_security_group_id]
+    security_groups  = [aws_security_group.sandbox.id]
     assign_public_ip = true
   }
 
@@ -399,5 +538,113 @@ resource "aws_ecs_service" "main" {
 
   tags = {
     Name = "${var.name_prefix}-service"
+  }
+}
+
+# --- CloudWatch Monitoring & Alarms ---
+
+resource "aws_sns_topic" "sandbox_alerts" {
+  name = "${var.name_prefix}-sandbox-alerts"
+
+  tags = {
+    Name = "${var.name_prefix}-sandbox-alerts"
+  }
+}
+
+resource "aws_sns_topic_subscription" "sandbox_alerts_email" {
+  count     = var.alert_email != "" ? 1 : 0
+  topic_arn = aws_sns_topic.sandbox_alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
+# EFS total storage alarm — detect runaway storage growth
+resource "aws_cloudwatch_metric_alarm" "efs_storage_size" {
+  alarm_name          = "${var.name_prefix}-efs-storage-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "StorageBytes"
+  namespace           = "AWS/EFS"
+  period              = 86400
+  statistic           = "Maximum"
+  threshold           = var.max_vault_size_bytes
+  alarm_description   = "EFS storage for research workspace exceeds threshold"
+  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+
+  dimensions = {
+    FileSystemId = var.efs_file_system_id
+    StorageClass = "Total"
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-efs-storage-alarm"
+  }
+}
+
+# EFS write throughput spike — detect storage abuse (>100MB in 5 min)
+resource "aws_cloudwatch_metric_alarm" "efs_write_throughput" {
+  alarm_name          = "${var.name_prefix}-efs-write-spike"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "DataWriteIOBytes"
+  namespace           = "AWS/EFS"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 104857600
+  alarm_description   = "EFS write throughput spike (>100MB/5min) — possible storage abuse"
+  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+
+  dimensions = {
+    FileSystemId = var.efs_file_system_id
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-efs-write-alarm"
+  }
+}
+
+# ECS CPU utilization — detect compute abuse (crypto mining, runaway processes)
+resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
+  alarm_name          = "${var.name_prefix}-cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 90
+  alarm_description   = "Research workspace CPU >90% for 15 minutes"
+  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+
+  dimensions = {
+    ClusterName = local.cluster_name
+    ServiceName = aws_ecs_service.main.name
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-cpu-alarm"
+  }
+}
+
+# ECS memory utilization — detect memory exhaustion
+resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
+  alarm_name          = "${var.name_prefix}-memory-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 90
+  alarm_description   = "Research workspace memory >90% for 15 minutes"
+  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+
+  dimensions = {
+    ClusterName = local.cluster_name
+    ServiceName = aws_ecs_service.main.name
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-memory-alarm"
   }
 }
