@@ -14,6 +14,7 @@ An AI-powered research workspace where users set research intentions (papers, sy
 
 ```
 CloudFront
+├── /prototypes/research-workspace/vault/api/vault/published*  →  ALB → ECS (no auth, public)
 ├── /prototypes/research-workspace/vault*  →  ALB → Cognito → ECS (Express.js)
 │   ├── REST: file CRUD, intentions, runs, activity log, auth
 │   ├── WS: interactive terminal (PTY), run streams, chat

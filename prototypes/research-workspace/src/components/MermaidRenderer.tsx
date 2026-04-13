@@ -19,18 +19,26 @@ export default function MermaidRenderer({ chart }: Props) {
         // Dynamic import to avoid SSR issues
         const { default: mermaid } = await import("mermaid");
 
+        // Resolve CSS custom properties to hex — Mermaid requires actual color values
+        const cssVar = (name: string, fallback: string) => {
+          const val = getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim();
+          return val || fallback;
+        };
+
         mermaid.initialize({
           startOnLoad: false,
           theme: "dark",
           themeVariables: {
             darkMode: true,
             background: "transparent",
-            primaryColor: "var(--color-primary-container)",
-            primaryTextColor: "var(--color-on-surface)",
-            primaryBorderColor: "var(--color-outline-variant)",
-            lineColor: "var(--color-outline)",
-            secondaryColor: "var(--color-secondary-container)",
-            tertiaryColor: "var(--color-tertiary-container)",
+            primaryColor: cssVar("--color-primary-container", "#2b2d42"),
+            primaryTextColor: cssVar("--color-on-surface", "#e3e2e8"),
+            primaryBorderColor: cssVar("--color-outline-variant", "#46464f"),
+            lineColor: cssVar("--color-outline", "#918f9a"),
+            secondaryColor: cssVar("--color-secondary-container", "#2d3142"),
+            tertiaryColor: cssVar("--color-tertiary-container", "#3b2d42"),
             fontFamily: "Inter, sans-serif",
           },
           securityLevel: "loose",
