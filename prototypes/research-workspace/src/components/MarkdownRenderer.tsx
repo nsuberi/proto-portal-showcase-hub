@@ -1,50 +1,33 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
+import type { Element, Text } from "hast";
 import MermaidRenderer from "./MermaidRenderer";
 
 interface Props {
   content: string;
 }
 
+function getMermaidText(node: Element | undefined): string | null {
+  if (!node?.children) return null;
+  const codeChild = node.children.find(
+    (c): c is Element => c.type === "element" && c.tagName === "code",
+  );
+  if (!codeChild) return null;
+  const classNames = codeChild.properties?.className;
+  if (!Array.isArray(classNames) || !classNames.includes("language-mermaid"))
+    return null;
+  return codeChild.children
+    .filter((c): c is Text => c.type === "text")
+    .map((c) => c.value)
+    .join("");
+}
+
 const components: Components = {
-  code({ className, children, ...props }) {
-    const match = /language-(\w+)/.exec(className || "");
-    const lang = match?.[1];
-    const codeText = String(children).replace(/\n$/, "");
-
-    if (lang === "mermaid") {
-      return <MermaidRenderer chart={codeText} />;
-    }
-
-    // For inline code (no language class), render as inline
-    if (!className) {
-      return (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
-    }
-
-    // Block code — rendered inside <pre> by react-markdown
-    return (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    );
-  },
-  // Prevent wrapping mermaid output in <pre>
-  pre({ children }) {
-    // If the child is a MermaidRenderer (rendered from a mermaid code block),
-    // return it unwrapped. Check if the child is a non-string React element.
-    const child = Array.isArray(children) ? children[0] : children;
-    if (
-      child &&
-      typeof child === "object" &&
-      "type" in child &&
-      child.type === MermaidRenderer
-    ) {
-      return <>{children}</>;
+  pre({ children, node }) {
+    const mermaidText = getMermaidText(node);
+    if (mermaidText) {
+      return <MermaidRenderer chart={mermaidText} />;
     }
     return <pre>{children}</pre>;
   },

@@ -195,7 +195,7 @@ export default function WorkspaceLayout() {
           </div>
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "config" ? "" : "hidden"}`}>
             <div className="glass-widget h-full">
-              <SessionConfigPanel />
+              <SessionConfigPanel onSelectFile={handleMobileSelectFile} />
             </div>
           </div>
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "activity" ? "" : "hidden"}`}>
@@ -268,7 +268,7 @@ export default function WorkspaceLayout() {
         <Panel defaultSize={22} minSize={15} maxSize={40}>
           <PanelGroup
             direction="vertical"
-            autoSaveId="workspace-left-v"
+            autoSaveId="workspace-left-v3"
           >
             <Panel defaultSize={40} minSize={15}>
               <div className="glass-widget h-full">
@@ -283,7 +283,7 @@ export default function WorkspaceLayout() {
 
             <Panel defaultSize={25} minSize={10}>
               <div className="glass-widget h-full">
-                <SessionConfigPanel />
+                <SessionConfigPanel onSelectFile={handleSelectFile} />
               </div>
             </Panel>
 
