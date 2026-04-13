@@ -11,6 +11,7 @@ import TerminalPanel from "../terminal/TerminalPanel";
 import IntentionsPanel from "../intentions/IntentionsPanel";
 import ToolActivityPanel from "../activity/ToolActivityPanel";
 import SessionConfigPanel from "../config/SessionConfigPanel";
+import ToastContainer from "../ui/ToastContainer";
 import {
   FileText,
   FolderOpen,
@@ -143,7 +144,7 @@ export default function WorkspaceLayout() {
       { id: "claude", icon: Terminal, label: "Claude" },
       { id: "intentions", icon: Lightbulb, label: "Plan" },
       { id: "config", icon: Settings2, label: "Config" },
-      { id: "activity", icon: Shield, label: "Hooks" },
+      { id: "activity", icon: Shield, label: "Audit" },
     ];
 
     return (
@@ -227,6 +228,7 @@ export default function WorkspaceLayout() {
 
   return (
     <div className="workspace-layout workspace-backdrop p-5 flex flex-col">
+      <ToastContainer />
       {/* Fullscreen editor overlay */}
       {fullscreen && selectedFile && (
         <div className="fixed inset-0 z-50 workspace-backdrop p-5">
