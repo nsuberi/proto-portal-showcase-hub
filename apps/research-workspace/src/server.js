@@ -99,6 +99,9 @@ function getCleanEnv(userVaultRoot) {
   delete env.AWS_SESSION_TOKEN;
   env.HOME = userVaultRoot;
   env.TERM = 'xterm-256color';
+  // Skip the "do you trust this folder?" prompt — the vault is a controlled,
+  // per-user server environment; trust is implicit via Cognito auth.
+  env.CLAUDE_CODE_SANDBOXED = '1';
   return env;
 }
 
@@ -1041,19 +1044,38 @@ fi
     console.log('[init] Created hook script');
   }
 
-  // Claude Code settings with hook config
+  // Claude Code settings with hook config — always write the correct format
   const settingsPath = path.join(claudeDir, 'settings.json');
-  if (!existsSync(settingsPath)) {
-    await fs.writeFile(settingsPath, JSON.stringify({
-      hooks: {
-        PreToolUse: [
-          {
-            matcher: "",
-            command: hookScript
-          }
-        ]
+  const settingsContent = {
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: "",
+          hooks: [
+            {
+              type: "command",
+              command: hookScript
+            }
+          ]
+        }
+      ]
+    }
+  };
+  // Write if missing or if the existing file has a malformed hooks structure
+  let needsWrite = !existsSync(settingsPath);
+  if (!needsWrite) {
+    try {
+      const existing = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
+      const entries = existing?.hooks?.PreToolUse;
+      if (Array.isArray(entries) && entries.some(e => e.command && !e.hooks)) {
+        needsWrite = true;
       }
-    }, null, 2));
+    } catch {
+      needsWrite = true;
+    }
+  }
+  if (needsWrite) {
+    await fs.writeFile(settingsPath, JSON.stringify(settingsContent, null, 2));
     console.log('[init] Created Claude Code settings with hooks');
   }
 
@@ -1145,12 +1167,21 @@ app.get(`${API_PREFIX}/config`, async (req, res) => {
       }
     }
 
-    // Read hooks from settings.json
+    // Read hooks from settings.json — convert absolute command paths to vault-relative
     const settingsPath = path.join(claudeDir, 'settings.json');
     if (existsSync(settingsPath)) {
       const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
       if (settings.hooks) {
-        result.hooks = settings.hooks;
+        const normalized = {};
+        for (const [event, hookList] of Object.entries(settings.hooks)) {
+          normalized[event] = hookList.map(h => ({
+            ...h,
+            filePath: h.command.startsWith(userVault)
+              ? h.command.slice(userVault.length + 1)
+              : null,
+          }));
+        }
+        result.hooks = normalized;
       }
     }
 
@@ -1176,15 +1207,21 @@ app.get(`${API_PREFIX}/onboarding-status`, async (req, res) => {
   const configPath = path.join(userVault, '.claude.json');
   try {
     if (!existsSync(configPath)) {
-      return res.json({ ready: false, reason: 'Claude Code has not been launched yet.' });
+      return res.json({ ready: false, reason: 'not_launched' });
     }
     const config = JSON.parse(await fs.readFile(configPath, 'utf-8'));
-    if (config.hasCompletedOnboarding) {
-      return res.json({ ready: true });
+    if (!config.hasCompletedOnboarding) {
+      return res.json({ ready: false, reason: 'not_onboarded' });
     }
-    return res.json({ ready: false, reason: 'Claude Code onboarding has not been completed.' });
+    // Also check for OAuth credentials (user must have authenticated)
+    const credPath = path.join(userVault, '.claude', 'credentials.json');
+    const altCredPath = path.join(userVault, '.claude', '.credentials.json');
+    if (!existsSync(credPath) && !existsSync(altCredPath)) {
+      return res.json({ ready: false, reason: 'not_authenticated' });
+    }
+    return res.json({ ready: true });
   } catch {
-    return res.json({ ready: false, reason: 'Could not read Claude Code config.' });
+    return res.json({ ready: false, reason: 'not_launched' });
   }
 });
 
@@ -1210,13 +1247,19 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
 
   console.log(`[run:${runId.slice(0,8)}] Starting interactive PTY for ${req.userId}: ${(title || prompt).slice(0, 60)}`);
 
-  const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
-    name: 'xterm-256color',
-    cols: 120,
-    rows: 30,
-    cwd: userVault,
-    env: getCleanEnv(userVault),
-  });
+  let shell;
+  try {
+    shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 30,
+      cwd: userVault,
+      env: getCleanEnv(userVault),
+    });
+  } catch (err) {
+    console.error(`[run:${runId.slice(0,8)}] Failed to spawn PTY:`, err.message);
+    return res.status(500).json({ error: `Failed to spawn Claude Code: ${err.message}` });
+  }
 
   const run = {
     id: runId,
