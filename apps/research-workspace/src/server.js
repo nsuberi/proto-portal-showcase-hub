@@ -125,6 +125,56 @@ function pathMiddleware(req, res, next) {
   next();
 }
 
+// --- Vault Size Enforcement ---
+// Prevents EFS storage abuse by checking per-user vault size before writes.
+// Complements infrastructure-level CloudWatch alarms on EFS StorageBytes.
+
+const MAX_VAULT_SIZE_BYTES = parseInt(process.env.MAX_VAULT_SIZE_MB || '1024', 10) * 1024 * 1024;
+const vaultSizeCache = new Map();
+const VAULT_SIZE_CACHE_TTL = 60_000;
+
+async function getVaultSize(vaultDir) {
+  let total = 0;
+  async function walk(dir) {
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+      } else {
+        try { total += (await fs.stat(fullPath)).size; } catch { /* skip */ }
+      }
+    }
+  }
+  await walk(vaultDir);
+  return total;
+}
+
+async function checkVaultSize(userId, userVault, additionalBytes = 0) {
+  const cached = vaultSizeCache.get(userId);
+  const now = Date.now();
+  let currentSize;
+  if (cached && (now - cached.timestamp) < VAULT_SIZE_CACHE_TTL) {
+    currentSize = cached.size;
+  } else {
+    currentSize = await getVaultSize(userVault);
+    vaultSizeCache.set(userId, { size: currentSize, timestamp: now });
+  }
+  if (currentSize + additionalBytes > MAX_VAULT_SIZE_BYTES) {
+    return {
+      allowed: false,
+      currentMB: Math.round(currentSize / 1024 / 1024),
+      limitMB: Math.round(MAX_VAULT_SIZE_BYTES / 1024 / 1024),
+    };
+  }
+  return { allowed: true };
+}
+
+function invalidateVaultSizeCache(userId) {
+  vaultSizeCache.delete(userId);
+}
+
 // --- CORS ---
 
 app.use((req, res, next) => {
@@ -234,10 +284,19 @@ app.get(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
 // Write/update file
 app.put(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
   try {
+    const content = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const sizeCheck = await checkVaultSize(req.userId, req.userVault, Buffer.byteLength(content));
+    if (!sizeCheck.allowed) {
+      return res.status(413).json({
+        error: 'Vault size limit exceeded',
+        currentMB: sizeCheck.currentMB,
+        limitMB: sizeCheck.limitMB,
+      });
+    }
     const dir = path.dirname(req.vaultPath);
     await fs.mkdir(dir, { recursive: true });
-    const content = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     await fs.writeFile(req.vaultPath, content, 'utf-8');
+    invalidateVaultSizeCache(req.userId);
     const stat = statSync(req.vaultPath);
     res.json({
       path: req.vaultRelPath,
@@ -255,10 +314,19 @@ app.post(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
     if (existsSync(req.vaultPath)) {
       return res.status(409).json({ error: 'File already exists', path: req.vaultRelPath });
     }
+    const content = typeof req.body === 'string' ? req.body : '';
+    const sizeCheck = await checkVaultSize(req.userId, req.userVault, Buffer.byteLength(content));
+    if (!sizeCheck.allowed) {
+      return res.status(413).json({
+        error: 'Vault size limit exceeded',
+        currentMB: sizeCheck.currentMB,
+        limitMB: sizeCheck.limitMB,
+      });
+    }
     const dir = path.dirname(req.vaultPath);
     await fs.mkdir(dir, { recursive: true });
-    const content = typeof req.body === 'string' ? req.body : '';
     await fs.writeFile(req.vaultPath, content, 'utf-8');
+    invalidateVaultSizeCache(req.userId);
     const stat = statSync(req.vaultPath);
     res.status(201).json({
       path: req.vaultRelPath,
@@ -282,6 +350,7 @@ app.delete(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
     } else {
       await fs.unlink(req.vaultPath);
     }
+    invalidateVaultSizeCache(req.userId);
     res.json({ deleted: req.vaultRelPath });
   } catch (err) {
     next(err);
@@ -368,6 +437,151 @@ app.get(`${API_PREFIX}/search`, async (req, res, next) => {
     }
 
     res.json({ results });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- Published Content (shared across users, persisted on EFS) ---
+// Stores a non-editable snapshot of a vault file in /workspace/published/.
+// The gallery page reads from these endpoints (no per-user scoping).
+
+const PUBLISHED_DIR = path.join(VAULT_ROOT, 'published');
+
+async function ensurePublishedDir() {
+  if (!existsSync(PUBLISHED_DIR)) {
+    await fs.mkdir(PUBLISHED_DIR, { recursive: true });
+    console.log('[vault] Created shared published directory');
+  }
+}
+
+// POST /api/vault/publish — publish a vault file to the shared gallery
+app.post(`${API_PREFIX}/publish`, async (req, res, next) => {
+  try {
+    await ensurePublishedDir();
+    const userVault = await ensureUserVault(req.userId);
+    const { filePath, title, summary, type, tags, domains, markdown } = req.body;
+
+    if (!filePath && !markdown) {
+      return res.status(400).json({ error: 'filePath or markdown required' });
+    }
+
+    // Read content from vault file if markdown not provided inline
+    let content = markdown;
+    if (!content && filePath) {
+      const absPath = sanitizePath(userVault, filePath);
+      if (!absPath || !existsSync(absPath)) {
+        return res.status(404).json({ error: 'File not found in vault' });
+      }
+      content = await fs.readFile(absPath, 'utf-8');
+    }
+
+    // Generate stable id from filePath or content hash
+    const stableSlug = (filePath || 'untitled')
+      .replace(/[^a-z0-9]/gi, '-').toLowerCase().replace(/-+/g, '-');
+    const id = `pub-${req.userId}-${stableSlug}`;
+    const now = new Date().toISOString();
+
+    // Auto-extract title/summary from markdown if not provided
+    const extractedTitle = title?.trim()
+      || content.match(/^#\s+(.+)$/m)?.[1]?.trim()
+      || (filePath || 'Untitled').split('/').pop().replace(/\.\w+$/, '').replace(/[-_]/g, ' ');
+    const extractedSummary = summary?.trim()
+      || content.split('\n').find(l => l.trim() && !l.startsWith('#') && !l.startsWith('---'))?.trim().slice(0, 200)
+      || 'Published from workspace';
+
+    const item = {
+      id,
+      title: extractedTitle,
+      summary: extractedSummary,
+      type: type || 'insight',
+      date: now.slice(0, 10),
+      publishedAt: now,
+      tags: tags || ['published'],
+      domains: domains || [],
+      status: 'published',
+      author: req.userEmail || req.userId,
+      contentPath: filePath || null,
+    };
+
+    // Write non-editable snapshot to EFS: metadata + content in one JSON file
+    const entry = { item, markdown: content };
+    await fs.writeFile(
+      path.join(PUBLISHED_DIR, `${id}.json`),
+      JSON.stringify(entry, null, 2),
+      'utf-8'
+    );
+
+    // Best-effort forward to Lambda API for public gallery access
+    // (vault server is behind Cognito, so unauthenticated gallery visitors
+    // need the Lambda API to read published content)
+    const lambdaApiBase = process.env.LAMBDA_API_URL || 'https://portfolio.cookinupideas.com/api/v1';
+    const apiKey = process.env.CLIENT_API_KEY || '';
+    if (apiKey) {
+      fetch(`${lambdaApiBase}/research-workspace/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({
+          type: item.type,
+          title: item.title,
+          summary: item.summary,
+          contentPath: item.contentPath,
+          tags: item.tags,
+          domains: item.domains,
+          markdown: content,
+        }),
+      }).then(r => {
+        if (r.ok) console.log(`[publish] Forwarded to Lambda API: ${id}`);
+        else console.warn(`[publish] Lambda API forward failed: HTTP ${r.status}`);
+      }).catch(err => {
+        console.warn(`[publish] Lambda API forward error: ${err.message}`);
+      });
+    }
+
+    console.log(`[publish] ${req.userId} published "${extractedTitle}" as ${id}`);
+    res.status(201).json(item);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/vault/published — list all published items (metadata only)
+app.get(`${API_PREFIX}/published`, async (_req, res, next) => {
+  try {
+    await ensurePublishedDir();
+    const files = await fs.readdir(PUBLISHED_DIR);
+    const items = [];
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      try {
+        const raw = await fs.readFile(path.join(PUBLISHED_DIR, file), 'utf-8');
+        const entry = JSON.parse(raw);
+        if (entry.item) items.push(entry.item);
+      } catch {
+        // Skip corrupted files
+      }
+    }
+    // Sort by date descending
+    items.sort((a, b) => (b.publishedAt || b.date || '').localeCompare(a.publishedAt || a.date || ''));
+    res.json({ items, count: items.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/vault/published/:id — get a single published item with markdown
+app.get(`${API_PREFIX}/published/:id`, async (req, res, next) => {
+  try {
+    const filePath = path.join(PUBLISHED_DIR, `${req.params.id}.json`);
+    if (!existsSync(filePath)) {
+      return res.status(404).json({ error: 'Published item not found' });
+    }
+    const raw = await fs.readFile(filePath, 'utf-8');
+    const entry = JSON.parse(raw);
+    res.json(entry);
   } catch (err) {
     next(err);
   }

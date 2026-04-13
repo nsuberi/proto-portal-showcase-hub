@@ -7,3 +7,8 @@ output "ecs_service_name" {
   description = "ECS service name"
   value       = aws_ecs_service.main.name
 }
+
+output "sandbox_security_group_id" {
+  description = "Security group ID for research workspace sandbox tasks"
+  value       = aws_security_group.sandbox.id
+}

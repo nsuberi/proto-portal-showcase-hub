@@ -300,6 +300,9 @@ module "research_workspace" {
 
   # Claude Code integration
   anthropic_api_key = var.research_workspace_anthropic_api_key
+
+  # Security monitoring
+  alert_email = var.sandbox_alert_email
 }
 
 # CloudFront distribution

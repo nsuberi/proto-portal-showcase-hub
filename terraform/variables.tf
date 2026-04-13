@@ -111,3 +111,10 @@ variable "code_dojo_flask_secret_key" {
   sensitive   = true
   default     = ""
 }
+
+# Sandbox security monitoring
+variable "sandbox_alert_email" {
+  description = "Email for sandbox security alerts and budget notifications"
+  type        = string
+  default     = ""
+}
