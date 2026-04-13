@@ -14,8 +14,10 @@ const PORT = parseInt(process.env.PORT || '8080', 10);
 const API_PREFIX = '/api/vault';
 
 // The ALB forwards the full CloudFront path to the container.
-// Strip this prefix so Express routes match (e.g. /healthz, /api/vault/*).
 const VAULT_BASE_PATH = '/prototypes/research-workspace/vault';
+
+// Default user for dev mode (no ALB/Cognito)
+const DEV_USER = { userId: 'dev-local', userEmail: 'dev@localhost' };
 
 const app = express();
 
@@ -30,25 +32,96 @@ app.use((req, _res, next) => {
 app.use(express.json());
 app.use(express.text({ type: 'text/*' }));
 
-// --- Path Sanitization ---
+// --- User Identity Middleware ---
+// Parses Cognito JWT from ALB x-amzn-oidc-data header for per-user isolation.
 
-function sanitizePath(userPath) {
-  const resolved = path.resolve(VAULT_ROOT, userPath);
-  if (!resolved.startsWith(VAULT_ROOT)) {
+function parseUserIdentity(req) {
+  const jwt = req.headers['x-amzn-oidc-data'];
+  if (jwt) {
+    try {
+      const parts = jwt.split('.');
+      if (parts.length >= 2) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+        return {
+          userId: payload.sub || payload.username || 'unknown',
+          userEmail: payload.email || '',
+        };
+      }
+    } catch {
+      // Malformed JWT — fall through to default
+    }
+  }
+  return DEV_USER;
+}
+
+app.use((req, _res, next) => {
+  const identity = parseUserIdentity(req);
+  req.userId = identity.userId;
+  req.userEmail = identity.userEmail;
+  next();
+});
+
+// --- Per-User Vault Roots ---
+// Each user gets an isolated directory under VAULT_ROOT/vaults/{userId}/
+
+function getUserVaultRoot(userId) {
+  return path.join(VAULT_ROOT, 'vaults', userId);
+}
+
+const initializedVaults = new Set();
+
+async function ensureUserVault(userId) {
+  const vaultDir = getUserVaultRoot(userId);
+  if (!initializedVaults.has(userId)) {
+    if (!existsSync(vaultDir)) {
+      await fs.mkdir(vaultDir, { recursive: true });
+      await fs.writeFile(path.join(vaultDir, 'README.md'),
+        '# My Research Vault\n\nWelcome to your personal research workspace.\n');
+      console.log(`[vault] Created vault for user ${userId}`);
+    }
+    // Initialize Claude Code config + harden permissions (once per session)
+    await initClaudeCodeConfig(vaultDir).catch(err =>
+      console.warn(`[init] Config init failed for ${userId}:`, err.message));
+    await hardenUserVault(vaultDir).catch(() => {});
+    initializedVaults.add(userId);
+  }
+  return vaultDir;
+}
+
+// --- Clean Environment for Spawned Processes ---
+// Remove sensitive variables so Claude Code uses per-user OAuth, not shared API key.
+
+function getCleanEnv(userVaultRoot) {
+  const env = { ...process.env };
+  delete env.ANTHROPIC_API_KEY;
+  delete env.AWS_ACCESS_KEY_ID;
+  delete env.AWS_SECRET_ACCESS_KEY;
+  delete env.AWS_SESSION_TOKEN;
+  env.HOME = userVaultRoot;
+  env.TERM = 'xterm-256color';
+  return env;
+}
+
+// --- Path Sanitization (scoped to user vault) ---
+
+function sanitizePath(userVaultRoot, userPath) {
+  const resolved = path.resolve(userVaultRoot, userPath);
+  if (!resolved.startsWith(userVaultRoot)) {
     return null; // directory traversal attempt
   }
   return resolved;
 }
 
 function pathMiddleware(req, res, next) {
-  // Extract the file path from the URL after /api/vault/files/
   const filePath = req.params[0] || '';
-  const absPath = sanitizePath(filePath);
+  const userVault = getUserVaultRoot(req.userId);
+  const absPath = sanitizePath(userVault, filePath);
   if (!absPath) {
     return res.status(400).json({ error: 'Invalid path' });
   }
   req.vaultPath = absPath;
   req.vaultRelPath = filePath;
+  req.userVault = userVault;
   next();
 }
 
@@ -126,9 +199,8 @@ async function buildTree(dirPath, basePath = '') {
 
 app.get(`${API_PREFIX}/tree`, async (req, res, next) => {
   try {
-    // Ensure vault root exists
-    await fs.mkdir(VAULT_ROOT, { recursive: true });
-    const children = await buildTree(VAULT_ROOT);
+    const userVault = await ensureUserVault(req.userId);
+    const children = await buildTree(userVault);
     res.json({ name: 'vault', type: 'directory', path: '', children });
   } catch (err) {
     next(err);
@@ -239,45 +311,35 @@ app.patch(`${API_PREFIX}/files/*`, pathMiddleware, async (req, res, next) => {
 
 app.get(`${API_PREFIX}/links`, async (req, res, next) => {
   try {
-    await fs.mkdir(VAULT_ROOT, { recursive: true });
-    const mdFiles = await glob('**/*.md', { cwd: VAULT_ROOT });
+    const userVault = await ensureUserVault(req.userId);
+    const mdFiles = await glob('**/*.md', { cwd: userVault });
     const nodes = new Map();
     const edges = [];
 
     for (const filePath of mdFiles) {
-      const absPath = path.join(VAULT_ROOT, filePath);
+      const absPath = path.join(userVault, filePath);
       const content = await fs.readFile(absPath, 'utf-8');
-
-      // Extract first heading as title
       const titleMatch = content.match(/^#\s+(.+)$/m);
       const title = titleMatch ? titleMatch[1] : path.basename(filePath, '.md');
-
       nodes.set(filePath, { id: filePath, title, exists: true });
 
-      // Extract [[wiki-links]]
       const linkRegex = /\[\[([^\]]+)\]\]/g;
       let match;
       while ((match = linkRegex.exec(content)) !== null) {
         const target = match[1];
-        // Resolve to a .md path
         const targetPath = target.endsWith('.md') ? target : `${target}.md`;
-
         if (!nodes.has(targetPath)) {
           nodes.set(targetPath, {
             id: targetPath,
             title: target,
-            exists: existsSync(path.join(VAULT_ROOT, targetPath)),
+            exists: existsSync(path.join(userVault, targetPath)),
           });
         }
-
         edges.push({ source: filePath, target: targetPath });
       }
     }
 
-    res.json({
-      nodes: Array.from(nodes.values()),
-      edges,
-    });
+    res.json({ nodes: Array.from(nodes.values()), edges });
   } catch (err) {
     next(err);
   }
@@ -288,20 +350,16 @@ app.get(`${API_PREFIX}/links`, async (req, res, next) => {
 app.get(`${API_PREFIX}/search`, async (req, res, next) => {
   try {
     const query = (req.query.q || '').toLowerCase();
-    if (!query) {
-      return res.json({ results: [] });
-    }
-    const mdFiles = await glob('**/*.md', { cwd: VAULT_ROOT });
+    if (!query) return res.json({ results: [] });
+    const userVault = getUserVaultRoot(req.userId);
+    const mdFiles = await glob('**/*.md', { cwd: userVault });
     const results = [];
 
     for (const filePath of mdFiles) {
-      const absPath = path.join(VAULT_ROOT, filePath);
+      const absPath = path.join(userVault, filePath);
       const content = await fs.readFile(absPath, 'utf-8');
-      const lower = content.toLowerCase();
-      const idx = lower.indexOf(query);
-
+      const idx = content.toLowerCase().indexOf(query);
       if (idx !== -1) {
-        // Extract a snippet around the match
         const start = Math.max(0, idx - 40);
         const end = Math.min(content.length, idx + query.length + 40);
         const snippet = content.slice(start, end).replace(/\n/g, ' ');
@@ -373,27 +431,24 @@ try {
   console.warn('[terminal] node-pty not available:', err.message);
 }
 
-wss.on('connection', (ws) => {
+wss.on('connection', async (ws, request) => {
   if (!pty) {
     ws.send('\r\n[Error: node-pty not available in this environment]\r\n');
     ws.close();
     return;
   }
 
-  console.log('[terminal] New terminal session');
+  // Parse user identity from the upgrade request headers
+  const identity = parseUserIdentity(request);
+  const userVault = await ensureUserVault(identity.userId);
+  console.log(`[terminal] New session for user ${identity.userId}`);
 
-  // Spawn Claude Code directly — gives the full TUI experience
-  // (auth, streaming, tool use, permissions, etc.) in the terminal.
   const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
     name: 'xterm-256color',
     cols: 80,
     rows: 24,
-    cwd: VAULT_ROOT,
-    env: {
-      ...process.env,
-      TERM: 'xterm-256color',
-      HOME: VAULT_ROOT,
-    },
+    cwd: userVault,
+    env: getCleanEnv(userVault),
   });
 
   shell.onData((data) => {
@@ -432,8 +487,10 @@ wss.on('connection', (ws) => {
 
 // --- Chat WebSocket Handler (Claude Code integration) ---
 
-chatWss.on('connection', (ws) => {
-  console.log('[chat] New chat session');
+chatWss.on('connection', async (ws, request) => {
+  const chatIdentity = parseUserIdentity(request);
+  const chatUserVault = await ensureUserVault(chatIdentity.userId);
+  console.log(`[chat] New session for user ${chatIdentity.userId}`);
   let sessionId = null;
   let activeProcess = null;
 
@@ -474,8 +531,8 @@ chatWss.on('connection', (ws) => {
 
       console.log('[chat] Starting auth flow');
       const authProc = spawn('claude', ['auth', 'login', '--claudeai'], {
-        cwd: VAULT_ROOT,
-        env: { ...process.env, HOME: VAULT_ROOT },
+        cwd: chatUserVault,
+        env: getCleanEnv(chatUserVault),
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       activeProcess = authProc;
@@ -562,8 +619,8 @@ chatWss.on('connection', (ws) => {
     console.log('[chat] Spawning claude with prompt:', msg.content.slice(0, 80));
 
     const proc = spawn('claude', args, {
-      cwd: VAULT_ROOT,
-      env: { ...process.env, HOME: VAULT_ROOT },
+      cwd: chatUserVault,
+      env: getCleanEnv(chatUserVault),
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     activeProcess = proc;
@@ -692,8 +749,9 @@ chatWss.on('connection', (ws) => {
 
 // --- Initialize Claude Code skill + hooks on first boot ---
 
-async function initClaudeCodeConfig() {
-  const claudeDir = path.join(VAULT_ROOT, '.claude');
+// Initialize Claude Code config for a user's vault (called on first request)
+async function initClaudeCodeConfig(vaultRoot = VAULT_ROOT) {
+  const claudeDir = path.join(vaultRoot, '.claude');
   const skillDir = path.join(claudeDir, 'skills', 'research');
   const hooksDir = path.join(claudeDir, 'hooks');
 
@@ -734,20 +792,36 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
   if (!existsSync(hookScript)) {
     await fs.mkdir(hooksDir, { recursive: true });
     await fs.writeFile(hookScript, `#!/bin/bash
-# Claude Code PreToolUse hook — logs tool activity for the workspace UI.
-# This demonstrates enterprise controls: every tool invocation is audited,
-# and this hook could block specific tools by outputting {"decision":"block"}.
+# Claude Code PreToolUse hook — logs tool activity and enforces tool policy.
+# Enterprise controls: every tool invocation is audited. Blocked tools
+# are denied with a reason.
 
 INPUT=$(cat)
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
 TOOL_INPUT=$(echo "$INPUT" | jq -c '.tool_input // {}')
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+DECISION="allow"
+REASON=""
 
-# Append to activity log
-echo "{\\"timestamp\\":\\"$TIMESTAMP\\",\\"tool\\":\\"$TOOL\\",\\"input\\":$TOOL_INPUT,\\"decision\\":\\"allow\\"}" >> ${VAULT_ROOT}/.tool-activity.jsonl
+# Check tool policy (if policy file exists)
+POLICY_FILE="$HOME/.claude/tool-policy.json"
+if [ -f "$POLICY_FILE" ]; then
+  BLOCKED=$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null)
+  if [ "$BLOCKED" != "0" ] && [ "$BLOCKED" != "" ]; then
+    DECISION="block"
+    REASON="Tool $TOOL is blocked by workspace policy"
+  fi
+fi
 
-# Allow all tools (an enterprise policy could block here)
-echo '{"decision":"allow"}'
+# Append to per-user activity log
+echo "{\\"timestamp\\":\\"$TIMESTAMP\\",\\"tool\\":\\"$TOOL\\",\\"input\\":$TOOL_INPUT,\\"decision\\":\\"$DECISION\\"}" >> "$HOME/.tool-activity.jsonl"
+
+# Output decision
+if [ "$DECISION" = "block" ]; then
+  echo "{\\"decision\\":\\"block\\",\\"reason\\":\\"$REASON\\"}"
+else
+  echo '{"decision":"allow"}'
+fi
 `);
     await fs.chmod(hookScript, 0o755);
     console.log('[init] Created hook script');
@@ -768,16 +842,43 @@ echo '{"decision":"allow"}'
     }, null, 2));
     console.log('[init] Created Claude Code settings with hooks');
   }
+
+  // Default tool policy (enterprise controls demo)
+  const policyPath = path.join(claudeDir, 'tool-policy.json');
+  if (!existsSync(policyPath)) {
+    await fs.writeFile(policyPath, JSON.stringify({
+      blocked_tools: [],
+      notes: "Add tool names to blocked_tools to deny them. E.g. [\"Bash\"] blocks shell access."
+    }, null, 2));
+    console.log('[init] Created default tool policy');
+  }
+}
+
+// Harden .claude/ permissions for a specific vault directory
+async function hardenUserVault(vaultRoot) {
+  const claudeDir = path.join(vaultRoot, '.claude');
+  try {
+    if (existsSync(claudeDir)) {
+      await fs.chmod(claudeDir, 0o700);
+      const entries = await fs.readdir(claudeDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && (
+          entry.name.includes('credential') || entry.name.includes('token')
+          || entry.name.includes('auth') || entry.name === 'settings.json'
+        )) {
+          await fs.chmod(path.join(claudeDir, entry.name), 0o600);
+        }
+      }
+    }
+  } catch { /* best effort */ }
 }
 
 // --- Activity log endpoint ---
 
 app.get(`${API_PREFIX}/activity`, async (req, res) => {
-  const logPath = path.join(VAULT_ROOT, '.tool-activity.jsonl');
+  const logPath = path.join(getUserVaultRoot(req.userId), '.tool-activity.jsonl');
   try {
-    if (!existsSync(logPath)) {
-      return res.json({ events: [] });
-    }
+    if (!existsSync(logPath)) return res.json({ events: [] });
     const content = await fs.readFile(logPath, 'utf-8');
     const events = content.trim().split('\n').filter(Boolean).map(line => {
       try { return JSON.parse(line); } catch { return null; }
@@ -789,7 +890,7 @@ app.get(`${API_PREFIX}/activity`, async (req, res) => {
 });
 
 app.delete(`${API_PREFIX}/activity`, async (req, res) => {
-  const logPath = path.join(VAULT_ROOT, '.tool-activity.jsonl');
+  const logPath = path.join(getUserVaultRoot(req.userId), '.tool-activity.jsonl');
   try {
     await fs.writeFile(logPath, '');
     res.json({ cleared: true });
@@ -834,12 +935,13 @@ function formatEventForTerminal(event) {
   return '';
 }
 
-app.post(`${API_PREFIX}/runs`, (req, res) => {
+app.post(`${API_PREFIX}/runs`, async (req, res) => {
   const { prompt, title, intentionId } = req.body || {};
   if (!prompt) {
     return res.status(400).json({ error: 'prompt is required' });
   }
 
+  const userVault = await ensureUserVault(req.userId);
   const runId = randomUUID();
   const args = [
     '-p', prompt,
@@ -849,11 +951,11 @@ app.post(`${API_PREFIX}/runs`, (req, res) => {
     '--max-budget-usd', '2',
   ];
 
-  console.log(`[run:${runId.slice(0,8)}] Starting: ${(title || prompt).slice(0, 60)}`);
+  console.log(`[run:${runId.slice(0,8)}] Starting for ${req.userId}: ${(title || prompt).slice(0, 60)}`);
 
   const proc = spawn('claude', args, {
-    cwd: VAULT_ROOT,
-    env: { ...process.env, HOME: VAULT_ROOT },
+    cwd: userVault,
+    env: getCleanEnv(userVault),
     stdio: ['pipe', 'pipe', 'pipe'],
   });
   proc.stdin.end();
@@ -867,6 +969,8 @@ app.post(`${API_PREFIX}/runs`, (req, res) => {
     finishedAt: null,
     toolCount: 0,
     error: null,
+    userVault,
+    userId: req.userId,
     proc,
     clients: new Set(),
     outputBuffer: '',
@@ -914,7 +1018,7 @@ app.post(`${API_PREFIX}/runs`, (req, res) => {
             runId,
             runTitle: run.title,
           });
-          fs.appendFile(path.join(VAULT_ROOT, '.tool-activity.jsonl'), logLine + '\n').catch(() => {});
+          fs.appendFile(path.join(run.userVault, '.tool-activity.jsonl'), logLine + '\n').catch(() => {});
         }
       }
     }
@@ -1010,76 +1114,41 @@ runWss.on('connection', (ws, runId) => {
 
 // --- Token Security ---
 
-// Revoke stored auth tokens
+// Revoke stored auth tokens (per-user)
 app.delete(`${API_PREFIX}/auth`, async (req, res) => {
+  const userVault = getUserVaultRoot(req.userId);
   const credPaths = [
-    path.join(VAULT_ROOT, '.claude', 'credentials.json'),
-    path.join(VAULT_ROOT, '.claude', '.credentials.json'),
-    path.join(VAULT_ROOT, '.claude.json'),
+    path.join(userVault, '.claude', 'credentials.json'),
+    path.join(userVault, '.claude', '.credentials.json'),
+    path.join(userVault, '.claude.json'),
   ];
   let revoked = 0;
   for (const p of credPaths) {
     try {
-      if (existsSync(p)) {
-        await fs.unlink(p);
-        revoked++;
-      }
+      if (existsSync(p)) { await fs.unlink(p); revoked++; }
     } catch { /* best effort */ }
   }
-  // Also try to clear any oauth tokens in subdirectories
   try {
-    const configDir = path.join(VAULT_ROOT, '.claude');
-    const entries = await fs.readdir(configDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isFile() && (entry.name.includes('token') || entry.name.includes('auth') || entry.name.includes('credential'))) {
-        await fs.unlink(path.join(configDir, entry.name));
-        revoked++;
-      }
-    }
-  } catch { /* directory may not exist */ }
-  console.log(`[auth] Revoked ${revoked} credential files`);
-  res.json({ revoked, message: `Deleted ${revoked} credential file(s). Re-authenticate in the terminal.` });
-});
-
-// --- Security Hardening on Startup ---
-
-async function hardenTokenStorage() {
-  const claudeDir = path.join(VAULT_ROOT, '.claude');
-  try {
-    if (existsSync(claudeDir)) {
-      // Restrict .claude/ to owner-only (rwx------)
-      await fs.chmod(claudeDir, 0o700);
-      // Lock down any credential/token files to owner-read-only
-      const entries = await fs.readdir(claudeDir, { withFileTypes: true });
+    const configDir = path.join(userVault, '.claude');
+    if (existsSync(configDir)) {
+      const entries = await fs.readdir(configDir, { withFileTypes: true });
       for (const entry of entries) {
-        if (entry.isFile() && (
-          entry.name.includes('credential') || entry.name.includes('token')
-          || entry.name.includes('auth') || entry.name === 'settings.json'
-        )) {
-          await fs.chmod(path.join(claudeDir, entry.name), 0o600);
+        if (entry.isFile() && (entry.name.includes('token') || entry.name.includes('auth') || entry.name.includes('credential'))) {
+          await fs.unlink(path.join(configDir, entry.name));
+          revoked++;
         }
       }
     }
-  } catch (err) {
-    console.warn('[security] Could not harden .claude/ permissions:', err.message);
-  }
-}
+  } catch { /* directory may not exist */ }
+  console.log(`[auth] Revoked ${revoked} credential files for user ${req.userId}`);
+  res.json({ revoked, message: `Deleted ${revoked} credential file(s). Re-authenticate in the terminal.` });
+});
 
 // --- Start Server ---
-
-async function startup() {
-  await initClaudeCodeConfig().catch(err => {
-    console.warn('[init] Failed to initialize Claude Code config:', err.message);
-  });
-  await hardenTokenStorage().catch(err => {
-    console.warn('[security] Token hardening failed:', err.message);
-  });
-}
-
-startup();
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[server] Research Workspace backend listening on port ${PORT}`);
   console.log(`[server] Vault root: ${VAULT_ROOT}`);
+  console.log(`[server] Per-user vaults: ${VAULT_ROOT}/vaults/{userId}/`);
   console.log(`[server] API prefix: ${API_PREFIX}`);
 });

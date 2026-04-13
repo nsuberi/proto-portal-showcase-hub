@@ -116,6 +116,85 @@ Hold-spacebar-to-dictate in the terminal:
 - Tool activity volume per run (hooks observability)
 - Auth token longevity (~90 days for Max plan OAuth)
 
+## Security Architecture (Implemented)
+
+### IAM Role — ECS Task
+
+The task role (`research-workspace-prod-ecs-task`) has a single scoped policy:
+
+| Permission | Scope | Purpose |
+|------------|-------|---------|
+| `elasticfilesystem:ClientMount` | This EFS + this access point only | Mount the vault volume |
+| `elasticfilesystem:ClientWrite` | This EFS + this access point only | Write files to vault |
+
+All other AWS API calls (S3, DynamoDB, Secrets Manager, Lambda, etc.) are **denied** — the role has no other policies. The execution role has `secretsmanager:GetSecretValue` scoped to the Anthropic API key ARN for env injection at startup only.
+
+EFS authorization uses **IAM enforcement** (`iam = "ENABLED"`) — only this task role, with this specific access point, can mount the filesystem. Other containers or services on the same account cannot access the EFS volume.
+
+### Per-User File Isolation (Implemented)
+
+```
+EFS File System (AES-256 at rest, transit encryption)
+└── Access Point: /users/nathan (UID 1000, GID 1000)
+    └── /workspace (container mount)
+        └── /vaults/{cognito-sub}/    ← per-user isolation
+            ├── reviews/
+            ├── .claude/              ← per-user tokens + config
+            ├── .intentions.json
+            └── .tool-activity.jsonl
+```
+
+**How user identity flows:**
+1. ALB Cognito authenticator adds `x-amzn-oidc-data` JWT header
+2. Server middleware parses the JWT payload → extracts `sub` (unique Cognito user ID)
+3. All file operations scoped to `/workspace/vaults/{sub}/`
+4. `sanitizePath()` validates every path against user's vault root — blocks directory traversal
+5. Claude Code spawned with `HOME = /workspace/vaults/{sub}/` — per-user tokens
+6. Dev mode: falls back to `dev-local` user ID (no ALB headers)
+
+**What this prevents:**
+- User A cannot read User B's files, intentions, or activity logs
+- User A cannot see User B's OAuth tokens (different HOME directory)
+- Directory traversal from `/vaults/user-a/` to `/vaults/user-b/` is blocked by path validation
+
+### Claude Code Session Capabilities
+
+Claude Code runs with `--dangerously-skip-permissions` but with these mitigations:
+
+| Control | Implementation |
+|---------|---------------|
+| **Env filtering** | `ANTHROPIC_API_KEY`, AWS credentials stripped from spawned process env. Claude uses per-user OAuth. |
+| **Per-user HOME** | Each user's Claude Code reads/writes its own `.claude/` directory |
+| **Tool policy hooks** | PreToolUse hook reads `.claude/tool-policy.json` — can block specific tools (e.g., `["Bash"]` for read-only agents) |
+| **Activity auditing** | Every tool invocation logged to per-user `.tool-activity.jsonl` with tool name, input, and allow/block decision |
+| **Token revocation** | `DELETE /api/vault/auth` removes all credential files from user's vault |
+
+Claude Code can still execute arbitrary Bash and make HTTP requests within the container. The `--dangerously-skip-permissions` flag is required for automated background runs. Enterprise-grade restriction is achieved via the configurable tool policy hooks.
+
+### Hardening Summary
+
+| Layer | Measure | Status |
+|-------|---------|--------|
+| **Network** | ALB Cognito auth on all `/vault*` requests | Shipped |
+| **Identity** | Cognito JWT parsed from ALB headers per request | Shipped |
+| **File system** | Per-user vault directories with path traversal protection | Shipped |
+| **EFS IAM** | IAM auth enabled, scoped to task role + access point | Shipped |
+| **Encryption** | EFS AES-256 at rest + transit encryption | Shipped |
+| **Credentials** | `.claude/` dir 0700, credential files 0600 per user | Shipped |
+| **Env isolation** | API key + AWS creds stripped from Claude Code processes | Shipped |
+| **Tool policy** | Configurable allow/block per tool via `.claude/tool-policy.json` | Shipped |
+| **Audit trail** | PreToolUse hook logs every tool invocation per user | Shipped |
+| **Token revocation** | One-click revoke via API + UI button | Shipped |
+
+### Remaining Gaps
+
+| Gap | Impact | Mitigation Path |
+|-----|--------|-----------------|
+| Single ECS task serves all users | Shared container memory/processes | Per-user Fargate tasks or task-per-session |
+| All users run as UID 1000 | POSIX can't distinguish users at OS level | Server-enforced path isolation (implemented) |
+| `--dangerously-skip-permissions` | Claude can run arbitrary Bash | Tool policy hooks can block `Bash` tool |
+| Network egress unrestricted | Claude can make external HTTP calls | VPC security groups / NAT gateway controls |
+
 ## Future Work
 
 - [ ] Whisper API fallback for voice input (Firefox, better accuracy)
@@ -123,6 +202,8 @@ Hold-spacebar-to-dictate in the terminal:
 - [ ] Scheduled cron execution of recurring intentions (currently manual trigger only)
 - [ ] Jupyter notebook viewer (.ipynb cell rendering)
 - [ ] CodeMirror/Monaco for proper syntax highlighting with autocomplete
-- [ ] Per-tool allow/deny policies in hooks (enterprise controls UI)
+- [ ] UI for editing tool policy (currently manual JSON edit)
 - [ ] Run history persistence (currently in-memory only)
 - [ ] Gallery publishing from workspace (write to S3 content paths)
+- [ ] Per-user EFS access points (filesystem-level isolation, not just server-enforced)
+- [ ] Per-user Fargate tasks (container-level isolation)
