@@ -1113,41 +1113,87 @@ app.delete(`${API_PREFIX}/activity`, async (req, res) => {
   }
 });
 
-// --- Concurrent Run Manager (stream-json) ---
-// Each run spawns Claude Code with --output-format stream-json.
-// The server parses events, logs tool use, and formats ANSI-colored
-// output that streams to run terminal tabs via WebSocket.
+// --- Session config endpoint ---
+// Returns configured skills, hooks, and tool policy for the user's Claude session.
 
-const activeRuns = new Map();
+app.get(`${API_PREFIX}/config`, async (req, res) => {
+  const userVault = await ensureUserVault(req.userId);
+  const claudeDir = path.join(userVault, '.claude');
+  const result = { skills: [], hooks: {}, toolPolicy: { blocked_tools: [] } };
 
-// Format a stream-json event as colored ANSI text for the terminal tab
-function formatEventForTerminal(event) {
-  if (event.type === 'system' && event.subtype === 'init') {
-    return `\x1b[90m[Session ${event.session_id?.slice(0,8) || '?'}]\x1b[0m\r\n`;
-  }
-  if (event.type === 'assistant' && event.message?.content) {
-    const parts = [];
-    for (const block of event.message.content) {
-      if (block.type === 'text') {
-        parts.push(block.text);
-      } else if (block.type === 'tool_use') {
-        const inp = block.input || {};
-        let detail = '';
-        if (inp.file_path) detail = inp.file_path;
-        else if (inp.command) detail = (inp.command || '').slice(0, 80);
-        else if (inp.pattern) detail = inp.pattern;
-        else if (inp.url) detail = inp.url;
-        else if (inp.query) detail = inp.query;
-        parts.push(`\x1b[36m[${block.name}]\x1b[0m \x1b[90m${detail}\x1b[0m`);
+  try {
+    // Read skills
+    const skillsDir = path.join(claudeDir, 'skills');
+    if (existsSync(skillsDir)) {
+      const skillEntries = await fs.readdir(skillsDir, { withFileTypes: true });
+      for (const entry of skillEntries) {
+        if (entry.isDirectory()) {
+          const skillFile = path.join(skillsDir, entry.name, 'SKILL.md');
+          if (existsSync(skillFile)) {
+            const content = await fs.readFile(skillFile, 'utf-8');
+            // Extract first heading as name, first paragraph under "When to Use" as description
+            const nameMatch = content.match(/^#\s+(.+)/m);
+            const whenMatch = content.match(/##\s+When to Use\s*\n+([\s\S]*?)(?=\n##|\n$)/);
+            result.skills.push({
+              id: entry.name,
+              name: nameMatch ? nameMatch[1].trim() : entry.name,
+              description: whenMatch ? whenMatch[1].trim().split('\n')[0] : '',
+              path: `.claude/skills/${entry.name}/SKILL.md`,
+            });
+          }
+        }
       }
     }
-    return parts.join('\r\n') + '\r\n';
+
+    // Read hooks from settings.json
+    const settingsPath = path.join(claudeDir, 'settings.json');
+    if (existsSync(settingsPath)) {
+      const settings = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
+      if (settings.hooks) {
+        result.hooks = settings.hooks;
+      }
+    }
+
+    // Read tool policy
+    const policyPath = path.join(claudeDir, 'tool-policy.json');
+    if (existsSync(policyPath)) {
+      result.toolPolicy = JSON.parse(await fs.readFile(policyPath, 'utf-8'));
+    }
+  } catch (err) {
+    console.warn('[config] Error reading config:', err.message);
   }
-  if (event.type === 'result') {
-    return `\r\n\x1b[32m[Done]\x1b[0m\r\n`;
+
+  res.json(result);
+});
+
+// --- Onboarding status check ---
+// Checks whether Claude Code has completed onboarding in this vault.
+// The frontend uses this to gate run launches with a helpful modal.
+
+app.get(`${API_PREFIX}/onboarding-status`, async (req, res) => {
+  const userVault = await ensureUserVault(req.userId);
+  // Claude Code stores onboarding state in ~/.claude.json (HOME=vault root)
+  const configPath = path.join(userVault, '.claude.json');
+  try {
+    if (!existsSync(configPath)) {
+      return res.json({ ready: false, reason: 'Claude Code has not been launched yet.' });
+    }
+    const config = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+    if (config.hasCompletedOnboarding) {
+      return res.json({ ready: true });
+    }
+    return res.json({ ready: false, reason: 'Claude Code onboarding has not been completed.' });
+  } catch {
+    return res.json({ ready: false, reason: 'Could not read Claude Code config.' });
   }
-  return '';
-}
+});
+
+// --- Concurrent Run Manager (interactive PTY) ---
+// Each run spawns a full interactive Claude Code PTY session.
+// The research prompt is auto-injected after Claude Code starts up.
+// Users see the real Claude Code TUI and can interact with it.
+
+const activeRuns = new Map();
 
 app.post(`${API_PREFIX}/runs`, async (req, res) => {
   const { prompt, title, intentionId } = req.body || {};
@@ -1155,24 +1201,22 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     return res.status(400).json({ error: 'prompt is required' });
   }
 
+  if (!pty) {
+    return res.status(500).json({ error: 'node-pty not available — cannot spawn interactive terminal' });
+  }
+
   const userVault = await ensureUserVault(req.userId);
   const runId = randomUUID();
-  const args = [
-    '-p', prompt,
-    '--output-format', 'stream-json',
-    '--verbose',
-    '--dangerously-skip-permissions',
-    '--max-budget-usd', '2',
-  ];
 
-  console.log(`[run:${runId.slice(0,8)}] Starting for ${req.userId}: ${(title || prompt).slice(0, 60)}`);
+  console.log(`[run:${runId.slice(0,8)}] Starting interactive PTY for ${req.userId}: ${(title || prompt).slice(0, 60)}`);
 
-  const proc = spawn('claude', args, {
+  const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
+    name: 'xterm-256color',
+    cols: 120,
+    rows: 30,
     cwd: userVault,
     env: getCleanEnv(userVault),
-    stdio: ['pipe', 'pipe', 'pipe'],
   });
-  proc.stdin.end();
 
   const run = {
     id: runId,
@@ -1185,7 +1229,8 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     error: null,
     userVault,
     userId: req.userId,
-    proc,
+    shell,
+    promptInjected: false,
     clients: new Set(),
     outputBuffer: '',
   };
@@ -1201,62 +1246,55 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     }
   }
 
-  // Header
-  broadcast(`\x1b[33m▶ ${run.title}\x1b[0m\r\n\x1b[90m${new Date().toLocaleTimeString()}\x1b[0m\r\n\r\n`);
+  // Stream raw PTY output to all connected WebSocket clients
+  shell.onData((data) => {
+    broadcast(data);
+  });
 
-  let buffer = '';
-  proc.stdout.on('data', (chunk) => {
-    buffer += chunk.toString();
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
+  // Auto-inject the research prompt after Claude Code starts up.
+  // Wait for output to settle (no new data for 1.5s) with a max wait of 10s.
+  let settleTimer = null;
+  let maxTimer = null;
+  let hasOutput = false;
 
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      let event;
-      try { event = JSON.parse(line); } catch { continue; }
+  function injectPrompt() {
+    if (run.promptInjected) return;
+    run.promptInjected = true;
+    if (settleTimer) clearTimeout(settleTimer);
+    if (maxTimer) clearTimeout(maxTimer);
+    // Write the prompt to the PTY as if the user typed it, then press Enter
+    shell.write(prompt + '\r');
+    console.log(`[run:${runId.slice(0,8)}] Prompt injected (${prompt.length} chars)`);
+  }
 
-      // Format for terminal display
-      const text = formatEventForTerminal(event);
-      if (text) broadcast(text);
+  // Reset settle timer on each chunk of output
+  const onDataForInjection = shell.onData(() => {
+    hasOutput = true;
+    if (run.promptInjected) return;
+    if (settleTimer) clearTimeout(settleTimer);
+    settleTimer = setTimeout(injectPrompt, 1500);
+  });
 
-      // Log tool use to activity file
-      if (event.type === 'assistant' && event.message?.content) {
-        const tools = event.message.content.filter(b => b.type === 'tool_use');
-        for (const tool of tools) {
-          run.toolCount++;
-          const logLine = JSON.stringify({
-            timestamp: new Date().toISOString(),
-            tool: tool.name,
-            input: tool.input || {},
-            decision: 'allow',
-            runId,
-            runTitle: run.title,
-          });
-          fs.appendFile(path.join(run.userVault, '.tool-activity.jsonl'), logLine + '\n').catch(() => {});
-        }
-      }
+  // Max wait fallback
+  maxTimer = setTimeout(() => {
+    if (!run.promptInjected) {
+      console.log(`[run:${runId.slice(0,8)}] Max wait reached, injecting prompt`);
+      injectPrompt();
     }
-  });
+  }, 10000);
 
-  proc.stderr.on('data', (chunk) => {
-    const text = chunk.toString().trim();
-    console.error(`[run:${runId.slice(0,8)}] stderr:`, text);
-    broadcast(`\x1b[31m${text}\x1b[0m\r\n`);
-  });
-
-  proc.on('error', (err) => {
-    run.status = 'failed';
-    run.error = err.message;
+  shell.onExit(({ exitCode }) => {
+    run.status = exitCode === 0 ? 'completed' : 'failed';
     run.finishedAt = new Date().toISOString();
-    broadcast(`\r\n\x1b[31m[Error: ${err.message}]\x1b[0m\r\n`);
-  });
-
-  proc.on('close', (code) => {
-    run.status = code === 0 ? 'completed' : 'failed';
-    run.finishedAt = new Date().toISOString();
-    if (code !== 0) run.error = `Exited with code ${code}`;
-    console.log(`[run:${runId.slice(0,8)}] ${run.status} (${run.toolCount} tools, exit ${code})`);
-    broadcast(`\r\n\x1b[${code === 0 ? '32' : '31'}m[Run ${run.status}]\x1b[0m\r\n`);
+    if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
+    console.log(`[run:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
+    // Notify connected clients the session ended
+    for (const ws of run.clients) {
+      try { ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`); } catch {}
+    }
+    // Clean up injection listeners
+    if (settleTimer) clearTimeout(settleTimer);
+    if (maxTimer) clearTimeout(maxTimer);
     setTimeout(() => activeRuns.delete(runId), 1800000);
   });
 
@@ -1293,8 +1331,8 @@ app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
   if (!entry) {
     return res.status(404).json({ error: 'Run not found' });
   }
-  if (entry.status === 'running' && entry.proc) {
-    entry.proc.kill();
+  if (entry.status === 'running' && entry.shell) {
+    entry.shell.kill();
     entry.status = 'cancelled';
     entry.finishedAt = new Date().toISOString();
   }
@@ -1302,7 +1340,7 @@ app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
 });
 
 // --- Run Terminal WebSocket Handler ---
-// Streams formatted ANSI output from background runs to terminal tabs.
+// Bidirectional: streams PTY output to clients, relays client input to PTY.
 
 runWss.on('connection', (ws, runId) => {
   const run = activeRuns.get(runId);
@@ -1315,10 +1353,29 @@ runWss.on('connection', (ws, runId) => {
   console.log(`[run:${runId.slice(0,8)}] Client connected`);
   run.clients.add(ws);
 
+  // Backfill buffered output for late-joining clients
   if (run.outputBuffer) ws.send(run.outputBuffer);
   if (run.status !== 'running') {
-    ws.send(`\r\n\x1b[33m[Run ${run.status}]\x1b[0m\r\n`);
+    ws.send(`\r\n\x1b[33m[Session ${run.status}]\x1b[0m\r\n`);
   }
+
+  // Relay client input to the PTY (bidirectional)
+  ws.on('message', (msg) => {
+    if (run.status !== 'running' || !run.shell) return;
+    const str = msg.toString();
+    // Handle resize messages (prefixed with \x01)
+    if (str.startsWith('\x01')) {
+      try {
+        const { cols, rows } = JSON.parse(str.slice(1));
+        run.shell.resize(cols, rows);
+      } catch {
+        // Not a valid resize message — send as input
+        run.shell.write(str);
+      }
+    } else {
+      run.shell.write(str);
+    }
+  });
 
   ws.on('close', () => {
     run.clients.delete(ws);

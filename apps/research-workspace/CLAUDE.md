@@ -1,6 +1,6 @@
 # Research Workspace Backend
 
-Express.js server with 3 WebSocket servers (terminal, chat, run streams), file CRUD, and concurrent Claude Code run manager.
+Express.js server with 3 WebSocket servers (terminal, chat, run PTY sessions), file CRUD, and concurrent Claude Code run manager.
 
 ## Quick Reference
 
@@ -21,14 +21,14 @@ Express.js server with 3 WebSocket servers (terminal, chat, run streams), file C
 8. WebSocket upgrade handler (routes by pathname to 3 WSS instances)
 9. Terminal WSS: PTY → `claude --dangerously-skip-permissions`
 10. Chat WSS: stream-json Claude with auth flow
-11. Run WSS: read-only stream of run output
+11. Run WSS: bidirectional PTY I/O (same protocol as terminal WSS)
 12. Startup: `initClaudeCodeConfig()` + `hardenTokenStorage()`
 
 ## Run Manager
 
-Runs use `spawn` (not PTY) with `--output-format stream-json --verbose`. The server parses JSON events, formats them as ANSI-colored text, broadcasts to WebSocket clients, and logs tool use to `.tool-activity.jsonl`.
+Runs spawn a full interactive Claude Code PTY session (same as the interactive terminal). The research prompt is auto-injected after Claude Code starts up by watching for output to settle (~1.5s silence after initial activity, 10s max wait). Run WebSockets are bidirectional — clients can type input and resize, just like the main terminal. Each run tab shows the real Claude Code TUI.
 
-**Do not use PTY for runs** — Claude Code with `-p` in a PTY has auth/TUI issues. PTY is only for the interactive terminal.
+Tool activity is logged via Claude Code hooks (`.claude/hooks/log-activity.sh`) rather than server-side JSON parsing.
 
 ## Adding Routes
 
