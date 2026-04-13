@@ -5,7 +5,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { useTerminal } from "../../hooks/useTerminal";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import VoiceIndicator from "./VoiceIndicator";
-import { Terminal as TerminalIcon, Wifi, WifiOff, X, Loader2 } from "lucide-react";
+import { Terminal as TerminalIcon, Wifi, WifiOff, X, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import "@xterm/xterm/css/xterm.css";
 
 // ---------------------------------------------------------------------------
@@ -16,6 +16,7 @@ interface RunTab {
   id: string;
   runId: string;
   title: string;
+  status: "running" | "completed" | "failed" | "cancelled";
 }
 
 // ---------------------------------------------------------------------------
@@ -52,13 +53,17 @@ const XTERM_THEME = {
 function RunTerminal({
   runId,
   isActive,
+  onStatusChange,
 }: {
   runId: string;
   isActive: boolean;
+  onStatusChange?: (status: "completed" | "failed") => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
 
   // Create terminal + connect WebSocket
   useEffect(() => {
@@ -91,8 +96,22 @@ function RunTerminal({
     const wsUrl = `${wsProtocol}//${wsHost}/prototypes/research-workspace/vault/api/vault/runs/${runId}/ws`;
 
     const ws = new WebSocket(wsUrl);
-    ws.onmessage = (event) => term.write(event.data);
-    ws.onclose = () => term.write("\r\n\x1b[90m[Disconnected]\x1b[0m\r\n");
+    let lastMessage = "";
+    ws.onmessage = (event) => {
+      term.write(event.data);
+      lastMessage = event.data;
+    };
+    ws.onclose = () => {
+      term.write("\r\n\x1b[90m[Disconnected]\x1b[0m\r\n");
+      // Detect final status from the last message the server sent
+      if (lastMessage.includes("[Run completed]")) {
+        onStatusChangeRef.current?.("completed");
+      } else if (lastMessage.includes("[Run failed]") || lastMessage.includes("[Run cancelled]")) {
+        onStatusChangeRef.current?.("failed");
+      } else {
+        onStatusChangeRef.current?.("completed");
+      }
+    };
     ws.onerror = () => term.write("\r\n\x1b[31m[Connection error]\x1b[0m\r\n");
 
     return () => {
@@ -165,16 +184,55 @@ export default function TerminalPanel() {
     }
   }, [activeTab, fitAddon]);
 
+  // Restore tabs for active runs on mount (e.g. after navigating away and back)
+  useEffect(() => {
+    const baseUrl = import.meta.env.DEV
+      ? "http://localhost:8080"
+      : "/prototypes/research-workspace/vault";
+
+    fetch(`${baseUrl}/api/vault/runs`)
+      .then((res) => (res.ok ? res.json() : { runs: [] }))
+      .then((data) => {
+        const active = (data.runs || []).filter(
+          (r: { status: string }) => r.status === "running"
+        );
+        if (active.length > 0) {
+          setRunTabs((prev) => {
+            const existingIds = new Set(prev.map((t) => t.runId));
+            const newTabs = active
+              .filter((r: { id: string }) => !existingIds.has(r.id))
+              .map((r: { id: string; title: string; status: "running" | "completed" | "failed" | "cancelled" }) => ({
+                id: r.id,
+                runId: r.id,
+                title: r.title,
+                status: r.status,
+              }));
+            return [...prev, ...newTabs];
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Listen for run-started events from IntentionsPanel
   useEffect(() => {
     const handler = (e: Event) => {
       const { runId, title } = (e as CustomEvent).detail;
-      const tab: RunTab = { id: runId, runId, title };
-      setRunTabs((prev) => [...prev, tab]);
+      setRunTabs((prev) => {
+        // Avoid duplicating a tab that was already restored
+        if (prev.some((t) => t.runId === runId)) return prev;
+        return [...prev, { id: runId, runId, title, status: "running" as const }];
+      });
       setActiveTab(runId); // auto-switch to the new tab
     };
     window.addEventListener("run-started", handler);
     return () => window.removeEventListener("run-started", handler);
+  }, []);
+
+  const updateTabStatus = useCallback((tabId: string, status: "completed" | "failed") => {
+    setRunTabs((prev) =>
+      prev.map((t) => (t.id === tabId ? { ...t, status } : t))
+    );
   }, []);
 
   const closeTab = useCallback((tabId: string) => {
@@ -220,7 +278,13 @@ export default function TerminalPanel() {
               onClick={() => setActiveTab(tab.id)}
               className="flex items-center gap-1 text-[11px] font-label whitespace-nowrap max-w-[120px]"
             >
-              <Loader2 className="w-2.5 h-2.5 animate-spin text-tertiary flex-shrink-0" />
+              {tab.status === "running" ? (
+                <Loader2 className="w-2.5 h-2.5 animate-spin text-tertiary flex-shrink-0" />
+              ) : tab.status === "completed" ? (
+                <CheckCircle2 className="w-2.5 h-2.5 text-domain-ml flex-shrink-0" />
+              ) : (
+                <XCircle className="w-2.5 h-2.5 text-error/60 flex-shrink-0" />
+              )}
               <span className="truncate">{tab.title}</span>
             </button>
             <button
@@ -256,6 +320,7 @@ export default function TerminalPanel() {
             key={tab.id}
             runId={tab.runId}
             isActive={activeTab === tab.id}
+            onStatusChange={(status) => updateTabStatus(tab.id, status)}
           />
         ))}
       </div>

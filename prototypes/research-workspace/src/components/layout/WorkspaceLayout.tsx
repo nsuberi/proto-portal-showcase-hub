@@ -16,10 +16,12 @@ import {
   Terminal,
   Lightbulb,
   Shield,
-  Maximize2,
-  Minimize2,
+  ArrowLeft,
+  LogOut,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useAuthStatus } from "../../hooks/useAuthStatus";
 
 const CODE_EXTENSIONS = new Set([
   "py", "ts", "tsx", "js", "jsx", "json", "sh", "bash",
@@ -70,11 +72,35 @@ function WelcomeScreen() {
   );
 }
 
-function FileEditor({ filePath, onSave }: { filePath: string; onSave?: () => void }) {
+function FileEditor({
+  filePath,
+  onSave,
+  isFullscreen,
+  onFullscreen,
+}: {
+  filePath: string;
+  onSave?: () => void;
+  isFullscreen?: boolean;
+  onFullscreen?: () => void;
+}) {
   if (isCodeFile(filePath)) {
-    return <CodeEditor filePath={filePath} onSave={onSave} />;
+    return (
+      <CodeEditor
+        filePath={filePath}
+        onSave={onSave}
+        isFullscreen={isFullscreen}
+        onFullscreen={onFullscreen}
+      />
+    );
   }
-  return <MarkdownEditor filePath={filePath} onSave={onSave} />;
+  return (
+    <MarkdownEditor
+      filePath={filePath}
+      onSave={onSave}
+      isFullscreen={isFullscreen}
+      onFullscreen={onFullscreen}
+    />
+  );
 }
 
 export default function WorkspaceLayout() {
@@ -82,6 +108,8 @@ export default function WorkspaceLayout() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("files");
   const [fullscreen, setFullscreen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { logout } = useAuthStatus();
 
   const handleSelectFile = useCallback((path: string) => {
     setSelectedFile(path);
@@ -117,6 +145,23 @@ export default function WorkspaceLayout() {
 
     return (
       <div className="workspace-layout workspace-backdrop overflow-hidden flex flex-col">
+        {/* Mobile top bar */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-0 shrink-0">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-1.5 font-label text-xs text-white/50 hover:text-white/80 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Gallery
+          </button>
+          <button
+            onClick={() => { logout(); navigate("/"); }}
+            className="inline-flex items-center gap-1.5 font-label text-xs text-white/40 hover:text-white/70 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Logout
+          </button>
+        </div>
         <div className="flex-1 overflow-hidden relative p-5 pb-0">
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "files" ? "" : "hidden"}`}>
             <div className="glass-widget h-full">
@@ -173,28 +218,43 @@ export default function WorkspaceLayout() {
   }
 
   return (
-    <div className="workspace-layout workspace-backdrop p-5">
+    <div className="workspace-layout workspace-backdrop p-5 flex flex-col">
       {/* Fullscreen editor overlay */}
       {fullscreen && selectedFile && (
         <div className="fixed inset-0 z-50 workspace-backdrop p-5">
-          {/* Minimize button floats above everything */}
-          <button
-            onClick={() => setFullscreen(false)}
-            className="fixed top-7 right-7 z-[60] p-2 rounded-lg bg-black/60 border border-white/[0.15] text-white/70 hover:text-white hover:bg-black/80 backdrop-blur-sm transition-colors shadow-lg"
-            title="Exit fullscreen (Esc)"
-          >
-            <Minimize2 className="w-4 h-4" />
-          </button>
           <div className="glass-widget h-full">
-            <FileEditor filePath={selectedFile} onSave={handleSave} />
+            <FileEditor
+              filePath={selectedFile}
+              onSave={handleSave}
+              isFullscreen
+              onFullscreen={() => setFullscreen(false)}
+            />
           </div>
         </div>
       )}
 
+      {/* Top bar */}
+      <div className="flex items-center justify-between shrink-0 mb-3">
+        <button
+          onClick={() => navigate("/")}
+          className="inline-flex items-center gap-1.5 font-label text-xs text-white/50 hover:text-white/80 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Gallery
+        </button>
+        <button
+          onClick={() => { logout(); navigate("/"); }}
+          className="inline-flex items-center gap-1.5 font-label text-xs text-white/40 hover:text-white/70 transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Logout
+        </button>
+      </div>
+
       <PanelGroup
         direction="horizontal"
         autoSaveId="workspace-h-panels"
-        className="h-full"
+        className="flex-1 min-h-0"
       >
         {/* Left column: Files + Intentions stacked */}
         <Panel defaultSize={22} minSize={15} maxSize={40}>
@@ -230,18 +290,13 @@ export default function WorkspaceLayout() {
             autoSaveId="workspace-v-panels"
           >
             <Panel defaultSize={50} minSize={15}>
-              <div className="glass-widget h-full relative">
+              <div className="glass-widget h-full">
                 {selectedFile ? (
-                  <>
-                    <button
-                      onClick={() => setFullscreen(true)}
-                      className="absolute top-2 right-2 z-10 p-1 rounded text-white/30 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
-                      title="Fullscreen"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </button>
-                    <FileEditor filePath={selectedFile} onSave={handleSave} />
-                  </>
+                  <FileEditor
+                    filePath={selectedFile}
+                    onSave={handleSave}
+                    onFullscreen={() => setFullscreen(true)}
+                  />
                 ) : (
                   <WelcomeScreen />
                 )}
