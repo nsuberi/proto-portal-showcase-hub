@@ -82,6 +82,28 @@ resource "aws_lb_target_group" "main" {
   }
 }
 
+# Public route: published gallery content (no auth required)
+# Higher priority than the authenticated rule so gallery visitors
+# can read published insights without Cognito login.
+resource "aws_lb_listener_rule" "vault_published_public" {
+  listener_arn = var.alb_https_listener_arn
+  priority     = 89
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.main.arn
+  }
+
+  condition {
+    path_pattern {
+      values = [
+        "/prototypes/research-workspace/vault/api/vault/published",
+        "/prototypes/research-workspace/vault/api/vault/published/*",
+      ]
+    }
+  }
+}
+
 # Authenticated route: /prototypes/research-workspace/vault/*
 # ALB authenticates via Cognito before forwarding to code-server
 resource "aws_lb_listener_rule" "vault_authenticated" {
