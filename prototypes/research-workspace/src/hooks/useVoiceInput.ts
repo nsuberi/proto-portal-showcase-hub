@@ -14,6 +14,8 @@ interface UseVoiceInputOptions {
   terminalRef: RefObject<Terminal | null>;
   wsRef: RefObject<WebSocket | null>;
   enabled?: boolean;
+  /** Flip this when the terminal instance is ready (triggers handler attachment). */
+  ready?: boolean;
 }
 
 // Minimum hold duration (ms) before activating voice vs typing a space
@@ -30,6 +32,7 @@ export function useVoiceInput({
   terminalRef,
   wsRef,
   enabled = true,
+  ready = true,
 }: UseVoiceInputOptions): UseVoiceInputResult {
   const [state, setState] = useState<VoiceState>("idle");
   const [volumeLevel, setVolumeLevel] = useState(0);
@@ -193,14 +196,21 @@ export function useVoiceInput({
         return true; // pass through
       }
 
+      // For printable characters like Space, xterm.js v5 processes input
+      // through the textarea's `input` event (not keydown). Returning false
+      // from this handler suppresses xterm's keydown processing, but the
+      // browser still inserts the character into the textarea → onData fires.
+      // So we do NOT manually send the space — onData handles it.
+
       if (event.type === "keydown") {
         if (stateRef.current === "idle") {
-          // Start the hold timer
+          // Start the hold timer — if released quickly, the space goes
+          // through the normal onData path. If held, recording starts.
           holdTimerRef.current = setTimeout(() => {
             holdTimerRef.current = null;
             startRecording();
           }, HOLD_THRESHOLD_MS);
-          return false; // suppress — we'll send space on quick release
+          return false;
         }
         // If already recording/waiting, suppress repeats
         return false;
@@ -208,13 +218,9 @@ export function useVoiceInput({
 
       if (event.type === "keyup") {
         if (stateRef.current === "idle" && holdTimerRef.current) {
-          // Quick tap — send space to terminal
+          // Quick tap — cancel hold timer, space already sent via onData
           clearTimeout(holdTimerRef.current);
           holdTimerRef.current = null;
-          const ws = wsRef.current;
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(" ");
-          }
           return false;
         }
 
@@ -236,7 +242,7 @@ export function useVoiceInput({
         holdTimerRef.current = null;
       }
     };
-  }, [terminalRef, wsRef, enabled, startRecording, stopRecording]);
+  }, [terminalRef, wsRef, enabled, ready, startRecording, stopRecording]);
 
   return {
     isRecording: state === "recording",

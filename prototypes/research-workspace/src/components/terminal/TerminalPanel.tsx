@@ -47,6 +47,19 @@ const XTERM_THEME = {
 };
 
 // ---------------------------------------------------------------------------
+// Voice state reported by each terminal tab
+// ---------------------------------------------------------------------------
+
+interface VoiceState {
+  isRecording: boolean;
+  isTranscribing: boolean;
+  volumeLevel: number;
+  error: string | null;
+}
+
+const IDLE_VOICE: VoiceState = { isRecording: false, isTranscribing: false, volumeLevel: 0, error: null };
+
+// ---------------------------------------------------------------------------
 // RunTerminal — interactive xterm connected to a run's PTY via WebSocket
 // ---------------------------------------------------------------------------
 
@@ -54,16 +67,31 @@ function RunTerminal({
   runId,
   isActive,
   onStatusChange,
+  onVoiceState,
 }: {
   runId: string;
   isActive: boolean;
   onStatusChange?: (status: "completed" | "failed") => void;
+  onVoiceState?: (state: VoiceState) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [termReady, setTermReady] = useState(false);
   const onStatusChangeRef = useRef(onStatusChange);
   onStatusChangeRef.current = onStatusChange;
+
+  // Voice input (hold spacebar to dictate) — same as interactive terminal.
+  // `ready` flips when the terminal is created so the hook re-attaches.
+  const voice = useVoiceInput({ terminalRef: termRef, wsRef, ready: termReady });
+
+  // Report voice state to parent for the shared indicator
+  const onVoiceStateRef = useRef(onVoiceState);
+  onVoiceStateRef.current = onVoiceState;
+  useEffect(() => {
+    onVoiceStateRef.current?.(voice);
+  }, [voice.isRecording, voice.isTranscribing, voice.volumeLevel, voice.error]);
 
   // Create terminal + connect bidirectional WebSocket
   useEffect(() => {
@@ -89,6 +117,7 @@ function RunTerminal({
 
     termRef.current = term;
     fitRef.current = fitAddon;
+    setTermReady(true);
 
     // Connect to run WebSocket (bidirectional — full Claude Code PTY)
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -96,6 +125,7 @@ function RunTerminal({
     const wsUrl = `${wsProtocol}//${wsHost}/prototypes/research-workspace/vault/api/vault/runs/${runId}/ws`;
 
     const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
     ws.onopen = () => {
       // Send initial terminal dimensions
@@ -137,20 +167,27 @@ function RunTerminal({
       term.dispose();
       termRef.current = null;
       fitRef.current = null;
+      wsRef.current = null;
+      setTermReady(false);
     };
   }, [runId]);
 
-  // Re-fit when becoming active or when container resizes
+  // Re-fit and focus when becoming active or when container resizes
   useEffect(() => {
     if (!isActive) return;
-    const fit = () => {
+    const fitAndFocus = () => {
       try { fitRef.current?.fit(); } catch {}
+      termRef.current?.focus();
     };
-    requestAnimationFrame(fit);
+    requestAnimationFrame(fitAndFocus);
 
     const container = containerRef.current;
     if (!container) return;
-    const observer = new ResizeObserver(() => requestAnimationFrame(fit));
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        try { fitRef.current?.fit(); } catch {}
+      });
+    });
     observer.observe(container);
     return () => observer.disconnect();
   }, [isActive]);
@@ -170,13 +207,26 @@ function RunTerminal({
 export default function TerminalPanel() {
   const interactiveRef = useRef<HTMLDivElement>(null);
   const { terminalRef, fitAddon, isConnected, wsRef } = useTerminal(interactiveRef);
-  const { isRecording, isTranscribing, volumeLevel, error } = useVoiceInput({
-    terminalRef,
-    wsRef,
-  });
+  const interactiveVoice = useVoiceInput({ terminalRef, wsRef });
 
   const [runTabs, setRunTabs] = useState<RunTab[]>([]);
   const [activeTab, setActiveTab] = useState<string>("interactive");
+
+  // Track voice state from run tabs so the shared indicator works across all tabs.
+  // Use state (not ref) so the indicator re-renders when the active run's voice changes.
+  const [activeRunVoice, setActiveRunVoice] = useState<VoiceState>(IDLE_VOICE);
+  const runVoiceStates = useRef<Map<string, VoiceState>>(new Map());
+
+  const handleRunVoice = useCallback((tabId: string, vs: VoiceState) => {
+    runVoiceStates.current.set(tabId, vs);
+    // Only trigger re-render if this is the currently active tab
+    if (tabId === activeTab) setActiveRunVoice(vs);
+  }, [activeTab]);
+
+  // Compute which voice state to display based on active tab
+  const activeVoice = activeTab === "interactive"
+    ? interactiveVoice
+    : activeRunVoice;
 
   // Re-fit interactive terminal when active
   const handleResize = useCallback(() => {
@@ -193,13 +243,16 @@ export default function TerminalPanel() {
     return () => observer.disconnect();
   }, [handleResize]);
 
-  // Re-fit interactive terminal when switching to it
+  // Re-fit and focus interactive terminal when switching to it
   useEffect(() => {
     if (activeTab === "interactive") {
       requestAnimationFrame(() => {
         try { fitAddon?.fit(); } catch {}
+        terminalRef.current?.focus();
       });
     }
+    // Sync the voice indicator to the newly active tab's state
+    setActiveRunVoice(runVoiceStates.current.get(activeTab) ?? IDLE_VOICE);
   }, [activeTab, fitAddon]);
 
   // Restore tabs for active runs on mount (e.g. after navigating away and back)
@@ -265,6 +318,7 @@ export default function TerminalPanel() {
 
   const closeTab = useCallback((tabId: string) => {
     setRunTabs((prev) => prev.filter((t) => t.id !== tabId));
+    runVoiceStates.current.delete(tabId);
     setActiveTab("interactive");
   }, []);
 
@@ -324,13 +378,13 @@ export default function TerminalPanel() {
           </div>
         ))}
 
-        {/* Voice indicator (pushed right) */}
+        {/* Voice indicator (pushed right) — shows state from whichever tab is active */}
         <div className="ml-auto pr-2">
           <VoiceIndicator
-            isRecording={isRecording}
-            isTranscribing={isTranscribing}
-            volumeLevel={volumeLevel}
-            error={error}
+            isRecording={activeVoice.isRecording}
+            isTranscribing={activeVoice.isTranscribing}
+            volumeLevel={activeVoice.volumeLevel}
+            error={activeVoice.error}
           />
         </div>
       </div>
@@ -348,6 +402,7 @@ export default function TerminalPanel() {
             key={tab.id}
             runId={tab.runId}
             isActive={activeTab === tab.id}
+            onVoiceState={(vs) => handleRunVoice(tab.id, vs)}
             onStatusChange={(status) => updateTabStatus(tab.id, status)}
           />
         ))}

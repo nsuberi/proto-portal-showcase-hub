@@ -165,12 +165,14 @@ async function checkOnboardingReady(): Promise<{ ready: boolean; reason?: string
   }
 }
 
-/** Returns true if the run launched, or 'onboarding-needed' if setup is required. */
-async function triggerResearch(item: Intention): Promise<true | "onboarding-needed"> {
+type SetupReason = "not_launched" | "not_onboarded" | "not_authenticated";
+
+/** Returns true if the run launched, or a reason string if setup is required. */
+async function triggerResearch(item: Intention): Promise<true | SetupReason> {
   // Pre-flight: ensure Claude Code onboarding is complete
   const status = await checkOnboardingReady();
   if (!status.ready) {
-    return "onboarding-needed";
+    return (status.reason as SetupReason) || "not_launched";
   }
 
   const prompt = buildPrompt(item);
@@ -202,7 +204,27 @@ async function triggerResearch(item: Intention): Promise<true | "onboarding-need
 // OnboardingModal — shown when Claude Code setup isn't complete
 // ---------------------------------------------------------------------------
 
-function OnboardingModal({ onClose }: { onClose: () => void }) {
+const SETUP_MESSAGES: Record<SetupReason, { title: string; body: string; detail: string }> = {
+  not_launched: {
+    title: "Setup Required",
+    body: "Claude Code hasn\u2019t been launched yet. Open the Claude terminal tab to complete the initial setup.",
+    detail: "This is a one-time step \u2014 once done, all future runs will start immediately.",
+  },
+  not_onboarded: {
+    title: "Setup Required",
+    body: "Claude Code needs to complete its welcome flow. Open the Claude terminal tab and follow the prompts.",
+    detail: "This is a one-time step \u2014 once done, all future runs will start immediately.",
+  },
+  not_authenticated: {
+    title: "Authentication Required",
+    body: "Claude Code isn\u2019t signed in yet. Open the Claude terminal tab and sign in to your Claude account.",
+    detail: "Run /login in the terminal or follow the authentication prompts.",
+  },
+};
+
+function OnboardingModal({ reason, onClose }: { reason: SetupReason; onClose: () => void }) {
+  const msg = SETUP_MESSAGES[reason];
+
   const goToClaude = () => {
     // Tell TerminalPanel to switch to the interactive Claude tab
     window.dispatchEvent(new CustomEvent("switch-terminal-tab", { detail: { tab: "interactive" } }));
@@ -221,7 +243,7 @@ function OnboardingModal({ onClose }: { onClose: () => void }) {
       <div className="w-80 rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden">
         <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
           <span className="font-label text-sm font-semibold text-white/90">
-            Setup Required
+            {msg.title}
           </span>
           <button onClick={onClose} className="p-0.5 rounded hover:bg-white/[0.08] text-white/30 hover:text-white/60">
             <X className="w-3.5 h-3.5" />
@@ -229,11 +251,10 @@ function OnboardingModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className="px-4 py-4 space-y-3">
           <p className="font-label text-xs text-white/60 leading-relaxed">
-            Claude Code needs to complete its initial setup before running research agents.
-            Open the <span className="text-primary font-semibold">Claude</span> terminal tab and accept the welcome prompts.
+            {msg.body}
           </p>
           <p className="font-label text-[10px] text-white/35">
-            This is a one-time step — once done, all future runs will start immediately.
+            {msg.detail}
           </p>
         </div>
         <div className="px-4 py-3 border-t border-white/[0.08] flex justify-end">
@@ -253,12 +274,12 @@ function IntentionCard({
   item,
   onDelete,
   onUpdate,
-  onOnboardingNeeded,
+  onSetupNeeded,
 }: {
   item: Intention;
   onDelete: () => void;
   onUpdate: (updated: Intention) => void;
-  onOnboardingNeeded: () => void;
+  onSetupNeeded: (reason: SetupReason) => void;
 }) {
   const [launching, setLaunching] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -271,8 +292,8 @@ function IntentionCard({
   const handleRun = async () => {
     setLaunching(true);
     const result = await triggerResearch(item);
-    if (result === "onboarding-needed") {
-      onOnboardingNeeded();
+    if (result !== true) {
+      onSetupNeeded(result);
     }
     setTimeout(() => setLaunching(false), 2000);
   };
@@ -695,7 +716,7 @@ export default function IntentionsPanel() {
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [setupReason, setSetupReason] = useState<SetupReason | null>(null);
   const [expandedTypes, setExpandedTypes] = useState<Set<IntentionType>>(
     new Set(["research", "synthesis", "review"])
   );
@@ -837,7 +858,7 @@ export default function IntentionsPanel() {
                         item={item}
                         onDelete={() => handleDelete(item.id)}
                         onUpdate={handleUpdate}
-                        onOnboardingNeeded={() => setShowOnboardingModal(true)}
+                        onSetupNeeded={(reason) => setSetupReason(reason)}
                       />
                     ))}
                   </div>
@@ -846,8 +867,8 @@ export default function IntentionsPanel() {
             );
           })}
       </div>
-      {showOnboardingModal && (
-        <OnboardingModal onClose={() => setShowOnboardingModal(false)} />
+      {setupReason && (
+        <OnboardingModal reason={setupReason} onClose={() => setSetupReason(null)} />
       )}
     </div>
   );

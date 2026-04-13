@@ -23,9 +23,15 @@ interface Skill {
   path: string;
 }
 
+interface Hook {
+  matcher: string;
+  command: string;
+  filePath: string | null;
+}
+
 interface SessionConfig {
   skills: Skill[];
-  hooks: Record<string, { matcher: string; command: string }[]>;
+  hooks: Record<string, Hook[]>;
   toolPolicy: { blocked_tools: string[]; notes?: string };
 }
 
@@ -79,7 +85,11 @@ function SectionHeader({
   );
 }
 
-export default function SessionConfigPanel() {
+interface SessionConfigPanelProps {
+  onSelectFile?: (path: string) => void;
+}
+
+export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelProps) {
   const [config, setConfig] = useState<SessionConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [skillsOpen, setSkillsOpen] = useState(true);
@@ -157,13 +167,14 @@ export default function SessionConfigPanel() {
                     </p>
                   ) : (
                     config.skills.map((skill) => (
-                      <div
+                      <button
                         key={skill.id}
-                        className="flex items-start gap-2 py-1 pl-5"
+                        onClick={() => onSelectFile?.(skill.path)}
+                        className="flex items-start gap-2 py-1 pl-5 w-full text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer group"
                       >
                         <Sparkles className="w-3 h-3 text-tertiary/70 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <p className="font-label text-[11px] text-white/70 truncate">
+                          <p className="font-label text-[11px] text-white/70 truncate group-hover:text-white/90">
                             {skill.name}
                           </p>
                           {skill.description && (
@@ -172,7 +183,7 @@ export default function SessionConfigPanel() {
                             </p>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>
@@ -197,13 +208,16 @@ export default function SessionConfigPanel() {
                   ) : (
                     Object.entries(config.hooks).map(([event, hooks]) =>
                       hooks.map((hook, i) => (
-                        <div
+                        <button
                           key={`${event}-${i}`}
-                          className="flex items-start gap-2 py-1 pl-5"
+                          onClick={() =>
+                            hook.filePath && onSelectFile?.(hook.filePath)
+                          }
+                          className="flex items-start gap-2 py-1 pl-5 w-full text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer group"
                         >
                           <Webhook className="w-3 h-3 text-domain-ml/70 flex-shrink-0 mt-0.5" />
                           <div className="min-w-0">
-                            <p className="font-label text-[11px] text-white/70">
+                            <p className="font-label text-[11px] text-white/70 group-hover:text-white/90">
                               {event}
                             </p>
                             <p className="font-mono text-[9px] text-white/30 truncate">
@@ -211,7 +225,7 @@ export default function SessionConfigPanel() {
                               {hook.command.split("/").pop()}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       ))
                     )
                   )}
