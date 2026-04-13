@@ -21,17 +21,89 @@ body {
   overflow: hidden;
 }
 
-/* Milkdown editor overrides for dark workspace theme */
+/* Dark dot-grid backdrop */
+.workspace-backdrop {
+  background-color: #08090c;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Glassmorphism widget card */
+.glass-widget {
+  background: rgba(13, 14, 18, 0.72);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(187, 198, 226, 0.08);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+/* Glass header bars inside widgets */
+.glass-header {
+  background: rgba(26, 27, 32, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(187, 198, 226, 0.06);
+}
+
+/* --- Milkdown editor: fill widget + force white text on glass --- */
+
+/* Every wrapper in the Milkdown DOM must participate in the flex chain
+   so the editable area fills the entire glass widget. */
+.milkdown-editor-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;          /* allow shrinking inside flex parent */
+}
+
 .milkdown-editor-root .milkdown {
-  background: var(--color-surface-container-lowest);
-  color: var(--color-on-surface);
+  background: transparent !important;
+  color: #ffffff !important;
   font-family: var(--font-body);
   padding: 1rem 1.5rem;
-  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .milkdown-editor-root .milkdown .editor {
   outline: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  cursor: text;
+}
+
+.milkdown-editor-root .milkdown .ProseMirror {
+  outline: none;
+  flex: 1;
+  cursor: text;
+  overflow-y: auto;
+  max-width: 100% !important;  /* override nord theme max-width */
+  width: 100% !important;
+}
+
+/* Kill any max-width the nord theme puts on content wrappers */
+.milkdown-editor-root .milkdown,
+.milkdown-editor-root .milkdown > *,
+.milkdown-editor-root .milkdown .editor,
+.milkdown-editor-root .milkdown .ProseMirror,
+.milkdown-editor-root .milkdown .ProseMirror > * {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* All text elements: force white — override nord theme (including strong/b/em) */
+.milkdown-editor-root .milkdown,
+.milkdown-editor-root .milkdown * {
+  color: #ffffff !important;
 }
 
 .milkdown-editor-root .milkdown h1,
@@ -41,7 +113,6 @@ body {
 .milkdown-editor-root .milkdown h5,
 .milkdown-editor-root .milkdown h6 {
   font-family: var(--font-headline);
-  color: var(--color-on-surface);
 }
 
 .milkdown-editor-root .milkdown h1 {
@@ -67,17 +138,24 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.milkdown-editor-root .milkdown a {
+  color: #93b4ff !important;
+  text-decoration: underline;
+  cursor: pointer !important;
+}
+
 .milkdown-editor-root .milkdown code {
   font-family: var(--font-mono);
-  background: var(--color-surface-container-high);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0 !important;
   padding: 0.15em 0.4em;
   border-radius: var(--radius-sm);
   font-size: 0.85em;
 }
 
 .milkdown-editor-root .milkdown pre {
-  background: var(--color-surface-container);
-  border: 1px solid var(--color-outline-variant);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
   padding: 1rem;
   overflow-x: auto;
@@ -86,18 +164,14 @@ body {
 .milkdown-editor-root .milkdown pre code {
   background: none;
   padding: 0;
+  color: #e0e0e0 !important;
 }
 
 .milkdown-editor-root .milkdown blockquote {
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid #93b4ff;
   padding-left: 1rem;
-  color: var(--color-on-surface-variant);
+  color: rgba(255, 255, 255, 0.7) !important;
   margin: 0.75rem 0;
-}
-
-.milkdown-editor-root .milkdown a {
-  color: var(--color-primary);
-  text-decoration: underline;
 }
 
 .milkdown-editor-root .milkdown ul,
@@ -112,7 +186,7 @@ body {
 
 .milkdown-editor-root .milkdown hr {
   border: none;
-  border-top: 1px solid var(--color-outline-variant);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin: 1.5rem 0;
 }
 
@@ -124,15 +198,20 @@ body {
 
 .milkdown-editor-root .milkdown th,
 .milkdown-editor-root .milkdown td {
-  border: 1px solid var(--color-outline-variant);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
 
 .milkdown-editor-root .milkdown th {
-  background: var(--color-surface-container);
+  background: rgba(255, 255, 255, 0.05);
   font-family: var(--font-label);
   font-weight: 600;
+}
+
+/* Placeholder text for empty editor */
+.milkdown-editor-root .milkdown .ProseMirror p.is-editor-empty:first-child::before {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* xterm.js terminal container sizing */
@@ -144,12 +223,11 @@ body {
   overflow-y: auto !important;
 }
 
-/* react-resizable-panels resize handle area */
+/* react-resizable-panels resize handle — transparent gap reveals dot grid */
 [data-panel-resize-handle-id] {
   background: transparent;
 }
 
 [data-panel-resize-handle-id]:hover {
-  background: var(--color-outline-variant);
-  opacity: 0.15;
+  background: transparent;
 }

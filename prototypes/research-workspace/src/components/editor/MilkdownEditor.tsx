@@ -68,6 +68,15 @@ export default function MilkdownEditor({
 
         editorInstanceRef.current = editor;
         setMilkdownReady(true);
+
+        // Open links in a new tab on click (ProseMirror swallows clicks for editing)
+        editorDivRef.current!.addEventListener("click", (e) => {
+          const target = (e.target as HTMLElement).closest("a");
+          if (target && target.href) {
+            e.preventDefault();
+            window.open(target.href, "_blank", "noopener,noreferrer");
+          }
+        });
       } catch (err) {
         console.warn("Milkdown failed to initialize, using fallback editor:", err);
         if (!cancelled) {
@@ -101,13 +110,13 @@ export default function MilkdownEditor({
   return (
     <div className="h-full flex flex-col">
       {!milkdownReady && (
-        <div className="flex items-center justify-center h-full text-on-surface-variant/40 font-label text-sm">
+        <div className="flex items-center justify-center h-full text-white/40 font-label text-sm">
           Loading editor...
         </div>
       )}
       <div
         ref={editorDivRef}
-        className={`milkdown-editor-root flex-1 overflow-y-auto ${
+        className={`milkdown-editor-root flex-1 overflow-y-auto min-h-0 ${
           milkdownReady ? "" : "hidden"
         }`}
       />
@@ -132,14 +141,14 @@ function FallbackEditor({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 py-1 text-xs font-label text-tertiary/60 border-b border-outline-variant/10">
+      <div className="px-3 py-1 text-xs font-label text-white/40 border-b border-white/[0.06]">
         Markdown editor (plain text mode)
       </div>
       <textarea
         value={content}
         onChange={handleChange}
         spellCheck={false}
-        className="flex-1 w-full bg-surface-container-lowest text-on-surface font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed"
+        className="flex-1 w-full bg-transparent text-white font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed placeholder:text-white/30"
         placeholder="Start writing markdown..."
       />
     </div>

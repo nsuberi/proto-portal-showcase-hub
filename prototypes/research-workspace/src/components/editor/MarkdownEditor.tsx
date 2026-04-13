@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useVaultFile, saveVaultFile } from "../../hooks/useVaultApi";
 import MilkdownEditor from "./MilkdownEditor";
-import { Save, Loader2, Check, AlertCircle } from "lucide-react";
+import { Save, Loader2, Check, AlertCircle, Keyboard } from "lucide-react";
 
 interface MarkdownEditorProps {
   filePath: string;
@@ -10,6 +10,17 @@ interface MarkdownEditorProps {
 
 type SaveStatus = "idle" | "unsaved" | "saving" | "saved" | "error";
 
+const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
+const MOD = isMac ? "\u2318" : "Ctrl";
+
+const HOTKEYS = [
+  { keys: `${MOD}+S`, action: "Save now" },
+  { keys: `${MOD}+Z`, action: "Undo" },
+  { keys: `${MOD}+Shift+Z`, action: "Redo" },
+  { keys: `${MOD}+B`, action: "Bold" },
+  { keys: `${MOD}+I`, action: "Italic" },
+];
+
 export default function MarkdownEditor({
   filePath,
   onSave,
@@ -17,10 +28,10 @@ export default function MarkdownEditor({
   const { content, loading, error } = useVaultFile(filePath);
   const [localContent, setLocalContent] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [showHotkeys, setShowHotkeys] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
 
-  // When file loads, set local content
   useEffect(() => {
     if (content !== null) {
       setLocalContent(content);
@@ -29,7 +40,7 @@ export default function MarkdownEditor({
     }
   }, [content]);
 
-  // Auto-save with debounce
+  // Auto-save on typing (800ms debounce)
   const handleChange = useCallback(
     (newContent: string) => {
       setLocalContent(newContent);
@@ -50,21 +61,17 @@ export default function MarkdownEditor({
           lastSavedRef.current = newContent;
           setSaveStatus("saved");
           onSave?.();
-          // Reset to idle after a moment
           setTimeout(() => setSaveStatus("idle"), 2000);
         } catch {
           setSaveStatus("error");
         }
-      }, 1500);
+      }, 800);
     },
     [filePath, onSave]
   );
 
-  // Manual save
   const handleManualSave = useCallback(async () => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setSaveStatus("saving");
     try {
       await saveVaultFile(filePath, localContent);
@@ -77,7 +84,7 @@ export default function MarkdownEditor({
     }
   }, [filePath, localContent, onSave]);
 
-  // Keyboard shortcut: Ctrl/Cmd+S
+  // Ctrl/Cmd+S
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
@@ -89,24 +96,29 @@ export default function MarkdownEditor({
     return () => window.removeEventListener("keydown", handler);
   }, [handleManualSave]);
 
-  // Cleanup debounce on unmount
   useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
+
+  // Close hotkey menu on click outside
+  useEffect(() => {
+    if (!showHotkeys) return;
+    const close = () => setShowHotkeys(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [showHotkeys]);
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-surface-container-lowest">
-        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/40" />
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-white/30" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center bg-surface-container-lowest">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-error mx-auto mb-2" />
           <p className="font-label text-sm text-error">{error}</p>
@@ -116,27 +128,64 @@ export default function MarkdownEditor({
   }
 
   return (
-    <div className="h-full flex flex-col bg-surface-container-lowest">
+    <div className="h-full flex flex-col">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-1.5 border-b border-outline-variant/20 bg-surface-container-low/50">
-        <span className="font-mono text-xs text-on-surface-variant/60 truncate">
+      <div className="glass-header flex items-center justify-between px-4 py-1.5">
+        <span className="font-mono text-xs text-white/50 truncate">
           {filePath}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <SaveStatusBadge status={saveStatus} />
           <button
             onClick={handleManualSave}
-            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/60 hover:text-on-surface-variant"
-            title="Save (Ctrl+S)"
+            className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white/70"
+            title={`Save (${MOD}+S)`}
           >
             <Save className="w-3.5 h-3.5" />
           </button>
+
+          {/* Hotkey menu */}
+          <div className="relative">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowHotkeys(!showHotkeys); }}
+              className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/30 hover:text-white/60"
+              title="Keyboard shortcuts"
+            >
+              <Keyboard className="w-3.5 h-3.5" />
+            </button>
+            {showHotkeys && (
+              <div
+                className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-[#1a1b20] border border-white/[0.1] shadow-xl py-1 z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-3 py-1.5 border-b border-white/[0.06]">
+                  <span className="font-label text-[10px] text-white/40 uppercase tracking-wider">
+                    Shortcuts
+                  </span>
+                </div>
+                {HOTKEYS.map(({ keys, action }) => (
+                  <div
+                    key={keys}
+                    className="flex items-center justify-between px-3 py-1"
+                  >
+                    <span className="font-label text-[10px] text-white/60">
+                      {action}
+                    </span>
+                    <kbd className="font-mono text-[9px] text-white/40 bg-white/[0.06] px-1.5 py-0.5 rounded">
+                      {keys}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Editor area */}
       <div className="flex-1 overflow-hidden">
         <MilkdownEditor
+          key={filePath}
           content={localContent}
           onChange={handleChange}
         />
@@ -149,29 +198,27 @@ function SaveStatusBadge({ status }: { status: SaveStatus }) {
   switch (status) {
     case "saving":
       return (
-        <span className="flex items-center gap-1 font-label text-xs text-tertiary">
-          <Loader2 className="w-3 h-3 animate-spin" />
-          Saving...
+        <span className="flex items-center gap-1 font-label text-[10px] text-tertiary">
+          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+          Saving
         </span>
       );
     case "saved":
       return (
-        <span className="flex items-center gap-1 font-label text-xs text-domain-ml">
-          <Check className="w-3 h-3" />
+        <span className="flex items-center gap-1 font-label text-[10px] text-domain-ml">
+          <Check className="w-2.5 h-2.5" />
           Saved
         </span>
       );
     case "unsaved":
       return (
-        <span className="font-label text-xs text-tertiary/80">
-          Unsaved changes
-        </span>
+        <span className="w-1.5 h-1.5 rounded-full bg-tertiary/80" title="Unsaved — auto-saving..." />
       );
     case "error":
       return (
-        <span className="flex items-center gap-1 font-label text-xs text-error">
-          <AlertCircle className="w-3 h-3" />
-          Save failed
+        <span className="flex items-center gap-1 font-label text-[10px] text-error">
+          <AlertCircle className="w-2.5 h-2.5" />
+          Error
         </span>
       );
     default:

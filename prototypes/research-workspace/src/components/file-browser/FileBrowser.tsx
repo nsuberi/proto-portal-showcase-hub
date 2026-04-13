@@ -145,9 +145,9 @@ export default function FileBrowser({
   }, [newFileName, refetch, onSelectFile]);
 
   return (
-    <div className="h-full flex flex-col bg-surface-container-low border-r border-outline-variant/20">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-outline-variant/20">
+      <div className="glass-header flex items-center justify-between px-3 py-2">
         <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
           Files
         </span>
@@ -171,7 +171,7 @@ export default function FileBrowser({
 
       {/* New file input */}
       {creating && (
-        <div className="px-3 py-2 border-b border-outline-variant/20">
+        <div className="px-3 py-2 border-b border-white/[0.06]">
           <input
             type="text"
             value={newFileName}
