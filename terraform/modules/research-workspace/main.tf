@@ -544,7 +544,8 @@ resource "aws_ecs_service" "main" {
 # --- CloudWatch Monitoring & Alarms ---
 
 resource "aws_sns_topic" "sandbox_alerts" {
-  name = "${var.name_prefix}-sandbox-alerts"
+  count = var.enable_monitoring ? 1 : 0
+  name  = "${var.name_prefix}-sandbox-alerts"
 
   tags = {
     Name = "${var.name_prefix}-sandbox-alerts"
@@ -552,14 +553,15 @@ resource "aws_sns_topic" "sandbox_alerts" {
 }
 
 resource "aws_sns_topic_subscription" "sandbox_alerts_email" {
-  count     = var.alert_email != "" ? 1 : 0
-  topic_arn = aws_sns_topic.sandbox_alerts.arn
+  count     = var.enable_monitoring && var.alert_email != "" ? 1 : 0
+  topic_arn = aws_sns_topic.sandbox_alerts[0].arn
   protocol  = "email"
   endpoint  = var.alert_email
 }
 
 # EFS total storage alarm — detect runaway storage growth
 resource "aws_cloudwatch_metric_alarm" "efs_storage_size" {
+  count               = var.enable_monitoring ? 1 : 0
   alarm_name          = "${var.name_prefix}-efs-storage-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -569,7 +571,7 @@ resource "aws_cloudwatch_metric_alarm" "efs_storage_size" {
   statistic           = "Maximum"
   threshold           = var.max_vault_size_bytes
   alarm_description   = "EFS storage for research workspace exceeds threshold"
-  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+  alarm_actions       = [aws_sns_topic.sandbox_alerts[0].arn]
 
   dimensions = {
     FileSystemId = var.efs_file_system_id
@@ -583,6 +585,7 @@ resource "aws_cloudwatch_metric_alarm" "efs_storage_size" {
 
 # EFS write throughput spike — detect storage abuse (>100MB in 5 min)
 resource "aws_cloudwatch_metric_alarm" "efs_write_throughput" {
+  count               = var.enable_monitoring ? 1 : 0
   alarm_name          = "${var.name_prefix}-efs-write-spike"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -592,7 +595,7 @@ resource "aws_cloudwatch_metric_alarm" "efs_write_throughput" {
   statistic           = "Sum"
   threshold           = 104857600
   alarm_description   = "EFS write throughput spike (>100MB/5min) — possible storage abuse"
-  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+  alarm_actions       = [aws_sns_topic.sandbox_alerts[0].arn]
 
   dimensions = {
     FileSystemId = var.efs_file_system_id
@@ -605,6 +608,7 @@ resource "aws_cloudwatch_metric_alarm" "efs_write_throughput" {
 
 # ECS CPU utilization — detect compute abuse (crypto mining, runaway processes)
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
+  count               = var.enable_monitoring ? 1 : 0
   alarm_name          = "${var.name_prefix}-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
@@ -614,7 +618,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
   statistic           = "Average"
   threshold           = 90
   alarm_description   = "Research workspace CPU >90% for 15 minutes"
-  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+  alarm_actions       = [aws_sns_topic.sandbox_alerts[0].arn]
 
   dimensions = {
     ClusterName = local.cluster_name
@@ -628,6 +632,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
 
 # ECS memory utilization — detect memory exhaustion
 resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
+  count               = var.enable_monitoring ? 1 : 0
   alarm_name          = "${var.name_prefix}-memory-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 3
@@ -637,7 +642,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
   statistic           = "Average"
   threshold           = 90
   alarm_description   = "Research workspace memory >90% for 15 minutes"
-  alarm_actions       = [aws_sns_topic.sandbox_alerts.arn]
+  alarm_actions       = [aws_sns_topic.sandbox_alerts[0].arn]
 
   dimensions = {
     ClusterName = local.cluster_name

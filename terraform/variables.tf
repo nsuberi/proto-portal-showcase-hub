@@ -118,3 +118,9 @@ variable "sandbox_alert_email" {
   type        = string
   default     = ""
 }
+
+variable "enable_budget" {
+  description = "Create AWS Budget (requires budgets:ModifyBudget on deploy role)"
+  type        = bool
+  default     = false
+}
