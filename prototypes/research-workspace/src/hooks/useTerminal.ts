@@ -4,9 +4,10 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 
 export interface UseTerminalResult {
-  terminal: Terminal | null;
+  terminalRef: React.RefObject<Terminal | null>;
   fitAddon: FitAddon | null;
   isConnected: boolean;
+  wsRef: React.RefObject<WebSocket | null>;
 }
 
 /**
@@ -130,8 +131,9 @@ export function useTerminal(
   }, [containerRef]);
 
   return {
-    terminal: terminalRef.current,
+    terminalRef,
     fitAddon: fitAddonRef.current,
     isConnected,
+    wsRef,
   };
 }

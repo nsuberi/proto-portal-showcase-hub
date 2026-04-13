@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { existsSync, createReadStream, statSync } from 'fs';
 import { glob } from 'glob';
+import { randomUUID } from 'crypto';
 
 const VAULT_ROOT = process.env.VAULT_ROOT || '/workspace';
 const PORT = parseInt(process.env.PORT || '8080', 10);
@@ -328,6 +329,9 @@ const server = createServer(app);
 // Terminal WebSocket
 const wss = new WebSocketServer({ noServer: true });
 
+// Run terminal WebSocket (streams PTY output for background runs)
+const runWss = new WebSocketServer({ noServer: true });
+
 // Chat WebSocket (Claude Code integration)
 const chatWss = new WebSocketServer({ noServer: true });
 
@@ -340,9 +344,17 @@ server.on('upgrade', (request, socket, head) => {
     pathname = pathname.slice(VAULT_BASE_PATH.length) || '/';
   }
 
+  // Match /api/vault/runs/:id/ws for run terminals
+  const runWsMatch = pathname.match(new RegExp(`^${API_PREFIX}/runs/([^/]+)/ws$`));
+
   if (pathname === `${API_PREFIX}/terminal`) {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
+    });
+  } else if (runWsMatch) {
+    const runId = runWsMatch[1];
+    runWss.handleUpgrade(request, socket, head, (ws) => {
+      runWss.emit('connection', ws, runId);
     });
   } else if (pathname === `${API_PREFIX}/chat`) {
     chatWss.handleUpgrade(request, socket, head, (ws) => {
@@ -370,7 +382,9 @@ wss.on('connection', (ws) => {
 
   console.log('[terminal] New terminal session');
 
-  const shell = pty.spawn('/bin/bash', [], {
+  // Spawn Claude Code directly — gives the full TUI experience
+  // (auth, streaming, tool use, permissions, etc.) in the terminal.
+  const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
     name: 'xterm-256color',
     cols: 80,
     rows: 24,
@@ -675,6 +689,394 @@ chatWss.on('connection', (ws) => {
     }
   });
 });
+
+// --- Initialize Claude Code skill + hooks on first boot ---
+
+async function initClaudeCodeConfig() {
+  const claudeDir = path.join(VAULT_ROOT, '.claude');
+  const skillDir = path.join(claudeDir, 'skills', 'research');
+  const hooksDir = path.join(claudeDir, 'hooks');
+
+  // Research skill
+  const skillPath = path.join(skillDir, 'SKILL.md');
+  if (!existsSync(skillPath)) {
+    await fs.mkdir(skillDir, { recursive: true });
+    await fs.writeFile(skillPath, `# Research Skill
+
+## When to Use
+When asked to research a paper, analyze an arXiv submission, or investigate a technical topic.
+
+## Instructions
+1. Use WebFetch to retrieve the paper from arXiv or the provided URL
+2. Read and analyze the paper's key contributions, methodology, and results
+3. Create a structured markdown review in the vault with:
+   - **Paper metadata** — title, authors, date, source URL
+   - **Key Contributions** — what's novel
+   - **Methodology** — how they did it
+   - **Results & Findings** — what they found
+   - **Weaknesses & Limitations** — gaps, assumptions, scalability concerns
+   - **Connections** — how this relates to other papers in the vault
+4. Save the file as \`reviews/<paper-slug>.md\`
+5. If multiple papers are provided for review, also produce:
+   - A comparative analysis section
+   - Architecture diagrams (Mermaid) showing how concepts fit together
+   - Code assets that implement key architectural patterns described
+
+## Output Format
+Save all files to the vault. Use Mermaid diagrams for architecture visualization.
+Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses/\`.
+`);
+    console.log('[init] Created research skill');
+  }
+
+  // Hook script — logs tool use to .tool-activity.jsonl
+  const hookScript = path.join(hooksDir, 'log-activity.sh');
+  if (!existsSync(hookScript)) {
+    await fs.mkdir(hooksDir, { recursive: true });
+    await fs.writeFile(hookScript, `#!/bin/bash
+# Claude Code PreToolUse hook — logs tool activity for the workspace UI.
+# This demonstrates enterprise controls: every tool invocation is audited,
+# and this hook could block specific tools by outputting {"decision":"block"}.
+
+INPUT=$(cat)
+TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
+TOOL_INPUT=$(echo "$INPUT" | jq -c '.tool_input // {}')
+TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+# Append to activity log
+echo "{\\"timestamp\\":\\"$TIMESTAMP\\",\\"tool\\":\\"$TOOL\\",\\"input\\":$TOOL_INPUT,\\"decision\\":\\"allow\\"}" >> ${VAULT_ROOT}/.tool-activity.jsonl
+
+# Allow all tools (an enterprise policy could block here)
+echo '{"decision":"allow"}'
+`);
+    await fs.chmod(hookScript, 0o755);
+    console.log('[init] Created hook script');
+  }
+
+  // Claude Code settings with hook config
+  const settingsPath = path.join(claudeDir, 'settings.json');
+  if (!existsSync(settingsPath)) {
+    await fs.writeFile(settingsPath, JSON.stringify({
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "",
+            command: hookScript
+          }
+        ]
+      }
+    }, null, 2));
+    console.log('[init] Created Claude Code settings with hooks');
+  }
+}
+
+// --- Activity log endpoint ---
+
+app.get(`${API_PREFIX}/activity`, async (req, res) => {
+  const logPath = path.join(VAULT_ROOT, '.tool-activity.jsonl');
+  try {
+    if (!existsSync(logPath)) {
+      return res.json({ events: [] });
+    }
+    const content = await fs.readFile(logPath, 'utf-8');
+    const events = content.trim().split('\n').filter(Boolean).map(line => {
+      try { return JSON.parse(line); } catch { return null; }
+    }).filter(Boolean);
+    res.json({ events: events.slice(-200) });
+  } catch {
+    res.json({ events: [] });
+  }
+});
+
+app.delete(`${API_PREFIX}/activity`, async (req, res) => {
+  const logPath = path.join(VAULT_ROOT, '.tool-activity.jsonl');
+  try {
+    await fs.writeFile(logPath, '');
+    res.json({ cleared: true });
+  } catch {
+    res.json({ cleared: false });
+  }
+});
+
+// --- Concurrent Run Manager (stream-json) ---
+// Each run spawns Claude Code with --output-format stream-json.
+// The server parses events, logs tool use, and formats ANSI-colored
+// output that streams to run terminal tabs via WebSocket.
+
+const activeRuns = new Map();
+
+// Format a stream-json event as colored ANSI text for the terminal tab
+function formatEventForTerminal(event) {
+  if (event.type === 'system' && event.subtype === 'init') {
+    return `\x1b[90m[Session ${event.session_id?.slice(0,8) || '?'}]\x1b[0m\r\n`;
+  }
+  if (event.type === 'assistant' && event.message?.content) {
+    const parts = [];
+    for (const block of event.message.content) {
+      if (block.type === 'text') {
+        parts.push(block.text);
+      } else if (block.type === 'tool_use') {
+        const inp = block.input || {};
+        let detail = '';
+        if (inp.file_path) detail = inp.file_path;
+        else if (inp.command) detail = (inp.command || '').slice(0, 80);
+        else if (inp.pattern) detail = inp.pattern;
+        else if (inp.url) detail = inp.url;
+        else if (inp.query) detail = inp.query;
+        parts.push(`\x1b[36m[${block.name}]\x1b[0m \x1b[90m${detail}\x1b[0m`);
+      }
+    }
+    return parts.join('\r\n') + '\r\n';
+  }
+  if (event.type === 'result') {
+    return `\r\n\x1b[32m[Done]\x1b[0m\r\n`;
+  }
+  return '';
+}
+
+app.post(`${API_PREFIX}/runs`, (req, res) => {
+  const { prompt, title, intentionId } = req.body || {};
+  if (!prompt) {
+    return res.status(400).json({ error: 'prompt is required' });
+  }
+
+  const runId = randomUUID();
+  const args = [
+    '-p', prompt,
+    '--output-format', 'stream-json',
+    '--verbose',
+    '--dangerously-skip-permissions',
+    '--max-budget-usd', '2',
+  ];
+
+  console.log(`[run:${runId.slice(0,8)}] Starting: ${(title || prompt).slice(0, 60)}`);
+
+  const proc = spawn('claude', args, {
+    cwd: VAULT_ROOT,
+    env: { ...process.env, HOME: VAULT_ROOT },
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  proc.stdin.end();
+
+  const run = {
+    id: runId,
+    intentionId: intentionId || null,
+    title: title || prompt.slice(0, 80),
+    status: 'running',
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    toolCount: 0,
+    error: null,
+    proc,
+    clients: new Set(),
+    outputBuffer: '',
+  };
+  activeRuns.set(runId, run);
+
+  function broadcast(text) {
+    run.outputBuffer += text;
+    if (run.outputBuffer.length > 100000) {
+      run.outputBuffer = run.outputBuffer.slice(-80000);
+    }
+    for (const ws of run.clients) {
+      try { ws.send(text); } catch {}
+    }
+  }
+
+  // Header
+  broadcast(`\x1b[33m▶ ${run.title}\x1b[0m\r\n\x1b[90m${new Date().toLocaleTimeString()}\x1b[0m\r\n\r\n`);
+
+  let buffer = '';
+  proc.stdout.on('data', (chunk) => {
+    buffer += chunk.toString();
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      let event;
+      try { event = JSON.parse(line); } catch { continue; }
+
+      // Format for terminal display
+      const text = formatEventForTerminal(event);
+      if (text) broadcast(text);
+
+      // Log tool use to activity file
+      if (event.type === 'assistant' && event.message?.content) {
+        const tools = event.message.content.filter(b => b.type === 'tool_use');
+        for (const tool of tools) {
+          run.toolCount++;
+          const logLine = JSON.stringify({
+            timestamp: new Date().toISOString(),
+            tool: tool.name,
+            input: tool.input || {},
+            decision: 'allow',
+            runId,
+            runTitle: run.title,
+          });
+          fs.appendFile(path.join(VAULT_ROOT, '.tool-activity.jsonl'), logLine + '\n').catch(() => {});
+        }
+      }
+    }
+  });
+
+  proc.stderr.on('data', (chunk) => {
+    const text = chunk.toString().trim();
+    console.error(`[run:${runId.slice(0,8)}] stderr:`, text);
+    broadcast(`\x1b[31m${text}\x1b[0m\r\n`);
+  });
+
+  proc.on('error', (err) => {
+    run.status = 'failed';
+    run.error = err.message;
+    run.finishedAt = new Date().toISOString();
+    broadcast(`\r\n\x1b[31m[Error: ${err.message}]\x1b[0m\r\n`);
+  });
+
+  proc.on('close', (code) => {
+    run.status = code === 0 ? 'completed' : 'failed';
+    run.finishedAt = new Date().toISOString();
+    if (code !== 0) run.error = `Exited with code ${code}`;
+    console.log(`[run:${runId.slice(0,8)}] ${run.status} (${run.toolCount} tools, exit ${code})`);
+    broadcast(`\r\n\x1b[${code === 0 ? '32' : '31'}m[Run ${run.status}]\x1b[0m\r\n`);
+    setTimeout(() => activeRuns.delete(runId), 1800000);
+  });
+
+  res.status(201).json({
+    runId,
+    id: runId,
+    intentionId: run.intentionId,
+    title: run.title,
+    status: run.status,
+    startedAt: run.startedAt,
+  });
+});
+
+app.get(`${API_PREFIX}/runs`, (req, res) => {
+  const runs = [];
+  for (const [, entry] of activeRuns) {
+    runs.push({
+      id: entry.id,
+      intentionId: entry.intentionId,
+      title: entry.title,
+      status: entry.status,
+      startedAt: entry.startedAt,
+      finishedAt: entry.finishedAt,
+      toolCount: entry.toolCount,
+      error: entry.error,
+    });
+  }
+  runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  res.json({ runs });
+});
+
+app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
+  const entry = activeRuns.get(req.params.id);
+  if (!entry) {
+    return res.status(404).json({ error: 'Run not found' });
+  }
+  if (entry.status === 'running' && entry.proc) {
+    entry.proc.kill();
+    entry.status = 'cancelled';
+    entry.finishedAt = new Date().toISOString();
+  }
+  res.json({ status: entry.status });
+});
+
+// --- Run Terminal WebSocket Handler ---
+// Streams formatted ANSI output from background runs to terminal tabs.
+
+runWss.on('connection', (ws, runId) => {
+  const run = activeRuns.get(runId);
+  if (!run) {
+    ws.send('\r\n\x1b[31m[Run not found]\x1b[0m\r\n');
+    ws.close();
+    return;
+  }
+
+  console.log(`[run:${runId.slice(0,8)}] Client connected`);
+  run.clients.add(ws);
+
+  if (run.outputBuffer) ws.send(run.outputBuffer);
+  if (run.status !== 'running') {
+    ws.send(`\r\n\x1b[33m[Run ${run.status}]\x1b[0m\r\n`);
+  }
+
+  ws.on('close', () => {
+    run.clients.delete(ws);
+    console.log(`[run:${runId.slice(0,8)}] Client disconnected`);
+  });
+});
+
+// --- Token Security ---
+
+// Revoke stored auth tokens
+app.delete(`${API_PREFIX}/auth`, async (req, res) => {
+  const credPaths = [
+    path.join(VAULT_ROOT, '.claude', 'credentials.json'),
+    path.join(VAULT_ROOT, '.claude', '.credentials.json'),
+    path.join(VAULT_ROOT, '.claude.json'),
+  ];
+  let revoked = 0;
+  for (const p of credPaths) {
+    try {
+      if (existsSync(p)) {
+        await fs.unlink(p);
+        revoked++;
+      }
+    } catch { /* best effort */ }
+  }
+  // Also try to clear any oauth tokens in subdirectories
+  try {
+    const configDir = path.join(VAULT_ROOT, '.claude');
+    const entries = await fs.readdir(configDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isFile() && (entry.name.includes('token') || entry.name.includes('auth') || entry.name.includes('credential'))) {
+        await fs.unlink(path.join(configDir, entry.name));
+        revoked++;
+      }
+    }
+  } catch { /* directory may not exist */ }
+  console.log(`[auth] Revoked ${revoked} credential files`);
+  res.json({ revoked, message: `Deleted ${revoked} credential file(s). Re-authenticate in the terminal.` });
+});
+
+// --- Security Hardening on Startup ---
+
+async function hardenTokenStorage() {
+  const claudeDir = path.join(VAULT_ROOT, '.claude');
+  try {
+    if (existsSync(claudeDir)) {
+      // Restrict .claude/ to owner-only (rwx------)
+      await fs.chmod(claudeDir, 0o700);
+      // Lock down any credential/token files to owner-read-only
+      const entries = await fs.readdir(claudeDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile() && (
+          entry.name.includes('credential') || entry.name.includes('token')
+          || entry.name.includes('auth') || entry.name === 'settings.json'
+        )) {
+          await fs.chmod(path.join(claudeDir, entry.name), 0o600);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[security] Could not harden .claude/ permissions:', err.message);
+  }
+}
+
+// --- Start Server ---
+
+async function startup() {
+  await initClaudeCodeConfig().catch(err => {
+    console.warn('[init] Failed to initialize Claude Code config:', err.message);
+  });
+  await hardenTokenStorage().catch(err => {
+    console.warn('[security] Token hardening failed:', err.message);
+  });
+}
+
+startup();
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[server] Research Workspace backend listening on port ${PORT}`);
