@@ -116,11 +116,5 @@ variable "code_dojo_flask_secret_key" {
 variable "sandbox_alert_email" {
   description = "Email for sandbox security alerts and budget notifications"
   type        = string
-  default     = ""
-}
-
-variable "enable_budget" {
-  description = "Create AWS Budget (requires budgets:ModifyBudget on deploy role)"
-  type        = bool
-  default     = false
+  default     = "nsuberi@gmail.com"
 }

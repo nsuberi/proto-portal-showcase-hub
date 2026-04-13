@@ -450,9 +450,7 @@ resource "aws_secretsmanager_secret_version" "research_workspace_deploy_creds" {
 
 # --- AWS Budget (cost backstop) ---
 
-# Requires budgets:ModifyBudget on the deploy role — set enable_budget=true once permission is added
 resource "aws_budgets_budget" "research_workspace" {
-  count        = var.enable_budget ? 1 : 0
   name         = "research-workspace-monthly"
   budget_type  = "COST"
   limit_amount = "100"
