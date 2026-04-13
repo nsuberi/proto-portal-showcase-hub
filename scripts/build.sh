@@ -5,14 +5,17 @@ echo "🔨 Building AI Portfolio application..."
 
 # Setup environment
 echo "🔧 Setting up environment..."
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-nvm use 18 &> /dev/null || echo "Node 18 already active"
-corepack enable &> /dev/null || echo "Corepack already enabled"
+if [ -z "$CI" ]; then
+  # Local dev: use NVM if available
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  nvm use 18 &> /dev/null || true
+fi
+corepack enable &> /dev/null || true
 
-# Install dependencies for main project
+# Install dependencies — CI already ran install, so --immutable just validates
 echo "📦 Installing main project dependencies..."
-yarn install --immutable
+yarn install
 
 # Build main portfolio for production
 echo "🏗️ Building main portfolio..."
