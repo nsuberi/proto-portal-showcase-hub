@@ -155,9 +155,26 @@ const RUN_BASE = import.meta.env.DEV
   ? "http://localhost:8080"
   : "/prototypes/research-workspace/vault";
 
-async function triggerResearch(item: Intention) {
+async function checkOnboardingReady(): Promise<{ ready: boolean; reason?: string }> {
+  try {
+    const res = await fetch(`${RUN_BASE}/api/vault/onboarding-status`);
+    if (!res.ok) return { ready: false, reason: "Could not check onboarding status." };
+    return await res.json();
+  } catch {
+    return { ready: false, reason: "Could not reach the server." };
+  }
+}
+
+/** Returns true if the run launched, or 'onboarding-needed' if setup is required. */
+async function triggerResearch(item: Intention): Promise<true | "onboarding-needed"> {
+  // Pre-flight: ensure Claude Code onboarding is complete
+  const status = await checkOnboardingReady();
+  if (!status.ready) {
+    return "onboarding-needed";
+  }
+
   const prompt = buildPrompt(item);
-  // Spawn a background run via the server (PTY-based)
+  // Spawn an interactive Claude Code PTY session via the server
   const res = await fetch(`${RUN_BASE}/api/vault/runs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -169,7 +186,7 @@ async function triggerResearch(item: Intention) {
   });
   if (!res.ok) {
     console.error("[run] Failed to start:", await res.text());
-    return;
+    return true;
   }
   const data = await res.json();
   // Tell TerminalPanel to open a new tab for this run
@@ -178,16 +195,70 @@ async function triggerResearch(item: Intention) {
       detail: { runId: data.runId, title: item.title },
     })
   );
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// OnboardingModal — shown when Claude Code setup isn't complete
+// ---------------------------------------------------------------------------
+
+function OnboardingModal({ onClose }: { onClose: () => void }) {
+  const goToClaude = () => {
+    // Tell TerminalPanel to switch to the interactive Claude tab
+    window.dispatchEvent(new CustomEvent("switch-terminal-tab", { detail: { tab: "interactive" } }));
+    onClose();
+  };
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-80 rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
+          <span className="font-label text-sm font-semibold text-white/90">
+            Setup Required
+          </span>
+          <button onClick={onClose} className="p-0.5 rounded hover:bg-white/[0.08] text-white/30 hover:text-white/60">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <div className="px-4 py-4 space-y-3">
+          <p className="font-label text-xs text-white/60 leading-relaxed">
+            Claude Code needs to complete its initial setup before running research agents.
+            Open the <span className="text-primary font-semibold">Claude</span> terminal tab and accept the welcome prompts.
+          </p>
+          <p className="font-label text-[10px] text-white/35">
+            This is a one-time step — once done, all future runs will start immediately.
+          </p>
+        </div>
+        <div className="px-4 py-3 border-t border-white/[0.08] flex justify-end">
+          <button
+            onClick={goToClaude}
+            className="font-label text-xs font-semibold px-4 py-1.5 rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors"
+          >
+            Go to Claude Terminal
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function IntentionCard({
   item,
   onDelete,
   onUpdate,
+  onOnboardingNeeded,
 }: {
   item: Intention;
   onDelete: () => void;
   onUpdate: (updated: Intention) => void;
+  onOnboardingNeeded: () => void;
 }) {
   const [launching, setLaunching] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -199,7 +270,10 @@ function IntentionCard({
 
   const handleRun = async () => {
     setLaunching(true);
-    await triggerResearch(item);
+    const result = await triggerResearch(item);
+    if (result === "onboarding-needed") {
+      onOnboardingNeeded();
+    }
     setTimeout(() => setLaunching(false), 2000);
   };
 
@@ -621,6 +695,7 @@ export default function IntentionsPanel() {
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [expandedTypes, setExpandedTypes] = useState<Set<IntentionType>>(
     new Set(["research", "synthesis", "review"])
   );
@@ -762,6 +837,7 @@ export default function IntentionsPanel() {
                         item={item}
                         onDelete={() => handleDelete(item.id)}
                         onUpdate={handleUpdate}
+                        onOnboardingNeeded={() => setShowOnboardingModal(true)}
                       />
                     ))}
                   </div>
@@ -770,6 +846,9 @@ export default function IntentionsPanel() {
             );
           })}
       </div>
+      {showOnboardingModal && (
+        <OnboardingModal onClose={() => setShowOnboardingModal(false)} />
+      )}
     </div>
   );
 }

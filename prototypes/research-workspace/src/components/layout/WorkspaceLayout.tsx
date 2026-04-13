@@ -10,12 +10,14 @@ import CodeEditor from "../editor/CodeEditor";
 import TerminalPanel from "../terminal/TerminalPanel";
 import IntentionsPanel from "../intentions/IntentionsPanel";
 import ToolActivityPanel from "../activity/ToolActivityPanel";
+import SessionConfigPanel from "../config/SessionConfigPanel";
 import {
   FileText,
   FolderOpen,
   Terminal,
   Lightbulb,
   Shield,
+  Settings2,
   ArrowLeft,
   LogOut,
 } from "lucide-react";
@@ -34,7 +36,7 @@ function isCodeFile(filePath: string): boolean {
   return CODE_EXTENSIONS.has(ext);
 }
 
-type MobileTab = "files" | "editor" | "claude" | "intentions" | "activity";
+type MobileTab = "files" | "editor" | "claude" | "intentions" | "config" | "activity";
 
 function ResizeHandle({
   direction = "horizontal",
@@ -140,6 +142,7 @@ export default function WorkspaceLayout() {
       { id: "editor", icon: FileText, label: "Editor" },
       { id: "claude", icon: Terminal, label: "Claude" },
       { id: "intentions", icon: Lightbulb, label: "Plan" },
+      { id: "config", icon: Settings2, label: "Config" },
       { id: "activity", icon: Shield, label: "Hooks" },
     ];
 
@@ -188,6 +191,11 @@ export default function WorkspaceLayout() {
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "intentions" ? "" : "hidden"}`}>
             <div className="glass-widget h-full">
               <IntentionsPanel />
+            </div>
+          </div>
+          <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "config" ? "" : "hidden"}`}>
+            <div className="glass-widget h-full">
+              <SessionConfigPanel />
             </div>
           </div>
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "activity" ? "" : "hidden"}`}>
@@ -262,7 +270,7 @@ export default function WorkspaceLayout() {
             direction="vertical"
             autoSaveId="workspace-left-v"
           >
-            <Panel defaultSize={50} minSize={20}>
+            <Panel defaultSize={40} minSize={15}>
               <div className="glass-widget h-full">
                 <FileBrowser
                   onSelectFile={handleSelectFile}
@@ -273,7 +281,15 @@ export default function WorkspaceLayout() {
 
             <ResizeHandle direction="vertical" />
 
-            <Panel defaultSize={50} minSize={20}>
+            <Panel defaultSize={25} minSize={10}>
+              <div className="glass-widget h-full">
+                <SessionConfigPanel />
+              </div>
+            </Panel>
+
+            <ResizeHandle direction="vertical" />
+
+            <Panel defaultSize={35} minSize={15}>
               <div className="glass-widget h-full">
                 <IntentionsPanel />
               </div>

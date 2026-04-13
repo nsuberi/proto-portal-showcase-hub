@@ -47,7 +47,7 @@ const XTERM_THEME = {
 };
 
 // ---------------------------------------------------------------------------
-// RunTerminal — a read-only xterm connected to a run's WebSocket
+// RunTerminal — interactive xterm connected to a run's PTY via WebSocket
 // ---------------------------------------------------------------------------
 
 function RunTerminal({
@@ -65,13 +65,13 @@ function RunTerminal({
   const onStatusChangeRef = useRef(onStatusChange);
   onStatusChangeRef.current = onStatusChange;
 
-  // Create terminal + connect WebSocket
+  // Create terminal + connect bidirectional WebSocket
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const term = new Terminal({
-      cursorBlink: false,
+      cursorBlink: true,
       fontSize: 13,
       fontFamily: "var(--font-mono), monospace",
       theme: XTERM_THEME,
@@ -90,29 +90,47 @@ function RunTerminal({
     termRef.current = term;
     fitRef.current = fitAddon;
 
-    // Connect to run WebSocket
+    // Connect to run WebSocket (bidirectional — full Claude Code PTY)
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
     const wsHost = import.meta.env.DEV ? "localhost:8080" : location.host;
     const wsUrl = `${wsProtocol}//${wsHost}/prototypes/research-workspace/vault/api/vault/runs/${runId}/ws`;
 
     const ws = new WebSocket(wsUrl);
-    let lastMessage = "";
+
+    ws.onopen = () => {
+      // Send initial terminal dimensions
+      const resizePayload = JSON.stringify({
+        cols: term.cols,
+        rows: term.rows,
+      });
+      ws.send("\x01" + resizePayload);
+    };
+
     ws.onmessage = (event) => {
       term.write(event.data);
-      lastMessage = event.data;
     };
+
     ws.onclose = () => {
-      term.write("\r\n\x1b[90m[Disconnected]\x1b[0m\r\n");
-      // Detect final status from the last message the server sent
-      if (lastMessage.includes("[Run completed]")) {
-        onStatusChangeRef.current?.("completed");
-      } else if (lastMessage.includes("[Run failed]") || lastMessage.includes("[Run cancelled]")) {
-        onStatusChangeRef.current?.("failed");
-      } else {
-        onStatusChangeRef.current?.("completed");
-      }
+      term.write("\r\n\x1b[90m[Session ended]\x1b[0m\r\n");
+      onStatusChangeRef.current?.("completed");
     };
+
     ws.onerror = () => term.write("\r\n\x1b[31m[Connection error]\x1b[0m\r\n");
+
+    // Terminal input → WebSocket → PTY
+    term.onData((data) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      }
+    });
+
+    // Terminal resize → WebSocket → PTY resize
+    term.onResize(({ cols, rows }) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        const resizePayload = JSON.stringify({ cols, rows });
+        ws.send("\x01" + resizePayload);
+      }
+    });
 
     return () => {
       ws.close();
@@ -227,6 +245,16 @@ export default function TerminalPanel() {
     };
     window.addEventListener("run-started", handler);
     return () => window.removeEventListener("run-started", handler);
+  }, []);
+
+  // Listen for switch-terminal-tab events (e.g. from onboarding modal)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { tab } = (e as CustomEvent).detail;
+      setActiveTab(tab);
+    };
+    window.addEventListener("switch-terminal-tab", handler);
+    return () => window.removeEventListener("switch-terminal-tab", handler);
   }, []);
 
   const updateTabStatus = useCallback((tabId: string, status: "completed" | "failed") => {
