@@ -8,6 +8,7 @@ import fs from 'fs/promises';
 import { existsSync, createReadStream, statSync } from 'fs';
 import { glob } from 'glob';
 import { randomUUID } from 'crypto';
+import archiver from 'archiver';
 
 const VAULT_ROOT = process.env.VAULT_ROOT || '/workspace';
 const PORT = parseInt(process.env.PORT || '8080', 10);
@@ -393,6 +394,48 @@ app.post(`${API_PREFIX}/folders/*`, pathMiddleware, async (req, res, next) => {
     }
     await fs.mkdir(req.vaultPath, { recursive: true });
     res.status(201).json({ path: req.vaultRelPath, type: 'directory' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- Vault Download (ZIP) ---
+
+app.get(`${API_PREFIX}/download`, async (req, res, next) => {
+  try {
+    const userVault = await ensureUserVault(req.userId);
+    const subPath = req.query.path || '';
+    const targetDir = subPath ? sanitizePath(userVault, subPath) : userVault;
+
+    if (!targetDir) {
+      return res.status(400).json({ error: 'Invalid path' });
+    }
+    if (!existsSync(targetDir)) {
+      return res.status(404).json({ error: 'Path not found' });
+    }
+    const stat = statSync(targetDir);
+    if (!stat.isDirectory()) {
+      return res.status(400).json({ error: 'Path is not a directory' });
+    }
+
+    const folderName = subPath ? path.basename(subPath) : 'vault';
+    const zipName = `${folderName}-${new Date().toISOString().slice(0, 10)}.zip`;
+
+    res.set('Content-Type', 'application/zip');
+    res.set('Content-Disposition', `attachment; filename="${zipName}"`);
+
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    archive.on('error', (err) => { next(err); });
+    archive.pipe(res);
+
+    // Add files, skipping dotfiles (same pattern as buildTree)
+    archive.glob('**/*', {
+      cwd: targetDir,
+      ignore: ['.*', '.*/**'],
+      dot: false,
+    });
+
+    await archive.finalize();
   } catch (err) {
     next(err);
   }
@@ -1025,7 +1068,9 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
 
   // Hook script — logs tool use to .tool-activity.jsonl
   // Always overwrite: this is server-generated, not user-customized.
-  // Written as Node.js (not bash) to avoid shell escaping and jq issues.
+  // Uses fully synchronous fd I/O (readFileSync(0) + writeSync(1)) to guarantee
+  // stdout is flushed before exit. process.stdout.write() is async on pipes and
+  // can fail to flush before Node.js exits — see HOOK-DIAGNOSIS.md.
   const hookScript = path.join(hooksDir, 'log-activity.js');
   // Also clean up old bash version if it exists
   const oldHookScript = path.join(hooksDir, 'log-activity.sh');
@@ -1033,56 +1078,55 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
   await fs.mkdir(hooksDir, { recursive: true });
   await fs.writeFile(hookScript, `#!/usr/bin/env node
 // Claude Code PreToolUse hook — audits tool activity and enforces tool policy.
+// Uses synchronous fd I/O to guarantee stdout delivery on pipes.
 const fs = require('fs');
 const path = require('path');
 
-let input = '';
-process.stdin.on('data', (chunk) => { input += chunk; });
-process.stdin.on('end', () => {
+try {
+  const input = fs.readFileSync(0, 'utf-8').trim() || '{}';
+  const parsed = JSON.parse(input);
+  const tool = parsed.tool_name || 'unknown';
+  const toolInput = parsed.tool_input || {};
+  const runId = process.env.CLAUDE_RUN_ID || '';
+  const home = process.env.HOME || '/tmp';
+  let decision = 'allow';
+  let reason = '';
+
+  // Check tool policy
+  const policyFile = path.join(home, '.claude', 'tool-policy.json');
   try {
-    const parsed = JSON.parse(input || '{}');
-    const tool = parsed.tool_name || 'unknown';
-    const toolInput = parsed.tool_input || {};
-    const runId = process.env.CLAUDE_RUN_ID || '';
-    const home = process.env.HOME || '/tmp';
-    let decision = 'allow';
-    let reason = '';
-
-    // Check tool policy
-    const policyFile = path.join(home, '.claude', 'tool-policy.json');
-    try {
-      if (fs.existsSync(policyFile)) {
-        const policy = JSON.parse(fs.readFileSync(policyFile, 'utf-8'));
-        if (Array.isArray(policy.blocked_tools) && policy.blocked_tools.includes(tool)) {
-          decision = 'block';
-          reason = 'Tool ' + tool + ' is blocked by workspace policy';
-        }
+    if (fs.existsSync(policyFile)) {
+      const policy = JSON.parse(fs.readFileSync(policyFile, 'utf-8'));
+      if (Array.isArray(policy.blocked_tools) && policy.blocked_tools.includes(tool)) {
+        decision = 'block';
+        reason = 'Tool ' + tool + ' is blocked by workspace policy';
       }
-    } catch {}
-
-    // Append to activity log
-    const logEntry = JSON.stringify({
-      timestamp: new Date().toISOString(),
-      tool,
-      input: toolInput,
-      decision,
-      runId,
-    });
-    try {
-      fs.appendFileSync(path.join(home, '.tool-activity.jsonl'), logEntry + '\\n');
-    } catch {}
-
-    // Output decision — this MUST be the only stdout
-    if (decision === 'block') {
-      process.stdout.write(JSON.stringify({ decision: 'block', reason }) + '\\n');
-    } else {
-      process.stdout.write('{"decision":"allow"}\\n');
     }
-  } catch (err) {
-    // If anything goes wrong, still output valid JSON
-    process.stdout.write('{"decision":"allow"}\\n');
+  } catch {}
+
+  // Append to activity log
+  const logEntry = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    tool,
+    input: toolInput,
+    decision,
+    runId,
+  });
+  try {
+    fs.appendFileSync(path.join(home, '.tool-activity.jsonl'), logEntry + '\\n');
+  } catch {}
+
+  // Synchronous stdout write to fd 1 — bypasses Node.js event loop,
+  // guaranteed in kernel pipe buffer before this call returns.
+  if (decision === 'block') {
+    fs.writeSync(1, JSON.stringify({ decision: 'block', reason }) + '\\n');
+  } else {
+    fs.writeSync(1, '{"decision":"allow"}\\n');
   }
-});
+} catch (err) {
+  // If anything goes wrong, still output valid JSON via synchronous write
+  fs.writeSync(1, '{"decision":"allow"}\\n');
+}
 `);
   await fs.chmod(hookScript, 0o755);
 
