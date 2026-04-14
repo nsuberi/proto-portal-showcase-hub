@@ -6,7 +6,7 @@ import ContentTypeTabs from "../components/ContentTypeTabs";
 import HeroSection from "../components/HeroSection";
 import { usePublishedItems } from "../hooks/usePublishedContent";
 import { useAuthStatus } from "../hooks/useAuthStatus";
-import { Lock, LogOut, Shield, ArrowRight } from "lucide-react";
+import { Lock, LogOut, ArrowRight } from "lucide-react";
 
 export default function GalleryPage() {
   const [staticItems, setStaticItems] = useState<ContentItem[]>([]);
@@ -90,13 +90,6 @@ export default function GalleryPage() {
                   Sign in to publish
                 </a>
               )}
-              <Link
-                to="/security"
-                className="inline-flex items-center gap-1.5 font-label text-sm text-on-surface-variant/50 hover:text-on-surface-variant/80 transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                Security
-              </Link>
               <a
                 href="/"
                 className="font-label text-sm text-primary hover:text-primary/80 transition-colors"
@@ -169,14 +162,7 @@ export default function GalleryPage() {
 
       {/* Footer */}
       <footer className="border-t border-outline-variant/10 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <Link
-            to="/security"
-            className="inline-flex items-center gap-1.5 font-label text-xs text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors"
-          >
-            <Shield className="w-3 h-3" />
-            Security Architecture
-          </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center">
           <a
             href="/"
             className="font-label text-xs text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors"
