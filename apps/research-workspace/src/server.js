@@ -1086,9 +1086,9 @@ process.stdin.on('end', () => {
 `);
   await fs.chmod(hookScript, 0o755);
 
-  // Claude Code settings with hook config — always write the correct format
+  // Claude Code settings — always overwrite to ensure hook path is current
   const settingsPath = path.join(claudeDir, 'settings.json');
-  const settingsContent = {
+  await fs.writeFile(settingsPath, JSON.stringify({
     hooks: {
       PreToolUse: [
         {
@@ -1102,24 +1102,7 @@ process.stdin.on('end', () => {
         }
       ]
     }
-  };
-  // Write if missing or if the existing file has a malformed hooks structure
-  let needsWrite = !existsSync(settingsPath);
-  if (!needsWrite) {
-    try {
-      const existing = JSON.parse(await fs.readFile(settingsPath, 'utf-8'));
-      const entries = existing?.hooks?.PreToolUse;
-      if (Array.isArray(entries) && entries.some(e => e.command && !e.hooks)) {
-        needsWrite = true;
-      }
-    } catch {
-      needsWrite = true;
-    }
-  }
-  if (needsWrite) {
-    await fs.writeFile(settingsPath, JSON.stringify(settingsContent, null, 2));
-    console.log('[init] Created Claude Code settings with hooks');
-  }
+  }, null, 2));
 
   // Default tool policy (enterprise controls demo)
   const policyPath = path.join(claudeDir, 'tool-policy.json');
@@ -1381,24 +1364,26 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
   }, 10000);
 
   // --- Task completion detection ---
-  // After the prompt is injected, monitor output for Claude's idle state.
-  // When output settles (3s silence after substantial output), send /exit.
+  // After the prompt is injected and Claude has done substantial work,
+  // detect when output settles (10s silence) and send /exit.
+  // Thresholds are high to avoid killing runs during thinking pauses.
   let completionBytes = 0;
   let completionTimer = null;
+  const COMPLETION_MIN_BYTES = 5000;   // ~5KB of output before considering done
+  const COMPLETION_SETTLE_MS = 10000;  // 10s of silence = task complete
   const MAX_RUN_DURATION = 30 * 60 * 1000; // 30 minutes
 
   shell.onData((data) => {
     if (!run.promptInjected || run.status !== 'running') return;
     completionBytes += data.length;
-    // Wait for substantial output before considering "settle"
-    if (completionBytes < 500) return;
+    if (completionBytes < COMPLETION_MIN_BYTES) return;
     if (completionTimer) clearTimeout(completionTimer);
     completionTimer = setTimeout(() => {
       if (run.status === 'running') {
-        console.log(`[run:${runId.slice(0,8)}] Task complete (${completionBytes} bytes output), sending /exit`);
+        console.log(`[run:${runId.slice(0,8)}] Task complete (${completionBytes} bytes, 10s idle), sending /exit`);
         shell.write('/exit\r');
       }
-    }, 3000);
+    }, COMPLETION_SETTLE_MS);
   });
 
   // Max duration fallback — force-exit stuck runs
@@ -1710,14 +1695,14 @@ async function runScheduler() {
         shell.onData((data) => {
           if (!run.promptInjected || run.status !== 'running') return;
           compBytes += data.length;
-          if (compBytes < 500) return;
+          if (compBytes < 5000) return;
           if (compTimer) clearTimeout(compTimer);
           compTimer = setTimeout(() => {
             if (run.status === 'running') {
               shell.write('/exit\r');
-              console.log(`[scheduler:${runId.slice(0,8)}] Task complete, sending /exit`);
+              console.log(`[scheduler:${runId.slice(0,8)}] Task complete (${compBytes} bytes, 10s idle), sending /exit`);
             }
-          }, 3000);
+          }, 10000);
         });
 
         shell.onExit(({ exitCode }) => {
