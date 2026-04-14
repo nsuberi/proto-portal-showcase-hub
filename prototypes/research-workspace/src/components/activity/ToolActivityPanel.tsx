@@ -21,6 +21,7 @@ interface ToolEvent {
   tool: string;
   input: Record<string, unknown>;
   decision: "allow" | "block";
+  reason?: string;
   runId?: string;
   runTitle?: string;
 }
@@ -297,6 +298,9 @@ function EventRow({ event }: { event: ToolEvent }) {
               {event.decision === "allow" ? "Allowed" : "Blocked"}
             </span>
           </div>
+          {event.decision === "block" && event.reason && (
+            <DetailField label="Reason" value={event.reason} />
+          )}
         </div>
       )}
     </div>

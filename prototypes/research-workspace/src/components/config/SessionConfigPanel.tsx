@@ -14,6 +14,7 @@ import {
   Search,
   Globe,
   Activity,
+  SlidersHorizontal,
 } from "lucide-react";
 
 interface Skill {
@@ -32,7 +33,7 @@ interface Hook {
 interface SessionConfig {
   skills: Skill[];
   hooks: Record<string, Hook[]>;
-  toolPolicy: { blocked_tools: string[]; notes?: string };
+  toolPolicy: { blocked_tools: string[]; rules?: { id: string; label: string }[]; notes?: string };
 }
 
 const BASE_URL = import.meta.env.DEV
@@ -87,9 +88,10 @@ function SectionHeader({
 
 interface SessionConfigPanelProps {
   onSelectFile?: (path: string) => void;
+  onOpenPolicyEditor?: () => void;
 }
 
-export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelProps) {
+export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }: SessionConfigPanelProps) {
   const [config, setConfig] = useState<SessionConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [skillsOpen, setSkillsOpen] = useState(true);
@@ -112,6 +114,13 @@ export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelP
 
   useEffect(() => {
     fetchConfig();
+  }, []);
+
+  // Re-fetch when tool policy is updated from the editor
+  useEffect(() => {
+    const handler = () => fetchConfig();
+    window.addEventListener("tool-policy-updated", handler);
+    return () => window.removeEventListener("tool-policy-updated", handler);
   }, []);
 
   const blockedTools = new Set(config?.toolPolicy?.blocked_tools || []);
@@ -235,13 +244,26 @@ export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelP
 
             {/* Tools section */}
             <div className="border-b border-white/[0.04]">
-              <SectionHeader
-                icon={Wrench}
-                label="Tools"
-                count={CLAUDE_TOOLS.length - blockedTools.size}
-                expanded={toolsOpen}
-                onToggle={() => setToolsOpen(!toolsOpen)}
-              />
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <SectionHeader
+                    icon={Wrench}
+                    label="Tools"
+                    count={CLAUDE_TOOLS.length - blockedTools.size}
+                    expanded={toolsOpen}
+                    onToggle={() => setToolsOpen(!toolsOpen)}
+                  />
+                </div>
+                {onOpenPolicyEditor && (
+                  <button
+                    onClick={onOpenPolicyEditor}
+                    className="p-1 mr-2 text-white/20 hover:text-primary/70 transition-colors"
+                    title="Edit tool policy"
+                  >
+                    <SlidersHorizontal className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
               {toolsOpen && (
                 <div className="px-3 pb-2 pl-5">
                   <div className="flex flex-wrap gap-1">
@@ -274,6 +296,13 @@ export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelP
                       <ShieldCheck className="w-3 h-3" />
                       {blockedTools.size} tool
                       {blockedTools.size > 1 ? "s" : ""} blocked by policy
+                    </p>
+                  )}
+                  {(config?.toolPolicy?.rules?.length ?? 0) > 0 && (
+                    <p className="font-label text-[9px] text-primary/40 mt-1 flex items-center gap-1">
+                      <SlidersHorizontal className="w-3 h-3" />
+                      {config!.toolPolicy.rules!.length} parameter rule
+                      {config!.toolPolicy.rules!.length > 1 ? "s" : ""} active
                     </p>
                   )}
                 </div>
