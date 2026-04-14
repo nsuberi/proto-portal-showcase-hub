@@ -49,10 +49,10 @@ CloudFront (E25WB0ZPQ7JJFT)
 ## Server API Surface
 
 **REST:**
-`GET /api/vault/tree` · `GET|PUT|POST|DELETE|PATCH /api/vault/files/*` · `GET /api/vault/links` · `GET /api/vault/search?q=` · `GET|DELETE /api/vault/activity` · `POST|GET /api/vault/runs` · `DELETE /api/vault/runs/:id` · `POST /api/vault/auth-code` · `DELETE /api/vault/auth` · `GET /healthz`
+`GET /api/vault/tree` · `GET|PUT|POST|DELETE|PATCH /api/vault/files/*` · `POST /api/vault/folders/*` · `GET /api/vault/links` · `GET /api/vault/search?q=` · `GET|DELETE /api/vault/activity` · `POST|GET /api/vault/runs` · `DELETE /api/vault/runs/:id` · `POST /api/vault/publish` · `GET /api/vault/published` · `GET /api/vault/published/:id` · `GET /api/vault/config` · `GET /api/vault/onboarding-status` · `GET /api/vault/download?path=` · `POST /api/vault/auth-code` · `DELETE /api/vault/auth` · `GET /healthz`
 
 **WebSocket:**
-`/api/vault/terminal` (interactive PTY) · `/api/vault/runs/:id/ws` (run output stream) · `/api/vault/chat` (stream-json Claude)
+`/api/vault/terminal` (interactive PTY) · `/api/vault/runs/:id/ws` (run output stream) · `/api/vault/chat` (stream-json Claude interaction)
 
 ## Data Files (vault)
 
@@ -61,7 +61,7 @@ CloudFront (E25WB0ZPQ7JJFT)
 | `.intentions.json` | Intentions list (hidden from file browser) |
 | `.tool-activity.jsonl` | Hook-logged tool use events |
 | `.claude/settings.json` | Claude Code hook config |
-| `.claude/hooks/log-activity.sh` | PreToolUse hook script |
+| `.claude/hooks/log-activity.js` | PreToolUse hook script (Node.js) |
 | `.claude/skills/research/SKILL.md` | Research skill for Claude Code |
 | `reviews/` | Paper review outputs |
 | `syntheses/` | Cross-paper synthesis outputs |
@@ -133,5 +133,5 @@ aws logs tail /ecs/research-workspace-prod --since 5m --region us-east-1
 2. **CloudFront pattern**: `vault*` (no slash before `*`). Previous `vault/*` caused 404 on `/vault`.
 3. **ECS `ignore_changes` trap**: `terraform apply` ≠ container update. Always force-deploy.
 4. **Cognito OAuth vars**: Omitting destroys auth. Always pass or use `-target`.
-5. **Runs use `spawn` not PTY**: Background runs use `--output-format stream-json` (not PTY). PTY is only for the interactive terminal.
+5. **Runs use PTY, chat uses spawn**: Both the interactive terminal AND background runs use interactive PTY sessions (`pty.spawn`). The chat WebSocket uses `child_process.spawn` with `--output-format stream-json`.
 6. **Token security**: `.claude/` is chmod 700, credentials chmod 600. Revoke via `DELETE /api/vault/auth`.

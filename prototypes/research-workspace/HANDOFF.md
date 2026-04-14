@@ -8,7 +8,7 @@
 
 A multi-user research platform at `portfolio.cookinupideas.com/prototypes/research-workspace/` that combines:
 - **Public gallery** — browse published insights, syntheses, and architecture diagrams
-- **Authenticated workspace** — Obsidian-like markdown editor, file browser, xterm.js terminal, all in a React SPA
+- **Authenticated workspace** — Milkdown WYSIWYG markdown editor, file browser, xterm.js terminal, all in a React SPA
 - **Automated research loop** — Claude Code Cloud Scheduled Tasks generate content from arXiv papers based on user-set "learning intentions"
 
 ## Current State (What's Done)
@@ -53,8 +53,8 @@ cloudfront_distribution_id  = E25WB0ZPQ7JJFT
 - Content fetched at runtime via `fetch()` from S3-backed paths
 - Build: `yarn workspace @proto-portal/research-workspace build` — passes cleanly
 
-### Workspace SPA Components (built, NOT yet deployed)
-These components are built and the SPA compiles, but the ECS container still runs the old code-server image:
+### Workspace SPA Components (built and deployed)
+These components are built and deployed. The ECS container runs the Express.js backend (`node src/server.js`):
 - `src/components/layout/WorkspaceLayout.tsx` — resizable three-panel layout (file browser | editor | terminal)
 - `src/components/file-browser/FileBrowser.tsx` — tree view from `/api/vault/tree`
 - `src/components/editor/MarkdownEditor.tsx` — editor wrapper with save status + auto-save
@@ -64,8 +64,8 @@ These components are built and the SPA compiles, but the ECS container still run
 - `src/hooks/useTerminal.ts` — terminal WebSocket hook
 - Route: `/workspace` in App.tsx
 
-### Backend (built, NOT yet deployed)
-The new Express.js backend replaces code-server:
+### Backend (built and deployed)
+The Express.js backend serves the workspace:
 - `apps/research-workspace/src/server.js` — Express + file API + WebSocket terminal
 - `apps/research-workspace/Dockerfile` — Node.js 20 + node-pty + Claude Code CLI
 - `apps/research-workspace/vault-readme.md` — getting started guide baked into vault
@@ -86,56 +86,8 @@ The new Express.js backend replaces code-server:
 
 ## What's NOT Done (Remaining Work)
 
-### Immediate: Deploy the new backend + workspace SPA
-**This is the critical next step.** The code is written but the ECS container still runs code-server.
-
-Steps:
-1. Assume IAM role:
-   ```bash
-   eval $(aws sts assume-role --role-arn "arn:aws:iam::671388079324:role/terraform-cooking-up-ideas" \
-     --role-session-name "deploy-session" --output json \
-     | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')")
-   ```
-
-2. Update Terraform health check:
-   In `terraform/modules/research-workspace/main.tf`, the health check path should be `/healthz` (the new backend's health endpoint). Currently it's `/`.
-
-3. Build + push Docker image:
-   ```bash
-   cd apps/research-workspace
-   docker build --platform linux/arm64 -t research-workspace .
-   docker tag research-workspace:latest 671388079324.dkr.ecr.us-east-1.amazonaws.com/research-workspace-prod:latest
-   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 671388079324.dkr.ecr.us-east-1.amazonaws.com
-   docker push 671388079324.dkr.ecr.us-east-1.amazonaws.com/research-workspace-prod:latest
-   ```
-
-4. Apply Terraform + force ECS deployment:
-   ```bash
-   cd terraform
-   terraform apply -auto-approve -var="bucket_name=portfolio-portal-code" \
-     -var="github_oauth_client_id=Ov23limPUjSbaPOZ4PFW" \
-     -var="github_oauth_client_secret=06408f2b25ba56d964c0d169527c5c7e25f1557b"
-   
-   # Force new task definition + image pull
-   LATEST_TD=$(aws ecs describe-task-definition --task-definition research-workspace-prod --region us-east-1 --query 'taskDefinition.taskDefinitionArn' --output text)
-   aws ecs update-service --cluster ai-testing-resource-prod --service research-workspace-prod \
-     --task-definition "$LATEST_TD" --force-new-deployment --region us-east-1
-   ```
-   
-   NOTE: ECS has `lifecycle { ignore_changes = [task_definition] }` — after Terraform creates a new revision, you must manually update the service to use it (the `aws ecs update-service --task-definition` command above).
-
-5. Deploy SPA to S3:
-   ```bash
-   cd /path/to/repo
-   ./scripts/build.sh
-   aws s3 sync dist/ s3://portfolio-portal-code --delete --exclude "*.map"
-   aws cloudfront create-invalidation --distribution-id E25WB0ZPQ7JJFT --paths "/*"
-   ```
-
-6. Verify:
-   - `https://portfolio.cookinupideas.com/prototypes/research-workspace/` — public gallery loads
-   - `https://portfolio.cookinupideas.com/prototypes/research-workspace/vault/healthz` — returns JSON (after auth)
-   - `https://portfolio.cookinupideas.com/prototypes/research-workspace/workspace` — workspace layout loads (after auth)
+### ~~Immediate: Deploy the new backend + workspace SPA~~ (COMPLETED)
+The Express.js backend is deployed. The ECS container runs `node src/server.js`. Deploy instructions are in AGENTS.md.
 
 ### Phase 2: Wiki-Links + Graph (not started)
 - Wiki-link `[[]]` remark plugin for Milkdown
@@ -143,12 +95,12 @@ Steps:
 - Sigma.js + graphology graph view (reuse pattern from `prototypes/ffx-skill-map/src/pages/SkillMap.tsx`)
 - Backlinks panel
 
-### Phase 3: Polish (not started)
-- Command palette (Ctrl+P)
-- Publish integration in editor UI
-- Tab system for multiple files
-- Intentions dashboard
-- Mobile responsive
+### Phase 3: Polish (partially shipped)
+- Command palette (Ctrl+P) — not started
+- ~~Publish integration in editor UI~~ — **shipped** (PublishDialog.tsx)
+- ~~Tab system for multiple files~~ — **shipped** (TerminalPanel tabbed interface)
+- ~~Intentions dashboard~~ — **shipped** (IntentionsPanel with CRUD, schedules, manual triggers)
+- ~~Mobile responsive~~ — **shipped** (5-tab swipeable layout with useIsMobile hook)
 
 ### Cloud Scheduled Task (not registered)
 The prompt is at `scripts/research-workspace-cloud-prompt.md`. To register:
@@ -273,7 +225,7 @@ IAM for cloud task:
 
 ## Architectural Decisions (documented in README.md)
 
-1. code-server → Milkdown + xterm.js + custom Express backend (IDE is overkill for the JTBD)
+1. Custom workspace (Express.js + Milkdown + xterm.js) instead of code-server/Obsidian (completed — IDE is overkill for the JTBD)
 2. GitHub OIDC proxy Lambda (GitHub OAuth is not OIDC-compliant)
 3. Cognito at ALB level (no auth in app code)
 4. Per-user EFS access points (kernel-level token isolation)
@@ -287,9 +239,10 @@ IAM for cloud task:
 
 ## Known Issues
 
-1. **ECS still runs code-server** — needs Docker rebuild + push with the new Express backend
+1. ~~**ECS still runs code-server**~~ — **RESOLVED.** Express.js backend is deployed. Dockerfile runs `node src/server.js`.
 2. **Milkdown may fall back to textarea** — the MilkdownEditor.tsx has a dynamic import fallback; if Milkdown fails to initialize in production, users get a plain textarea. This is intentional for resilience but should be debugged if it happens.
 3. **Large Mermaid.js chunks** — ~600KB. Dynamically imported but still large. Consider lazy-loading only on architecture content pages.
 4. **DynamoDB table is empty** — run `scripts/seed-research-workspace.sh` after assuming IAM role to migrate existing inference-insights data.
 5. **Cloud scheduled task not registered** — prompt exists at `scripts/research-workspace-cloud-prompt.md` but RemoteTrigger hasn't been called yet.
 6. **node-pty on ARM64** — The Dockerfile installs `build-essential` and `python3` for native compilation. If the build fails, try `npm rebuild node-pty` inside the container.
+7. **Single ECS task for all users** — Application-layer isolation only (no container or kernel-level isolation). See PRD Security Architecture for isolation tiers and cost analysis.

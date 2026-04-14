@@ -66,7 +66,7 @@ variable "cognito_domain" {
 
 # Container configuration
 variable "container_port" {
-  description = "Port the container listens on (code-server default)"
+  description = "Port the container listens on"
   type        = number
   default     = 8080
 }
