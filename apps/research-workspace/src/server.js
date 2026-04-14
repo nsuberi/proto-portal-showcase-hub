@@ -1025,43 +1025,64 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
 
   // Hook script — logs tool use to .tool-activity.jsonl
   // Always overwrite: this is server-generated, not user-customized.
-  const hookScript = path.join(hooksDir, 'log-activity.sh');
+  // Written as Node.js (not bash) to avoid shell escaping and jq issues.
+  const hookScript = path.join(hooksDir, 'log-activity.js');
+  // Also clean up old bash version if it exists
+  const oldHookScript = path.join(hooksDir, 'log-activity.sh');
+  if (existsSync(oldHookScript)) await fs.unlink(oldHookScript).catch(() => {});
   await fs.mkdir(hooksDir, { recursive: true });
-  await fs.writeFile(hookScript, `#!/bin/bash
-# Claude Code PreToolUse hook — audits tool activity and enforces tool policy.
-# Every tool invocation is logged with the run ID for session filtering.
-# NOTE: No set -e — this script MUST always produce valid JSON on stdout.
+  await fs.writeFile(hookScript, `#!/usr/bin/env node
+// Claude Code PreToolUse hook — audits tool activity and enforces tool policy.
+const fs = require('fs');
+const path = require('path');
 
-INPUT="$(cat)" || INPUT='{}'
-TOOL="$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null)" || TOOL="unknown"
-TOOL_INPUT="$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null)" || TOOL_INPUT='{}'
-TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
-RUN_ID="\${CLAUDE_RUN_ID:-}"
-DECISION="allow"
-REASON=""
+let input = '';
+process.stdin.on('data', (chunk) => { input += chunk; });
+process.stdin.on('end', () => {
+  try {
+    const parsed = JSON.parse(input || '{}');
+    const tool = parsed.tool_name || 'unknown';
+    const toolInput = parsed.tool_input || {};
+    const runId = process.env.CLAUDE_RUN_ID || '';
+    const home = process.env.HOME || '/tmp';
+    let decision = 'allow';
+    let reason = '';
 
-# Check tool policy (if policy file exists)
-POLICY_FILE="$HOME/.claude/tool-policy.json"
-if [ -f "$POLICY_FILE" ]; then
-  BLOCKED="$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null)" || BLOCKED="0"
-  if [ "$BLOCKED" != "0" ] && [ -n "$BLOCKED" ]; then
-    DECISION="block"
-    REASON="Tool $TOOL is blocked by workspace policy"
-  fi
-fi
+    // Check tool policy
+    const policyFile = path.join(home, '.claude', 'tool-policy.json');
+    try {
+      if (fs.existsSync(policyFile)) {
+        const policy = JSON.parse(fs.readFileSync(policyFile, 'utf-8'));
+        if (Array.isArray(policy.blocked_tools) && policy.blocked_tools.includes(tool)) {
+          decision = 'block';
+          reason = 'Tool ' + tool + ' is blocked by workspace policy';
+        }
+      }
+    } catch {}
 
-# Append to per-user activity log (use jq to safely build JSON)
-jq -n --arg ts "$TIMESTAMP" --arg tool "$TOOL" --argjson input "$TOOL_INPUT" \\
-  --arg decision "$DECISION" --arg runId "$RUN_ID" \\
-  '{timestamp:$ts, tool:$tool, input:$input, decision:$decision, runId:$runId}' \\
-  >> "$HOME/.tool-activity.jsonl" 2>/dev/null || true
+    // Append to activity log
+    const logEntry = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      tool,
+      input: toolInput,
+      decision,
+      runId,
+    });
+    try {
+      fs.appendFileSync(path.join(home, '.tool-activity.jsonl'), logEntry + '\\n');
+    } catch {}
 
-# Output decision to stdout — MUST be valid JSON, nothing else
-if [ "$DECISION" = "block" ]; then
-  echo '{"decision":"block","reason":"'"$REASON"'"}'
-else
-  echo '{"decision":"allow"}'
-fi
+    // Output decision — this MUST be the only stdout
+    if (decision === 'block') {
+      process.stdout.write(JSON.stringify({ decision: 'block', reason }) + '\\n');
+    } else {
+      process.stdout.write('{"decision":"allow"}\\n');
+    }
+  } catch (err) {
+    // If anything goes wrong, still output valid JSON
+    process.stdout.write('{"decision":"allow"}\\n');
+  }
+});
 `);
   await fs.chmod(hookScript, 0o755);
 
