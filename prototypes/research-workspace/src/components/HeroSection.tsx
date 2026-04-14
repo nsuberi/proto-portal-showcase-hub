@@ -88,7 +88,7 @@ export default function HeroSection({ isAuthenticated }: Props) {
 
         {/* Right: lens focus visual */}
         <div className="flex-1 relative" aria-hidden="true">
-          <div className="relative w-full max-w-md mx-auto md:mx-0 md:ml-auto h-48 sm:h-56">
+          <div className="relative w-full max-w-xl mx-auto md:mx-0 md:ml-auto h-72 sm:h-84">
             <svg
               viewBox="0 0 100 100"
               className="w-full h-full"
