@@ -1,17 +1,10 @@
 import { Lightbulb, Layers, GitBranch } from "lucide-react";
-import type { ContentItem, ContentType, Domain } from "../types";
-import { DOMAIN_LABELS, CONTENT_TYPE_LABELS } from "../types";
+import type { ContentItem, ContentType } from "../types";
+import { CONTENT_TYPE_LABELS } from "../types";
 
 interface Props {
   item: ContentItem;
 }
-
-const DOMAIN_DOT_COLORS: Record<string, string> = {
-  distributed: "bg-domain-distributed",
-  music: "bg-domain-music",
-  architecture: "bg-domain-architecture",
-  ml: "bg-domain-ml",
-};
 
 const TYPE_BADGE_STYLES: Record<ContentType, string> = {
   insight: "bg-tertiary/15 text-tertiary",
@@ -61,20 +54,6 @@ export default function ContentCard({ item }: Props) {
           by {item.author}
         </p>
       )}
-
-      {/* Domain dots */}
-      <div className="flex items-center gap-3 mb-3">
-        {item.domains.map((d) => (
-          <div key={d.domain} className="flex items-center gap-1.5" title={d.note}>
-            <span
-              className={`w-2 h-2 rounded-full ${DOMAIN_DOT_COLORS[d.domain] || "bg-on-surface-variant"}`}
-            />
-            <span className="font-label text-xs text-on-surface-variant">
-              {DOMAIN_LABELS[d.domain as Domain] || d.domain}
-            </span>
-          </div>
-        ))}
-      </div>
 
       {/* Tags */}
       <div className="flex flex-wrap gap-1.5">

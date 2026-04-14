@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { ContentItem, CodeCell } from "../types";
-import { DOMAIN_LABELS, CONTENT_TYPE_LABELS, type Domain, type ContentType } from "../types";
+import { CONTENT_TYPE_LABELS, type ContentType } from "../types";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import CodeCanvas from "../components/CodeCanvas";
 import MermaidRenderer from "../components/MermaidRenderer";
@@ -77,16 +77,6 @@ export default function ContentDetailPage() {
     );
   }
 
-  const domainColor = (domain: string) => {
-    const map: Record<string, string> = {
-      distributed: "bg-domain-distributed/20 text-domain-distributed",
-      music: "bg-domain-music/20 text-domain-music",
-      architecture: "bg-domain-architecture/20 text-domain-architecture",
-      ml: "bg-domain-ml/20 text-domain-ml",
-    };
-    return map[domain] || "bg-surface-container-high text-on-surface-variant";
-  };
-
   const favorited = isFavorite(item.id);
   const dismissed = isDismissed(item.id);
 
@@ -136,19 +126,6 @@ export default function ContentDetailPage() {
               by {item.author}
             </p>
           )}
-        </div>
-
-        {/* Domains */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {item.domains.map((d) => (
-            <span
-              key={d.domain}
-              className={`font-label text-xs px-3 py-1.5 rounded-full ${domainColor(d.domain)}`}
-              title={d.note}
-            >
-              {DOMAIN_LABELS[d.domain as Domain] || d.domain}
-            </span>
-          ))}
         </div>
 
         {/* Tags */}
