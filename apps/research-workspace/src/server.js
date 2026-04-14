@@ -1101,6 +1101,23 @@ try {
         decision = 'block';
         reason = 'Tool ' + tool + ' is blocked by workspace policy';
       }
+      // Parameter-level rules
+      if (decision === 'allow' && Array.isArray(policy.rules)) {
+        for (const rule of policy.rules) {
+          if (rule.tool !== tool || rule.action !== 'block') continue;
+          const val = String(toolInput[rule.parameter] || '');
+          if (!val || !rule.pattern) continue;
+          try {
+            const matched = new RegExp(rule.pattern).test(val);
+            if ((rule.condition === 'matches' && matched) ||
+                (rule.condition === 'not_matches' && !matched)) {
+              decision = 'block';
+              reason = 'Blocked by rule: ' + (rule.label || rule.id);
+              break;
+            }
+          } catch {}
+        }
+      }
     }
   } catch {}
 
@@ -1110,6 +1127,7 @@ try {
     tool,
     input: toolInput,
     decision,
+    reason,
     runId,
   });
   try {
@@ -1274,6 +1292,43 @@ app.get(`${API_PREFIX}/config`, async (req, res) => {
   }
 
   res.json(result);
+});
+
+// --- Tool policy update endpoint ---
+// Persists tool policy changes from the frontend policy editor.
+
+app.put(`${API_PREFIX}/tool-policy`, async (req, res) => {
+  const userVault = await ensureUserVault(req.userId);
+  const policyPath = path.join(userVault, '.claude', 'tool-policy.json');
+
+  try {
+    const policy = req.body;
+    if (!policy || typeof policy !== 'object') {
+      return res.status(400).json({ error: 'Invalid policy object' });
+    }
+    if (!Array.isArray(policy.blocked_tools)) {
+      return res.status(400).json({ error: 'blocked_tools must be an array' });
+    }
+    if (policy.rules && !Array.isArray(policy.rules)) {
+      return res.status(400).json({ error: 'rules must be an array' });
+    }
+    // Validate regex patterns
+    if (Array.isArray(policy.rules)) {
+      for (const rule of policy.rules) {
+        if (rule.pattern) {
+          try { new RegExp(rule.pattern); }
+          catch { return res.status(400).json({ error: `Invalid regex in rule "${rule.label || rule.id}": ${rule.pattern}` }); }
+        }
+      }
+    }
+
+    await fs.writeFile(policyPath, JSON.stringify(policy, null, 2));
+    console.log(`[policy] Updated tool policy for ${req.userId}: ${policy.blocked_tools.length} blocked tools, ${(policy.rules || []).length} rules`);
+    res.json({ ok: true, policy });
+  } catch (err) {
+    console.error('[policy] Error saving tool policy:', err.message);
+    res.status(500).json({ error: 'Failed to save tool policy' });
+  }
 });
 
 // --- Onboarding status check ---
