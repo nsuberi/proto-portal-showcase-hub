@@ -339,11 +339,25 @@ export default function ToolActivityPanel() {
     return () => clearInterval(interval);
   }, [polling]);
 
-  // Filter events by selected session
+  // Filter events by selected session.
+  // Primary: match by runId. Fallback: match by timestamp overlap with the run.
   const filteredEvents = useMemo(() => {
     if (!selectedRunId) return events;
-    return events.filter((e) => e.runId === selectedRunId);
-  }, [events, selectedRunId]);
+    const run = runs.find((r) => r.id === selectedRunId);
+    return events.filter((e) => {
+      if (e.runId === selectedRunId) return true;
+      // Fallback: if event has no runId, match by time window
+      if (!e.runId && run) {
+        const eventTime = new Date(e.timestamp).getTime();
+        const startTime = new Date(run.startedAt).getTime();
+        const endTime = run.finishedAt
+          ? new Date(run.finishedAt).getTime()
+          : Date.now();
+        return eventTime >= startTime && eventTime <= endTime;
+      }
+      return false;
+    });
+  }, [events, selectedRunId, runs]);
 
   // Auto-scroll on new events
   useEffect(() => {
@@ -364,14 +378,27 @@ export default function ToolActivityPanel() {
 
   const activeCount = runs.filter((r) => r.status === "running").length;
 
-  // Per-run tool counts computed from events (server field is unreliable)
+  // Per-run tool counts computed from events (with timestamp fallback)
   const runToolCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const e of events) {
-      if (e.runId) counts[e.runId] = (counts[e.runId] || 0) + 1;
+      if (e.runId) {
+        counts[e.runId] = (counts[e.runId] || 0) + 1;
+      } else {
+        // Fallback: attribute untagged events to runs by timestamp overlap
+        const eventTime = new Date(e.timestamp).getTime();
+        for (const run of runs) {
+          const start = new Date(run.startedAt).getTime();
+          const end = run.finishedAt ? new Date(run.finishedAt).getTime() : Date.now();
+          if (eventTime >= start && eventTime <= end) {
+            counts[run.id] = (counts[run.id] || 0) + 1;
+            break;
+          }
+        }
+      }
     }
     return counts;
-  }, [events]);
+  }, [events, runs]);
 
   // Tool summary counts for the filtered view
   const toolCounts = filteredEvents.reduce<Record<string, number>>((acc, e) => {
