@@ -11,6 +11,7 @@ import TerminalPanel from "../terminal/TerminalPanel";
 import IntentionsPanel from "../intentions/IntentionsPanel";
 import ToolActivityPanel from "../activity/ToolActivityPanel";
 import SessionConfigPanel from "../config/SessionConfigPanel";
+import ToolPolicyEditor from "../config/ToolPolicyEditor";
 import ToastContainer from "../ui/ToastContainer";
 import {
   FileText,
@@ -110,6 +111,7 @@ export default function WorkspaceLayout() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("files");
   const [fullscreen, setFullscreen] = useState(false);
+  const [policyEditorOpen, setPolicyEditorOpen] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { logout } = useAuthStatus();
@@ -149,6 +151,9 @@ export default function WorkspaceLayout() {
 
     return (
       <div className="workspace-layout workspace-backdrop overflow-hidden flex flex-col">
+        {policyEditorOpen && (
+          <ToolPolicyEditor onClose={() => setPolicyEditorOpen(false)} />
+        )}
         {/* Mobile top bar */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0 shrink-0">
           <button
@@ -196,7 +201,7 @@ export default function WorkspaceLayout() {
           </div>
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "config" ? "" : "hidden"}`}>
             <div className="glass-widget h-full">
-              <SessionConfigPanel onSelectFile={handleMobileSelectFile} />
+              <SessionConfigPanel onSelectFile={handleMobileSelectFile} onOpenPolicyEditor={() => setPolicyEditorOpen(true)} />
             </div>
           </div>
           <div className={`absolute inset-0 m-5 mb-0 ${mobileTab === "activity" ? "" : "hidden"}`}>
@@ -242,6 +247,10 @@ export default function WorkspaceLayout() {
           </div>
         </div>
       )}
+      {/* Tool policy editor modal */}
+      {policyEditorOpen && (
+        <ToolPolicyEditor onClose={() => setPolicyEditorOpen(false)} />
+      )}
 
       {/* Top bar */}
       <div className="flex items-center justify-between shrink-0 mb-3">
@@ -285,7 +294,7 @@ export default function WorkspaceLayout() {
 
             <Panel defaultSize={25} minSize={10}>
               <div className="glass-widget h-full">
-                <SessionConfigPanel onSelectFile={handleSelectFile} />
+                <SessionConfigPanel onSelectFile={handleSelectFile} onOpenPolicyEditor={() => setPolicyEditorOpen(true)} />
               </div>
             </Panel>
 
