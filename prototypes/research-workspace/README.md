@@ -1,6 +1,8 @@
 # Research Workspace Platform
 
-A multi-user research platform combining a public knowledge gallery with authenticated personal workspaces. Users set learning intentions, Claude Code researches arXiv papers, and synthesizes findings into publishable insights, cross-article narratives, and architecture diagrams.
+A multi-user research platform built on one principle: **users state intentions and organize their information**, while Claude Code handles execution. Users declare what they want to learn or integrate, trigger background research sessions, and curate results in a personal vault — nothing auto-publishes; the user decides what to share.
+
+The platform combines a public knowledge gallery with authenticated personal workspaces. Users set learning intentions, Claude Code researches arXiv papers, and synthesizes findings into publishable insights, cross-article narratives, and architecture diagrams.
 
 **Live at:** https://portfolio.cookinupideas.com/prototypes/research-workspace/
 
@@ -9,9 +11,10 @@ A multi-user research platform combining a public knowledge gallery with authent
 ```
 /prototypes/research-workspace/
   |
-  |-- /* (public, S3)           ->  Gallery SPA (browse published content)
-  |-- /vault/* (authenticated)  ->  ALB -> Cognito -> ECS code-server
-  |-- /api/* (mixed auth)       ->  API Gateway / ALB -> Lambda / ECS
+  |-- /* (public, S3)                          ->  Gallery SPA (browse published content)
+  |-- /vault/api/vault/published* (no auth)    ->  ALB -> ECS (Express.js, public endpoints)
+  |-- /vault/* (authenticated)                 ->  ALB -> Cognito -> ECS (Express.js + node-pty)
+  |-- /api/* (mixed auth)                      ->  API Gateway -> Lambda -> DynamoDB
 ```
 
 ### Public Gallery
@@ -22,10 +25,21 @@ A React + Vite SPA served from S3 via CloudFront. Three content types displayed 
 
 Content files (.md, .cells.json) are fetched at runtime via `fetch()` -- not bundled into JS.
 
-### Authenticated Vault
-code-server (VS Code in the browser) on ECS Fargate with:
-- **Foam** extension for wiki-links, backlinks, graph visualization
-- **Claude Code** CLI + VS Code extension
+### Authenticated Workspace
+Express.js backend on ECS Fargate with a glassmorphism five-panel React SPA:
+- **Files** — vault file browser (EFS-backed, drag-and-drop, create/delete/rename)
+- **Intentions** — create research/synthesis/review plans with recurring schedules
+- **Editor** — Milkdown WYSIWYG for markdown, regex syntax highlighting for code files
+- **Claude Terminal** — tabbed xterm.js: interactive Claude Code session + per-run output tabs
+- **Hooks & Activity** — real-time PreToolUse hook log showing every tool invocation
+
+Additional capabilities:
+- **Chat panel** — WebSocket-based Claude Code interaction with stream-json output
+- **Voice input** — hold spacebar to dictate (Web Speech API transcription into terminal)
+- **Publishing** — tag-based publishing from vault to public gallery
+- **Session config** — read-only viewer for Claude Code skills, hooks, and tool policies
+- **Scheduler** — recurring intention automation (checks every 60s, spawns PTY sessions)
+- **Download/export** — download folder or entire vault as ZIP
 - **EFS** persistent storage per user
 
 ### Automated Research Loop
@@ -33,10 +47,10 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 
 ## Architectural Decisions
 
-### 1. code-server + Foam instead of Obsidian
-**Decision:** Use code-server with the Foam VS Code extension, not Obsidian.
+### 1. Custom Workspace Instead of code-server or Obsidian
+**Decision:** Build a purpose-built workspace (Express.js + Milkdown + xterm.js) instead of deploying code-server with Foam or Obsidian.
 
-**Why:** Obsidian is a closed-source Electron desktop app with no official Docker/web deployment. Its license prohibits hosting as a multi-user service. Community workarounds (obsidian-remote via noVNC) are fragile and resource-heavy (~1-2GB per instance). code-server provides VS Code in the browser with the Foam extension offering Obsidian-like features (wiki-links, backlinks, graph view) in a web-deployable, multi-user-ready form. The Claude Code VS Code extension also installs natively.
+**Why:** The job-to-be-done is "state intentions and organize information," not "write code in a full IDE." code-server (VS Code in the browser) was the original approach but proved to be overkill — it ships a full IDE when users need a markdown editor, a file browser, and a way to interact with Claude Code. Obsidian is closed-source with no multi-user web deployment option. The custom Express.js backend enables capabilities that couldn't exist as VS Code extensions: the intentions system with recurring schedules, real-time tool activity hooks panel, tag-based publishing to the public gallery, voice input, and a scheduler that spawns background research sessions. Milkdown provides focused WYSIWYG markdown editing, and xterm.js + node-pty gives direct interactive Claude Code terminal sessions.
 
 ### 2. GitHub OIDC Proxy for Cognito Authentication
 **Decision:** Deploy a custom Lambda proxy that wraps GitHub OAuth in OIDC-compliant endpoints.
@@ -46,7 +60,7 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 ### 3. Cognito at ALB Level (Not Application Level)
 **Decision:** Authentication is enforced at the ALB via `authenticate-cognito` listener rule actions, not in application code.
 
-**Why:** No unauthenticated HTTP request ever reaches an ECS container. The ALB rejects traffic before it touches the application. This eliminates an entire class of auth bypass vulnerabilities and means code-server needs zero auth configuration (runs with `--auth none`). The JWT `sub` claim from Cognito maps directly to per-user EFS access points for filesystem isolation.
+**Why:** No unauthenticated HTTP request ever reaches an ECS container. The ALB rejects traffic before it touches the application. This eliminates an entire class of auth bypass vulnerabilities — the Express.js backend has no built-in auth and doesn't need any. The JWT `sub` claim from Cognito is parsed from the `x-amzn-oidc-data` header by the server middleware and used to scope all file operations to the user's vault directory.
 
 ### 4. Per-User EFS Access Points for Token Isolation
 **Decision:** Each user gets a kernel-enforced EFS access point, not just directory-level separation.
@@ -71,12 +85,12 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 ### 8. Mermaid for Architecture Diagrams
 **Decision:** Architecture content uses Mermaid diagram blocks in markdown, rendered client-side.
 
-**Why:** Mermaid is the most widely supported diagramming format in markdown renderers (GitHub, VS Code, Foam, HedgeDoc). It renders client-side via mermaid.js with no server needed. Alternatives (D2, PlantUML) require server-side rendering. The gallery SPA dynamically imports mermaid.js to avoid bundling its full weight on pages that don't need diagrams.
+**Why:** Mermaid is the most widely supported diagramming format in markdown renderers (GitHub, VS Code, HedgeDoc). It renders client-side via mermaid.js with no server needed. Alternatives (D2, PlantUML) require server-side rendering. The gallery SPA dynamically imports mermaid.js to avoid bundling its full weight on pages that don't need diagrams.
 
-### 9. Max Plan Auth via `claude login` in code-server
-**Decision:** Users authenticate Claude Code with their own Max plan by running `claude login` in the code-server terminal.
+### 9. Max Plan Auth via `claude login` in Interactive Terminal
+**Decision:** Users authenticate Claude Code with their own Max plan by running `claude login` in the interactive terminal or via the chat panel's auth flow.
 
-**Why:** The Claude Code CLI's OAuth flow starts a local HTTP callback server. code-server's built-in port forwarding proxies this back through the browser, making the standard `claude login` flow work inside a container. The OAuth token is stored at `~/.claude/` which is symlinked to the EFS vault, persisting across container restarts. Each user authenticates independently -- no shared credentials.
+**Why:** The Claude Code CLI's OAuth device-code flow works in the container because it doesn't require a local callback server — it displays a URL and code that the user enters in their browser. The chat WebSocket handler also supports `claude auth login --claudeai` with a REST fallback for code submission. The OAuth token is stored at `~/.claude/` in the user's vault root (`HOME=/workspace/vaults/{userId}/`), persisting across container restarts on EFS. Each user authenticates independently — no shared credentials.
 
 ### 10. CloudFront Path-Based Routing (Vault vs Gallery)
 **Decision:** CloudFront uses ordered cache behaviors to route `/vault/*` to ALB (authenticated) and `/*` to S3 (public).
@@ -96,7 +110,7 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 | GitHub OIDC Proxy | Lambda | Translates GitHub OAuth to OIDC for Cognito |
 | DynamoDB | Metadata | Content index, intentions, feedback, user profiles |
 | EFS | Storage | Per-user persistent vaults with access point isolation |
-| ECS Fargate | Compute | code-server containers (ARM64, Fargate Spot) |
+| ECS Fargate | Compute | Express.js + node-pty backend (ARM64, Fargate Spot) |
 | ECR | Registry | Docker images for the workspace |
 | S3 | Content | Published gallery content (.md, .cells.json) + static SPA |
 | CloudFront | CDN | Path-based routing (public vs authenticated) |
@@ -104,19 +118,48 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 
 ## Security Model
 
+### Current Isolation (Implemented)
+
 ```
-Layer 1: Cognito + GitHub OAuth (at ALB)
+Layer 1: Cognito + GitHub OAuth (at ALB)                    ✓ Shipped
   No request reaches any container without a valid JWT
 
-Layer 2: Per-User EFS Access Points
-  Kernel-level NFS isolation between user vaults
+Layer 2: Per-User Application-Level Path Isolation          ✓ Shipped
+  Each user scoped to /workspace/vaults/{cognito-sub}/
+  sanitizePath() validates every path against user's vault root
+  Claude Code spawned with HOME set to user's vault directory
 
-Layer 3: Per-User ECS Tasks
-  Separate container per user, no shared process space
-
-Layer 4: Per-User Claude OAuth
-  Each user's .claude/ token stored on their own EFS partition
+Layer 3: Per-User Claude OAuth                              ✓ Shipped
+  Each user's .claude/ token stored in their vault directory
+  Credential scrubbing: ANTHROPIC_API_KEY, AWS_* stripped from spawned processes
 ```
+
+### Planned Isolation (Not Yet Implemented)
+
+```
+Layer 4: Per-User EFS Access Points                         ☐ Planned
+  Kernel-level NFS isolation between user vaults (currently single access point)
+
+Layer 5: Per-User ECS Tasks                                 ☐ Planned
+  Separate container per user, no shared process space (currently shared task)
+```
+
+### Current Limitation: Single Shared ECS Task
+
+All users share one ECS Fargate task (1 vCPU, 2 GB, ARM64). User isolation is enforced at the **application layer** — Cognito JWT parsing + `sanitizePath()` + per-user HOME directories. Users share the same container PID namespace, Linux UID (1000), and network stack.
+
+**Suitable for:** Internal teams, trusted users, portfolio demonstrations.
+**Not suitable for:** Multi-tenant production with untrusted users.
+
+### Isolation Maturity Tiers
+
+| Tier | Model | Isolation | Monthly Cost (5 users) | Cold Start |
+|------|-------|-----------|----------------------|------------|
+| **Current** | Shared task, app-layer paths | Application | ~$14 (Spot) | 0s (always on) |
+| **Tier 2** | Per-user Fargate tasks | Container + application | ~$24 (Spot, 8hr/day) | 45-170s |
+| **Tier 3** | Per-user tasks + per-user EFS APs | Container + kernel | ~$24 (Spot, APs free) | 45-170s |
+
+Cold-start breakdown for per-user tasks: ECS placement (5-15s) + image pull (10-30s, cached after first) + Express boot (3-5s) + health check (30-120s). Mitigable with faster health checks, pre-warming, or loading screen UX.
 
 IAM for the cloud research task: append-only (no delete on S3 or DynamoDB), 1-hour credential TTL, S3 versioning + DynamoDB PITR for rollback.
 

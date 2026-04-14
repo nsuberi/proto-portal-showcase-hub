@@ -22,13 +22,19 @@ Express.js server with 3 WebSocket servers (terminal, chat, run PTY sessions), f
 9. Terminal WSS: PTY → `claude --dangerously-skip-permissions`
 10. Chat WSS: stream-json Claude with auth flow
 11. Run WSS: bidirectional PTY I/O (same protocol as terminal WSS)
-12. Startup: `initClaudeCodeConfig()` + `hardenTokenStorage()`
+12. Publishing: `POST /api/vault/publish`, `GET /api/vault/published`, `GET /api/vault/published/:id`
+13. Config & onboarding: `GET /api/vault/config`, `GET /api/vault/onboarding-status`
+14. Folder creation: `POST /api/vault/folders/*`
+15. Vault download: `GET /api/vault/download`
+16. Vault size enforcement middleware
+17. Scheduler: `runScheduler()` at 60s interval for recurring intentions
+18. Startup: `initClaudeCodeConfig()` + `hardenUserVault()`
 
 ## Run Manager
 
 Runs spawn a full interactive Claude Code PTY session (same as the interactive terminal). The research prompt is auto-injected after Claude Code starts up by watching for output to settle (~1.5s silence after initial activity, 10s max wait). Run WebSockets are bidirectional — clients can type input and resize, just like the main terminal. Each run tab shows the real Claude Code TUI.
 
-Tool activity is logged via Claude Code hooks (`.claude/hooks/log-activity.sh`) rather than server-side JSON parsing.
+Tool activity is logged via Claude Code hooks (`.claude/hooks/log-activity.js`) rather than server-side JSON parsing.
 
 ## Adding Routes
 

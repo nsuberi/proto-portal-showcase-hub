@@ -2,7 +2,9 @@
 
 ## Vision
 
-An AI-powered research workspace where users set research intentions (papers, synthesis tasks, comparative reviews), trigger them as background Claude Code sessions, and view results as structured markdown, code assets, and architecture diagrams — all within a glassmorphism-styled multi-panel web interface with real-time observability into agent tool use via Claude Code hooks.
+Built on one principle: **users state intentions and organize their information**, while Claude Code handles execution.
+
+An AI-powered research workspace where users set research intentions (papers, synthesis tasks, comparative reviews), trigger them as background Claude Code sessions, and view results as structured markdown, code assets, and architecture diagrams — all within a glassmorphism-styled multi-panel web interface with real-time observability into agent tool use via Claude Code hooks. Users decide what to research, when to run, and what to publish. Nothing auto-publishes; the user curates their vault and explicitly shares what they choose.
 
 ## Users
 
@@ -63,13 +65,13 @@ Each intention has:
 - Each run opens a fully interactive Claude Code terminal tab — users see the real TUI and can steer the session
 - Run WebSockets are bidirectional: input, resize, and output all flow between browser and PTY
 - Multiple runs execute simultaneously as separate PTY sessions
-- Tool use events logged via Claude Code hooks (`.claude/hooks/log-activity.sh`)
+- Tool use events logged via Claude Code hooks (`.claude/hooks/log-activity.js`)
 - Run status tracking: running → completed/failed/cancelled
 - Output buffer (100KB rolling) for late-joining WebSocket clients
 
 ### 4. Claude Code Hooks — Enterprise Controls Demo (Shipped)
 
-PreToolUse hook (`log-activity.sh`) fires before every tool invocation:
+PreToolUse hook (`log-activity.js`) fires before every tool invocation:
 - Logs tool name, input, timestamp, decision to activity file
 - Currently allows all tools (`{"decision":"allow"}`)
 - Could block specific tools for enterprise policy enforcement
@@ -94,6 +96,63 @@ Hold-spacebar-to-dictate in the terminal:
 - Maximize button on editor panel → fixed overlay covering entire viewport
 - Escape key or minimize button to exit
 - Works for both markdown and code files
+
+### 8. Publishing System (Shipped)
+
+Publish vault files to the public gallery with tag-based categorization:
+- `POST /api/vault/publish` — publishes a vault markdown file as a gallery item
+- Auto-extracts title (first `#` heading) and summary (first non-heading paragraph) from markdown
+- Generates stable ID: `pub-{userId}-{slug}`
+- Tag system: existing tags suggested + content-derived tags from headings/bold phrases
+- Writes snapshot to `/workspace/published/{id}.json` and forwards to Lambda API for public access
+- `GET /api/vault/published` — list all published items (no auth required)
+- `PublishDialog.tsx` component with tag selection UI
+
+### 9. Chat Panel (Shipped)
+
+WebSocket-based Claude Code interaction at `/api/vault/chat`:
+- Spawns `claude -p "{prompt}" --output-format stream-json` for each message
+- Session continuity via `--resume {sessionId}`
+- Auth flow integration: `/login` command triggers `claude auth login --claudeai`
+- Returns structured events: `assistant_text`, `tool_use`, `done`, `auth_url`, `error`
+- Tool use badges displayed inline (Read, Write, Bash, Glob, Grep, WebFetch)
+- Markdown rendering of Claude responses
+
+### 10. Session Config Panel (Shipped)
+
+Read-only viewer for Claude Code configuration at `GET /api/vault/config`:
+- Displays configured skills from `.claude/skills/` directory
+- Shows hook configuration from `settings.json`
+- Lists tool policy (blocked tools from `.claude/tool-policy.json`)
+- No editing — config is managed by the server initialization
+
+### 11. Scheduler (Shipped)
+
+Automated recurring intention execution:
+- `runScheduler()` executes every 60 seconds
+- Iterates all vaults, checks `.intentions.json` for recurring schedules
+- Spawns PTY sessions when due (same pattern as manual runs)
+- Schedule options: 1x/2x/4x/8x per day, optional end date
+- Completion detection via output volume (>500 bytes) + idle timer (3s silence)
+- Auto-sends `/exit` after task completes
+- Logs events to `.scheduler-log.jsonl` per vault (timestamp, intentionId, event, runId, error)
+- Updates `lastRunAt` in `.intentions.json` to track schedule adherence
+
+### 12. Onboarding Flow (Shipped)
+
+Detects Claude Code readiness at `GET /api/vault/onboarding-status`:
+- Three states: `not_launched` (no `.claude.json`), `not_onboarded` (no settings), `not_authenticated` (no credentials)
+- Frontend gates run launches with a helpful modal explaining what's needed
+- Auth note in Intentions panel warns about token storage and recommends scoped API keys
+
+### 13. Vault Download/Export (Shipped)
+
+Download folder contents or entire vault as a ZIP file:
+- `GET /api/vault/download?path=<folder>` — download specific folder
+- `GET /api/vault/download` — download entire vault
+- Excludes dotfiles (`.claude/`, `.intentions.json`, `.tool-activity.jsonl`, etc.)
+- Streams ZIP via `archiver` (constant memory usage regardless of vault size)
+- Download buttons in file browser header (full vault) and per-folder on hover
 
 ## Data Model
 
@@ -189,11 +248,31 @@ Claude Code can still execute arbitrary Bash and make HTTP requests within the c
 | **Audit trail** | PreToolUse hook logs every tool invocation per user | Shipped |
 | **Token revocation** | One-click revoke via API + UI button | Shipped |
 
+### Current Limitation: Single Shared ECS Task
+
+All users share one ECS Fargate task (`desired_count=1`, 1 vCPU, 2 GB, ARM64). User isolation is enforced at the **application layer** via Cognito JWT parsing + `sanitizePath()` + per-user HOME directories. There is one EFS access point (hardcoded to `/users/nathan`). Users share the same container PID namespace, Linux UID (1000), and network stack.
+
+**Suitable for:** Internal teams, trusted users, portfolio demonstrations.
+**Not suitable for:** Multi-tenant production with untrusted users.
+
+### Isolation Maturity Tiers
+
+| Tier | Model | Isolation | Monthly Cost (5 users) | Cold Start |
+|------|-------|-----------|----------------------|------------|
+| **Current** | Shared task, app-layer paths | Application | ~$14 (Spot) | 0s (always on) |
+| **Tier 2** | Per-user Fargate tasks | Container + application | ~$24 (Spot, 8hr/day) | 45-170s |
+| **Tier 3** | Per-user tasks + per-user EFS APs | Container + kernel | ~$24 (Spot, APs free) | 45-170s |
+
+Per-user task cold-start breakdown: ECS placement (5-15s) + image pull (10-30s, cached after first) + Express boot (3-5s) + health check (30-120s). Mitigable with faster health checks (~20s total), pre-warming (~$14/mo Spot), or loading screen UX.
+
+Per-user EFS access points are free ($0). They provide kernel-level NFS isolation but only make practical sense when combined with per-user tasks, since a shared container would need dynamic NFS mounts.
+
 ### Remaining Gaps
 
 | Gap | Impact | Mitigation Path |
 |-----|--------|-----------------|
-| Single ECS task serves all users | Shared container memory/processes | Per-user Fargate tasks or task-per-session |
+| Single ECS task serves all users | Shared container memory/processes, PID namespace visible to all | Per-user Fargate tasks (~$24/mo Spot for 5 users, 45-170s cold start) |
+| Single EFS access point | All vaults under one mount, isolation is app-enforced only | Per-user EFS access points (free, requires per-user tasks) |
 | All users run as UID 1000 | POSIX can't distinguish users at OS level | Server-enforced path isolation (implemented) |
 | `--dangerously-skip-permissions` | Claude can run arbitrary Bash | Tool policy hooks can block `Bash` tool |
 | Network egress unrestricted | Claude can make external HTTP calls | VPC security groups / NAT gateway controls |
@@ -202,11 +281,15 @@ Claude Code can still execute arbitrary Bash and make HTTP requests within the c
 
 - [ ] Whisper API fallback for voice input (Firefox, better accuracy)
 - [ ] Mobile microphone button (on-screen keyboard can't detect spacebar hold)
-- [ ] Scheduled cron execution of recurring intentions (currently manual trigger only)
 - [ ] Jupyter notebook viewer (.ipynb cell rendering)
 - [ ] CodeMirror/Monaco for proper syntax highlighting with autocomplete
 - [ ] UI for editing tool policy (currently manual JSON edit)
 - [ ] Run history persistence (currently in-memory only)
-- [ ] Gallery publishing from workspace (write to S3 content paths)
+- [ ] Wiki-link `[[]]` remark plugin for Milkdown with autocomplete
+- [ ] Sigma.js + graphology graph view for backlinks
+- [ ] Command palette (Ctrl+P)
 - [ ] Per-user EFS access points (filesystem-level isolation, not just server-enforced)
-- [ ] Per-user Fargate tasks (container-level isolation)
+- [ ] Per-user Fargate tasks (container-level isolation, ~$24/mo Spot for 5 users)
+- [x] ~~Scheduled cron execution of recurring intentions~~ — shipped (scheduler runs every 60s)
+- [x] ~~Gallery publishing from workspace~~ — shipped (POST /api/vault/publish + PublishDialog UI)
+- [x] ~~Vault download/export~~ — shipped (GET /api/vault/download, ZIP with dotfile exclusion)

@@ -1,3 +1,5 @@
+# Historical: Completed Migration Plan from Inference-Insights Era
+
 # Plan: Inference Insights — Cloud Scheduled Task with S3/DynamoDB Backend
 
 ## Context
