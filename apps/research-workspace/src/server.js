@@ -82,6 +82,12 @@ async function ensureUserVault(userId) {
     // Initialize Claude Code config + harden permissions (once per session)
     await initClaudeCodeConfig(vaultDir).catch(err =>
       console.warn(`[init] Config init failed for ${userId}:`, err.message));
+    // Clear old activity log so all events have runId tagging
+    const activityLog = path.join(vaultDir, '.tool-activity.jsonl');
+    if (existsSync(activityLog)) {
+      await fs.unlink(activityLog).catch(() => {});
+      console.log(`[init] Cleared activity log for ${userId}`);
+    }
     await hardenUserVault(vaultDir).catch(() => {});
     initializedVaults.add(userId);
   }
@@ -1387,9 +1393,13 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     run.finishedAt = new Date().toISOString();
     if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
     console.log(`[run:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
-    // Notify connected clients the session ended
+    // Notify connected clients the session ended, then close the WebSocket
+    // so the frontend's ws.onclose fires and updates the tab icon
     for (const ws of run.clients) {
-      try { ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`); } catch {}
+      try {
+        ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`);
+        ws.close();
+      } catch {}
     }
     // Clean up timers
     if (settleTimer) clearTimeout(settleTimer);
@@ -1695,7 +1705,10 @@ async function runScheduler() {
           if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
           console.log(`[scheduler:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
           for (const ws of run.clients) {
-            try { ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`); } catch {}
+            try {
+              ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`);
+              ws.close();
+            } catch {}
           }
           if (settleT) clearTimeout(settleT);
           clearTimeout(maxT);
