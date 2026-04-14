@@ -126,6 +126,36 @@ export async function createVaultFile(
   }
 }
 
+/** Create an empty folder. */
+export async function createVaultFolder(folderPath: string): Promise<void> {
+  const res = await fetch(
+    apiUrl(`/api/vault/folders/${encodeURIComponent(folderPath)}`),
+    { method: "POST" }
+  );
+  if (!res.ok) {
+    if (res.status === 409) throw new Error("Folder already exists");
+    throw new Error(`Create folder failed: HTTP ${res.status}`);
+  }
+}
+
+/** Move/rename a file or folder (PATCH). */
+export async function moveVaultFile(
+  fromPath: string,
+  toPath: string
+): Promise<void> {
+  const res = await fetch(
+    apiUrl(`/api/vault/files/${encodeURIComponent(fromPath)}`),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newPath: toPath }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(`Move failed: HTTP ${res.status}`);
+  }
+}
+
 /** Delete a file. */
 export async function deleteVaultFile(filePath: string): Promise<void> {
   const res = await fetch(
@@ -135,4 +165,31 @@ export async function deleteVaultFile(filePath: string): Promise<void> {
   if (!res.ok) {
     throw new Error(`Delete failed: HTTP ${res.status}`);
   }
+}
+
+/** Download a folder (or entire vault) as a ZIP file. */
+export async function downloadVault(folderPath?: string): Promise<void> {
+  const params = folderPath
+    ? `?path=${encodeURIComponent(folderPath)}`
+    : "";
+  const url = apiUrl(`/api/vault/download${params}`);
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Download failed: HTTP ${res.status}`);
+  }
+
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+  const filename = filenameMatch?.[1] || "vault.zip";
+
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(blobUrl);
 }
