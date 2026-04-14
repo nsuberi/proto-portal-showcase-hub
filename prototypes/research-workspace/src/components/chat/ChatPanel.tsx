@@ -232,13 +232,13 @@ export default function ChatPanel() {
         </div>
         <div className="flex items-center gap-1.5">
           {isConnected ? (
-            <Wifi className="w-3.5 h-3.5 text-domain-ml" />
+            <Wifi className="w-3.5 h-3.5 text-accent-success" />
           ) : (
             <WifiOff className="w-3.5 h-3.5 text-error/60" />
           )}
           <span
             className={`font-label text-xs ${
-              isConnected ? "text-domain-ml" : "text-error/60"
+              isConnected ? "text-accent-success" : "text-error/60"
             }`}
           >
             {isConnected ? "Connected" : "Disconnected"}

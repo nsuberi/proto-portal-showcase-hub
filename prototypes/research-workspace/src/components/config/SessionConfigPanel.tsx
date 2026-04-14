@@ -215,7 +215,7 @@ export default function SessionConfigPanel({ onSelectFile }: SessionConfigPanelP
                           }
                           className="flex items-start gap-2 py-1 pl-5 w-full text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer group"
                         >
-                          <Webhook className="w-3 h-3 text-domain-ml/70 flex-shrink-0 mt-0.5" />
+                          <Webhook className="w-3 h-3 text-accent-success/70 flex-shrink-0 mt-0.5" />
                           <div className="min-w-0">
                             <p className="font-label text-[11px] text-white/70 group-hover:text-white/90">
                               {event}

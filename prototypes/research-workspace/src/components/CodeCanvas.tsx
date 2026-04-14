@@ -29,10 +29,10 @@ export default function CodeCanvas({ cell }: Props) {
         <button
           onClick={handleRun}
           disabled={isRunning}
-          className="absolute top-3 right-3 inline-flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded-md bg-domain-ml/20 text-domain-ml hover:bg-domain-ml/30 disabled:opacity-50 transition-colors"
+          className="absolute top-3 right-3 inline-flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded-md bg-accent-success/20 text-accent-success hover:bg-accent-success/30 disabled:opacity-50 transition-colors"
         >
           {isRunning ? (
-            <span className="w-3 h-3 border-2 border-domain-ml/40 border-t-domain-ml rounded-full animate-spin" />
+            <span className="w-3 h-3 border-2 border-accent-success/40 border-t-accent-success rounded-full animate-spin" />
           ) : showOutput ? (
             <Check className="w-3 h-3" />
           ) : (

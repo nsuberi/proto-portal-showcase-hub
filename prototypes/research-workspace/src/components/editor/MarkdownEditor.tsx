@@ -172,7 +172,7 @@ export default function MarkdownEditor({
               }}
               className={`p-1 rounded transition-colors ${
                 publishStatus === "published"
-                  ? "text-domain-ml"
+                  ? "text-accent-success"
                   : "text-white/40 hover:text-white/70 hover:bg-white/[0.08]"
               }`}
               title="Publish to gallery"
@@ -273,7 +273,7 @@ function SaveStatusBadge({ status }: { status: SaveStatus }) {
       );
     case "saved":
       return (
-        <span className="flex items-center gap-1 font-label text-[10px] text-domain-ml">
+        <span className="flex items-center gap-1 font-label text-[10px] text-accent-success">
           <Check className="w-2.5 h-2.5" />
           Saved
         </span>

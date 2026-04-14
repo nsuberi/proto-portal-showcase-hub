@@ -271,7 +271,7 @@ function SaveStatusBadge({ status }: { status: SaveStatus }) {
       );
     case "saved":
       return (
-        <span className="flex items-center gap-1 font-label text-xs text-domain-ml">
+        <span className="flex items-center gap-1 font-label text-xs text-accent-success">
           <Check className="w-3 h-3" />
         </span>
       );
