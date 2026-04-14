@@ -1024,12 +1024,12 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
   await fs.writeFile(hookScript, `#!/bin/bash
 # Claude Code PreToolUse hook — audits tool activity and enforces tool policy.
 # Every tool invocation is logged with the run ID for session filtering.
-set -euo pipefail
+# NOTE: No set -e — this script MUST always produce valid JSON on stdout.
 
-INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null) || TOOL="unknown"
-TOOL_INPUT=$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null) || TOOL_INPUT='{}'
-TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+INPUT="$(cat)" || INPUT='{}'
+TOOL="$(echo "$INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null)" || TOOL="unknown"
+TOOL_INPUT="$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null)" || TOOL_INPUT='{}'
+TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 RUN_ID="\${CLAUDE_RUN_ID:-}"
 DECISION="allow"
 REASON=""
@@ -1037,24 +1037,24 @@ REASON=""
 # Check tool policy (if policy file exists)
 POLICY_FILE="$HOME/.claude/tool-policy.json"
 if [ -f "$POLICY_FILE" ]; then
-  BLOCKED=$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null) || BLOCKED="0"
-  if [ "$BLOCKED" != "0" ] && [ "$BLOCKED" != "" ]; then
+  BLOCKED="$(jq -r --arg tool "$TOOL" '(.blocked_tools // []) | map(select(. == $tool)) | length' "$POLICY_FILE" 2>/dev/null)" || BLOCKED="0"
+  if [ "$BLOCKED" != "0" ] && [ -n "$BLOCKED" ]; then
     DECISION="block"
     REASON="Tool $TOOL is blocked by workspace policy"
   fi
 fi
 
 # Append to per-user activity log (use jq to safely build JSON)
-jq -n --arg ts "$TIMESTAMP" --arg tool "$TOOL" --argjson input "$TOOL_INPUT" \
-  --arg decision "$DECISION" --arg runId "$RUN_ID" \
-  '{timestamp:$ts, tool:$tool, input:$input, decision:$decision, runId:$runId}' \
+jq -n --arg ts "$TIMESTAMP" --arg tool "$TOOL" --argjson input "$TOOL_INPUT" \\
+  --arg decision "$DECISION" --arg runId "$RUN_ID" \\
+  '{timestamp:$ts, tool:$tool, input:$input, decision:$decision, runId:$runId}' \\
   >> "$HOME/.tool-activity.jsonl" 2>/dev/null || true
 
-# Output decision to stdout (only valid JSON goes here)
+# Output decision to stdout — MUST be valid JSON, nothing else
 if [ "$DECISION" = "block" ]; then
-  printf '{"decision":"block","reason":"%s"}\\n' "$REASON"
+  echo '{"decision":"block","reason":"'"$REASON"'"}'
 else
-  printf '{"decision":"allow"}\\n'
+  echo '{"decision":"allow"}'
 fi
 `);
   await fs.chmod(hookScript, 0o755);
