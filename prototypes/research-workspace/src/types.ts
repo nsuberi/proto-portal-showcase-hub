@@ -43,22 +43,6 @@ export interface ResearchMemory {
   totalSessions: number;
 }
 
-export type Domain = "distributed" | "music" | "architecture" | "ml";
-
-export const DOMAIN_LABELS: Record<Domain, string> = {
-  distributed: "Distributed Systems",
-  music: "Music & Signal Processing",
-  architecture: "Architecture",
-  ml: "ML & Inference",
-};
-
-export const DOMAIN_COLORS: Record<Domain, string> = {
-  distributed: "domain-distributed",
-  music: "domain-music",
-  architecture: "domain-architecture",
-  ml: "domain-ml",
-};
-
 export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   insight: "Insight",
   synthesis: "Synthesis",
