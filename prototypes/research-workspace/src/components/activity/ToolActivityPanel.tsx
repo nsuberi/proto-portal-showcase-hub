@@ -58,8 +58,8 @@ const TOOL_COLORS: Record<string, string> = {
   Bash: "text-secondary",
   Glob: "text-white/60",
   Grep: "text-white/60",
-  WebFetch: "text-domain-ml",
-  WebSearch: "text-domain-ml",
+  WebFetch: "text-accent-success",
+  WebSearch: "text-accent-success",
 };
 
 function summarizeInput(tool: string, input: Record<string, unknown>): string {
@@ -100,7 +100,7 @@ function RunStatusBadge({ run, toolCount, onStop, onSelect, isSelected }: { run:
       {run.status === "running" ? (
         <Loader2 className="w-3 h-3 text-primary animate-spin flex-shrink-0" />
       ) : run.status === "completed" ? (
-        <CheckCircle2 className="w-3 h-3 text-domain-ml flex-shrink-0" />
+        <CheckCircle2 className="w-3 h-3 text-accent-success flex-shrink-0" />
       ) : (
         <XCircle className="w-3 h-3 text-error/60 flex-shrink-0" />
       )}
@@ -276,7 +276,7 @@ function EventRow({ event }: { event: ToolEvent }) {
         <span
           className={`font-label text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
             event.decision === "allow"
-              ? "bg-domain-ml/10 text-domain-ml/70"
+              ? "bg-accent-success/10 text-accent-success/70"
               : "bg-error/10 text-error/70"
           }`}
         >
@@ -292,7 +292,7 @@ function EventRow({ event }: { event: ToolEvent }) {
           <div className="flex gap-2 py-0.5 mt-0.5">
             <span className="font-label text-[9px] text-white/30 w-16 flex-shrink-0 text-right">Decision</span>
             <span className={`font-label text-[10px] font-medium ${
-              event.decision === "allow" ? "text-domain-ml/80" : "text-error/80"
+              event.decision === "allow" ? "text-accent-success/80" : "text-error/80"
             }`}>
               {event.decision === "allow" ? "Allowed" : "Blocked"}
             </span>
@@ -407,7 +407,7 @@ export default function ToolActivityPanel() {
             onClick={() => setPolling(!polling)}
             className={`px-1.5 py-0.5 rounded text-[9px] font-label transition-colors ${
               polling
-                ? "text-domain-ml bg-domain-ml/10"
+                ? "text-accent-success bg-accent-success/10"
                 : "text-white/30 bg-white/[0.04]"
             }`}
           >

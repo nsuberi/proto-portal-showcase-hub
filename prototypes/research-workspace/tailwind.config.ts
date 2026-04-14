@@ -32,11 +32,7 @@ export default {
         "outline-variant": "var(--color-outline-variant)",
         error: "var(--color-error)",
         "on-error": "var(--color-on-error)",
-        // Domain colors (repurposing phase accents)
-        "domain-distributed": "var(--color-phase-1)", // Blue-silver — FINRA / Big Data
-        "domain-music": "var(--color-phase-2)",       // Amber — Music / Signal Processing
-        "domain-architecture": "var(--color-phase-3)", // Terracotta — Architecture
-        "domain-ml": "var(--color-phase-4)",           // Green — General ML / Inference
+        "accent-success": "var(--color-accent-success)",
       },
       fontFamily: {
         headline: ["var(--font-headline)"],

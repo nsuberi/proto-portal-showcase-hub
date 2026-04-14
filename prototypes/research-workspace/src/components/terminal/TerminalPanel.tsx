@@ -349,7 +349,7 @@ export default function TerminalPanel() {
           Claude
           <span className="ml-1">
             {isConnected ? (
-              <Wifi className="w-2.5 h-2.5 text-domain-ml inline" />
+              <Wifi className="w-2.5 h-2.5 text-accent-success inline" />
             ) : (
               <WifiOff className="w-2.5 h-2.5 text-error/60 inline" />
             )}
@@ -373,7 +373,7 @@ export default function TerminalPanel() {
               {tab.status === "running" ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin text-tertiary flex-shrink-0" />
               ) : tab.status === "completed" ? (
-                <CheckCircle2 className="w-2.5 h-2.5 text-domain-ml flex-shrink-0" />
+                <CheckCircle2 className="w-2.5 h-2.5 text-accent-success flex-shrink-0" />
               ) : (
                 <XCircle className="w-2.5 h-2.5 text-error/60 flex-shrink-0" />
               )}

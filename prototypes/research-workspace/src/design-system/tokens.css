@@ -49,11 +49,8 @@
   --color-on-error: #690005;
   --color-on-error-container: #ffdad6;
 
-  /* Domain accents (phase colors repurposed) */
-  --color-phase-1: #bbc6e2; /* Blue-silver — FINRA / Distributed Systems */
-  --color-phase-2: #ffba38; /* Amber — Music / Signal Processing */
-  --color-phase-3: #ffb4a5; /* Terracotta — Architecture */
-  --color-phase-4: #a8d5ba; /* Green — General ML / Inference */
+  /* Accent — success/positive state */
+  --color-accent-success: #a8d5ba;
 
   /* Spacing */
   --spacing-xs: 4px;
