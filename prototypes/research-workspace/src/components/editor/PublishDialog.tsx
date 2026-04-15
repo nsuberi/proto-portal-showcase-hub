@@ -123,18 +123,18 @@ export default function PublishDialog({
 
   return (
     <div className="absolute right-0 top-full mt-1 z-50" ref={panelRef}>
-      <div className="w-72 rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden">
+      <div className="w-72 rounded-xl bg-[#1a1b20] border border-outline-variant/40 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-outline-variant/30">
           <div className="flex items-center gap-1.5">
             <Globe className="w-3.5 h-3.5 text-tertiary" />
-            <span className="font-label text-xs font-semibold text-white/80">
+            <span className="font-label text-xs font-semibold text-on-surface/80">
               Publish to Gallery
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-0.5 rounded hover:bg-white/[0.08] text-white/30 hover:text-white/60"
+            className="p-0.5 rounded hover:bg-on-surface/[0.08] text-on-surface-variant/40 hover:text-on-surface-variant"
           >
             <X className="w-3 h-3" />
           </button>
@@ -142,7 +142,7 @@ export default function PublishDialog({
 
         {/* Tag input area */}
         <div className="px-3 py-2">
-          <label className="font-label text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">
+          <label className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider mb-1.5 block">
             Tags
           </label>
 
@@ -157,7 +157,7 @@ export default function PublishDialog({
                   {tag}
                   <button
                     onClick={() => removeTag(tag)}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-on-primary transition-colors"
                   >
                     <X className="w-2.5 h-2.5" />
                   </button>
@@ -179,7 +179,7 @@ export default function PublishDialog({
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={handleKeyDown}
               placeholder={tags.length > 0 ? "Add another..." : "Add tags..."}
-              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 font-label text-xs text-white/80 placeholder:text-white/25 focus:outline-none focus:border-primary/40"
+              className="w-full bg-on-surface/[0.05] border border-outline-variant/30 rounded-lg px-2.5 py-1.5 font-label text-xs text-on-surface/80 placeholder:text-on-surface-variant/30 focus:outline-none focus:border-primary/40"
             />
           </div>
 
@@ -187,8 +187,8 @@ export default function PublishDialog({
           {showSuggestions && filtered.length > 0 && (
             <div className="mt-1.5 max-h-32 overflow-y-auto">
               <div className="flex items-center gap-1 mb-1">
-                <Sparkles className="w-2.5 h-2.5 text-white/25" />
-                <span className="font-label text-[9px] text-white/25 uppercase tracking-wider">
+                <Sparkles className="w-2.5 h-2.5 text-on-surface-variant/30" />
+                <span className="font-label text-[9px] text-on-surface-variant/30 uppercase tracking-wider">
                   Suggestions
                 </span>
               </div>
@@ -199,7 +199,7 @@ export default function PublishDialog({
                     onClick={() => addTag(tag)}
                     className={`inline-flex items-center gap-1 font-label text-[10px] px-2 py-0.5 rounded-full transition-colors ${
                       source === "existing"
-                        ? "bg-white/[0.06] text-white/50 hover:bg-white/[0.12] hover:text-white/70"
+                        ? "bg-on-surface/[0.06] text-on-surface-variant/80 hover:bg-on-surface/[0.12] hover:text-on-surface/70"
                         : "bg-tertiary/10 text-tertiary/60 hover:bg-tertiary/20 hover:text-tertiary/80"
                     }`}
                   >
@@ -213,12 +213,12 @@ export default function PublishDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-3 py-2 border-t border-white/[0.08] space-y-1.5">
+        <div className="px-3 py-2 border-t border-outline-variant/30 space-y-1.5">
           {error && (
             <p className="font-label text-[10px] text-error truncate">{error}</p>
           )}
           <div className="flex items-center justify-between">
-            <span className="font-label text-[10px] text-white/25">
+            <span className="font-label text-[10px] text-on-surface-variant/30">
               {tags.length === 0 ? "No tags = \"published\"" : `${tags.length} tag${tags.length === 1 ? "" : "s"}`}
             </span>
             <button

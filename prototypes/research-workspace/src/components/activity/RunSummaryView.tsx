@@ -25,8 +25,8 @@ function ToolBreakdownBar({ byTool }: { byTool: Record<string, number> }) {
     Write: "bg-tertiary/60",
     Edit: "bg-tertiary/40",
     Bash: "bg-secondary/60",
-    Grep: "bg-white/20",
-    Glob: "bg-white/15",
+    Grep: "bg-on-surface/20",
+    Glob: "bg-on-surface/15",
     WebFetch: "bg-accent-success/50",
     WebSearch: "bg-accent-success/40",
     Agent: "bg-primary/40",
@@ -36,11 +36,11 @@ function ToolBreakdownBar({ byTool }: { byTool: Record<string, number> }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex h-1.5 rounded-full overflow-hidden bg-white/[0.04]">
+      <div className="flex h-1.5 rounded-full overflow-hidden bg-on-surface/[0.04]">
         {entries.map(([tool, count]) => (
           <div
             key={tool}
-            className={`${TOOL_BAR_COLORS[tool] || "bg-white/20"} transition-all`}
+            className={`${TOOL_BAR_COLORS[tool] || "bg-on-surface/20"} transition-all`}
             style={{ width: `${(count / total) * 100}%` }}
             title={`${tool}: ${count}`}
           />
@@ -50,9 +50,9 @@ function ToolBreakdownBar({ byTool }: { byTool: Record<string, number> }) {
         {entries.map(([tool, count]) => (
           <span
             key={tool}
-            className="font-label text-[9px] text-white/40"
+            className="font-label text-[9px] text-on-surface-variant/60"
           >
-            {tool} <span className="text-white/25">{count}</span>
+            {tool} <span className="text-on-surface-variant/30">{count}</span>
           </span>
         ))}
       </div>
@@ -87,16 +87,16 @@ export default function RunSummaryView({
         ) : (
           <XCircle className="w-4 h-4 text-error/70" />
         )}
-        <span className="font-label text-sm text-white/70">
+        <span className="font-label text-sm text-on-surface/70">
           {isSuccess ? "Completed" : "Failed"} in{" "}
           {formatElapsed(run.elapsedMs)}
         </span>
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-white/40 font-label text-[11px]">
+      <div className="flex items-center gap-4 text-on-surface-variant/60 font-label text-[11px]">
         <span className="flex items-center gap-1">
-          <span className="text-white/60 font-medium">
+          <span className="text-on-surface-variant font-medium">
             {summary.totalCalls}
           </span>{" "}
           tool calls

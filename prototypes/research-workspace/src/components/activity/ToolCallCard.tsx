@@ -42,8 +42,8 @@ const TOOL_COLORS: Record<string, string> = {
   Write: "text-tertiary",
   Edit: "text-tertiary",
   Bash: "text-secondary",
-  Glob: "text-white/60",
-  Grep: "text-white/60",
+  Glob: "text-on-surface-variant",
+  Grep: "text-on-surface-variant",
   WebFetch: "text-accent-success",
   WebSearch: "text-accent-success",
   Agent: "text-primary",
@@ -66,11 +66,11 @@ function DetailField({
   if (!value) return null;
   return (
     <div className="flex gap-2 py-0.5">
-      <span className="font-label text-[9px] text-white/30 w-16 flex-shrink-0 text-right">
+      <span className="font-label text-[9px] text-on-surface-variant/40 w-16 flex-shrink-0 text-right">
         {label}
       </span>
       <span
-        className={`text-[10px] text-white/60 break-all flex-1 ${
+        className={`text-[10px] text-on-surface-variant break-all flex-1 ${
           mono ? "font-mono" : "font-label"
         }`}
       >
@@ -279,7 +279,7 @@ function StatusIcon({ status }: { status: ToolCall["status"] }) {
       return <ShieldX className="w-3 h-3 text-error/70" />;
     case "pending":
       return (
-        <span className="w-3 h-3 rounded-full border border-white/20" />
+        <span className="w-3 h-3 rounded-full border border-on-surface/20" />
       );
   }
 }
@@ -301,7 +301,7 @@ function formatDuration(ms?: number): string {
 export default function ToolCallCard({ call }: { call: ToolCall }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = TOOL_ICONS[call.tool] || Activity;
-  const color = TOOL_COLORS[call.tool] || "text-white/50";
+  const color = TOOL_COLORS[call.tool] || "text-on-surface-variant/80";
 
   const time = new Date(call.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -319,21 +319,21 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
   return (
     <div
       className={`tool-call-card tool-call-enter ${statusClass} ${
-        expanded ? "bg-white/[0.03]" : ""
+        expanded ? "bg-on-surface/[0.03]" : ""
       }`}
       data-status={call.status}
     >
       {/* Collapsed row */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.04] transition-colors w-full text-left cursor-pointer"
+        className="flex items-center gap-2 px-3 py-1.5 hover:bg-on-surface/[0.04] transition-colors w-full text-left cursor-pointer"
       >
         <ChevronRight
-          className={`w-2.5 h-2.5 text-white/20 flex-shrink-0 transition-transform ${
+          className={`w-2.5 h-2.5 text-on-surface-variant/30 flex-shrink-0 transition-transform ${
             expanded ? "rotate-90" : ""
           }`}
         />
-        <span className="font-mono text-[9px] text-white/25 w-14 flex-shrink-0">
+        <span className="font-mono text-[9px] text-on-surface-variant/30 w-14 flex-shrink-0">
           {time}
         </span>
         <span
@@ -341,11 +341,11 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
         >
           <Icon className="w-3.5 h-3.5" />
         </span>
-        <span className="font-body text-[11px] text-white/50 truncate flex-1">
+        <span className="font-body text-[11px] text-on-surface-variant/80 truncate flex-1">
           {call.description}
         </span>
         {call.durationMs != null && call.status === "completed" && (
-          <span className="font-mono text-[9px] text-white/20 flex-shrink-0">
+          <span className="font-mono text-[9px] text-on-surface-variant/30 flex-shrink-0">
             {formatDuration(call.durationMs)}
           </span>
         )}
@@ -355,10 +355,10 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="pl-[68px] pr-3 pb-2 pt-0.5 border-b border-white/[0.04]">
+        <div className="pl-[68px] pr-3 pb-2 pt-0.5 border-b border-outline-variant/20">
           {renderToolDetails(call.tool, call.input)}
           <div className="flex gap-2 py-0.5 mt-0.5">
-            <span className="font-label text-[9px] text-white/30 w-16 flex-shrink-0 text-right">
+            <span className="font-label text-[9px] text-on-surface-variant/40 w-16 flex-shrink-0 text-right">
               Decision
             </span>
             <span

@@ -265,24 +265,24 @@ function OnboardingModal({ reason, onClose }: { reason: SetupReason; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-80 rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
-          <span className="font-label text-sm font-semibold text-white/90">
+      <div className="w-80 rounded-xl bg-[#1a1b20] border border-outline-variant/40 shadow-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-outline-variant/40 flex items-center justify-between">
+          <span className="font-label text-sm font-semibold text-on-surface/70">
             {msg.title}
           </span>
-          <button onClick={onClose} className="p-0.5 rounded hover:bg-white/[0.08] text-white/30 hover:text-white/60">
+          <button onClick={onClose} className="p-0.5 rounded hover:bg-on-surface/[0.08] text-on-surface-variant/40 hover:text-on-surface-variant">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
         <div className="px-4 py-4 space-y-3">
-          <p className="font-label text-xs text-white/60 leading-relaxed">
+          <p className="font-label text-xs text-on-surface-variant leading-relaxed">
             {msg.body}
           </p>
-          <p className="font-label text-[10px] text-white/35">
+          <p className="font-label text-[10px] text-on-surface-variant/40">
             {msg.detail}
           </p>
         </div>
-        <div className="px-4 py-3 border-t border-white/[0.08] flex justify-end">
+        <div className="px-4 py-3 border-t border-outline-variant/40 flex justify-end">
           <button
             onClick={goToClaude}
             className="font-label text-xs font-semibold px-4 py-1.5 rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors"
@@ -335,16 +335,16 @@ function IntentionCard({
   };
 
   return (
-    <div className="border-b border-white/[0.04]">
+    <div className="border-b border-outline-variant/20">
       {/* Collapsed row */}
-      <div className="group flex items-start gap-2 px-3 py-2 hover:bg-white/[0.03] transition-colors cursor-pointer"
+      <div className="group flex items-start gap-2 px-3 py-2 hover:bg-on-surface/[0.03] transition-colors cursor-pointer"
         onClick={() => !editing && setExpanded(!expanded)}
       >
         <Icon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${meta.color}`} />
         <div className="flex-1 min-w-0">
-          <p className="font-label text-xs text-white truncate">{item.title}</p>
+          <p className="font-label text-xs text-on-primary truncate">{item.title}</p>
           {!expanded && item.description && (
-            <p className="font-body text-[10px] text-white/50 mt-0.5 line-clamp-1">
+            <p className="font-body text-[10px] text-on-surface-variant/80 mt-0.5 line-clamp-1">
               {item.description}
             </p>
           )}
@@ -354,19 +354,19 @@ function IntentionCard({
                 {meta.label}
               </span>
               {item.schedule && (
-                <span className="flex items-center gap-0.5 font-label text-[9px] text-white/40">
+                <span className="flex items-center gap-0.5 font-label text-[9px] text-on-surface-variant/60">
                   <Repeat className="w-2.5 h-2.5" />
                   {formatSchedule(item.schedule)}
                 </span>
               )}
               {item.documents && item.documents.length > 0 && (
-                <span className="flex items-center gap-0.5 font-label text-[9px] text-white/40">
+                <span className="flex items-center gap-0.5 font-label text-[9px] text-on-surface-variant/60">
                   <FileText className="w-2.5 h-2.5" />
                   {item.documents.length} docs
                 </span>
               )}
               {item.lastRunAt && (
-                <span className="font-label text-[9px] text-white/30">
+                <span className="font-label text-[9px] text-on-surface-variant/40">
                   Last run: {formatTimeAgo(item.lastRunAt)}
                 </span>
               )}
@@ -375,17 +375,17 @@ function IntentionCard({
         </div>
         <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
           <button onClick={handleRun} disabled={launching}
-            className={`p-0.5 transition-all ${launching ? "text-primary animate-pulse" : "opacity-0 group-hover:opacity-100 text-white/30 hover:text-primary"}`}
+            className={`p-0.5 transition-all ${launching ? "text-primary animate-pulse" : "opacity-0 group-hover:opacity-100 text-on-surface-variant/40 hover:text-primary"}`}
             title="Run now">
             {launching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
           </button>
           <button onClick={() => { setEditing(!editing); setExpanded(true); }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 text-white/30 hover:text-tertiary transition-all"
+            className="opacity-0 group-hover:opacity-100 p-0.5 text-on-surface-variant/40 hover:text-tertiary transition-all"
             title="Edit">
             <Pencil className="w-3 h-3" />
           </button>
           <button onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 p-0.5 text-white/30 hover:text-error transition-all">
+            className="opacity-0 group-hover:opacity-100 p-0.5 text-on-surface-variant/40 hover:text-error transition-all">
             <Trash2 className="w-3 h-3" />
           </button>
         </div>
@@ -397,12 +397,12 @@ function IntentionCard({
           {editing ? (
             <>
               <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full bg-white/[0.04] text-white text-xs font-body px-2 py-1 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none" />
+                className="w-full bg-on-surface/[0.04] text-on-primary text-xs font-body px-2 py-1 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none" />
               <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={3}
-                className="w-full bg-white/[0.04] text-white text-xs font-body px-2 py-1 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none resize-none" />
+                className="w-full bg-on-surface/[0.04] text-on-primary text-xs font-body px-2 py-1 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none resize-none" />
               <div className="flex justify-end gap-1">
                 <button onClick={() => setEditing(false)}
-                  className="px-2 py-0.5 text-[10px] font-label text-white/40 hover:text-white/60">Cancel</button>
+                  className="px-2 py-0.5 text-[10px] font-label text-on-surface-variant/60 hover:text-on-surface-variant">Cancel</button>
                 <button onClick={handleSaveEdit}
                   className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-label text-primary bg-primary/10 rounded hover:bg-primary/20">
                   <Check className="w-2.5 h-2.5" />Save
@@ -412,7 +412,7 @@ function IntentionCard({
           ) : (
             <>
               {item.description && (
-                <p className="font-body text-[10px] text-white/60 leading-relaxed whitespace-pre-wrap">
+                <p className="font-body text-[10px] text-on-surface-variant leading-relaxed whitespace-pre-wrap">
                   {item.description}
                 </p>
               )}
@@ -421,7 +421,7 @@ function IntentionCard({
                   {meta.label}
                 </span>
                 {item.schedule && (
-                  <span className="flex items-center gap-0.5 font-label text-[9px] text-white/40">
+                  <span className="flex items-center gap-0.5 font-label text-[9px] text-on-surface-variant/60">
                     <Repeat className="w-2.5 h-2.5" />
                     {formatSchedule(item.schedule)}
                   </span>
@@ -429,15 +429,15 @@ function IntentionCard({
               </div>
               {item.documents && item.documents.length > 0 && (
                 <div className="mt-1">
-                  <span className="font-label text-[9px] text-white/30 uppercase tracking-wider">Documents:</span>
+                  <span className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider">Documents:</span>
                   <ul className="mt-0.5 space-y-0.5">
                     {item.documents.map((d) => (
-                      <li key={d} className="font-mono text-[10px] text-white/50 truncate">{d}</li>
+                      <li key={d} className="font-mono text-[10px] text-on-surface-variant/80 truncate">{d}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              <p className="font-mono text-[9px] text-white/20 mt-1">
+              <p className="font-mono text-[9px] text-on-surface-variant/30 mt-1">
                 Created {new Date(item.createdAt).toLocaleString()}
               </p>
             </>
@@ -458,22 +458,22 @@ function DocumentPicker({
   onToggle: (path: string) => void;
 }) {
   return (
-    <div className="max-h-28 overflow-y-auto border border-white/[0.08] rounded-md mt-1">
+    <div className="max-h-28 overflow-y-auto border border-outline-variant/40 rounded-md mt-1">
       {files.length === 0 && (
-        <p className="px-2 py-1.5 text-[10px] text-white/30 font-label">
+        <p className="px-2 py-1.5 text-[10px] text-on-surface-variant/40 font-label">
           No files in vault
         </p>
       )}
       {files.map((f) => (
         <label
           key={f}
-          className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-white/70 hover:bg-white/[0.04] cursor-pointer"
+          className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-on-surface/70 hover:bg-on-surface/[0.04] cursor-pointer"
         >
           <input
             type="checkbox"
             checked={selected.has(f)}
             onChange={() => onToggle(f)}
-            className="rounded border-white/20 bg-transparent text-primary focus:ring-0 focus:ring-offset-0 w-3 h-3"
+            className="rounded border-on-surface/20 bg-transparent text-primary focus:ring-0 focus:ring-offset-0 w-3 h-3"
           />
           <span className="truncate font-mono">{f}</span>
         </label>
@@ -524,7 +524,7 @@ function CreateForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="px-3 py-2 space-y-2 border-b border-white/[0.06]">
+    <form onSubmit={handleSubmit} className="px-3 py-2 space-y-2 border-b border-outline-variant/30">
       {/* Type selector */}
       <div className="flex gap-1">
         {(Object.keys(TYPE_META) as IntentionType[]).map((t) => {
@@ -537,8 +537,8 @@ function CreateForm({
               onClick={() => setType(t)}
               className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-label transition-colors ${
                 type === t
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/60"
+                  ? "bg-on-surface/10 text-on-primary"
+                  : "text-on-surface-variant/60 hover:text-on-surface-variant"
               }`}
             >
               <Icon className="w-3 h-3" />
@@ -561,7 +561,7 @@ function CreateForm({
               : "Review objective..."
         }
         autoFocus
-        className="w-full bg-white/[0.04] text-white text-xs font-body px-2 py-1.5 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none placeholder:text-white/25"
+        className="w-full bg-on-surface/[0.04] text-on-primary text-xs font-body px-2 py-1.5 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none placeholder:text-on-surface-variant/30"
       />
 
       {/* Description */}
@@ -576,12 +576,12 @@ function CreateForm({
               : "Compare these papers, produce code assets & architecture diagrams..."
         }
         rows={2}
-        className="w-full bg-white/[0.04] text-white text-xs font-body px-2 py-1.5 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none placeholder:text-white/25 resize-none"
+        className="w-full bg-on-surface/[0.04] text-on-primary text-xs font-body px-2 py-1.5 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none placeholder:text-on-surface-variant/30 resize-none"
       />
 
       {/* Recurring schedule */}
       <div className="space-y-1.5">
-        <span className="font-label text-[10px] text-white/40 uppercase tracking-wider flex items-center gap-1">
+        <span className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider flex items-center gap-1">
           <Repeat className="w-2.5 h-2.5" />
           Recurring schedule
         </span>
@@ -596,7 +596,7 @@ function CreateForm({
               className={`px-2 py-1 rounded text-[10px] font-label transition-colors ${
                 timesPerDay === opt.value
                   ? "bg-primary/20 text-primary"
-                  : "text-white/30 hover:text-white/50 bg-white/[0.03]"
+                  : "text-on-surface-variant/40 hover:text-on-surface-variant/80 bg-on-surface/[0.03]"
               }`}
             >
               {opt.label}
@@ -611,9 +611,9 @@ function CreateForm({
               type="checkbox"
               checked={hasEndDate}
               onChange={(e) => setHasEndDate(e.target.checked)}
-              className="rounded border-white/20 bg-transparent text-primary focus:ring-0 focus:ring-offset-0 w-3 h-3"
+              className="rounded border-on-surface/20 bg-transparent text-primary focus:ring-0 focus:ring-offset-0 w-3 h-3"
             />
-            <span className="font-label text-[10px] text-white/50">
+            <span className="font-label text-[10px] text-on-surface-variant/80">
               End date
             </span>
           </label>
@@ -622,11 +622,11 @@ function CreateForm({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="flex-1 bg-white/[0.04] text-white text-[10px] font-body px-2 py-1 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none [color-scheme:dark]"
+              className="flex-1 bg-on-surface/[0.04] text-on-primary text-[10px] font-body px-2 py-1 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none"
             />
           )}
           {!hasEndDate && (
-            <span className="font-label text-[10px] text-white/25 italic">
+            <span className="font-label text-[10px] text-on-surface-variant/30 italic">
               Runs indefinitely
             </span>
           )}
@@ -636,7 +636,7 @@ function CreateForm({
       {/* Document picker — only for review */}
       {type === "review" && (
         <div>
-          <span className="font-label text-[10px] text-white/40 uppercase tracking-wider">
+          <span className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">
             Select documents to review
           </span>
           <DocumentPicker
@@ -652,7 +652,7 @@ function CreateForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-2 py-1 text-[10px] font-label text-white/40 hover:text-white/60 transition-colors"
+          className="px-2 py-1 text-[10px] font-label text-on-surface-variant/60 hover:text-on-surface-variant transition-colors"
         >
           Cancel
         </button>
@@ -700,16 +700,16 @@ function AuthNote() {
         <div className="flex items-start gap-1.5">
           <KeyRound className="w-3 h-3 mt-0.5 text-primary/60 flex-shrink-0" />
           <div className="flex-1">
-            <p className="font-label text-[10px] text-white/60 leading-relaxed">
-              <span className="text-white/80 font-semibold">Auth &amp; token storage:</span>{" "}
+            <p className="font-label text-[10px] text-on-surface-variant leading-relaxed">
+              <span className="text-on-surface/70 font-semibold">Auth &amp; token storage:</span>{" "}
               Claude Code Max plan OAuth tokens stay active for{" "}
               <span className="text-primary">~90 days</span>. Tokens are stored
               on an encrypted EFS volume (AES-256 at rest) with{" "}
-              <span className="text-white/80">owner-only file permissions</span>{" "}
+              <span className="text-on-surface/70">owner-only file permissions</span>{" "}
               (chmod 600). The volume is private to your workspace &mdash; no
               other users or containers can access it.
             </p>
-            <p className="font-label text-[10px] text-white/40 leading-relaxed mt-1">
+            <p className="font-label text-[10px] text-on-surface-variant/60 leading-relaxed mt-1">
               <span className="text-error/80 font-semibold">Security warning:</span>{" "}
               Your OAuth token grants access to your Anthropic Max plan. If you
               suspect compromise, revoke tokens immediately using the button
@@ -724,7 +724,7 @@ function AuthNote() {
               setDismissed(true);
               localStorage.setItem("rw-auth-note-dismissed", "1");
             }}
-            className="text-white/20 hover:text-white/40 transition-colors"
+            className="text-on-surface-variant/30 hover:text-on-surface-variant/60 transition-colors"
           >
             <X className="w-3 h-3" />
           </button>
@@ -825,7 +825,7 @@ export default function IntentionsPanel() {
         </span>
         <button
           onClick={() => setCreating(!creating)}
-          className="p-1 rounded hover:bg-white/[0.08] transition-colors text-on-surface-variant/60 hover:text-white"
+          className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/60 hover:text-on-primary"
         >
           {creating ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
         </button>
@@ -846,7 +846,7 @@ export default function IntentionsPanel() {
       {/* Intention list */}
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <div className="flex items-center gap-2 px-3 py-4 text-white/40">
+          <div className="flex items-center gap-2 px-3 py-4 text-on-surface-variant/60">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="font-label text-xs">Loading...</span>
           </div>
@@ -863,19 +863,19 @@ export default function IntentionsPanel() {
               <div key={type}>
                 <button
                   onClick={() => toggleType(type)}
-                  className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left hover:bg-white/[0.03] transition-colors"
+                  className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left hover:bg-on-surface/[0.03] transition-colors"
                 >
                   {isExpanded ? (
-                    <ChevronDown className="w-3 h-3 text-white/30" />
+                    <ChevronDown className="w-3 h-3 text-on-surface-variant/40" />
                   ) : (
-                    <ChevronRight className="w-3 h-3 text-white/30" />
+                    <ChevronRight className="w-3 h-3 text-on-surface-variant/40" />
                   )}
                   <Icon className={`w-3 h-3 ${meta.color}`} />
-                  <span className="font-label text-[11px] text-white/70 flex-1">
+                  <span className="font-label text-[11px] text-on-surface/70 flex-1">
                     {meta.label}
                   </span>
                   {items.length > 0 && (
-                    <span className="font-label text-[9px] text-white/30 bg-white/[0.06] px-1.5 py-0.5 rounded-full">
+                    <span className="font-label text-[9px] text-on-surface-variant/40 bg-on-surface/[0.06] px-1.5 py-0.5 rounded-full">
                       {items.length}
                     </span>
                   )}
@@ -884,7 +884,7 @@ export default function IntentionsPanel() {
                 {isExpanded && (
                   <div>
                     {items.length === 0 && (
-                      <p className="px-3 pl-8 py-1.5 text-[10px] text-white/20 font-label">
+                      <p className="px-3 pl-8 py-1.5 text-[10px] text-on-surface-variant/30 font-label">
                         No {meta.label.toLowerCase()} intentions yet
                       </p>
                     )}

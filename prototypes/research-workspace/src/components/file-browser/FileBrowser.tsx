@@ -51,30 +51,30 @@ function ConfirmDeleteModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-on-surface/10 backdrop-blur-sm"
         onClick={onCancel}
       />
       {/* Modal */}
       <div
         ref={panelRef}
-        className="relative w-80 rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden"
+        className="relative w-80 rounded-xl bg-[#1a1b20] border border-outline-variant/40 shadow-2xl overflow-hidden"
       >
         <div className="px-4 pt-4 pb-3">
-          <h3 className="font-label text-sm font-semibold text-white/90 mb-1">
+          <h3 className="font-label text-sm font-semibold text-on-surface mb-1">
             Delete {isFolder ? "folder" : "file"}
           </h3>
-          <p className="font-label text-xs text-white/50 leading-relaxed">
+          <p className="font-label text-xs text-on-surface-variant/80 leading-relaxed">
             Are you sure you want to delete{" "}
-            <span className="text-white/80 font-mono">{node.name}</span>?
+            <span className="text-on-surface/80 font-mono">{node.name}</span>?
             {isFolder && " The folder must be empty to delete."}
             {" "}This cannot be undone.
           </p>
         </div>
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/[0.08]">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-outline-variant/30">
           <button
             onClick={onCancel}
             disabled={deleting}
-            className="font-label text-xs px-3 py-1.5 rounded-lg text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors disabled:opacity-50"
+            className="font-label text-xs px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-on-surface/[0.06] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -520,7 +520,7 @@ export default function FileBrowser({
 
       {/* Root-level new item input */}
       {creatingRoot && (
-        <div className="px-3 py-2 border-b border-white/[0.06] flex items-center gap-1.5">
+        <div className="px-3 py-2 border-b border-outline-variant/30 flex items-center gap-1.5">
           {creatingRoot === "folder" ? (
             <Folder className="w-4 h-4 flex-shrink-0 text-tertiary/80" />
           ) : (

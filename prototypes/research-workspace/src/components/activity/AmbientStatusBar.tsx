@@ -56,7 +56,7 @@ export default function AmbientStatusBar({
   return (
     <button
       onClick={onToggle}
-      className={`${barClass} w-full flex items-center gap-3 px-4 py-2 glass-header hover:bg-white/[0.04] transition-all cursor-pointer`}
+      className={`${barClass} w-full flex items-center gap-3 px-4 py-2 glass-header hover:bg-on-surface/[0.04] transition-all cursor-pointer`}
     >
       {/* Status indicator */}
       {activeRun ? (
@@ -73,10 +73,10 @@ export default function AmbientStatusBar({
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {activeRun ? (
           <>
-            <span className="font-label text-[11px] text-white/60 truncate">
+            <span className="font-label text-[11px] text-on-surface-variant truncate">
               Running "{activeRun.title}"
             </span>
-            <span className="font-label text-[10px] text-white/30">
+            <span className="font-label text-[10px] text-on-surface-variant/40">
               {activeRun.toolCalls.length > 0 &&
                 activeRun.toolCalls[activeRun.toolCalls.length - 1]
                   .description}
@@ -84,10 +84,10 @@ export default function AmbientStatusBar({
           </>
         ) : lastFinished ? (
           <>
-            <span className="font-label text-[11px] text-white/40">
+            <span className="font-label text-[11px] text-on-surface-variant/60">
               Last run: "{lastFinished.title}"
             </span>
-            <span className="font-label text-[10px] text-white/25">
+            <span className="font-label text-[10px] text-on-surface-variant/30">
               {lastFinished.status === "completed"
                 ? "completed"
                 : lastFinished.status}{" "}
@@ -95,7 +95,7 @@ export default function AmbientStatusBar({
             </span>
           </>
         ) : (
-          <span className="font-label text-[11px] text-white/30">
+          <span className="font-label text-[11px] text-on-surface-variant/40">
             Ready
           </span>
         )}
@@ -104,19 +104,19 @@ export default function AmbientStatusBar({
       {/* Right side stats */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {activeRun && (
-          <span className="font-mono text-[10px] text-white/25">
+          <span className="font-mono text-[10px] text-on-surface-variant/30">
             {formatElapsed(activeRun.elapsedMs)}
           </span>
         )}
         {totalToolCalls > 0 && (
-          <span className="font-label text-[9px] text-white/25 bg-white/[0.04] px-1.5 py-0.5 rounded-full">
+          <span className="font-label text-[9px] text-on-surface-variant/30 bg-on-surface/[0.04] px-1.5 py-0.5 rounded-full">
             {totalToolCalls} tools
           </span>
         )}
         {isExpanded ? (
-          <ChevronDown className="w-3 h-3 text-white/20" />
+          <ChevronDown className="w-3 h-3 text-on-surface-variant/30" />
         ) : (
-          <ChevronUp className="w-3 h-3 text-white/20" />
+          <ChevronUp className="w-3 h-3 text-on-surface-variant/30" />
         )}
       </div>
     </button>

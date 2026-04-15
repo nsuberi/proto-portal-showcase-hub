@@ -22,7 +22,7 @@ const SECTIONS = [
   { id: "files" as const, icon: FolderOpen, label: "Files" },
   { id: "plan" as const, icon: Lightbulb, label: "Plan" },
   { id: "audit" as const, icon: Activity, label: "Activity" },
-  { id: "config" as const, icon: Settings2, label: "Config" },
+  { id: "config" as const, icon: Settings2, label: "Personalization" },
 ];
 
 export default function SidebarRail({
@@ -59,7 +59,7 @@ export default function SidebarRail({
 
       {/* Expanded content panel */}
       {isExpanded && (
-        <div className="sidebar-content flex-1 min-w-0 overflow-hidden border-l border-white/[0.04]">
+        <div className="sidebar-content flex-1 min-w-0 overflow-hidden border-l border-outline-variant/20">
           {children(activeSection)}
         </div>
       )}
