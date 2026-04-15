@@ -129,7 +129,7 @@ export default function MarkdownEditor({
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-white/30" />
+        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/40" />
       </div>
     );
   }
@@ -149,14 +149,14 @@ export default function MarkdownEditor({
     <div className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="glass-header flex items-center justify-between px-4 py-1.5">
-        <span className="font-mono text-xs text-white/50 truncate min-w-0">
+        <span className="font-mono text-xs text-on-surface-variant/80 truncate min-w-0">
           {filePath}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
           <SaveStatusBadge status={saveStatus} />
           <button
             onClick={handleManualSave}
-            className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/40 hover:text-white/70"
+            className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/60 hover:text-on-surface/70"
             title={`Save (${MOD}+S)`}
           >
             <Save className="w-3.5 h-3.5" />
@@ -173,7 +173,7 @@ export default function MarkdownEditor({
               className={`p-1 rounded transition-colors ${
                 publishStatus === "published"
                   ? "text-accent-success"
-                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.08]"
+                  : "text-on-surface-variant/60 hover:text-on-surface/70 hover:bg-on-surface/[0.08]"
               }`}
               title="Publish to gallery"
             >
@@ -201,18 +201,18 @@ export default function MarkdownEditor({
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setShowHotkeys(!showHotkeys); }}
-              className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/30 hover:text-white/60"
+              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/40 hover:text-on-surface-variant"
               title="Keyboard shortcuts"
             >
               <Keyboard className="w-3.5 h-3.5" />
             </button>
             {showHotkeys && (
               <div
-                className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-[#1a1b20] border border-white/[0.1] shadow-xl py-1 z-50"
+                className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-[#1a1b20] border border-outline-variant/40 shadow-xl py-1 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="px-3 py-1.5 border-b border-white/[0.06]">
-                  <span className="font-label text-[10px] text-white/40 uppercase tracking-wider">
+                <div className="px-3 py-1.5 border-b border-outline-variant/30">
+                  <span className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">
                     Shortcuts
                   </span>
                 </div>
@@ -221,10 +221,10 @@ export default function MarkdownEditor({
                     key={keys}
                     className="flex items-center justify-between px-3 py-1"
                   >
-                    <span className="font-label text-[10px] text-white/60">
+                    <span className="font-label text-[10px] text-on-surface-variant">
                       {action}
                     </span>
-                    <kbd className="font-mono text-[9px] text-white/40 bg-white/[0.06] px-1.5 py-0.5 rounded">
+                    <kbd className="font-mono text-[9px] text-on-surface-variant/60 bg-on-surface/[0.06] px-1.5 py-0.5 rounded">
                       {keys}
                     </kbd>
                   </div>
@@ -237,7 +237,7 @@ export default function MarkdownEditor({
           {onFullscreen && (
             <button
               onClick={onFullscreen}
-              className="p-1 rounded hover:bg-white/[0.08] transition-colors text-white/30 hover:text-white/70"
+              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/40 hover:text-on-surface/70"
               title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
             >
               {isFullscreen ? (

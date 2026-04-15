@@ -68,10 +68,10 @@ function SectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-white/[0.04] transition-colors text-left cursor-pointer"
+      className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-on-surface/[0.04] transition-colors text-left cursor-pointer"
     >
       <ChevronRight
-        className={`w-2.5 h-2.5 text-white/20 flex-shrink-0 transition-transform ${
+        className={`w-2.5 h-2.5 text-on-surface-variant/30 flex-shrink-0 transition-transform ${
           expanded ? "rotate-90" : ""
         }`}
       />
@@ -79,7 +79,7 @@ function SectionHeader({
       <span className="font-label text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/50 flex-1">
         {label}
       </span>
-      <span className="font-label text-[9px] text-white/25 bg-white/[0.06] px-1.5 py-0.5 rounded-full">
+      <span className="font-label text-[9px] text-on-surface-variant/30 bg-on-surface/[0.06] px-1.5 py-0.5 rounded-full">
         {count}
       </span>
     </button>
@@ -89,9 +89,10 @@ function SectionHeader({
 interface SessionConfigPanelProps {
   onSelectFile?: (path: string) => void;
   onOpenPolicyEditor?: () => void;
+  selectedPath?: string | null;
 }
 
-export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }: SessionConfigPanelProps) {
+export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, selectedPath }: SessionConfigPanelProps) {
   const [config, setConfig] = useState<SessionConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [skillsOpen, setSkillsOpen] = useState(true);
@@ -135,12 +136,12 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
         <div className="flex items-center gap-1.5">
           <Settings2 className="w-3.5 h-3.5 text-on-surface-variant/60" />
           <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
-            Session Config
+            Personalization
           </span>
         </div>
         <button
           onClick={fetchConfig}
-          className="p-0.5 text-white/30 hover:text-white/60 transition-colors"
+          className="p-0.5 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
@@ -150,8 +151,8 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
       <div className="flex-1 overflow-y-auto">
         {loading && !config && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Settings2 className="w-8 h-8 text-white/10 mb-2 animate-pulse" />
-            <p className="font-label text-[10px] text-white/25">
+            <Settings2 className="w-8 h-8 text-on-surface-variant/15 mb-2 animate-pulse" />
+            <p className="font-label text-[10px] text-on-surface-variant/30">
               Loading config...
             </p>
           </div>
@@ -160,7 +161,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
         {config && (
           <>
             {/* Skills section */}
-            <div className="border-b border-white/[0.04]">
+            <div className="border-b border-outline-variant/20">
               <SectionHeader
                 icon={Sparkles}
                 label="Skills"
@@ -171,36 +172,41 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
               {skillsOpen && (
                 <div className="px-3 pb-2">
                   {config.skills.length === 0 ? (
-                    <p className="font-label text-[10px] text-white/20 pl-5">
+                    <p className="font-label text-[10px] text-on-surface-variant/30 pl-5">
                       No skills configured
                     </p>
                   ) : (
-                    config.skills.map((skill) => (
-                      <button
-                        key={skill.id}
-                        onClick={() => onSelectFile?.(skill.path)}
-                        className="flex items-start gap-2 py-1 pl-5 w-full text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer group"
-                      >
-                        <Sparkles className="w-3 h-3 text-tertiary/70 flex-shrink-0 mt-0.5" />
-                        <div className="min-w-0">
-                          <p className="font-label text-[11px] text-white/70 truncate group-hover:text-white/90">
-                            {skill.name}
-                          </p>
-                          {skill.description && (
-                            <p className="font-label text-[9px] text-white/30 leading-tight line-clamp-2">
-                              {skill.description}
+                    config.skills.map((skill) => {
+                      const isSelected = selectedPath === skill.path;
+                      return (
+                        <button
+                          key={skill.id}
+                          onClick={() => onSelectFile?.(skill.path)}
+                          className={`flex items-start gap-2 py-1 pl-5 w-full text-left rounded transition-colors cursor-pointer group ${
+                            isSelected ? "bg-primary/10" : "hover:bg-on-surface/[0.04]"
+                          }`}
+                        >
+                          <Sparkles className={`w-3 h-3 flex-shrink-0 mt-0.5 ${isSelected ? "text-primary" : "text-tertiary/70"}`} />
+                          <div className="min-w-0">
+                            <p className={`font-label text-[11px] truncate ${isSelected ? "text-primary font-semibold" : "text-on-surface/70 group-hover:text-on-surface/70"}`}>
+                              {skill.name}
                             </p>
-                          )}
-                        </div>
-                      </button>
-                    ))
+                            {skill.description && (
+                              <p className="font-label text-[9px] text-on-surface-variant/40 leading-tight line-clamp-2">
+                                {skill.description}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               )}
             </div>
 
             {/* Hooks section */}
-            <div className="border-b border-white/[0.04]">
+            <div className="border-b border-outline-variant/20">
               <SectionHeader
                 icon={Webhook}
                 label="Hooks"
@@ -211,31 +217,36 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
               {hooksOpen && (
                 <div className="px-3 pb-2">
                   {hookCount === 0 ? (
-                    <p className="font-label text-[10px] text-white/20 pl-5">
+                    <p className="font-label text-[10px] text-on-surface-variant/30 pl-5">
                       No hooks configured
                     </p>
                   ) : (
                     Object.entries(config.hooks).map(([event, hooks]) =>
-                      hooks.map((hook, i) => (
-                        <button
-                          key={`${event}-${i}`}
-                          onClick={() =>
-                            hook.filePath && onSelectFile?.(hook.filePath)
-                          }
-                          className="flex items-start gap-2 py-1 pl-5 w-full text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer group"
-                        >
-                          <Webhook className="w-3 h-3 text-accent-success/70 flex-shrink-0 mt-0.5" />
-                          <div className="min-w-0">
-                            <p className="font-label text-[11px] text-white/70 group-hover:text-white/90">
-                              {event}
-                            </p>
-                            <p className="font-mono text-[9px] text-white/30 truncate">
-                              {hook.matcher || "*"} &rarr;{" "}
-                              {hook.command.split("/").pop()}
-                            </p>
-                          </div>
-                        </button>
-                      ))
+                      hooks.map((hook, i) => {
+                        const isSelected = hook.filePath && selectedPath === hook.filePath;
+                        return (
+                          <button
+                            key={`${event}-${i}`}
+                            onClick={() =>
+                              hook.filePath && onSelectFile?.(hook.filePath)
+                            }
+                            className={`flex items-start gap-2 py-1 pl-5 w-full text-left rounded transition-colors cursor-pointer group ${
+                              isSelected ? "bg-primary/10" : "hover:bg-on-surface/[0.04]"
+                            }`}
+                          >
+                            <Webhook className={`w-3 h-3 flex-shrink-0 mt-0.5 ${isSelected ? "text-primary" : "text-accent-success/70"}`} />
+                            <div className="min-w-0">
+                              <p className={`font-label text-[11px] ${isSelected ? "text-primary font-semibold" : "text-on-surface/70 group-hover:text-on-surface"}`}>
+                                {event}
+                              </p>
+                              <p className="font-mono text-[9px] text-on-surface-variant/40 truncate">
+                                {hook.matcher || "*"} &rarr;{" "}
+                                {hook.command.split("/").pop()}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
                     )
                   )}
                 </div>
@@ -243,7 +254,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
             </div>
 
             {/* Tools section */}
-            <div className="border-b border-white/[0.04]">
+            <div className="border-b border-outline-variant/20">
               <div className="flex items-center">
                 <div className="flex-1">
                   <SectionHeader
@@ -257,7 +268,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
                 {onOpenPolicyEditor && (
                   <button
                     onClick={onOpenPolicyEditor}
-                    className="p-1 mr-2 text-white/20 hover:text-primary/70 transition-colors"
+                    className="p-1 mr-2 text-on-surface-variant/30 hover:text-primary/70 transition-colors"
                     title="Edit tool policy"
                   >
                     <SlidersHorizontal className="w-3 h-3" />
@@ -278,7 +289,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor }:
                           className={`inline-flex items-center gap-1 font-label text-[9px] px-1.5 py-0.5 rounded transition-colors ${
                             blocked
                               ? "bg-error/10 text-error/50 line-through"
-                              : "bg-white/[0.04] text-white/50"
+                              : "bg-on-surface/[0.04] text-on-surface-variant/80"
                           }`}
                         >
                           {blocked ? (

@@ -22,8 +22,8 @@ export default function ToolCallStream({ toolCalls }: ToolCallStreamProps) {
   if (toolCalls.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-4">
-        <Activity className="w-6 h-6 text-white/10 mb-2" />
-        <p className="font-label text-[10px] text-white/25">
+        <Activity className="w-6 h-6 text-on-surface-variant/15 mb-2" />
+        <p className="font-label text-[10px] text-on-surface-variant/30">
           No tool activity yet for this session.
         </p>
       </div>

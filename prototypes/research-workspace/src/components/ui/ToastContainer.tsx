@@ -68,19 +68,19 @@ export default function ToastContainer() {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-2 px-3 py-2 rounded-lg border-l-2 border border-white/[0.08] backdrop-blur-xl shadow-xl max-w-sm animate-in slide-in-from-right ${COLORS[toast.type]}`}
+            className={`pointer-events-auto flex items-start gap-2 px-3 py-2 rounded-lg border-l-2 border border-outline-variant/30 backdrop-blur-xl shadow-xl max-w-sm animate-in slide-in-from-right ${COLORS[toast.type]}`}
             style={{
               backgroundColor: "rgba(26, 27, 32, 0.92)",
               animation: "slideIn 0.2s ease-out",
             }}
           >
             <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${ICON_COLORS[toast.type]}`} />
-            <p className="font-label text-xs text-white/80 flex-1 leading-relaxed">
+            <p className="font-label text-xs text-on-surface/80 flex-1 leading-relaxed">
               {toast.message}
             </p>
             <button
               onClick={() => dismiss(toast.id)}
-              className="p-0.5 text-white/20 hover:text-white/50 transition-colors flex-shrink-0"
+              className="p-0.5 text-on-surface-variant/30 hover:text-on-surface-variant/80 transition-colors flex-shrink-0"
             >
               <X className="w-3 h-3" />
             </button>

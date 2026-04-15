@@ -106,14 +106,14 @@ export default function AgentActivityStrip({
             className={`px-1.5 py-0.5 rounded text-[9px] font-label transition-colors ${
               polling
                 ? "text-accent-success bg-accent-success/10"
-                : "text-white/30 bg-white/[0.04]"
+                : "text-on-surface-variant/40 bg-on-surface/[0.04]"
             }`}
           >
             {polling ? "Live" : "Paused"}
           </button>
           <button
             onClick={clearLog}
-            className="p-0.5 text-white/30 hover:text-error transition-colors"
+            className="p-0.5 text-on-surface-variant/40 hover:text-error transition-colors"
             title="Clear log"
           >
             <Trash2 className="w-3 h-3" />
@@ -149,11 +149,11 @@ export default function AgentActivityStrip({
           )
         ) : visibleRuns.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <Shield className="w-8 h-8 text-white/10 mb-2" />
-            <p className="font-label text-[10px] text-white/25">
+            <Shield className="w-8 h-8 text-on-surface-variant/15 mb-2" />
+            <p className="font-label text-[10px] text-on-surface-variant/30">
               Agent tool use is audited here.
             </p>
-            <p className="font-label text-[10px] text-white/15 mt-1">
+            <p className="font-label text-[10px] text-on-surface-variant/20 mt-1">
               Click the play button on an intention to run it.
             </p>
           </div>

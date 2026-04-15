@@ -157,7 +157,7 @@ function ToolToggleGrid({
             className={`inline-flex items-center gap-1.5 font-label text-[11px] px-2 py-1 rounded-md transition-all cursor-pointer select-none ${
               blocked
                 ? "bg-error/15 text-error/70 line-through hover:bg-error/25"
-                : "bg-white/[0.06] text-white/60 hover:bg-white/[0.12] hover:text-white/80"
+                : "bg-on-surface/[0.06] text-on-surface-variant hover:bg-on-surface/[0.12] hover:text-on-surface"
             }`}
           >
             {blocked ? (
@@ -186,17 +186,17 @@ function RuleRow({
     rule.condition === "not_matches" ? "must match" : "must not match";
 
   return (
-    <div className="group flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-white/[0.04] transition-colors">
+    <div className="group flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-on-surface/[0.04] transition-colors">
       <Icon className="w-3.5 h-3.5 text-primary/60 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="font-label text-[11px] text-white/70 font-medium">
+          <span className="font-label text-[11px] text-on-surface/70 font-medium">
             {rule.tool}
           </span>
-          <span className="font-label text-[9px] text-white/30">
+          <span className="font-label text-[9px] text-on-surface-variant/40">
             {meta?.paramLabel || rule.parameter}
           </span>
-          <span className="font-label text-[9px] text-white/25">
+          <span className="font-label text-[9px] text-on-surface-variant/30">
             {conditionLabel}
           </span>
         </div>
@@ -204,14 +204,14 @@ function RuleRow({
           {rule.pattern}
         </code>
         {rule.label && (
-          <p className="font-label text-[9px] text-white/30 mt-0.5">
+          <p className="font-label text-[9px] text-on-surface-variant/40 mt-0.5">
             {rule.label}
           </p>
         )}
       </div>
       <button
         onClick={onDelete}
-        className="p-1 text-white/20 hover:text-error/70 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+        className="p-1 text-on-surface-variant/30 hover:text-error/70 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
         title="Delete rule"
       >
         <Trash2 className="w-3 h-3" />
@@ -250,7 +250,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 font-label text-[10px] text-primary/50 hover:text-primary/80 transition-colors mt-1 px-2 py-1 rounded hover:bg-white/[0.04]"
+        className="flex items-center gap-1.5 font-label text-[10px] text-primary/50 hover:text-primary/80 transition-colors mt-1 px-2 py-1 rounded hover:bg-on-surface/[0.04]"
       >
         <Plus className="w-3 h-3" />
         Add parameter rule
@@ -259,10 +259,10 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
   }
 
   return (
-    <div className="mt-2 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] space-y-2.5">
+    <div className="mt-2 p-3 rounded-lg bg-on-surface/[0.03] border border-outline-variant/30 space-y-2.5">
       {/* Tool selector */}
       <div>
-        <label className="font-label text-[9px] text-white/30 uppercase tracking-wider block mb-1">
+        <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider block mb-1">
           Tool
         </label>
         <div className="flex flex-wrap gap-1">
@@ -273,7 +273,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
               className={`font-label text-[10px] px-2 py-0.5 rounded transition-colors ${
                 tool === name
                   ? "bg-primary/20 text-primary"
-                  : "bg-white/[0.04] text-white/40 hover:text-white/60"
+                  : "bg-on-surface/[0.04] text-on-surface-variant/60 hover:text-on-surface-variant"
               }`}
             >
               {name}
@@ -284,7 +284,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
 
       {/* Condition */}
       <div>
-        <label className="font-label text-[9px] text-white/30 uppercase tracking-wider block mb-1">
+        <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider block mb-1">
           Condition on {meta?.paramLabel || "parameter"}
         </label>
         <div className="flex gap-1">
@@ -293,7 +293,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
             className={`font-label text-[10px] px-2 py-1 rounded transition-colors ${
               condition === "not_matches"
                 ? "bg-primary/20 text-primary"
-                : "bg-white/[0.04] text-white/40 hover:text-white/60"
+                : "bg-on-surface/[0.04] text-on-surface-variant/60 hover:text-on-surface-variant"
             }`}
           >
             Must match (allowlist)
@@ -303,7 +303,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
             className={`font-label text-[10px] px-2 py-1 rounded transition-colors ${
               condition === "matches"
                 ? "bg-primary/20 text-primary"
-                : "bg-white/[0.04] text-white/40 hover:text-white/60"
+                : "bg-on-surface/[0.04] text-on-surface-variant/60 hover:text-on-surface-variant"
             }`}
           >
             Must not match (blocklist)
@@ -313,7 +313,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
 
       {/* Pattern */}
       <div>
-        <label className="font-label text-[9px] text-white/30 uppercase tracking-wider block mb-1">
+        <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider block mb-1">
           Regex pattern
         </label>
         <input
@@ -321,10 +321,10 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
           value={pattern}
           onChange={(e) => setPattern(e.target.value)}
           placeholder={meta?.placeholder || "pattern..."}
-          className={`w-full bg-white/[0.04] font-mono text-xs px-2.5 py-1.5 rounded border transition-colors focus:outline-none ${
+          className={`w-full bg-on-surface/[0.04] font-mono text-xs px-2.5 py-1.5 rounded border transition-colors focus:outline-none ${
             !regexValid
               ? "border-error/50 focus:border-error/70 text-error/80"
-              : "border-white/[0.08] focus:border-primary/40 text-white/80"
+              : "border-outline-variant/30 focus:border-primary/40 text-on-surface/80"
           }`}
         />
         {!regexValid && (
@@ -337,7 +337,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
 
       {/* Label */}
       <div>
-        <label className="font-label text-[9px] text-white/30 uppercase tracking-wider block mb-1">
+        <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider block mb-1">
           Description (optional)
         </label>
         <input
@@ -345,7 +345,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="e.g. Only allow arXiv and Scholar"
-          className="w-full bg-white/[0.04] font-label text-xs px-2.5 py-1.5 rounded border border-white/[0.08] focus:border-primary/40 focus:outline-none text-white/80 transition-colors"
+          className="w-full bg-on-surface/[0.04] font-label text-xs px-2.5 py-1.5 rounded border border-outline-variant/40 focus:border-primary/40 focus:outline-none text-on-surface/80 transition-colors"
         />
       </div>
 
@@ -361,7 +361,7 @@ function AddRuleForm({ onAdd }: { onAdd: (rule: ToolRule) => void }) {
         </button>
         <button
           onClick={() => setOpen(false)}
-          className="font-label text-[11px] px-3 py-1.5 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
+          className="font-label text-[11px] px-3 py-1.5 rounded-lg text-on-surface-variant/60 hover:text-on-surface-variant hover:bg-on-surface/[0.04] transition-colors"
         >
           Cancel
         </button>
@@ -508,23 +508,23 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/10 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[460px] max-h-[85vh] rounded-xl bg-[#1a1b20] border border-white/[0.12] shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-[460px] max-h-[85vh] rounded-xl bg-[#1a1b20] border border-outline-variant/40 shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0">
+        <div className="px-4 py-3 border-b border-outline-variant/30 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-primary" />
-            <span className="font-label text-sm font-semibold text-white/90">
+            <span className="font-label text-sm font-semibold text-on-surface">
               Tool Policy
             </span>
           </div>
           <div className="flex items-center gap-2">
             {saving && (
-              <span className="font-label text-[10px] text-white/30 animate-pulse">
+              <span className="font-label text-[10px] text-on-surface-variant/40 animate-pulse">
                 Saving...
               </span>
             )}
@@ -536,7 +536,7 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
             )}
             <button
               onClick={onClose}
-              className="p-1 text-white/30 hover:text-white/60 transition-colors"
+              className="p-1 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -547,8 +547,8 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <ShieldCheck className="w-8 h-8 text-white/10 mb-2 animate-pulse" />
-              <p className="font-label text-[10px] text-white/25">
+              <ShieldCheck className="w-8 h-8 text-on-surface-variant/15 mb-2 animate-pulse" />
+              <p className="font-label text-[10px] text-on-surface-variant/30">
                 Loading policy...
               </p>
             </div>
@@ -556,7 +556,7 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
             <>
               {/* Presets */}
               <div>
-                <label className="font-label text-[9px] text-white/30 uppercase tracking-wider block mb-2">
+                <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider block mb-2">
                   Presets
                 </label>
                 <div className="flex gap-1.5">
@@ -567,7 +567,7 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
                         key={key}
                         onClick={() => applyPreset(key)}
                         title={preset.description}
-                        className="flex items-center gap-1.5 font-label text-[10px] px-2.5 py-1.5 rounded-lg bg-white/[0.04] text-white/50 hover:bg-primary/15 hover:text-primary transition-colors"
+                        className="flex items-center gap-1.5 font-label text-[10px] px-2.5 py-1.5 rounded-lg bg-on-surface/[0.04] text-on-surface-variant/80 hover:bg-primary/15 hover:text-primary transition-colors"
                       >
                         <Icon className="w-3 h-3" />
                         {preset.label}
@@ -580,10 +580,10 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
               {/* Tool toggles */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="font-label text-[9px] text-white/30 uppercase tracking-wider">
+                  <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider">
                     Tool access
                   </label>
-                  <span className="font-label text-[9px] text-white/20">
+                  <span className="font-label text-[9px] text-on-surface-variant/30">
                     {TOOL_NAMES.length - blockedTools.size}/{TOOL_NAMES.length} allowed
                   </span>
                 </div>
@@ -600,14 +600,14 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
               {/* Parameter rules */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="font-label text-[9px] text-white/30 uppercase tracking-wider">
+                  <label className="font-label text-[9px] text-on-surface-variant/40 uppercase tracking-wider">
                     Parameter rules
                   </label>
-                  <span className="font-label text-[9px] text-white/20">
+                  <span className="font-label text-[9px] text-on-surface-variant/30">
                     {policy.rules.length} rule{policy.rules.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <p className="font-label text-[9px] text-white/20 mb-2">
+                <p className="font-label text-[9px] text-on-surface-variant/30 mb-2">
                   Fine-grained rules that inspect tool parameters before allowing execution.
                 </p>
 
@@ -630,8 +630,8 @@ export default function ToolPolicyEditor({ onClose }: ToolPolicyEditorProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-white/[0.06] flex-shrink-0">
-          <p className="font-label text-[9px] text-white/20 leading-relaxed">
+        <div className="px-4 py-2.5 border-t border-outline-variant/30 flex-shrink-0">
+          <p className="font-label text-[9px] text-on-surface-variant/30 leading-relaxed">
             Policy changes take effect immediately for new tool calls. Active runs will
             pick up changes on their next tool invocation.
           </p>

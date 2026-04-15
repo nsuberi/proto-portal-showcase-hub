@@ -110,7 +110,7 @@ export default function MilkdownEditor({
   return (
     <div className="h-full flex flex-col">
       {!milkdownReady && (
-        <div className="flex items-center justify-center h-full text-white/40 font-label text-sm">
+        <div className="flex items-center justify-center h-full text-on-surface-variant/60 font-label text-sm">
           Loading editor...
         </div>
       )}
@@ -141,14 +141,14 @@ function FallbackEditor({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 py-1 text-xs font-label text-white/40 border-b border-white/[0.06]">
+      <div className="px-3 py-1 text-xs font-label text-on-surface-variant/60 border-b border-outline-variant/30">
         Markdown editor (plain text mode)
       </div>
       <textarea
         value={content}
         onChange={handleChange}
         spellCheck={false}
-        className="flex-1 w-full bg-transparent text-white font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed placeholder:text-white/30"
+        className="flex-1 w-full bg-transparent text-on-primary font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed placeholder:text-on-surface-variant/40"
         placeholder="Start writing markdown..."
       />
     </div>
