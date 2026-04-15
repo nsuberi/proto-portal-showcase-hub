@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Shield, Key, Database, Eye, Users, Server, ArrowRight,
   Layers, Cloud, Monitor, Wifi, Cpu, HardDrive, BarChart3, DollarSign,
-  AlertTriangle, CircleCheck, Lock,
+  AlertTriangle, CircleCheck, Lock, LogIn, Github, ShieldCheck, Ban,
+  FileKey, ChevronRight,
 } from "lucide-react";
 
 export default function SecurityPage() {
@@ -108,6 +109,198 @@ export default function SecurityPage() {
                 All workspace access requires GitHub OAuth via AWS Cognito at the ALB layer. Unauthenticated requests are redirected to login. Sessions last 12 hours before re-authentication.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* GitHub Authentication Flow */}
+        <section className="mb-12 rounded-xl border border-outline-variant/20 bg-surface-container-low/50 p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-4">
+            <LogIn className="w-5 h-5 text-primary" />
+            <h2 className="font-headline text-lg text-on-surface">GitHub Authentication: What Happens When You Sign In</h2>
+          </div>
+          <p className="font-body text-sm text-on-surface-variant/70 mb-6 max-w-3xl">
+            Signing in with GitHub is the only way to access the workspace. Here's exactly what that means for your GitHub account, what data we receive, and how your identity flows through the system.
+          </p>
+
+          {/* Permission callout */}
+          <div className="rounded-lg border border-accent-success/30 bg-accent-success/5 p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-accent-success mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-label text-sm font-semibold text-on-surface mb-1">
+                  We request the minimum possible GitHub permission
+                </p>
+                <p className="font-body text-sm text-on-surface-variant/70">
+                  The OAuth scope is <code className="font-mono text-xs bg-accent-success/10 text-accent-success px-1.5 py-0.5 rounded">user:email</code> — read-only access to your email address. That's it. This is the most restrictive scope GitHub offers, and it's the only one we ask for.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* What we CAN'T do */}
+          <div className="rounded-lg border border-outline-variant/15 bg-surface-container/50 p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Ban className="w-4 h-4 text-error" />
+              <span className="font-label text-sm font-semibold text-on-surface">What this permission does NOT grant</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                "No access to your repositories (public or private)",
+                "No access to your organizations or teams",
+                "No ability to create, modify, or delete anything on GitHub",
+                "No access to your GitHub notifications or issues",
+                "No access to your SSH keys or GPG keys",
+                "No ability to act on your behalf in any way",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-2">
+                  <Ban className="w-3 h-3 text-error/60 mt-0.5 flex-shrink-0" />
+                  <span className="font-body text-xs text-on-surface-variant/60">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Step-by-step flow */}
+          <div className="mb-6">
+            <h3 className="font-label text-xs font-semibold text-on-surface-variant/50 uppercase tracking-wider mb-4">Authentication Flow Step by Step</h3>
+            <div className="space-y-0">
+              {/* Step 1 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs text-primary bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center font-semibold">1</span>
+                  <div className="w-px flex-1 bg-outline-variant/20 my-1" />
+                </div>
+                <div className="pb-4">
+                  <p className="font-label text-sm font-semibold text-on-surface">You click "Sign in with GitHub"</p>
+                  <p className="font-body text-xs text-on-surface-variant/60 mt-1">
+                    The ALB (load balancer) detects you're unauthenticated and redirects you through AWS Cognito to GitHub's login page.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs text-primary bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center font-semibold">2</span>
+                  <div className="w-px flex-1 bg-outline-variant/20 my-1" />
+                </div>
+                <div className="pb-4">
+                  <p className="font-label text-sm font-semibold text-on-surface">GitHub asks for your consent</p>
+                  <p className="font-body text-xs text-on-surface-variant/60 mt-1">
+                    You'll see GitHub's standard OAuth consent screen showing the <code className="font-mono text-[10px] bg-primary/10 text-primary px-1 rounded">user:email</code> scope. You authenticate with your own GitHub credentials — we never see your password.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs text-primary bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center font-semibold">3</span>
+                  <div className="w-px flex-1 bg-outline-variant/20 my-1" />
+                </div>
+                <div className="pb-4">
+                  <p className="font-label text-sm font-semibold text-on-surface">A bridge Lambda translates GitHub OAuth to OIDC</p>
+                  <p className="font-body text-xs text-on-surface-variant/60 mt-1">
+                    GitHub's OAuth isn't OIDC-compliant, so a lightweight Lambda function acts as a bridge. It exchanges the auth code for a temporary GitHub token, fetches your public profile and email, then signs a standard OIDC identity token (JWT) containing only: your numeric GitHub user ID, email, display name, and avatar URL.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs text-primary bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center font-semibold">4</span>
+                  <div className="w-px flex-1 bg-outline-variant/20 my-1" />
+                </div>
+                <div className="pb-4">
+                  <p className="font-label text-sm font-semibold text-on-surface">Cognito validates and creates your session</p>
+                  <p className="font-body text-xs text-on-surface-variant/60 mt-1">
+                    AWS Cognito verifies the signed JWT against the Lambda's public key (JWKS), maps your GitHub identity to a Cognito user, and issues a session cookie. The ALB enforces this session on every subsequent request.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="font-mono text-xs text-primary bg-primary/10 rounded-full w-6 h-6 flex items-center justify-center font-semibold">5</span>
+                </div>
+                <div className="pb-1">
+                  <p className="font-label text-sm font-semibold text-on-surface">Your identity scopes your private vault</p>
+                  <p className="font-body text-xs text-on-surface-variant/60 mt-1">
+                    The backend reads your Cognito-issued JWT from the ALB header. Your GitHub user ID becomes your vault directory name — all your files, intentions, and activity logs are isolated to <code className="font-mono text-[10px] bg-primary/10 text-primary px-1 rounded">/vaults/{'<your-github-id>'}/</code> and are invisible to other users.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual flow diagram */}
+          <div className="mb-6">
+            <h3 className="font-label text-xs font-semibold text-on-surface-variant/50 uppercase tracking-wider mb-4">Data Flow During Authentication</h3>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex items-stretch gap-0 min-w-[760px]">
+                <div className="flex-1 rounded-l-lg border border-outline-variant/20 bg-surface-container/30 p-3 text-center">
+                  <Github className="w-5 h-5 text-on-surface-variant/50 mx-auto mb-1" />
+                  <div className="font-label text-xs font-semibold text-on-surface">GitHub</div>
+                  <div className="font-body text-[10px] text-on-surface-variant/50 mt-1">Authenticates you</div>
+                  <div className="font-mono text-[10px] text-accent-success mt-1">scope: user:email</div>
+                </div>
+                <div className="flex items-center px-1 text-on-surface-variant/30"><ChevronRight className="w-4 h-4" /></div>
+                <div className="flex-1 border border-tertiary/30 bg-tertiary/5 p-3 text-center">
+                  <FileKey className="w-5 h-5 text-tertiary mx-auto mb-1" />
+                  <div className="font-label text-xs font-semibold text-on-surface">OIDC Proxy</div>
+                  <div className="font-body text-[10px] text-on-surface-variant/50 mt-1">Signs identity JWT</div>
+                  <div className="font-mono text-[10px] text-tertiary mt-1">id, email, name</div>
+                </div>
+                <div className="flex items-center px-1 text-on-surface-variant/30"><ChevronRight className="w-4 h-4" /></div>
+                <div className="flex-1 border border-error/30 bg-error/5 p-3 text-center">
+                  <Lock className="w-5 h-5 text-error mx-auto mb-1" />
+                  <div className="font-label text-xs font-semibold text-on-surface">Cognito</div>
+                  <div className="font-body text-[10px] text-on-surface-variant/50 mt-1">Validates & sessions</div>
+                  <div className="font-mono text-[10px] text-error mt-1">12h session cookie</div>
+                </div>
+                <div className="flex items-center px-1 text-on-surface-variant/30"><ChevronRight className="w-4 h-4" /></div>
+                <div className="flex-1 border border-primary/30 bg-primary/5 p-3 text-center">
+                  <Shield className="w-5 h-5 text-primary mx-auto mb-1" />
+                  <div className="font-label text-xs font-semibold text-on-surface">ALB</div>
+                  <div className="font-body text-[10px] text-on-surface-variant/50 mt-1">Enforces auth</div>
+                  <div className="font-mono text-[10px] text-primary mt-1">x-amzn-oidc-data</div>
+                </div>
+                <div className="flex items-center px-1 text-on-surface-variant/30"><ChevronRight className="w-4 h-4" /></div>
+                <div className="flex-1 rounded-r-lg border border-accent-success/30 bg-accent-success/5 p-3 text-center">
+                  <Users className="w-5 h-5 text-accent-success mx-auto mb-1" />
+                  <div className="font-label text-xs font-semibold text-on-surface">Your Vault</div>
+                  <div className="font-body text-[10px] text-on-surface-variant/50 mt-1">Isolated workspace</div>
+                  <div className="font-mono text-[10px] text-accent-success mt-1">/vaults/{'<id>'}/*</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Token handling reassurance */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="rounded-lg border border-outline-variant/15 bg-surface-container/50 p-4 text-center">
+              <CircleCheck className="w-5 h-5 text-accent-success mx-auto mb-2" />
+              <div className="font-label text-xs font-semibold text-on-surface mb-1">Token Not Stored</div>
+              <p className="font-body text-[10px] text-on-surface-variant/50">The GitHub access token is used once during sign-in to fetch your profile, then discarded. It is never written to disk or stored in any database.</p>
+            </div>
+            <div className="rounded-lg border border-outline-variant/15 bg-surface-container/50 p-4 text-center">
+              <CircleCheck className="w-5 h-5 text-accent-success mx-auto mb-2" />
+              <div className="font-label text-xs font-semibold text-on-surface mb-1">Revoke Anytime</div>
+              <p className="font-body text-[10px] text-on-surface-variant/50">You can revoke access at any time from GitHub Settings &rarr; Applications &rarr; Authorized OAuth Apps. Revoking instantly prevents new sign-ins.</p>
+            </div>
+            <div className="rounded-lg border border-outline-variant/15 bg-surface-container/50 p-4 text-center">
+              <CircleCheck className="w-5 h-5 text-accent-success mx-auto mb-2" />
+              <div className="font-label text-xs font-semibold text-on-surface mb-1">Sessions Expire</div>
+              <p className="font-body text-[10px] text-on-surface-variant/50">Cognito sessions last 12 hours, then you'll be prompted to sign in again. There are no persistent long-lived tokens on our side.</p>
+            </div>
+          </div>
+
+          <div className="border-t border-outline-variant/15 pt-4">
+            <p className="font-body text-xs text-on-surface-variant/40 max-w-3xl">
+              This flow follows the standard OAuth 2.0 Authorization Code grant. The OIDC bridge Lambda is necessary because GitHub's OAuth implementation doesn't natively support OIDC, which AWS Cognito requires. The Lambda's source code is open in this repository at <code className="font-mono text-[10px] text-on-surface-variant/50">infrastructure/github-oidc-proxy/index.mjs</code>.
+            </p>
           </div>
         </section>
 
