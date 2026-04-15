@@ -1,0 +1,50 @@
+{
+  "description": "Research workspace vault hooks — agent-based (no regex, no scripts)",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "A file was just written. Check the tool_input for the file_path. If the path contains '/leaves/', extract the branch slug from the path (the directory name after leaves/). Count how many .md files exist in that branch's leaves/ directory. If there are 5 or more leaves, check whether a .synthesis-needed-{branchSlug} flag file already exists in the vault root. If it doesn't exist, create it with JSON content: {\"branchSlug\": \"...\", \"leafCount\": N, \"triggeredAt\": \"ISO-timestamp\"}. Report what you found and any actions taken.",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Read",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Check the current working directory for any files matching the pattern .synthesis-needed-* (dot-prefixed hidden files). For each one found: (1) Read its JSON content to get the branchSlug and leafCount. (2) Check if a .synthesis-queue-{branchSlug} file already exists — if so, skip. (3) If no queue file exists, create .synthesis-queue-{branchSlug} with JSON: {\"branchSlug\": \"...\", \"leafCount\": N, \"queuedAt\": \"ISO-timestamp\", \"status\": \"pending\"}. (4) Delete the consumed .synthesis-needed-* flag file. Report any syntheses queued.",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Check if .claude/open-claw.local.md exists. If it does NOT exist, return ok:true immediately (no active loop). If it DOES exist, read its YAML frontmatter to get the current phase, phase_index, phases array, output_dir, iteration, and max_iterations. Then check if the required output files for the current phase exist in the output directory. Phase requirements: 'research' needs {output_dir}/research/findings.md AND {output_dir}/research/sources.json. 'validate' needs {output_dir}/validate/validation-report.md. 'implement' needs at least one source file in {output_dir}/implement/src/. 'architecture' needs {output_dir}/architecture/architecture.md. 'package' needs {output_dir}/package/README.md AND {output_dir}/package/package.json. If the current phase outputs ALL exist: advance phase_index by 1, update the phase field in the state file. If phase_index would exceed the phases array (all phases done), delete .claude/open-claw.local.md and return ok:true. Otherwise, read the next phase's prompt template from .claude/open-claw/prompts/{N}-{phase}.md, replace {{TOPIC}}, {{DESCRIPTION}}, {{OUTPUT_DIR}} with values from the state file, and return ok:false with reason set to the interpolated prompt. If the current phase outputs do NOT all exist: increment iteration in the state file. If iteration exceeds max_iterations, delete the state file and return ok:true. Otherwise return ok:false with reason reminding about the current phase's unmet requirements and what files are still needed.",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Analyze the user's recent message context for mastery signals — indications that a research topic has been internalized. Look for: (1) explaining_unprompted — user explains a concept without being asked, (2) domain_vocabulary — user uses technical terms casually and correctly, (3) cross_domain_connection — user connects the concept to other domains or analogies, (4) presupposing_question — user asks questions that assume understanding of fundamentals, (5) restatement — user restates concepts in their own words. If any signals detected, append a JSONL entry to .root-signals.jsonl with: {\"timestamp\": \"ISO\", \"signals\": [\"signal_names\"], \"messageExcerpt\": \"first 200 chars\"}. Return ok:true with a systemMessage listing detected signals. If no signals detected, return ok:true silently.",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

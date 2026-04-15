@@ -30,6 +30,7 @@ COPY package.json .
 RUN npm install --omit=dev
 
 COPY src/ src/
+COPY vault-seed/ vault-seed/
 
 # Bake in a vault README
 COPY vault-readme.md /workspace/README.md
