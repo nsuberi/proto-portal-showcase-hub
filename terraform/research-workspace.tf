@@ -252,18 +252,12 @@ resource "aws_efs_mount_target" "research_workspace" {
 }
 
 # Security group for EFS — allow NFS from ECS tasks
+# NOTE: All ingress rules use standalone aws_security_group_rule resources
+# to avoid the inline-vs-standalone conflict that silently drops rules on apply.
 resource "aws_security_group" "efs_research_workspace" {
   name        = "research-workspace-efs"
   description = "Allow NFS access from ECS tasks to research workspace EFS"
   vpc_id      = module.ai_evals.vpc_id
-
-  ingress {
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [module.ai_evals.ecs_security_group_id]
-    description     = "NFS from ECS tasks"
-  }
 
   egress {
     from_port   = 0
@@ -277,7 +271,18 @@ resource "aws_security_group" "efs_research_workspace" {
   }
 }
 
-# Allow NFS from the research workspace sandbox SG (replaces shared ECS SG for these tasks)
+# NFS from shared ECS cluster SG (legacy — kept for other services on the ALB)
+resource "aws_security_group_rule" "efs_from_ecs" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = module.ai_evals.ecs_security_group_id
+  security_group_id        = aws_security_group.efs_research_workspace.id
+  description              = "NFS from ECS tasks"
+}
+
+# NFS from the research workspace sandbox SG (the SG actually used by these tasks)
 resource "aws_security_group_rule" "efs_from_sandbox" {
   type                     = "ingress"
   from_port                = 2049
