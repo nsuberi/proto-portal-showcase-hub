@@ -33,6 +33,10 @@ export default {
         error: "var(--color-error)",
         "on-error": "var(--color-on-error)",
         "accent-success": "var(--color-accent-success)",
+        root: "var(--color-root)",
+        branch: "var(--color-branch)",
+        leaf: "var(--color-leaf)",
+        flower: "var(--color-flower)",
       },
       fontFamily: {
         headline: ["var(--font-headline)"],
