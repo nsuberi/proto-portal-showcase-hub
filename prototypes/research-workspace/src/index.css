@@ -220,18 +220,142 @@ body {
   50% { transform: translateY(-6px); }
 }
 
+/* design-token-lint-ignore */
 @keyframes focus-pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.7; }
 }
 
-/* xterm.js terminal container sizing */
-.xterm {
-  height: 100%;
+/* === Sidebar rail === */
+
+.sidebar-rail {
+  width: 48px;
+  background: rgba(13, 14, 18, 0.85);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border-right: 1px solid rgba(187, 198, 226, 0.06);
+  border-radius: 12px 0 0 12px;
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.xterm-viewport {
-  overflow-y: auto !important;
+.sidebar-rail.expanded {
+  width: 320px;
+  border-radius: 12px;
+  border: 1px solid rgba(187, 198, 226, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Fade-in content inside expanded sidebar */
+.sidebar-content {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 180ms ease-out 60ms, transform 180ms ease-out 60ms;
+}
+
+.sidebar-rail.expanded .sidebar-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* === Agent activity strip === */
+
+/* Ambient pulse dot (idle indicator) */
+.ambient-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: ambient-pulse 3s ease-in-out infinite;
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+/* Attention state bar */
+.activity-bar.attention {
+  background: rgba(255, 186, 56, 0.06);
+  border-color: rgba(255, 186, 56, 0.15);
+}
+
+/* Tool call card styles */
+.tool-call-card {
+  background: transparent;
+  border-bottom: 1px solid rgba(187, 198, 226, 0.04);
+  transition: background-color 150ms ease;
+}
+
+.tool-call-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tool-call-card[data-status="running"] {
+  background: rgba(187, 198, 226, 0.04);
+  border-left: 2px solid var(--color-primary);
+}
+
+.tool-call-card[data-status="blocked"] {
+  background: rgba(255, 180, 171, 0.04);
+  border-left: 2px solid var(--color-error);
+}
+
+/* Tool call entry animation */
+@keyframes tool-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tool-call-enter {
+  animation: tool-slide-in 200ms ease-out;
+}
+
+/* Completion checkmark pop */
+@keyframes tool-complete-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.tool-call-complete-icon {
+  animation: tool-complete-pop 300ms ease-out;
+}
+
+/* Running border pulse */
+@keyframes tool-running-border {
+  0%, 100% { border-left-color: var(--color-primary); }
+  50% { border-left-color: transparent; }
+}
+
+.tool-call-running {
+  border-left: 2px solid var(--color-primary);
+  animation: tool-running-border 2s ease-in-out infinite;
+}
+
+/* Failed card border */
+.tool-call-failed-border {
+  border-left: 2px solid var(--color-error);
+}
+
+/* Badge pulse for sidebar icons */
+@keyframes ambient-badge-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-ambient-pulse {
+  animation: ambient-badge-pulse 2s ease-in-out infinite;
 }
 
 /* react-resizable-panels resize handle — transparent gap reveals dot grid */
