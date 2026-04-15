@@ -32,16 +32,28 @@ CloudFront
 
 ## Features
 
-### 1. Glassmorphism Workspace (Shipped)
+### 1. Glassmorphism Workspace (Shipped — Redesigned with Calm AI UX)
 
-Five resizable glass widgets on a dark dot-grid backdrop:
+Sidebar-rail + 2-panel main area on a dark dot-grid backdrop, applying calm design principles from aiuxdesign.guide:
+
+**Sidebar Rail (48px collapsed / 320px expanded):**
 - **Files** — vault file browser (EFS-backed, hides dotfiles)
-- **Intentions** — create/edit/run research plans with recurring schedules
-- **Editor** — Milkdown WYSIWYG for .md, regex syntax highlighting for .py/.ts/.js/.json/.sh
-- **Claude Terminal** — tabbed xterm.js: interactive Claude Code session + per-run output tabs
-- **Hooks & Activity** — real-time PreToolUse hook log showing every tool invocation with allow/block status
+- **Plan** — intentions system for research task management
+- **Activity** — structured agent audit view with tool call visualization
+- **Config** — session configuration and tool policy editor
 
-Desktop: 3-column resizable panels. Mobile: 5-tab swipeable layout.
+**Main Area:**
+- **Editor** — Milkdown WYSIWYG for .md, regex syntax highlighting for .py/.ts/.js/.json/.sh (75% default)
+- **Agent Activity Strip** — calm tool call visualization replacing raw terminal output (25% default, collapsible)
+
+**Calm Design Principles Applied:**
+- Progressive disclosure: tool calls show 1-line summary → expanded params → full JSON
+- Color-coded reversibility: green (read-only) / amber (modifiable) / red (destructive)
+- 4-layer attention system: ambient dot → progress stream → attention (blocked/error) → summary report
+- Natural language descriptions instead of raw tool parameters
+- Ambient status bar (40px) that doesn't demand attention
+
+Desktop: sidebar rail + vertical resizable panels. Mobile: 4-tab layout (Files, Editor, Plan, Activity).
 
 ### 2. Intentions System (Shipped)
 
@@ -62,8 +74,8 @@ Each intention has:
 
 - `POST /api/vault/runs` spawns an interactive Claude Code PTY session (`claude --dangerously-skip-permissions`)
 - Research prompt is auto-injected after Claude Code starts (output-settle detection with 10s max wait)
-- Each run opens a fully interactive Claude Code terminal tab — users see the real TUI and can steer the session
-- Run WebSockets are bidirectional: input, resize, and output all flow between browser and PTY
+- Each run is monitored via the Agent Activity Strip with structured tool call cards (no raw terminal)
+- Run status and tool activity polled via REST endpoints (`/api/vault/runs`, `/api/vault/activity`)
 - Multiple runs execute simultaneously as separate PTY sessions
 - Tool use events logged via Claude Code hooks (`.claude/hooks/log-activity.js`)
 - Run status tracking: running → completed/failed/cancelled
@@ -77,12 +89,9 @@ PreToolUse hook (`log-activity.js`) fires before every tool invocation:
 - Could block specific tools for enterprise policy enforcement
 - Activity panel shows real-time feed with tool type icons, counts, allow/block badges
 
-### 5. Voice Input (Shipped)
+### 5. Voice Input (Removed)
 
-Hold-spacebar-to-dictate in the terminal:
-- Quick tap (<300ms) → space character
-- Long hold → mic capture → Web Speech API transcription → inject into terminal
-- Visual indicator (pulsing red dot + volume level) in terminal header
+Previously provided hold-spacebar-to-dictate in the terminal. Removed as part of the calm UI redesign that replaced the raw terminal with structured tool call visualization.
 
 ### 6. Token Security (Shipped)
 
