@@ -1,0 +1,94 @@
+/* Forest-inspired light syntax highlighting for code editors
+   Chikorita palette: greens, ruby, browns, earth tones */
+
+/* design-token-lint-ignore */
+
+.highlight-dark {
+  background: transparent;
+}
+
+.highlight-dark pre {
+  margin: 0;
+  padding: 0;
+}
+
+/* Comments — muted sage */
+.highlight-dark .c,
+.highlight-dark .c1,
+.highlight-dark .cm,
+.highlight-dark .cs { color: #7a8a72; font-style: italic; }
+
+/* Keywords — ruby (from Chikorita eyes) */
+.highlight-dark .k,
+.highlight-dark .kc,
+.highlight-dark .kd,
+.highlight-dark .kn,
+.highlight-dark .kp,
+.highlight-dark .kr,
+.highlight-dark .kt { color: #8b2252; font-weight: 500; }
+
+/* Names/Identifiers — forest tones */
+.highlight-dark .n { color: #1e2d1a; }
+.highlight-dark .na { color: #2d5a22; }
+.highlight-dark .nb { color: #3a7530; }
+.highlight-dark .nc { color: #2d5a22; font-weight: 500; }
+.highlight-dark .nd { color: #8b7355; }
+.highlight-dark .ne { color: #8b2252; font-weight: 500; }
+.highlight-dark .nf { color: #2d5a22; }
+.highlight-dark .ni { color: #1e2d1a; }
+.highlight-dark .nl { color: #3a7530; }
+.highlight-dark .nn { color: #1e2d1a; }
+.highlight-dark .no { color: #4a8a38; }
+.highlight-dark .nt { color: #4a8a38; }
+.highlight-dark .nv { color: #8b7355; }
+
+/* Strings — leaf green */
+.highlight-dark .s,
+.highlight-dark .s1,
+.highlight-dark .s2,
+.highlight-dark .sa,
+.highlight-dark .sb,
+.highlight-dark .sc,
+.highlight-dark .se,
+.highlight-dark .sh,
+.highlight-dark .si,
+.highlight-dark .sr,
+.highlight-dark .ss,
+.highlight-dark .sx { color: #4a8a38; }
+.highlight-dark .sd { color: #7a8a72; font-style: italic; }
+
+/* Numbers — branch brown */
+.highlight-dark .m,
+.highlight-dark .mi,
+.highlight-dark .mf,
+.highlight-dark .mh,
+.highlight-dark .mo,
+.highlight-dark .il { color: #8b7355; }
+
+/* Operators — earth */
+.highlight-dark .o { color: #6b5b4a; }
+.highlight-dark .ow { color: #8b2252; font-weight: 500; }
+
+/* Punctuation — warm gray */
+.highlight-dark .p { color: #6b5b4a; }
+
+/* Generic */
+.highlight-dark .gd { color: #ba1a1a; }
+.highlight-dark .ge { font-style: italic; }
+.highlight-dark .gh { color: #2d5a22; font-weight: 600; }
+.highlight-dark .gi { color: #4a8a38; }
+.highlight-dark .go { color: #7a8a72; }
+.highlight-dark .gp { color: #7a8a72; font-weight: 600; }
+.highlight-dark .gs { font-weight: 600; }
+.highlight-dark .gu { color: #8b2252; font-weight: 600; }
+
+/* Errors */
+.highlight-dark .err { color: #ba1a1a; }
+
+/* Special */
+.highlight-dark .bp { color: #3a7530; }
+.highlight-dark .fm { color: #2d5a22; }
+.highlight-dark .vc,
+.highlight-dark .vg,
+.highlight-dark .vi,
+.highlight-dark .vm { color: #8b7355; }
