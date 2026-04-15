@@ -89,10 +89,107 @@ async function ensureUserVault(userId) {
       await fs.unlink(activityLog).catch(() => {});
       console.log(`[init] Cleared activity log for ${userId}`);
     }
+    // Migrate .intentions.json → .tree.json if tree doesn't exist yet
+    await migrateIntentionsToTree(vaultDir).catch(err =>
+      console.warn(`[init] Tree migration failed for ${userId}:`, err.message));
     await hardenUserVault(vaultDir).catch(() => {});
     initializedVaults.add(userId);
   }
   return vaultDir;
+}
+
+// --- Tree Migration (.intentions.json → .tree.json) ---
+// Automatically converts legacy intentions to the Banyan Tree data model.
+
+async function migrateIntentionsToTree(vaultDir) {
+  const treePath = path.join(vaultDir, '.tree.json');
+  const intentionsPath = path.join(vaultDir, '.intentions.json');
+
+  // Skip if tree already exists
+  if (existsSync(treePath)) return;
+
+  // Skip if no intentions to migrate
+  if (!existsSync(intentionsPath)) return;
+
+  let intentions;
+  try {
+    const raw = await fs.readFile(intentionsPath, 'utf-8');
+    intentions = JSON.parse(raw);
+    if (!Array.isArray(intentions) || intentions.length === 0) return;
+  } catch {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const branches = [];
+  const leaves = [];
+  const connections = [];
+
+  for (const intent of intentions) {
+    // Map intention → branch
+    const descParts = [intent.description || ''];
+    const typeLabel = intent.type === 'research' ? 'Research'
+      : intent.type === 'synthesis' ? 'Synthesis' : 'Review';
+    descParts.push(`[Migrated from ${typeLabel} intention]`);
+    if (intent.schedule) {
+      const freq = `${intent.schedule.timesPerDay}x/day`;
+      const end = intent.schedule.endDate ? ` until ${intent.schedule.endDate}` : ', ongoing';
+      descParts.push(`Schedule: ${freq}${end}`);
+    }
+
+    branches.push({
+      id: intent.id,
+      title: intent.title,
+      description: descParts.filter(Boolean).join('\n'),
+      status: intent.status === 'completed' ? 'flowering' : 'growing',
+      rootConnections: [],
+      createdAt: intent.createdAt || now,
+      lastActiveAt: intent.lastRunAt || intent.createdAt || now,
+    });
+
+    // Map documents → leaves
+    if (intent.documents) {
+      for (const docPath of intent.documents) {
+        const ext = docPath.split('.').pop()?.toLowerCase() || '';
+        const leafType = ['py','ts','js','tsx','jsx','rs','go','java'].includes(ext)
+          ? 'code' : ['mmd','mermaid'].includes(ext) ? 'diagram' : 'markdown';
+        leaves.push({
+          id: randomUUID(),
+          branchId: intent.id,
+          type: leafType,
+          filePath: docPath,
+          summary: docPath.split('/').pop() || docPath,
+          createdAt: intent.createdAt || now,
+        });
+      }
+    }
+
+    // Synthesis/review intentions feed from research intentions
+    if (intent.type === 'synthesis' || intent.type === 'review') {
+      for (const other of intentions) {
+        if (other.type === 'research' && other.id !== intent.id) {
+          connections.push({
+            from: other.id,
+            to: intent.id,
+            type: 'feeds',
+          });
+        }
+      }
+    }
+  }
+
+  const tree = {
+    version: 1,
+    roots: [],
+    branches,
+    leaves,
+    flowers: [],
+    connections,
+    lastModified: now,
+  };
+
+  await fs.writeFile(treePath, JSON.stringify(tree, null, 2));
+  console.log(`[migration] Migrated ${intentions.length} intentions → .tree.json for vault ${path.basename(vaultDir)}`);
 }
 
 // --- Clean Environment for Spawned Processes ---
@@ -773,6 +870,55 @@ chatWss.on('connection', async (ws, request) => {
   let sessionId = null;
   let activeProcess = null;
 
+  // --- Conversation persistence ---
+  const conversationId = randomUUID();
+  const conversationMessages = [];
+  const conversationToolUses = [];
+  let conversationStartedAt = new Date().toISOString();
+
+  async function saveConversation() {
+    if (conversationMessages.length === 0) return;
+    const convDir = path.join(chatUserVault, '.conversations');
+    await fs.mkdir(convDir, { recursive: true }).catch(() => {});
+
+    // Snapshot tree associations — compare tree before/after
+    let treeNodes = { branchIds: [], leafIds: [], flowerIds: [], rootIds: [] };
+    try {
+      const treePath = path.join(chatUserVault, '.tree.json');
+      if (existsSync(treePath)) {
+        const tree = JSON.parse(await fs.readFile(treePath, 'utf-8'));
+        treeNodes = {
+          branchIds: (tree.branches || []).map(b => b.id),
+          leafIds: (tree.leaves || []).map(l => l.id),
+          flowerIds: (tree.flowers || []).map(f => f.id),
+          rootIds: (tree.roots || []).map(r => r.id),
+        };
+      }
+    } catch {}
+
+    // Derive title from first user message
+    const firstUserMsg = conversationMessages.find(m => m.role === 'user');
+    const title = firstUserMsg
+      ? firstUserMsg.content.slice(0, 80) + (firstUserMsg.content.length > 80 ? '...' : '')
+      : 'Untitled conversation';
+
+    const conversation = {
+      id: conversationId,
+      title,
+      sessionId,
+      createdAt: conversationStartedAt,
+      lastMessageAt: new Date().toISOString(),
+      messages: conversationMessages,
+      toolUses: conversationToolUses,
+      treeNodes,
+    };
+
+    await fs.writeFile(
+      path.join(convDir, `${conversationId}.json`),
+      JSON.stringify(conversation, null, 2)
+    ).catch(err => console.warn('[chat] Failed to save conversation:', err.message));
+  }
+
   // Keep-alive ping every 30s to prevent ALB idle timeout
   const pingInterval = setInterval(() => {
     if (ws.readyState === 1) {
@@ -867,6 +1013,13 @@ chatWss.on('connection', async (ws, request) => {
 
     if (msg.type !== 'message' || !msg.content) return;
 
+    // Record user message for conversation persistence
+    conversationMessages.push({
+      role: 'user',
+      content: msg.content.trim(),
+      timestamp: new Date().toISOString(),
+    });
+
     // Handle /login command typed in chat
     if (msg.content.trim().toLowerCase() === '/login') {
       if (activeProcess) {
@@ -911,6 +1064,7 @@ chatWss.on('connection', async (ws, request) => {
     let lastText = '';
     let stderrBuffer = '';
     let gotAnyEvent = false;
+    const turnToolUses = [];
 
     proc.stdout.on('data', (chunk) => {
       buffer += chunk.toString();
@@ -950,6 +1104,7 @@ chatWss.on('connection', async (ws, request) => {
           const toolBlocks = event.message.content.filter(b => b.type === 'tool_use');
           for (const tool of toolBlocks) {
             sendEvent({ type: 'tool_use', tool: tool.name, input: tool.input || {} });
+            turnToolUses.push({ tool: tool.name, input: tool.input || {}, timestamp: new Date().toISOString() });
           }
           continue;
         }
@@ -957,6 +1112,17 @@ chatWss.on('connection', async (ws, request) => {
         // Result (completion)
         if (event.type === 'result') {
           sessionId = event.session_id || sessionId;
+          // Record assistant message + tool uses for conversation persistence
+          if (lastText) {
+            conversationMessages.push({
+              role: 'assistant',
+              content: lastText,
+              toolUses: turnToolUses.length > 0 ? [...turnToolUses] : undefined,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          conversationToolUses.push(...turnToolUses);
+          saveConversation().catch(() => {});
           sendEvent({ type: 'done', sessionId });
           continue;
         }
@@ -1014,6 +1180,8 @@ chatWss.on('connection', async (ws, request) => {
   ws.on('close', () => {
     console.log('[chat] Session closed');
     clearInterval(pingInterval);
+    // Persist conversation on disconnect
+    saveConversation().catch(() => {});
     if (activeProcess) {
       // Don't kill auth processes — the REST fallback can still submit the code
       if (activeProcess === pendingAuthProcess) {
@@ -1064,6 +1232,42 @@ Save all files to the vault. Use Mermaid diagrams for architecture visualization
 Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses/\`.
 `);
     console.log('[init] Created research skill');
+  }
+
+  // Banyan Tree skills — copy from vault-seed if not already present
+  const seedDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'vault-seed', '.claude');
+  if (existsSync(seedDir)) {
+    const seedSkillsDir = path.join(seedDir, 'skills');
+    const seedHooksDir = path.join(seedDir, 'hooks');
+
+    // Copy skill directories
+    if (existsSync(seedSkillsDir)) {
+      const skillNames = await fs.readdir(seedSkillsDir).catch(() => []);
+      for (const name of skillNames) {
+        const srcSkill = path.join(seedSkillsDir, name, 'SKILL.md');
+        const destSkill = path.join(claudeDir, 'skills', name, 'SKILL.md');
+        if (existsSync(srcSkill) && !existsSync(destSkill)) {
+          await fs.mkdir(path.dirname(destSkill), { recursive: true });
+          await fs.copyFile(srcSkill, destSkill);
+          console.log(`[init] Installed skill: ${name}`);
+        }
+      }
+    }
+
+    // Copy hook scripts
+    if (existsSync(seedHooksDir)) {
+      const hookFiles = await fs.readdir(seedHooksDir).catch(() => []);
+      for (const file of hookFiles) {
+        const srcHook = path.join(seedHooksDir, file);
+        const destHook = path.join(hooksDir, file);
+        if (!existsSync(destHook)) {
+          await fs.mkdir(hooksDir, { recursive: true });
+          await fs.copyFile(srcHook, destHook);
+          await fs.chmod(destHook, 0o755);
+          console.log(`[init] Installed hook: ${file}`);
+        }
+      }
+    }
   }
 
   // Hook script — logs tool use to .tool-activity.jsonl
@@ -1221,23 +1425,44 @@ try {
     await removePluginHooks(pluginsDir);
   }
 
-  // Claude Code settings — always overwrite to ensure hook path is current
+  // Claude Code settings — always overwrite to ensure hook paths are current.
+  // - PreToolUse: log-activity (audits tool calls, enforces policy)
+  // - Stop: leaf-tracker, synthesis-trigger, root-updater (analyze session results)
   const settingsPath = path.join(claudeDir, 'settings.json');
-  await fs.writeFile(settingsPath, JSON.stringify({
+  const leafTrackerPath = path.join(hooksDir, 'leaf-tracker.js');
+  const synthesisTriggerPath = path.join(hooksDir, 'synthesis-trigger.js');
+  const rootUpdaterPath = path.join(hooksDir, 'root-updater.js');
+
+  const settingsObj = {
     hooks: {
       PreToolUse: [
         {
           matcher: "",
-          hooks: [
-            {
-              type: "command",
-              command: hookScript
-            }
-          ]
+          hooks: [{ type: "command", command: hookScript }]
         }
       ]
     }
-  }, null, 2));
+  };
+
+  // Register Banyan Tree hooks as Stop hooks (run at end of session)
+  const stopHooks = [];
+  if (existsSync(leafTrackerPath)) {
+    stopHooks.push({ type: "command", command: `node ${leafTrackerPath}` });
+  }
+  if (existsSync(synthesisTriggerPath)) {
+    stopHooks.push({ type: "command", command: `node ${synthesisTriggerPath}` });
+  }
+  if (existsSync(rootUpdaterPath)) {
+    stopHooks.push({ type: "command", command: `node ${rootUpdaterPath}` });
+  }
+
+  if (stopHooks.length > 0) {
+    settingsObj.hooks.Stop = [
+      { matcher: "", hooks: stopHooks }
+    ];
+  }
+
+  await fs.writeFile(settingsPath, JSON.stringify(settingsObj, null, 2));
 
   // Default tool policy (enterprise controls demo)
   const policyPath = path.join(claudeDir, 'tool-policy.json');
@@ -1476,6 +1701,87 @@ app.delete(`${API_PREFIX}/activity`, async (req, res) => {
     res.json({ cleared: true });
   } catch {
     res.json({ cleared: false });
+  }
+});
+
+// --- Conversation history endpoints ---
+
+// List all conversations (summaries only, sorted by most recent)
+app.get(`${API_PREFIX}/conversations`, async (req, res) => {
+  const userVault = await ensureUserVault(req.userId);
+  const convDir = path.join(userVault, '.conversations');
+
+  if (!existsSync(convDir)) {
+    return res.json({ conversations: [] });
+  }
+
+  try {
+    const files = await fs.readdir(convDir);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    const summaries = [];
+    for (const file of jsonFiles) {
+      try {
+        const raw = await fs.readFile(path.join(convDir, file), 'utf-8');
+        const conv = JSON.parse(raw);
+        summaries.push({
+          id: conv.id,
+          title: conv.title,
+          createdAt: conv.createdAt,
+          lastMessageAt: conv.lastMessageAt,
+          messageCount: (conv.messages || []).length,
+          toolUseCount: (conv.toolUses || []).length,
+          treeNodes: conv.treeNodes || { branchIds: [], leafIds: [], flowerIds: [], rootIds: [] },
+        });
+      } catch {
+        // Skip malformed files
+      }
+    }
+
+    // Sort by most recent first
+    summaries.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+
+    res.json({ conversations: summaries });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get full conversation detail
+app.get(`${API_PREFIX}/conversations/:id`, async (req, res) => {
+  const userVault = await ensureUserVault(req.userId);
+  const convPath = path.join(userVault, '.conversations', `${req.params.id}.json`);
+
+  if (!existsSync(convPath)) {
+    return res.status(404).json({ error: 'Conversation not found' });
+  }
+
+  try {
+    const raw = await fs.readFile(convPath, 'utf-8');
+    const conv = JSON.parse(raw);
+
+    // Enrich with tree data — resolve IDs to labels
+    let treeDetails = { branches: [], leaves: [], flowers: [], roots: [] };
+    const treePath = path.join(userVault, '.tree.json');
+    if (existsSync(treePath)) {
+      try {
+        const tree = JSON.parse(await fs.readFile(treePath, 'utf-8'));
+        const nodeIds = conv.treeNodes || {};
+        treeDetails = {
+          branches: (tree.branches || []).filter(b => (nodeIds.branchIds || []).includes(b.id)),
+          leaves: (tree.leaves || []).filter(l => (nodeIds.leafIds || []).includes(l.id)),
+          flowers: (tree.flowers || []).filter(f => (nodeIds.flowerIds || []).includes(f.id)),
+          roots: (tree.roots || []).filter(r => (nodeIds.rootIds || []).includes(r.id)),
+        };
+      } catch {}
+    }
+
+    res.json({
+      ...conv,
+      treeDetails,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
