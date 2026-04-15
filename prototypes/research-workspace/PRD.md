@@ -2,14 +2,14 @@
 
 ## Vision
 
-Built on one principle: **users state intentions and organize their information**, while Claude Code handles execution.
+A **knowledge garden** where users grow their understanding through conversation with an AI research companion. Built on the **Banyan Tree** metaphor: roots represent who you are, branches are what you're exploring, leaves are the research artifacts produced, and flowers are the personal insights that bloom when your background connects to what you're learning.
 
-An AI-powered research workspace where users set research intentions (papers, synthesis tasks, comparative reviews), trigger them as background Claude Code sessions, and view results as structured markdown, code assets, and architecture diagrams — all within a glassmorphism-styled multi-panel web interface with real-time observability into agent tool use via Claude Code hooks. Users decide what to research, when to run, and what to publish. Nothing auto-publishes; the user curates their vault and explicitly shares what they choose.
+The UI follows a **Claude.ai-inspired layout** (centered chat, icon sidebar, contextual artifact panel) with a **Chikorita-inspired color palette** (sage greens, leaf accents, earth-brown borders, ruby flowers). The system acts as a "Gardener" — a research companion that helps users articulate intentions, produces research, and recognizes when learning has been internalized.
 
 ## Users
 
 - Researchers exploring ML/AI papers and generating structured reviews
-- Developers building code assets derived from paper architectures
+- Lifelong learners building personal knowledge graphs that connect domains
 - Portfolio visitors evaluating the builder's dev maturity and AI integration skills
 
 ## Architecture
@@ -18,287 +18,346 @@ An AI-powered research workspace where users set research intentions (papers, sy
 CloudFront
 ├── /prototypes/research-workspace/vault/api/vault/published*  →  ALB → ECS (no auth, public)
 ├── /prototypes/research-workspace/vault*  →  ALB → Cognito → ECS (Express.js)
-│   ├── REST: file CRUD, intentions, runs, activity log, auth
-│   ├── WS: interactive terminal (PTY), run streams, chat
+│   ├── REST: file CRUD, tree, conversations, runs, activity, config, auth
+│   ├── WS: chat (stream-json Claude), run PTY streams
 │   └── /healthz
 ├── /prototypes/research-workspace/*       →  S3 (React SPA)
 │   ├── /                    Gallery (public)
 │   ├── /content/:id         Content detail (public)
-│   └── /workspace           Authenticated workspace
+│   ├── /workspace           Authenticated workspace
+│   └── /security            Security architecture page
 └── /api/v1/research-workspace/*           →  API Gateway → Lambda (DynamoDB)
 ```
 
-**Stack:** React 18 + Vite (SPA) | Express.js + node-pty + ws (backend) | ECS Fargate + EFS + Cognito (infra)
+**Stack:** React 18 + Vite + D3.js (SPA) | Express.js + node-pty + ws (backend) | ECS Fargate + EFS + Cognito (infra)
+
+## Banyan Tree Data Model
+
+The core data model stored as `.tree.json` in each user's vault:
+
+```typescript
+interface BanyanTree {
+  version: 1;
+  roots: Root[];       // Who you are — background, skills, internalized knowledge
+  branches: Branch[];  // What you're exploring — active learning intentions
+  leaves: Leaf[];      // Research artifacts — reviews, code, diagrams
+  flowers: Flower[];   // Personal insights — connections only you could make
+  connections: Connection[];  // Graph edges between nodes
+  lastModified: string;
+}
+```
+
+| Node Type | Represents | Color | Graph Position |
+|-----------|-----------|-------|----------------|
+| **Root** | Identity, background, internalized knowledge | Brown (#6b5b4a) | Below ground line |
+| **Branch** | Active learning intentions (growing/flowering/internalizing/rooted) | Amber (#8b7355) | Above ground line |
+| **Leaf** | Research artifacts (markdown, code, diagrams, references) | Green (#7bb661) | On branches |
+| **Flower** | Personal insights — connections between roots and branches | Ruby (#8b2252) | Top of tree, with glow |
+
+**Lifecycle:** Roots feed Branches → Branches grow Leaves → Leaves spark Flowers → Branches internalize into new Roots → cycle deepens.
+
+**Migration:** Users with existing `.intentions.json` files are auto-migrated to `.tree.json` on first load (server-side in `ensureUserVault()` + client-side fallback in `useTree` hook). Each legacy intention becomes a branch; documents become leaves.
 
 ## Features
 
-### 1. Glassmorphism Workspace (Shipped — Redesigned with Calm AI UX)
+### 1. Chikorita Color Palette (Shipped)
 
-Sidebar-rail + 2-panel main area on a dark dot-grid backdrop, applying calm design principles from aiuxdesign.guide:
+Light nature theme replacing the original dark glassmorphism:
 
-**Sidebar Rail (48px collapsed / 320px expanded):**
-- **Files** — vault file browser (EFS-backed, hides dotfiles)
-- **Plan** — intentions system for research task management
-- **Activity** — structured agent audit view with tool call visualization
-- **Config** — session configuration and tool policy editor
+- **Surfaces:** Sage greens (#f4f7ec base, layered paper hierarchy)
+- **Primary:** Leaf green (#4a8a38) — buttons, active states, links
+- **Secondary:** Ruby-red (#8b2252) — flowers, insights
+- **Tertiary:** Warm amber-brown (#8b7355) — branches, structure
+- **Text:** Forest dark (#1e2d1a) on light backgrounds
+- **Borders:** Earth tones (#6b5b4a outline, #c4b8a4 variant)
+- **Tree semantic tokens:** `--color-root`, `--color-branch`, `--color-leaf`, `--color-flower`
 
-**Main Area:**
-- **Editor** — Milkdown WYSIWYG for .md, regex syntax highlighting for .py/.ts/.js/.json/.sh (75% default)
-- **Agent Activity Strip** — calm tool call visualization replacing raw terminal output (25% default, collapsible)
+All 247 `text-white/` and `bg-white/` references migrated to semantic tokens. Milkdown editor, syntax highlighting (`syntax-forest.css`), tool call cards, and all modals updated for light backgrounds.
 
-**Calm Design Principles Applied:**
-- Progressive disclosure: tool calls show 1-line summary → expanded params → full JSON
-- Color-coded reversibility: green (read-only) / amber (modifiable) / red (destructive)
-- 4-layer attention system: ambient dot → progress stream → attention (blocked/error) → summary report
-- Natural language descriptions instead of raw tool parameters
-- Ambient status bar (40px) that doesn't demand attention
+### 2. Claude.ai Layout — NavRail + Chat + Context Panel (Shipped)
 
-Desktop: sidebar rail + vertical resizable panels. Mobile: 4-tab layout (Files, Editor, Plan, Activity).
+```
++--56px--+------ centered, max-w-720px ------+-- 0 or 420px --+
+|        |                                    |                 |
+| [Chat] |  Chat messages (scrollable)        | Context panel   |
+| [Hist] |                                    | (slides in      |
+| [Vault]|                                    |  when relevant) |
+| [Tree] |  ┌──────────────────────────────┐  |                 |
+| [Cfg]  |  │ What would you like to       │  | • Branch list   |
+|        |  │ explore?                      │  | • Activity feed |
+|        |  └──────────────────────────────┘  | • File preview  |
++--------+------------------------------------+-----------------+
+```
 
-### 2. Intentions System (Shipped)
+**NavRail (56px, non-expanding):** 5 views — Chat, History, Vault, Knowledge Map, Settings. Active indicator bar, optional badge/pulse.
 
-Three intention types:
-| Type | Purpose | Output |
-|------|---------|--------|
-| **Research** | Analyze a paper/URL | `reviews/<slug>.md` |
-| **Synthesis** | Connect findings across papers | `syntheses/*.md` + Mermaid diagrams |
-| **Review** | Compare selected docs, produce architecture | Code in `assets/`, comparative analysis, Mermaid diagrams |
+**ContextPanel (420px, slides in from right):** Phase-aware — automatically shows relevant content based on conversation state. Close button to dismiss. On mobile, becomes a bottom sheet.
 
-Each intention has:
-- Recurring schedule (1x/2x/4x/8x per day, optional end date)
-- Manual trigger (play button → spawns background Claude Code session)
-- Inline editing (expand card → edit title/description → auto-save)
-- Document selection (review type — multi-select vault files)
+**Desktop:** NavRail + centered view + optional context panel.
+**Mobile:** Edge-to-edge views + iOS-inspired frosted glass tab bar (5 tabs) + bottom sheet for context. Safe area handling (`viewport-fit=cover`, `env(safe-area-inset-bottom)`).
 
-### 3. Concurrent Interactive Runs (Shipped)
+### 3. Chat-First Interaction (Shipped)
 
-- `POST /api/vault/runs` spawns an interactive Claude Code PTY session (`claude --dangerously-skip-permissions`)
-- Research prompt is auto-injected after Claude Code starts (output-settle detection with 10s max wait)
-- Each run is monitored via the Agent Activity Strip with structured tool call cards (no raw terminal)
-- Run status and tool activity polled via REST endpoints (`/api/vault/runs`, `/api/vault/activity`)
+The chat is the primary interface. Welcome screen shows "What would you like to explore?" with 4 suggestion chips:
+- Connect my experience to a new field
+- Explore a research topic in depth
+- Synthesize what I've learned
+- What should I explore next?
+
+**Recent conversations** shown below suggestions on the welcome screen (last 3, with timestamps).
+
+Messages display with role avatars (user = brown circle, assistant = green circle with leaf icon, labeled "Gardener"). Tool use badges rendered inline as leaf-green pills. Markdown rendered via `react-markdown`.
+
+**Mobile-optimized:** Single-column suggestion chips with larger touch targets (44px+), compact avatars, connection status hidden when connected, safe area padding on input.
+
+### 4. Conversation Phase Detection (Shipped)
+
+`useConversationPhase` hook analyzes messages and streaming state to detect 7 phases:
+
+| Phase | User Signal | Context Panel Shows |
+|-------|-------------|---------------------|
+| **idle** | No messages | Nothing |
+| **intending** | "I want to learn about..." | Branch list panel |
+| **exploring** | General Q&A | Nothing (full-width chat) |
+| **researching** | Tool calls streaming | Activity panel (live tool feed) |
+| **reviewing** | Agent produced a file | File preview panel |
+| **connecting** | "How does X connect to Y?" | Branch list panel |
+| **reflecting** | "Show me my tree" | Branch list panel |
+
+Pattern matching uses regex arrays for each phase. Context panel auto-shows on desktop, accessible via FAB on mobile.
+
+### 5. Conversation History (Shipped)
+
+Full conversation persistence and browsing:
+
+**Server-side:**
+- Chat WebSocket handler auto-saves every conversation to `.conversations/{id}.json`
+- Each conversation stores: messages (user + assistant with timestamps), tool uses, tree node snapshot (branch/leaf/flower/root IDs), session ID
+- Saves on every turn completion and on WebSocket disconnect
+- `GET /api/vault/conversations` — list summaries (sorted by most recent)
+- `GET /api/vault/conversations/:id` — full detail with enriched tree data (resolves IDs to labels/titles from current `.tree.json`)
+
+**Frontend:**
+- **ConversationHistory** component with list view and detail view
+- List cards show: title, time ago, message count, tool use count, tree association badges (colored by type)
+- Detail view shows: tree associations panel, expandable tool audit trail, full message replay with markdown
+- Accessible from NavRail ("History" tab) and chat welcome screen ("Recent conversations")
+
+### 6. Knowledge Graph Visualization (Shipped)
+
+D3 force-directed graph in the Knowledge Map view:
+
+- **Ground line:** Dashed brown line separating "who you are" (roots below) from "what you're exploring" (branches above)
+- **Gravity:** Roots pull downward, branches pull upward, leaves higher, flowers highest
+- **Node styling:** Color-coded circles with light fill + colored stroke. Flowers get an outer glow ring.
+- **Interaction:** Drag nodes, zoom/pan, hover tooltips with node type + full label
+- **Legend:** Node type legend at bottom-left with colored indicators
+- **Stats bar:** Node counts by type at top-left
+- **Demo data:** "Load demo knowledge tree" button on empty state creates a realistic sample tree (3 roots, 3 branches, 5 leaves, 2 flowers, connections)
+- **Responsive:** ResizeObserver tracks container dimensions
+
+### 7. Agentic Skill Architecture (Shipped — Design + Files)
+
+8 skill definitions in `vault-seed/.claude/skills/`, installed to each user's vault on init:
+
+| Skill | Purpose |
+|-------|---------|
+| **gardener** | Orchestrator — reads tree, detects phase, delegates to sub-skills |
+| **branch-grower** | Creates/refines branches from learning intentions, connects to roots |
+| **researcher** | Spawns 3 parallel sub-agents (foundations, connections, practical) |
+| **synthesizer** | Cross-leaf pattern analysis, triggered at 5+ leaves on a branch |
+| **flower-bloomer** | Captures personal insights with full lineage (root→branch→leaf→flower) |
+| **root-deepener** | Onboarding (infers roots) + branch→root internalization |
+| **gallery-publisher** | Crafts shareable gallery items from flowers with journey context |
+| **tree-viewer** | Reflective summaries, growth patterns, gap analysis |
+| **research** | Original research skill — analyzes papers, writes structured reviews |
+
+3 hook scripts as **Stop hooks** (run at end of each Claude Code session):
+
+| Hook | Purpose |
+|------|---------|
+| **leaf-tracker.js** | Scans vault for new files, registers as leaf nodes, flags synthesis at 5+ leaves |
+| **synthesis-trigger.js** | Consumes synthesis-needed flags, queues synthesis runs |
+| **root-updater.js** | Analyzes session transcript for mastery signals, logs to `.root-signals.jsonl` |
+
+**Hook registration:** Skills and hooks auto-installed from `vault-seed/` on first vault init. Stop hooks run via `node` interpreter. The existing `log-activity.js` PreToolUse hook handles tool auditing and policy enforcement separately.
+
+Skills and hooks are viewable in the Session Config panel — clicking opens the context panel (desktop) or bottom sheet (mobile) with the full file content.
+
+### 8. Session Config Panel (Shipped)
+
+Displays Claude Code configuration at `GET /api/vault/config`:
+- **Skills:** Auto-discovered from `.claude/skills/*/SKILL.md`. Click to view content in artifact panel.
+- **Hooks:** Read from `.claude/settings.json` (PreToolUse + Stop hooks). Click to view script content in artifact panel.
+- **Tools:** Lists all Claude tools with allow/block badges from `.claude/tool-policy.json`
+- **Tool Policy Editor:** Modal for configuring blocked tools and parameter-level rules with presets
+
+### 9. Agent Activity (Shipped)
+
+**Activity Panel (context panel):**
+- Live tool call feed during streaming, with current + recent tool uses
+- Each tool call is clickable — expands to show tool name, file path/pattern, full description
+- Active streaming indicator with call count
+- Previous turn grouping with message-level counts
+
+**Activity Strip (existing):**
+- Structured tool call visualization with ToolCallCard components
+- 4-layer attention: ambient dot → progress stream → attention (blocked/error) → summary report
+- Risk classification: safe (read-only) / modifiable / caution / destructive
+- Run tab management with RunTabBar, RunSummaryView (elapsed time, tool breakdown bar, file stats)
+
+### 10. Intentions System (Shipped — Legacy, Migrated to Tree)
+
+Three intention types (research/synthesis/review) with recurring schedules. Stored as `.intentions.json`. Auto-migrated to Banyan Tree branches on first load. The form-based IntentionsPanel is retained for backward compatibility but the primary interface is now the chat.
+
+### 11. Concurrent Interactive Runs (Shipped)
+
+- `POST /api/vault/runs` spawns interactive Claude Code PTY sessions
+- Research prompt auto-injected after startup detection
 - Multiple runs execute simultaneously as separate PTY sessions
-- Tool use events logged via Claude Code hooks (`.claude/hooks/log-activity.js`)
-- Run status tracking: running → completed/failed/cancelled
-- Output buffer (100KB rolling) for late-joining WebSocket clients
+- Tool activity logged via hooks, polled via REST
+- Run status: running → completed/failed/cancelled
 
-### 4. Claude Code Hooks — Enterprise Controls Demo (Shipped)
+### 12. Publishing System (Shipped)
 
-PreToolUse hook (`log-activity.js`) fires before every tool invocation:
-- Logs tool name, input, timestamp, decision to activity file
-- Currently allows all tools (`{"decision":"allow"}`)
-- Could block specific tools for enterprise policy enforcement
-- Activity panel shows real-time feed with tool type icons, counts, allow/block badges
+Publish vault files to the public gallery:
+- `POST /api/vault/publish` — publishes markdown as gallery item
+- Auto-extracts title + summary, generates stable ID
+- Tag system with content-derived suggestions
+- `GET /api/vault/published` — public listing (no auth)
 
-### 5. Voice Input (Removed)
+### 13. Token Security (Shipped)
 
-Previously provided hold-spacebar-to-dictate in the terminal. Removed as part of the calm UI redesign that replaced the raw terminal with structured tool call visualization.
+- OAuth tokens on encrypted EFS (AES-256 at rest)
+- `.claude/` → 0700, credentials → 0600
+- One-click revoke via `DELETE /api/vault/auth`
+- Per-user vault isolation via Cognito JWT + path validation
 
-### 6. Token Security (Shipped)
+### 14. Mobile Experience (Shipped)
 
-- OAuth tokens stored on encrypted EFS (AES-256 at rest)
-- File permissions: `.claude/` → 0700, credentials → 0600
-- Revoke button in Intentions panel deletes all credential files
-- Auth note warns about token storage, recommends scoped API keys for automation
+Claude-app-inspired mobile layout:
+- **Top bar:** Minimal — back arrow, centered "Gardener" brand with leaf icon, streaming pulse dot
+- **Edge-to-edge views:** Chat full-bleed, other views with light padding
+- **Tab bar:** iOS frosted glass, safe area bottom padding, active tab with thicker stroke + semibold label
+- **Notification dot:** On chat tab when context is available or agent is streaming
+- **Context FAB:** Floating green button above tab bar, opens bottom sheet
+- **Bottom sheet:** Spring animation, max 75vh, drag handle, frosted glass, body scroll lock
+- **File browser:** Full-width list, tap opens editor as slide-in overlay with back button
+- **Config/History:** Full-height scroll, no card wrapper
 
-### 7. Fullscreen Editor (Shipped)
+### 15. Scheduler (Shipped)
 
-- Maximize button on editor panel → fixed overlay covering entire viewport
-- Escape key or minimize button to exit
-- Works for both markdown and code files
+Automated recurring intention execution every 60s. Iterates all vaults, checks schedules, spawns PTY sessions. Logs to `.scheduler-log.jsonl`.
 
-### 8. Publishing System (Shipped)
+### 16. Vault Download/Export (Shipped)
 
-Publish vault files to the public gallery with tag-based categorization:
-- `POST /api/vault/publish` — publishes a vault markdown file as a gallery item
-- Auto-extracts title (first `#` heading) and summary (first non-heading paragraph) from markdown
-- Generates stable ID: `pub-{userId}-{slug}`
-- Tag system: existing tags suggested + content-derived tags from headings/bold phrases
-- Writes snapshot to `/workspace/published/{id}.json` and forwards to Lambda API for public access
-- `GET /api/vault/published` — list all published items (no auth required)
-- `PublishDialog.tsx` component with tag selection UI
-
-### 9. Chat Panel (Shipped)
-
-WebSocket-based Claude Code interaction at `/api/vault/chat`:
-- Spawns `claude -p "{prompt}" --output-format stream-json` for each message
-- Session continuity via `--resume {sessionId}`
-- Auth flow integration: `/login` command triggers `claude auth login --claudeai`
-- Returns structured events: `assistant_text`, `tool_use`, `done`, `auth_url`, `error`
-- Tool use badges displayed inline (Read, Write, Bash, Glob, Grep, WebFetch)
-- Markdown rendering of Claude responses
-
-### 10. Session Config Panel (Shipped)
-
-Read-only viewer for Claude Code configuration at `GET /api/vault/config`:
-- Displays configured skills from `.claude/skills/` directory
-- Shows hook configuration from `settings.json`
-- Lists tool policy (blocked tools from `.claude/tool-policy.json`)
-- No editing — config is managed by the server initialization
-
-### 11. Scheduler (Shipped)
-
-Automated recurring intention execution:
-- `runScheduler()` executes every 60 seconds
-- Iterates all vaults, checks `.intentions.json` for recurring schedules
-- Spawns PTY sessions when due (same pattern as manual runs)
-- Schedule options: 1x/2x/4x/8x per day, optional end date
-- Completion detection via output volume (>500 bytes) + idle timer (3s silence)
-- Auto-sends `/exit` after task completes
-- Logs events to `.scheduler-log.jsonl` per vault (timestamp, intentionId, event, runId, error)
-- Updates `lastRunAt` in `.intentions.json` to track schedule adherence
-
-### 12. Onboarding Flow (Shipped)
-
-Detects Claude Code readiness at `GET /api/vault/onboarding-status`:
-- Three states: `not_launched` (no `.claude.json`), `not_onboarded` (no settings), `not_authenticated` (no credentials)
-- Frontend gates run launches with a helpful modal explaining what's needed
-- Auth note in Intentions panel warns about token storage and recommends scoped API keys
-
-### 13. Vault Download/Export (Shipped)
-
-Download folder contents or entire vault as a ZIP file:
-- `GET /api/vault/download?path=<folder>` — download specific folder
-- `GET /api/vault/download` — download entire vault
-- Excludes dotfiles (`.claude/`, `.intentions.json`, `.tool-activity.jsonl`, etc.)
-- Streams ZIP via `archiver` (constant memory usage regardless of vault size)
-- Download buttons in file browser header (full vault) and per-folder on hover
+`GET /api/vault/download` — streams vault contents as ZIP, excludes dotfiles.
 
 ## Data Model
 
-**Intentions** — stored as `.intentions.json` in vault (hidden from file browser)
+**Banyan Tree** — `.tree.json` (primary knowledge model)
 ```typescript
-{ id, type, title, description, schedule?: { timesPerDay, endDate? }, status, documents?, createdAt }
+{ version: 1, roots: Root[], branches: Branch[], leaves: Leaf[], flowers: Flower[], connections: Connection[], lastModified }
+```
+
+**Conversations** — `.conversations/{id}.json` (persisted chat history)
+```typescript
+{ id, title, sessionId?, createdAt, lastMessageAt, messages: [{role, content, toolUses?, timestamp}], toolUses: [{tool, input, timestamp}], treeNodes: {branchIds, leafIds, flowerIds, rootIds} }
+```
+
+**Intentions (legacy)** — `.intentions.json` (auto-migrated to tree on first load)
+```typescript
+{ id, type, title, description, schedule?, status, documents?, createdAt }
 ```
 
 **Tool Activity** — `.tool-activity.jsonl` (JSONL, one event per line)
 ```typescript
-{ timestamp, tool, input, decision, runId?, runTitle? }
+{ timestamp, tool, input, decision, runId? }
 ```
 
-**Runs** — in-memory on server (ephemeral, cleaned after 30min)
+**Root Signals** — `.root-signals.jsonl` (mastery tracking for internalization)
 ```typescript
-{ id, title, status, startedAt, finishedAt, toolCount, error, intentionId }
+{ timestamp, signals: string[], messageCount, excerpt }
 ```
-
-## Key Metrics
-
-- Time from intention creation to first research output
-- Concurrent run throughput (how many simultaneous Claude sessions)
-- Tool activity volume per run (hooks observability)
-- Auth token longevity (~90 days for Max plan OAuth)
 
 ## Security Architecture (Implemented)
 
 ### IAM Role — ECS Task
 
-The task role (`research-workspace-prod-ecs-task`) has a single scoped policy:
+The task role has a single scoped policy: `elasticfilesystem:ClientMount` and `ClientWrite` scoped to this EFS + access point only. All other AWS API calls denied.
 
-| Permission | Scope | Purpose |
-|------------|-------|---------|
-| `elasticfilesystem:ClientMount` | This EFS + this access point only | Mount the vault volume |
-| `elasticfilesystem:ClientWrite` | This EFS + this access point only | Write files to vault |
-
-All other AWS API calls (S3, DynamoDB, Secrets Manager, Lambda, etc.) are **denied** — the role has no other policies. The execution role has `secretsmanager:GetSecretValue` scoped to the Anthropic API key ARN for env injection at startup only.
-
-EFS authorization uses **IAM enforcement** (`iam = "ENABLED"`) — only this task role, with this specific access point, can mount the filesystem. Other containers or services on the same account cannot access the EFS volume.
-
-### Per-User File Isolation (Implemented)
+### Per-User File Isolation
 
 ```
-EFS File System (AES-256 at rest, transit encryption)
+EFS (AES-256 at rest, transit encryption)
 └── Access Point: /users/nathan (UID 1000, GID 1000)
-    └── /workspace (container mount)
-        └── /vaults/{cognito-sub}/    ← per-user isolation
-            ├── reviews/
-            ├── .claude/              ← per-user tokens + config
-            ├── .intentions.json
-            └── .tool-activity.jsonl
+    └── /workspace
+        └── /vaults/{cognito-sub}/
+            ├── .tree.json              ← Banyan Tree state
+            ├── .conversations/         ← Chat history
+            ├── .intentions.json        ← Legacy (auto-migrated)
+            ├── .tool-activity.jsonl    ← Tool audit log
+            ├── .root-signals.jsonl     ← Mastery signal log
+            ├── .claude/
+            │   ├── skills/             ← 9 skill definitions
+            │   ├── hooks/              ← 4 hook scripts
+            │   ├── settings.json       ← Hook registration
+            │   └── tool-policy.json    ← Tool allow/block rules
+            ├── reviews/                ← Research leaves
+            ├── syntheses/              ← Synthesis leaves
+            ├── assets/                 ← Code leaves
+            ├── leaves/                 ← Organized by branch
+            └── flowers/                ← Captured insights
 ```
 
-**How user identity flows:**
-1. ALB Cognito authenticator adds `x-amzn-oidc-data` JWT header
-2. Server middleware parses the JWT payload → extracts `sub` (unique Cognito user ID)
-3. All file operations scoped to `/workspace/vaults/{sub}/`
-4. `sanitizePath()` validates every path against user's vault root — blocks directory traversal
-5. Claude Code spawned with `HOME = /workspace/vaults/{sub}/` — per-user tokens
-6. Dev mode: falls back to `dev-local` user ID (no ALB headers)
-
-**What this prevents:**
-- User A cannot read User B's files, intentions, or activity logs
-- User A cannot see User B's OAuth tokens (different HOME directory)
-- Directory traversal from `/vaults/user-a/` to `/vaults/user-b/` is blocked by path validation
-
-### Claude Code Session Capabilities
-
-Claude Code runs with `--dangerously-skip-permissions` but with these mitigations:
-
-| Control | Implementation |
-|---------|---------------|
-| **Env filtering** | `ANTHROPIC_API_KEY`, AWS credentials stripped from spawned process env. Claude uses per-user OAuth. |
-| **Per-user HOME** | Each user's Claude Code reads/writes its own `.claude/` directory |
-| **Tool policy hooks** | PreToolUse hook reads `.claude/tool-policy.json` — can block specific tools (e.g., `["Bash"]` for read-only agents) |
-| **Activity auditing** | Every tool invocation logged to per-user `.tool-activity.jsonl` with tool name, input, and allow/block decision |
-| **Token revocation** | `DELETE /api/vault/auth` removes all credential files from user's vault |
-
-Claude Code can still execute arbitrary Bash and make HTTP requests within the container. The `--dangerously-skip-permissions` flag is required for automated background runs. Enterprise-grade restriction is achieved via the configurable tool policy hooks.
+**Identity flow:** ALB Cognito JWT → server middleware → `sanitizePath()` against vault root → Claude Code spawned with per-user HOME.
 
 ### Hardening Summary
 
 | Layer | Measure | Status |
 |-------|---------|--------|
-| **Network** | ALB Cognito auth on all `/vault*` requests | Shipped |
-| **Identity** | Cognito JWT parsed from ALB headers per request | Shipped |
-| **File system** | Per-user vault directories with path traversal protection | Shipped |
-| **EFS IAM** | IAM auth enabled, scoped to task role + access point | Shipped |
-| **Encryption** | EFS AES-256 at rest + transit encryption | Shipped |
-| **Credentials** | `.claude/` dir 0700, credential files 0600 per user | Shipped |
-| **Env isolation** | API key + AWS creds stripped from Claude Code processes | Shipped |
-| **Tool policy** | Configurable allow/block per tool via `.claude/tool-policy.json` | Shipped |
-| **Audit trail** | PreToolUse hook logs every tool invocation per user | Shipped |
-| **Token revocation** | One-click revoke via API + UI button | Shipped |
+| Network | ALB Cognito auth on all `/vault*` requests | Shipped |
+| Identity | Cognito JWT parsed per request, per-user vault dirs | Shipped |
+| File system | Path traversal protection via `sanitizePath()` | Shipped |
+| EFS IAM | IAM auth enabled, scoped to task role + access point | Shipped |
+| Encryption | EFS AES-256 at rest + transit | Shipped |
+| Credentials | `.claude/` 0700, credential files 0600 | Shipped |
+| Env isolation | API key + AWS creds stripped from Claude processes | Shipped |
+| Tool policy | Configurable allow/block per tool + parameter rules | Shipped |
+| Audit trail | PreToolUse hook logs every tool invocation | Shipped |
+| Token revocation | One-click revoke via API + UI | Shipped |
+| Session audit | Stop hooks analyze session for tree updates | Shipped |
 
 ### Current Limitation: Single Shared ECS Task
 
-All users share one ECS Fargate task (`desired_count=1`, 1 vCPU, 2 GB, ARM64). User isolation is enforced at the **application layer** via Cognito JWT parsing + `sanitizePath()` + per-user HOME directories. There is one EFS access point (hardcoded to `/users/nathan`). Users share the same container PID namespace, Linux UID (1000), and network stack.
-
-**Suitable for:** Internal teams, trusted users, portfolio demonstrations.
-**Not suitable for:** Multi-tenant production with untrusted users.
-
-### Isolation Maturity Tiers
-
-| Tier | Model | Isolation | Monthly Cost (5 users) | Cold Start |
-|------|-------|-----------|----------------------|------------|
-| **Current** | Shared task, app-layer paths | Application | ~$14 (Spot) | 0s (always on) |
-| **Tier 2** | Per-user Fargate tasks | Container + application | ~$24 (Spot, 8hr/day) | 45-170s |
-| **Tier 3** | Per-user tasks + per-user EFS APs | Container + kernel | ~$24 (Spot, APs free) | 45-170s |
-
-Per-user task cold-start breakdown: ECS placement (5-15s) + image pull (10-30s, cached after first) + Express boot (3-5s) + health check (30-120s). Mitigable with faster health checks (~20s total), pre-warming (~$14/mo Spot), or loading screen UX.
-
-Per-user EFS access points are free ($0). They provide kernel-level NFS isolation but only make practical sense when combined with per-user tasks, since a shared container would need dynamic NFS mounts.
-
-### Remaining Gaps
-
-| Gap | Impact | Mitigation Path |
-|-----|--------|-----------------|
-| Single ECS task serves all users | Shared container memory/processes, PID namespace visible to all | Per-user Fargate tasks (~$24/mo Spot for 5 users, 45-170s cold start) |
-| Single EFS access point | All vaults under one mount, isolation is app-enforced only | Per-user EFS access points (free, requires per-user tasks) |
-| All users run as UID 1000 | POSIX can't distinguish users at OS level | Server-enforced path isolation (implemented) |
-| `--dangerously-skip-permissions` | Claude can run arbitrary Bash | Tool policy hooks can block `Bash` tool |
-| Network egress unrestricted | Claude can make external HTTP calls | VPC security groups / NAT gateway controls |
+All users share one Fargate task. User isolation is application-layer. Suitable for internal teams and portfolio demonstrations, not multi-tenant production.
 
 ## Future Work
 
-- [ ] Whisper API fallback for voice input (Firefox, better accuracy)
-- [ ] Mobile microphone button (on-screen keyboard can't detect spacebar hold)
+- [ ] Conversation phase detection → automatic context panel triggers (connecting → molecule graph, reflecting → full graph)
+- [ ] Branch-to-root internalization UX (visual animation of branch curving through ground line)
+- [ ] Knowledge molecules — small 3-7 node clusters instead of full graph
+- [ ] Flower gallery with journey lineage (root → branch → leaf → flower)
+- [ ] Live skill execution from skills (gardener delegates to sub-skills in real-time)
+- [ ] Root-deepener onboarding flow (guided questions → root inference)
 - [ ] Jupyter notebook viewer (.ipynb cell rendering)
-- [ ] CodeMirror/Monaco for proper syntax highlighting with autocomplete
-- [ ] UI for editing tool policy (currently manual JSON edit)
-- [ ] Run history persistence (currently in-memory only)
-- [ ] Wiki-link `[[]]` remark plugin for Milkdown with autocomplete
-- [ ] Sigma.js + graphology graph view for backlinks
+- [ ] CodeMirror/Monaco for proper syntax highlighting
+- [ ] Wiki-link `[[]]` remark plugin with autocomplete
 - [ ] Command palette (Ctrl+P)
-- [ ] Per-user EFS access points (filesystem-level isolation, not just server-enforced)
-- [ ] Per-user Fargate tasks (container-level isolation, ~$24/mo Spot for 5 users)
-- [x] ~~Scheduled cron execution of recurring intentions~~ — shipped (scheduler runs every 60s)
-- [x] ~~Gallery publishing from workspace~~ — shipped (POST /api/vault/publish + PublishDialog UI)
-- [x] ~~Vault download/export~~ — shipped (GET /api/vault/download, ZIP with dotfile exclusion)
+- [ ] Per-user EFS access points (filesystem-level isolation)
+- [ ] Per-user Fargate tasks (container-level isolation)
+- [x] ~~Chikorita color palette~~ — shipped
+- [x] ~~Claude.ai layout (NavRail + centered chat + context panel)~~ — shipped
+- [x] ~~Banyan Tree data model + useTree hook~~ — shipped
+- [x] ~~Chat welcome screen redesign~~ — shipped
+- [x] ~~Conversation phase detection~~ — shipped
+- [x] ~~D3 force-directed knowledge graph~~ — shipped
+- [x] ~~Agentic skill architecture (8 skills + 3 hooks)~~ — shipped
+- [x] ~~Mobile redesign (Claude-inspired)~~ — shipped
+- [x] ~~Conversation history with tree associations + tool audit~~ — shipped
+- [x] ~~Tree migration from .intentions.json~~ — shipped
+- [x] ~~Session config artifact viewer (click skills/hooks to see content)~~ — shipped
+- [x] ~~Stop hooks (leaf-tracker, synthesis-trigger, root-updater)~~ — shipped
+- [x] ~~Scheduled cron execution~~ — shipped
+- [x] ~~Gallery publishing~~ — shipped
+- [x] ~~Vault download/export~~ — shipped
