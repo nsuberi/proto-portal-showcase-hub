@@ -216,7 +216,7 @@ async function triggerResearch(item: Intention): Promise<RunResult> {
     return { ok: false, error: `Failed to start run (${res.status}): ${text}` };
   }
   const data = await res.json();
-  // Tell TerminalPanel to open a new tab for this run
+  // Notify the activity strip about the new run
   window.dispatchEvent(
     new CustomEvent("run-started", {
       detail: { runId: data.runId, title: item.title },
@@ -251,8 +251,8 @@ function OnboardingModal({ reason, onClose }: { reason: SetupReason; onClose: ()
   const msg = SETUP_MESSAGES[reason];
 
   const goToClaude = () => {
-    // Tell TerminalPanel to switch to the interactive Claude tab
-    window.dispatchEvent(new CustomEvent("switch-terminal-tab", { detail: { tab: "interactive" } }));
+    // Close the onboarding modal (terminal setup is handled externally)
+    // The switch-terminal-tab event is no longer used
     onClose();
   };
 
