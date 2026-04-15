@@ -14,6 +14,7 @@ export interface UseChatResult {
   authUrl: string | null;
   isAuthenticating: boolean;
   sendMessage: (content: string) => void;
+  newChat: () => void;
   startAuth: () => void;
   submitAuthCode: (code: string) => void;
 }
@@ -140,6 +141,14 @@ export function useChat(): UseChatResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const newChat = useCallback(() => {
+    setMessages([]);
+    setIsStreaming(false);
+    currentTextRef.current = "";
+    currentToolsRef.current = [];
+    assistantIdRef.current = null;
+  }, []);
+
   const sendMessage = useCallback(
     (content: string) => {
       const ws = wsRef.current;
@@ -198,7 +207,7 @@ export function useChat(): UseChatResult {
     });
   }, []);
 
-  return { messages, isStreaming, isConnected, authUrl, isAuthenticating, sendMessage, startAuth, submitAuthCode };
+  return { messages, isStreaming, isConnected, authUrl, isAuthenticating, sendMessage, newChat, startAuth, submitAuthCode };
 }
 
 function formatToolUse(tool: string, input: Record<string, unknown>): string {
