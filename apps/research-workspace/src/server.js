@@ -1082,15 +1082,29 @@ Reviews go in \`reviews/\`, code assets in \`assets/\`, syntheses in \`syntheses
 const fs = require('fs');
 const path = require('path');
 
+const home = process.env.HOME || '/tmp';
+const debugLog = path.join(home, '.hook-debug.log');
+const start = Date.now();
+
+function debug(msg) {
+  try {
+    fs.appendFileSync(debugLog, '[' + new Date().toISOString() + ' +' + (Date.now() - start) + 'ms] ' + msg + '\\n');
+  } catch {}
+}
+
+debug('--- hook invoked pid=' + process.pid + ' stdout.isTTY=' + process.stdout.isTTY + ' fd1=' + (typeof process.stdout.fd));
+
 try {
   const input = fs.readFileSync(0, 'utf-8').trim() || '{}';
+  debug('stdin: ' + input.length + ' bytes');
   const parsed = JSON.parse(input);
   const tool = parsed.tool_name || 'unknown';
   const toolInput = parsed.tool_input || {};
   const runId = process.env.CLAUDE_RUN_ID || '';
-  const home = process.env.HOME || '/tmp';
   let decision = 'allow';
   let reason = '';
+
+  debug('tool: ' + tool);
 
   // Check tool policy
   const policyFile = path.join(home, '.claude', 'tool-policy.json');
@@ -1121,6 +1135,35 @@ try {
     }
   } catch {}
 
+  // Security pattern warnings (ported from security-guidance plugin).
+  // Warns about XSS, command injection, and deserialization risks on file edits.
+  let securityWarning = '';
+  if (decision === 'allow' && ['Edit', 'Write', 'MultiEdit'].includes(tool)) {
+    const filePath = String(toolInput.file_path || '');
+    const content = tool === 'Write' ? String(toolInput.content || '')
+      : tool === 'Edit' ? String(toolInput.new_string || '')
+      : '';
+    const patterns = [
+      { sub: 'child_process.exec', warn: 'child_process.exec can lead to command injection. Use execFile instead.' },
+      { sub: 'eval(', warn: 'eval() executes arbitrary code — consider safer alternatives.' },
+      { sub: 'dangerouslySetInnerHTML', warn: 'dangerouslySetInnerHTML risks XSS. Sanitize with DOMPurify.' },
+      { sub: '.innerHTML =', warn: 'innerHTML with untrusted content risks XSS. Use textContent or sanitize.' },
+      { sub: 'document.write', warn: 'document.write can be exploited for XSS. Use DOM methods instead.' },
+      { sub: 'new Function', warn: 'new Function() with dynamic strings risks code injection.' },
+      { sub: 'pickle', warn: 'pickle with untrusted data can execute arbitrary code. Use JSON instead.' },
+      { sub: 'os.system', warn: 'os.system is vulnerable to shell injection. Use subprocess with args list.' },
+    ];
+    for (const p of patterns) {
+      if (content.includes(p.sub)) {
+        securityWarning = p.warn;
+        break;
+      }
+    }
+    if (!securityWarning && filePath.includes('.github/workflows/') && (filePath.endsWith('.yml') || filePath.endsWith('.yaml'))) {
+      securityWarning = 'GitHub Actions workflow — avoid using untrusted input directly in run: commands.';
+    }
+  }
+
   // Append to activity log
   const logEntry = JSON.stringify({
     timestamp: new Date().toISOString(),
@@ -1128,6 +1171,7 @@ try {
     input: toolInput,
     decision,
     reason,
+    securityWarning: securityWarning || undefined,
     runId,
   });
   try {
@@ -1136,17 +1180,46 @@ try {
 
   // Synchronous stdout write to fd 1 — bypasses Node.js event loop,
   // guaranteed in kernel pipe buffer before this call returns.
-  if (decision === 'block') {
-    fs.writeSync(1, JSON.stringify({ decision: 'block', reason }) + '\\n');
-  } else {
-    fs.writeSync(1, '{"decision":"allow"}\\n');
-  }
+  const output = decision === 'block'
+    ? JSON.stringify({ decision: 'block', reason }) + '\\n'
+    : securityWarning
+      ? JSON.stringify({ decision: 'allow', systemMessage: 'Security: ' + securityWarning }) + '\\n'
+      : '{"decision":"allow"}\\n';
+  debug('writing stdout: ' + output.trim());
+  fs.writeSync(1, output);
+  debug('writeSync completed');
 } catch (err) {
+  debug('ERROR: ' + err.message + ' stack=' + err.stack);
   // If anything goes wrong, still output valid JSON via synchronous write
   fs.writeSync(1, '{"decision":"allow"}\\n');
 }
 `);
   await fs.chmod(hookScript, 0o755);
+
+  // Remove plugin hooks that produce broken output (empty stdout or missing
+  // decision field). Claude Code's marketplace git-pulls overwrite any patches,
+  // so the only reliable fix is removal. The security-guidance patterns are
+  // incorporated directly into our Node.js hook above instead.
+  const pluginsDir = path.join(claudeDir, 'plugins');
+  if (existsSync(pluginsDir)) {
+    const removePluginHooks = async (dir) => {
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            if (entry.name === 'hooks' || entry.name === 'hooks-handlers') {
+              await fs.rm(fullPath, { recursive: true, force: true });
+              console.log(`[init] Removed plugin hooks: ${fullPath.replace(vaultRoot, '~')}`);
+            } else {
+              await removePluginHooks(fullPath);
+            }
+          }
+        }
+      } catch {}
+    };
+    await removePluginHooks(pluginsDir);
+  }
 
   // Claude Code settings — always overwrite to ensure hook path is current
   const settingsPath = path.join(claudeDir, 'settings.json');
@@ -1195,6 +1268,190 @@ async function hardenUserVault(vaultRoot) {
     }
   } catch { /* best effort */ }
 }
+
+// --- Hook diagnostic endpoint ---
+// Returns the actual hook file, settings.json, and debug log from disk.
+// Allows verifying what Claude Code sees when it runs the hook.
+
+app.get(`${API_PREFIX}/hook-debug`, async (req, res) => {
+  const userVault = getUserVaultRoot(req.userId);
+  const claudeDir = path.join(userVault, '.claude');
+  const result = {};
+
+  // Read hook script
+  const hookPath = path.join(claudeDir, 'hooks', 'log-activity.js');
+  try {
+    result.hookScript = {
+      path: hookPath,
+      exists: existsSync(hookPath),
+      content: existsSync(hookPath) ? await fs.readFile(hookPath, 'utf-8') : null,
+      stat: existsSync(hookPath) ? (() => { const s = statSync(hookPath); return { mode: '0' + (s.mode & 0o777).toString(8), size: s.size, uid: s.uid, gid: s.gid }; })() : null,
+    };
+  } catch (err) { result.hookScript = { error: err.message }; }
+
+  // Read settings.json
+  const settingsPath = path.join(claudeDir, 'settings.json');
+  try {
+    result.settings = {
+      path: settingsPath,
+      exists: existsSync(settingsPath),
+      content: existsSync(settingsPath) ? JSON.parse(await fs.readFile(settingsPath, 'utf-8')) : null,
+    };
+  } catch (err) { result.settings = { error: err.message }; }
+
+  // Read debug log (last 50 lines)
+  const debugPath = path.join(userVault, '.hook-debug.log');
+  try {
+    if (existsSync(debugPath)) {
+      const content = await fs.readFile(debugPath, 'utf-8');
+      const lines = content.trim().split('\n');
+      result.debugLog = {
+        path: debugPath,
+        totalLines: lines.length,
+        lastLines: lines.slice(-50),
+      };
+    } else {
+      result.debugLog = { path: debugPath, exists: false };
+    }
+  } catch (err) { result.debugLog = { error: err.message }; }
+
+  // Read last 5 activity events
+  const activityPath = path.join(userVault, '.tool-activity.jsonl');
+  try {
+    if (existsSync(activityPath)) {
+      const content = await fs.readFile(activityPath, 'utf-8');
+      const lines = content.trim().split('\n').filter(Boolean);
+      result.recentActivity = {
+        totalEvents: lines.length,
+        lastEvents: lines.slice(-5).map(l => { try { return JSON.parse(l); } catch { return l; } }),
+      };
+    } else {
+      result.recentActivity = { exists: false };
+    }
+  } catch (err) { result.recentActivity = { error: err.message }; }
+
+  // List all files in .claude/ directory (recursive)
+  try {
+    const claudeDirPath = path.join(userVault, '.claude');
+    const listDir = async (dir, prefix = '') => {
+      const entries = [];
+      if (!existsSync(dir)) return entries;
+      const items = await fs.readdir(dir, { withFileTypes: true });
+      for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+        const relPath = prefix ? `${prefix}/${item.name}` : item.name;
+        if (item.isDirectory()) {
+          entries.push({ path: relPath, type: 'dir' });
+          entries.push(...await listDir(fullPath, relPath));
+        } else {
+          const s = statSync(fullPath);
+          entries.push({ path: relPath, type: 'file', size: s.size, mode: '0' + (s.mode & 0o777).toString(8) });
+        }
+      }
+      return entries;
+    };
+    result.claudeDir = await listDir(claudeDirPath);
+  } catch (err) { result.claudeDir = { error: err.message }; }
+
+  // Check for other settings files that might configure hooks
+  const otherSettingsPaths = [
+    path.join(userVault, '.claude', 'settings.local.json'),
+    path.join(userVault, '.claude.json'),
+    '/home/node/.claude/settings.json',
+    '/root/.claude/settings.json',
+    '/etc/claude/settings.json',
+    '/etc/claude/managed-settings.json',
+  ];
+  result.otherSettings = {};
+  for (const sp of otherSettingsPaths) {
+    try {
+      if (existsSync(sp)) {
+        result.otherSettings[sp] = JSON.parse(await fs.readFile(sp, 'utf-8'));
+      }
+    } catch (err) {
+      result.otherSettings[sp] = { exists: true, error: err.message };
+    }
+  }
+
+  // Test: execute the hook with test input and capture output
+  try {
+    const { execSync } = await import('child_process');
+    const testInput = '{"tool_name":"__diag_test__","tool_input":{}}';
+    const testOutput = execSync(
+      `echo '${testInput}' | HOME=${userVault} ${hookPath}`,
+      { timeout: 5000, encoding: 'utf-8', env: { ...process.env, HOME: userVault, CLAUDE_RUN_ID: 'diag-test' } }
+    ).trim();
+    result.testExecution = {
+      input: testInput,
+      output: testOutput,
+      validJson: (() => { try { JSON.parse(testOutput); return true; } catch { return false; } })(),
+      parsed: (() => { try { return JSON.parse(testOutput); } catch { return null; } })(),
+    };
+  } catch (err) {
+    result.testExecution = { error: err.message, stderr: err.stderr || '' };
+  }
+
+  // Test plugin hooks — run each Python/bash hook with test input
+  const pluginHookTests = [
+    {
+      name: 'hookify/pretooluse',
+      script: path.join(userVault, '.claude', 'plugins', 'marketplaces', 'claude-plugins-official', 'plugins', 'hookify', 'hooks', 'pretooluse.py'),
+      pluginRoot: path.join(userVault, '.claude', 'plugins', 'marketplaces', 'claude-plugins-official', 'plugins', 'hookify'),
+      command: 'python3',
+    },
+    {
+      name: 'security-guidance/security_reminder_hook',
+      script: path.join(userVault, '.claude', 'plugins', 'marketplaces', 'claude-plugins-official', 'plugins', 'security-guidance', 'hooks', 'security_reminder_hook.py'),
+      pluginRoot: path.join(userVault, '.claude', 'plugins', 'marketplaces', 'claude-plugins-official', 'plugins', 'security-guidance'),
+      command: 'python3',
+    },
+  ];
+  result.pluginHookTests = {};
+  for (const test of pluginHookTests) {
+    if (!existsSync(test.script)) {
+      result.pluginHookTests[test.name] = { exists: false, script: test.script };
+      continue;
+    }
+    try {
+      const { execSync } = await import('child_process');
+      const testInput = '{"tool_name":"Read","tool_input":{"file_path":"/tmp/test.txt"},"session_id":"diag-test"}';
+      const testEnv = { ...process.env, HOME: userVault, CLAUDE_PLUGIN_ROOT: test.pluginRoot, CLAUDE_RUN_ID: 'diag-test' };
+      const testOutput = execSync(
+        `echo '${testInput}' | ${test.command} "${test.script}"`,
+        { timeout: 10000, encoding: 'utf-8', env: testEnv, stdio: ['pipe', 'pipe', 'pipe'] }
+      );
+      result.pluginHookTests[test.name] = {
+        exitCode: 0,
+        stdout: testOutput.trim(),
+        stdoutLength: testOutput.length,
+        validJson: (() => { try { JSON.parse(testOutput.trim()); return true; } catch { return false; } })(),
+        parsed: (() => { try { return JSON.parse(testOutput.trim()); } catch { return null; } })(),
+      };
+    } catch (err) {
+      result.pluginHookTests[test.name] = {
+        exitCode: err.status,
+        stdout: (err.stdout || '').trim(),
+        stderr: (err.stderr || '').trim(),
+        error: err.message.split('\n')[0],
+      };
+    }
+  }
+
+  // Check python3 availability
+  try {
+    const { execSync } = await import('child_process');
+    result.python3 = execSync('python3 --version 2>&1', { encoding: 'utf-8' }).trim();
+  } catch (err) {
+    result.python3 = { error: err.message };
+  }
+
+  // Node.js version
+  result.nodeVersion = process.version;
+  result.platform = process.platform;
+  result.arch = process.arch;
+
+  res.json(result);
+});
 
 // --- Activity log endpoint ---
 
