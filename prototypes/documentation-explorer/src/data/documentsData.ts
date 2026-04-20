@@ -503,6 +503,38 @@ Together they form a layered agent configuration: CLAUDE.md for "how to work her
     position: { x: 75, y: 25 },
     floatDuration: 68,
     floatDelay: 18
+  },
+  {
+    id: 'concept-island-algorithms',
+    title: 'Island Algorithms',
+    filename: 'Prototype: island-algorithms-visualizer',
+    category: 'concept',
+    content: `# Island Algorithms Visualizer
+
+A Tron-inspired WebGL prototype for the connected-components algorithm family — the "Number of Islands" problem and its cousins. Built to be **both** an algorithm visualizer and a scrubbable LeetCode cheat sheet.
+
+## What it covers
+
+- **DFS** — stack-based traversal, backtracking, depth-first discovery order
+- **BFS** — queue-based wave expansion, shortest-path distances on unweighted grids
+- **Dijkstra's** — min-heap relaxation on weighted terrain, path reconstruction
+- **DP via Union-Find** — dynamic connectivity, max area of an island
+- **DP via 2D table** — largest-square-of-1s (LeetCode 221)
+
+## What you can do
+
+- **Play / pause / scrub** through every algorithm step
+- **Toggle cells** in 2D to author your own islands
+- **Switch between 2D** (tilted grid, post-bloom Tron aesthetic) **and true 3D** (6-connected volumetric grid with orbit controls)
+- **Read a live codex** alongside the visualizer: current data structure state, Big-O, "when to use," pseudocode with the current line highlighted, and interview gotchas
+- **On mobile**, the visualizer is hidden and the same codex content becomes a 4-tab cheat sheet with Python templates
+
+## Design
+
+Each prototype in this monorepo owns its visual tokens. This one lives entirely inside \`prototypes/island-algorithms-visualizer/src/design-system/theme.css\` — neon cyan + magenta on deep navy, no dependency on the shared design system package.`,
+    position: { x: 35, y: 40 },
+    floatDuration: 76,
+    floatDelay: 9
   }
 ];
 

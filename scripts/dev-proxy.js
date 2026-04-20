@@ -25,6 +25,7 @@ const SERVICES = {
   "ai-builders": { port: 3008, buildPath: "apps/ai-builders-portal/dist" },
   "ai-integration-visualizer": { port: 3010, buildPath: "prototypes/ai-integration-visualizer/dist" },
   "research-workspace": { port: 3011, buildPath: "prototypes/research-workspace/dist" },
+  "island-algorithms-visualizer": { port: 3012, buildPath: "prototypes/island-algorithms-visualizer/dist" },
 };
 
 console.log("Starting Multi-SPA Development Proxy Server...");
@@ -58,7 +59,7 @@ function createPrototypeProxy(name) {
 }
 
 // Prototype routes
-for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "research-workspace", "ai-builders", "ai-integration-visualizer"]) {
+for (const name of ["ffx-skill-map", "home-lending-learning", "documentation-explorer", "learning-path", "inference-insights", "research-workspace", "ai-builders", "ai-integration-visualizer", "island-algorithms-visualizer"]) {
   const svc = SERVICES[name];
   console.log(`  /prototypes/${name}  ->  localhost:${svc.port}`);
   app.use(`/prototypes/${name}`, createPrototypeProxy(name));
@@ -173,6 +174,7 @@ Routes:
   http://localhost:${PORT}/api/*                                  -> API Server (${SERVICES.api.port})
   http://localhost:${PORT}/prototypes/ai-evals/                    -> AI Evals Flask (${SERVICES["ai-evals"].port})
   http://localhost:${PORT}/prototypes/ai-builders/                  -> AI Builders (${SERVICES["ai-builders"].port})
+  http://localhost:${PORT}/prototypes/island-algorithms-visualizer/ -> Island Algorithms (${SERVICES["island-algorithms-visualizer"].port})
 
 Start all services: yarn dev:all
   `);

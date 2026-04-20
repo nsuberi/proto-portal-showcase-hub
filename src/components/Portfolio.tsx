@@ -62,6 +62,14 @@ const Portfolio = () => {
       tags: ["AI Strategy", "Data Pipeline", "Visualization", "Organization Design"],
       status: "Live Demo Available",
     },
+    {
+      title: "Island Algorithms Visualizer",
+      description:
+        "A Tron-inspired WebGL visualizer for the connected-components algorithm family. Step through DFS, BFS, Dijkstra, and DP solutions to the Number-of-Islands problem in 2D or fully volumetric 3D grids. A live codex explains the data structure, Big-O, and pseudocode at each step — a studyable, scrubbable LeetCode cheat sheet.",
+      link: "/prototypes/island-algorithms-visualizer/",
+      tags: ["Algorithms", "WebGL", "DFS/BFS", "Dijkstra", "Dynamic Programming"],
+      status: "Live Demo Available",
+    },
   ];
 
   const prototypeIdeas = [

@@ -1,0 +1,42 @@
+:root {
+  /* Surfaces */
+  --bg: #070b14;
+  --surface: #0d1526;
+  --surface-2: #132035;
+  --border: #1a2e4a;
+
+  /* Primary — neon cyan */
+  --cyan: #00e5ff;
+  --cyan-dim: #0099b3;
+  --cyan-glow: rgba(0, 229, 255, 0.25);
+
+  /* Accent — magenta */
+  --magenta: #ff00cc;
+  --magenta-glow: rgba(255, 0, 204, 0.2);
+
+  /* Text */
+  --text: #c8f0f8;
+  --text-mid: #5a8fa0;
+  --text-dim: #2a4a5a;
+
+  /* Algorithm state colors */
+  --cell-filled: #00e5ff;
+  --cell-frontier: #ff00cc;
+  --cell-visited: #003d4d;
+  --cell-current: #ffffff;
+  --cell-empty: #0d1526;
+
+  /* Island palette — 8-cycle */
+  --island-0: #00e5ff;
+  --island-1: #ff00cc;
+  --island-2: #00ff88;
+  --island-3: #ff6600;
+  --island-4: #8855ff;
+  --island-5: #ffdd00;
+  --island-6: #ff2255;
+  --island-7: #00aaff;
+
+  /* Typography */
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: "Inter", sans-serif;
+}

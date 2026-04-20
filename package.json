@@ -28,6 +28,8 @@
     "build:research-workspace": "cd prototypes/research-workspace && npm run build",
     "dev:ai-visualizer": "cd prototypes/ai-integration-visualizer && npm run dev",
     "build:ai-visualizer": "cd prototypes/ai-integration-visualizer && npm run build",
+    "dev:island-viz": "cd prototypes/island-algorithms-visualizer && npm run dev",
+    "build:island-viz": "cd prototypes/island-algorithms-visualizer && npm run build",
     "dev:ai-builders": "cd apps/ai-builders-portal && npm run dev",
     "build:ai-builders": "cd apps/ai-builders-portal && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
@@ -130,11 +132,13 @@
     "prototypes/inference-insights",
     "prototypes/research-workspace",
     "prototypes/ai-integration-visualizer",
+    "prototypes/island-algorithms-visualizer",
     "shared/design-tokens",
     "shared/api",
     "shared/mcp-cli",
     "shared/mcp-servers/design-tokens",
     "shared/ui-components",
+    "shared/layout-primitives",
     "apps/ai-builders-portal"
   ],
   "packageManager": "yarn@4.9.2"
