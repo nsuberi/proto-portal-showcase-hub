@@ -12,10 +12,12 @@ interface Props {
   onCellClick?: (index: number) => void;
 }
 
+const DOT_RADIUS_2D = 0.32;
+
 export function Scene2D({ grid, cells, scanCursor, onCellClick }: Props) {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 6, 12]} fov={45} />
+      <PerspectiveCamera makeDefault position={[0, 5.5, 12]} fov={45} />
       <OrbitControls
         enableRotate={false}
         enablePan
@@ -27,13 +29,13 @@ export function Scene2D({ grid, cells, scanCursor, onCellClick }: Props) {
       <pointLight position={[10, 12, 8]} intensity={1.1} color={THREE_HEX.cyan} />
       <pointLight position={[-10, 6, -8]} intensity={0.6} color={THREE_HEX.magenta} />
       <GridFloor size={Math.max(grid.width, grid.height) * 2.2} divisions={grid.width} />
-      <group rotation-x={-0.45}>
+      <group rotation-x={-0.3}>
         <CellInstances
           cells={cells}
           width={grid.width}
           height={grid.height}
           depth={1}
-          shape="cube"
+          radius={DOT_RADIUS_2D}
           onCellClick={onCellClick}
         />
         <ScanCursor
@@ -41,7 +43,7 @@ export function Scene2D({ grid, cells, scanCursor, onCellClick }: Props) {
           width={grid.width}
           height={grid.height}
           depth={1}
-          shape="cube"
+          radius={DOT_RADIUS_2D + 0.15}
         />
       </group>
     </>

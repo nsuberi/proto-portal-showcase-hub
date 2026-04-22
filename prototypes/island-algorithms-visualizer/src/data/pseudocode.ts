@@ -1,81 +1,113 @@
 import type { AlgorithmId } from "@/types";
 
+/**
+ * These are *runnable* Python reference implementations. The runner files
+ * (`src/algorithms/*.ts`) emit step numbers that correspond line-for-line
+ * to the text below — so when a generator yields `sourceLine: X`, the
+ * highlight in the codex lands on the Python line the TS is mimicking at
+ * that moment.
+ *
+ * Keep each function self-contained and executable. Mutating this text
+ * requires updating the matching `LINE` constants in the corresponding
+ * algorithm file.
+ */
 export const PSEUDOCODE: Record<AlgorithmId, string> = {
+  // Line indices are 1-based in the UI.
   dfs: `def num_islands(grid):
+    visited = [[False] * len(grid[0]) for _ in range(len(grid))]
     count = 0
-    for (x, y) in cells:
-        if grid[x][y] == 1 and not visited[x][y]:
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            if not grid[y][x] or visited[y][x]:
+                continue
             count += 1
             stack = [(x, y)]
+            visited[y][x] = True
             while stack:
                 cx, cy = stack[-1]
-                nxt = next_unvisited_neighbor(cx, cy)
+                nxt = next_unvisited_neighbor(grid, visited, cx, cy)
                 if nxt:
-                    visited[nxt] = True
-                    stack.append(nxt)
+                    nx, ny = nxt
+                    visited[ny][nx] = True
+                    stack.append((nx, ny))
                 else:
                     stack.pop()
     return count`,
 
   bfs: `def bfs_islands(grid):
-    count = 0
     dist = {}
-    for start in cells:
-        if grid[start] == 1 and start not in dist:
+    count = 0
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            if not grid[y][x] or (x, y) in dist:
+                continue
             count += 1
-            dist[start] = 0
-            q = deque([start])
+            dist[(x, y)] = 0
+            q = deque([(x, y)])
             while q:
-                u = q.popleft()
-                for v in neighbors(u):
-                    if grid[v] == 1 and v not in dist:
-                        dist[v] = dist[u] + 1
-                        q.append(v)
+                cx, cy = q.popleft()
+                for nx, ny in neighbors(grid, cx, cy):
+                    if grid[ny][nx] and (nx, ny) not in dist:
+                        dist[(nx, ny)] = dist[(cx, cy)] + 1
+                        q.append((nx, ny))
     return count`,
 
   dijkstra: `def dijkstra(grid, src, dst):
     dist = {src: 0}
+    parent = {src: None}
     heap = [(0, src)]
     while heap:
         d, u = heappop(heap)
         if d > dist[u]:
-            continue                    # stale
+            continue
         if u == dst:
-            return d
-        for v in neighbors(u):
-            nd = d + weight(v)
-            if nd < dist.get(v, INF):
+            return d, reconstruct(parent, dst)
+        for v in neighbors(grid, *u):
+            nd = d + weight(grid, v)
+            if nd < dist.get(v, float('inf')):
                 dist[v] = nd
+                parent[v] = u
                 heappush(heap, (nd, v))
-    return INF`,
+    return float('inf'), []`,
 
   "dp-max-area": `def max_area_dsu(grid):
+    n = len(grid) * len(grid[0])
     parent = list(range(n))
-    size   = [1 if grid[i] else 0 for i in range(n)]
+    size = [1 if cell else 0 for row in grid for cell in row]
     def find(i):
         while parent[i] != i:
             parent[i] = parent[parent[i]]
             i = parent[i]
         return i
-    for (u, v) in edges:
-        if grid[u] and grid[v]:
-            ra, rb = find(u), find(v)
-            if ra != rb:
-                parent[ra] = rb
-                size[rb] += size[ra]
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            if not grid[y][x]:
+                continue
+            for nx, ny in neighbors(grid, x, y):
+                if not grid[ny][nx]:
+                    continue
+                ra, rb = find(flat(x, y)), find(flat(nx, ny))
+                if ra == rb:
+                    continue
+                if size[ra] < size[rb]:
+                    ra, rb = rb, ra
+                parent[rb] = ra
+                size[ra] += size[rb]
+                size[rb] = 0
     return max(size)`,
 
   "dp-square": `def maximal_square(grid):
     H, W = len(grid), len(grid[0])
-    dp = [[0]*W for _ in range(H)]
+    dp = [[0] * W for _ in range(H)]
     best = 0
     for y in range(H):
         for x in range(W):
-            if grid[y][x]:
-                top  = dp[y-1][x]   if y else 0
-                left = dp[y][x-1]   if x else 0
-                diag = dp[y-1][x-1] if x and y else 0
-                dp[y][x] = min(top, left, diag) + 1
-                best = max(best, dp[y][x])
+            if not grid[y][x]:
+                continue
+            top  = dp[y - 1][x]     if y else 0
+            left = dp[y][x - 1]     if x else 0
+            diag = dp[y - 1][x - 1] if x and y else 0
+            dp[y][x] = min(top, left, diag) + 1
+            best = max(best, dp[y][x])
     return best * best`,
 };

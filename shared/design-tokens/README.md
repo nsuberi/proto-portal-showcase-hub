@@ -1,8 +1,10 @@
-# Shared Design Tokens
+# Shared Design Tokens (opt-in baseline)
 
-Shared UI theme system for all prototypes. Provides CSS custom properties, Tailwind configuration, and responsive utility classes.
+An **optional** baseline theme system. Prototypes default to owning their own design tokens (see root `CLAUDE.md` → Design Rules). Opt in to this package when a prototype wants the portfolio's shared look — dark-mode-aware colors, shared radii/shadows, and the responsive utility classes below.
 
-## Usage
+For structural layout (sidebars, scrolling shells, panels, sheets), use `@proto-portal/layout-primitives` instead. That package is always shared; this one is not.
+
+## Usage (opt-in)
 
 ```css
 /* Import in any prototype's CSS */
@@ -66,7 +68,7 @@ Use these instead of writing responsive patterns from scratch:
 
 **Blocking (CI fails):**
 - No hardcoded hex (`'#FF0000'`) or `rgb()/rgba()` in TS/TSX files
-- Every prototype CSS must import `tokens.css` or a `theme.css` override
+- Every prototype must define tokens — either a local `tokens.css` / `theme.css` with CSS custom properties, or import this shared `tokens.css`
 
 **Warnings (non-blocking):**
 - Non-semantic Tailwind classes (`bg-gray-500`) -- prefer `bg-muted`, `text-foreground`
@@ -78,6 +80,6 @@ Use these instead of writing responsive patterns from scratch:
 
 ## Dark Mode
 
-- **Default**: All prototypes inherit dark mode via `tokens.css` (`.dark` class)
-- **Light-only prototypes** (e.g. ffx-skill-map): Override CSS variables in a `theme.css` that sets light values on `:root`
+- **Available as opt-in baseline**: prototypes that import this package's `tokens.css` inherit a dark-mode aware setup via the `.dark` class
+- **Prototypes with their own tokens**: define a `.dark` class in your own tokens file that overrides your custom properties — or skip dark mode entirely if it doesn't fit your prototype
 - Do not use CSS hacks to block `.dark` -- set the variables explicitly

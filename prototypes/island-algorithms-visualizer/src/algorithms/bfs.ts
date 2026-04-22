@@ -4,6 +4,19 @@ import { neighbors2D, neighbors3D } from "@/lib/neighbors";
 import { cloneStepState, initialStepState, ROLE_CODES } from "@/lib/step-state";
 import type { AlgorithmStep, AuxView } from "./types";
 
+/**
+ * Line numbers in src/data/pseudocode.ts → bfs.
+ * Bump these when the Python text is edited.
+ */
+const LINE = {
+  outerLoop: 4, // for y in range(len(grid)):
+  scanSkip: 7, //     continue  (water OR already-visited)
+  newComponent: 8, // count += 1
+  dequeue: 12, // cx, cy = q.popleft()
+  enqueue: 16, // q.append((nx, ny))
+  done: 17, // return count
+} as const;
+
 function idxOf(grid: Grid, x: number, y: number, z: number): number {
   if (grid.mode === "2d") return indexOf2D(grid as Grid2D, x, y);
   return indexOf3D(grid as Grid3D, x, y, z);
@@ -36,7 +49,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
   yield {
     reason: "Sweep every cell; whenever we find unvisited land, drop a BFS wave from it.",
-    sourceLine: 2,
+    sourceLine: LINE.outerLoop,
     state: cloneStepState(state),
     aux: { kind: "queue", items: [] },
     visited: [...visited],
@@ -57,7 +70,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
         if (!grid.cells[start]) {
           yield {
             reason: `Scan ${coordLabel(grid, x, y, z)} — water, skip.`,
-            sourceLine: 3,
+            sourceLine: LINE.scanSkip,
             state: cloneStepState(state),
             aux: { kind: "queue", items: [] },
             visited: [...visited],
@@ -79,7 +92,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
         yield {
           reason: `Scan ${coordLabel(grid, x, y, z)} — new island #${islandCount}! Enqueue at distance 0.`,
-          sourceLine: 5,
+          sourceLine: LINE.newComponent,
           state: cloneStepState(state),
           aux: queueAux(queue, grid),
           visited: [...visited],
@@ -95,7 +108,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
           yield {
             reason: `Dequeue ${coordLabel(grid, head.x, head.y, head.z)} — process this wave cell.`,
-            sourceLine: 9,
+            sourceLine: LINE.dequeue,
             state: cloneStepState(state),
             aux: queueAux(queue, grid),
             visited: [...visited],
@@ -117,7 +130,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
             yield {
               reason: `Enqueue ${coordLabel(grid, nx, ny, nz)} at distance ${head.d + 1}.`,
-              sourceLine: 12,
+              sourceLine: LINE.enqueue,
               state: cloneStepState(state),
               aux: queueAux(queue, grid),
               visited: [...visited],
@@ -142,7 +155,7 @@ export function* bfsSteps(grid: Grid): Generator<AlgorithmStep> {
   state.scanCursor = -1;
   yield {
     reason: `BFS done — ${islandCount} component${islandCount === 1 ? "" : "s"}; labels show distance from each source.`,
-    sourceLine: 17,
+    sourceLine: LINE.done,
     state: cloneStepState(state),
     aux: { kind: "queue", items: [] },
     visited: [...visited],

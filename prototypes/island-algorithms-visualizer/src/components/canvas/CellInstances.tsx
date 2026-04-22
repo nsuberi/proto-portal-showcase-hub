@@ -9,8 +9,8 @@ interface Props {
   width: number;
   height: number;
   depth: number;
-  /** Visual mode — 2D uses cubes, 3D uses spheres. */
-  shape: "cube" | "sphere";
+  /** Sphere radius — 2D uses a slightly larger dot, 3D uses a smaller one. */
+  radius?: number;
   /** Spacing between cells. */
   spacing?: number;
   onCellClick?: (index: number) => void;
@@ -29,20 +29,17 @@ export function CellInstances({
   width,
   height,
   depth,
-  shape,
+  radius = 0.3,
   spacing = 1.1,
   onCellClick,
 }: Props) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const count = cells.length;
 
-  const geometry = useMemo(() => {
-    if (shape === "sphere") {
-      return new THREE.SphereGeometry(0.3, 16, 16);
-    }
-    // 2D tile — same footprint for all cells; thickness unchanged
-    return new THREE.BoxGeometry(0.85, 0.85, 0.2);
-  }, [shape]);
+  const geometry = useMemo(
+    () => new THREE.SphereGeometry(radius, 16, 16),
+    [radius],
+  );
 
   const offsetX = ((width - 1) * spacing) / 2;
   const offsetY = ((height - 1) * spacing) / 2;

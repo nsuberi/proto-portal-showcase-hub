@@ -4,6 +4,30 @@ import { neighbors2D, neighbors3D } from "@/lib/neighbors";
 import { cloneStepState, initialStepState, ROLE_CODES } from "@/lib/step-state";
 import type { AlgorithmStep, AuxView } from "./types";
 
+/**
+ * Line numbers in src/data/pseudocode.ts → dp-max-area.
+ * Bump these when the Python text is edited.
+ */
+const DSU_LINE = {
+  init: 4, // size = [...]
+  outerLoop: 10, // for y in range(len(grid)):
+  skipWater: 13, //     continue  (water)
+  scanInner: 14, // for nx, ny in neighbors(...)
+  union: 23, // size[ra] += size[rb]
+  done: 25, // return max(size)
+} as const;
+
+/**
+ * Line numbers in src/data/pseudocode.ts → dp-square.
+ * Bump these when the Python text is edited.
+ */
+const SQ_LINE = {
+  init: 3, // dp = [[0] * W for _ in range(H)]
+  skipZero: 8, //     continue
+  compute: 12, // dp[y][x] = min(top, left, diag) + 1
+  done: 14, // return best * best
+} as const;
+
 function idxOf(grid: Grid, x: number, y: number, z: number): number {
   if (grid.mode === "2d") return indexOf2D(grid as Grid2D, x, y);
   return indexOf3D(grid as Grid3D, x, y, z);
@@ -47,9 +71,9 @@ export function* dpMaxAreaSteps(grid: Grid): Generator<AlgorithmStep> {
   const visited: { label: string; cellIndex: number; islandId?: number }[] = [];
   yield {
     reason: "Union-Find: each land cell starts as its own component of size 1.",
-    sourceLine: 2,
+    sourceLine: DSU_LINE.init,
     state: cloneStepState(state),
-    aux: dsuAux(parent, size, grid),
+    aux: dsuArraysAux(parent, size, grid, -1),
     visited: [...visited],
   };
 
@@ -68,9 +92,9 @@ export function* dpMaxAreaSteps(grid: Grid): Generator<AlgorithmStep> {
         if (!grid.cells[i]) {
           yield {
             reason: `Scan ${coordLabel(grid, x, y, z)} — water, nothing to union.`,
-            sourceLine: 8,
+            sourceLine: DSU_LINE.skipWater,
             state: cloneStepState(state),
-            aux: dsuAux(parent, size, grid),
+            aux: dsuArraysAux(parent, size, grid, i),
             visited: [...visited],
             metric: { label: "Max area", value: String(best) },
           };
@@ -78,10 +102,10 @@ export function* dpMaxAreaSteps(grid: Grid): Generator<AlgorithmStep> {
         }
 
         yield {
-          reason: `Scan ${coordLabel(grid, x, y, z)} — try to merge with any land neighbor already in a component.`,
-          sourceLine: 8,
+          reason: `Scan ${coordLabel(grid, x, y, z)} — try to merge with any land neighbor.`,
+          sourceLine: DSU_LINE.scanInner,
           state: cloneStepState(state),
-          aux: dsuAux(parent, size, grid),
+          aux: dsuArraysAux(parent, size, grid, i),
           visited: [...visited],
           metric: { label: "Max area", value: String(best) },
         };
@@ -118,9 +142,9 @@ export function* dpMaxAreaSteps(grid: Grid): Generator<AlgorithmStep> {
           });
           yield {
             reason: `Union ${coordLabel(grid, x, y, z)} with ${coordLabel(grid, nx, ny, nz)} — component now size ${size[root]}.`,
-            sourceLine: 10,
+            sourceLine: DSU_LINE.union,
             state: cloneStepState(state),
-            aux: dsuAux(parent, size, grid),
+            aux: dsuArraysAux(parent, size, grid, i),
             visited: [...visited],
             metric: { label: "Max area", value: String(best) },
           };
@@ -144,9 +168,9 @@ export function* dpMaxAreaSteps(grid: Grid): Generator<AlgorithmStep> {
 
   yield {
     reason: `DSU complete. Largest component: ${best} cells. ${nextId} islands total.`,
-    sourceLine: 14,
+    sourceLine: DSU_LINE.done,
     state: cloneStepState(state),
-    aux: dsuAux(parent, size, grid),
+    aux: dsuArraysAux(parent, size, grid, -1),
     visited: [...visited],
     islandsFound: nextId,
     metric: { label: "Max area", value: String(best) },
@@ -159,7 +183,7 @@ export function* dpMaxSquareSteps(grid: Grid): Generator<AlgorithmStep> {
     const state = initialStepState(grid);
     yield {
       reason: "Largest-Square DP is a 2D-only demonstration. Switch to 2D view.",
-      sourceLine: 1,
+      sourceLine: SQ_LINE.init,
       state,
       aux: { kind: "dp-grid", width: 0, height: 0, values: [], best: 0 },
       visited: [],
@@ -176,9 +200,9 @@ export function* dpMaxSquareSteps(grid: Grid): Generator<AlgorithmStep> {
 
   yield {
     reason: "Build DP table. dp[y][x] = side length of the largest square ending at (x,y).",
-    sourceLine: 2,
+    sourceLine: SQ_LINE.init,
     state: cloneStepState(state),
-    aux: dpAux(dp, W, H, best),
+    aux: dpGridAux(dp, W, H, best),
     visited: [...visited],
   };
 
@@ -193,9 +217,9 @@ export function* dpMaxSquareSteps(grid: Grid): Generator<AlgorithmStep> {
         state.labelMask[i] = 1;
         yield {
           reason: `Scan (${x},${y}) — cell is 0, dp stays 0.`,
-          sourceLine: 4,
+          sourceLine: SQ_LINE.skipZero,
           state: cloneStepState(state),
-          aux: dpAux(dp, W, H, best),
+          aux: dpGridAux(dp, W, H, best),
           visited: [...visited],
           metric: { label: "Side", value: String(best) },
         };
@@ -217,9 +241,9 @@ export function* dpMaxSquareSteps(grid: Grid): Generator<AlgorithmStep> {
 
       yield {
         reason: `Scan (${x},${y}) — dp = min(${top},${left},${diag}) + 1 = ${dp[i]}.`,
-        sourceLine: 7,
+        sourceLine: SQ_LINE.compute,
         state: cloneStepState(state),
-        aux: dpAux(dp, W, H, best),
+        aux: dpGridAux(dp, W, H, best),
         visited: [...visited],
         metric: { label: "Side", value: String(best) },
       };
@@ -244,31 +268,30 @@ export function* dpMaxSquareSteps(grid: Grid): Generator<AlgorithmStep> {
 
   yield {
     reason: `Largest square side = ${best} (${best * best} cells).`,
-    sourceLine: 10,
+    sourceLine: SQ_LINE.done,
     state: cloneStepState(state),
-    aux: dpAux(dp, W, H, best),
+    aux: dpGridAux(dp, W, H, best),
     visited: [...visited],
     metric: { label: "Side", value: String(best) },
   };
 }
 
-function dsuAux(parent: Int32Array, size: Int32Array, grid: Grid): AuxView {
-  const seen = new Set<number>();
-  const comps: { root: number; size: number; color: number }[] = [];
-  for (let i = 0; i < parent.length; i++) {
-    if (!grid.cells[i]) continue;
-    let r = i;
-    while (parent[r] !== r) r = parent[r];
-    if (!seen.has(r)) {
-      seen.add(r);
-      comps.push({ root: r, size: size[r], color: r % 8 });
-    }
-  }
-  comps.sort((a, b) => b.size - a.size);
-  return { kind: "dsu", components: comps.slice(0, 8) };
+function dsuArraysAux(
+  parent: Int32Array,
+  size: Int32Array,
+  grid: Grid,
+  highlight: number,
+): AuxView {
+  return {
+    kind: "dsu-arrays",
+    parent: Array.from(parent),
+    size: Array.from(size),
+    gridMask: new Uint8Array(grid.cells),
+    highlight,
+  };
 }
 
-function dpAux(dp: Int32Array, W: number, H: number, best: number): AuxView {
+function dpGridAux(dp: Int32Array, W: number, H: number, best: number): AuxView {
   return {
     kind: "dp-grid",
     width: W,

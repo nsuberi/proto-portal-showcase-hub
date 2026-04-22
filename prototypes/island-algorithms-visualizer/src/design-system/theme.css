@@ -26,15 +26,17 @@
   --cell-current: #ffffff;
   --cell-empty: #0d1526;
 
-  /* Island palette — 8-cycle */
-  --island-0: #00e5ff;
-  --island-1: #ff00cc;
-  --island-2: #00ff88;
-  --island-3: #ff6600;
-  --island-4: #8855ff;
-  --island-5: #ffdd00;
-  --island-6: #ff2255;
-  --island-7: #00aaff;
+  /* Island palette — 8-cycle. Reserved colors (must NOT appear here):
+     cyan #00e5ff (unclaimed filled), magenta #ff00cc (frontier),
+     yellow #ffdd00 (path), white (current). */
+  --island-0: #ff7b2e;   /* orange */
+  --island-1: #35cf77;   /* green */
+  --island-2: #b56cff;   /* violet */
+  --island-3: #ff4f7d;   /* rose */
+  --island-4: #5a9bff;   /* periwinkle */
+  --island-5: #ffa726;   /* amber */
+  --island-6: #9effe0;   /* light mint */
+  --island-7: #e04dff;   /* orchid */
 
   /* Typography */
   --font-mono: "IBM Plex Mono", monospace;

@@ -23,7 +23,18 @@ export type AuxView =
   | { kind: "stack"; items: AuxItem[] }
   | { kind: "queue"; items: AuxItem[] }
   | { kind: "heap"; items: AuxItem[] }
-  | { kind: "dsu"; components: { root: number; size: number; color: number }[] }
+  | {
+      kind: "dist-map";
+      rows: { label: string; cellIndex: number; dist: number; parent: string | null; finalized: boolean }[];
+      heapTop: AuxItem[];
+    }
+  | {
+      kind: "dsu-arrays";
+      parent: number[];
+      size: number[];
+      gridMask: Uint8Array;
+      highlight: number; // index the scan cursor is currently on (-1 = none)
+    }
   | { kind: "dp-grid"; width: number; height: number; values: number[]; best: number };
 
 export interface AuxItem {

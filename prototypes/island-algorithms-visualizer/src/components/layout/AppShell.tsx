@@ -1,15 +1,19 @@
 import { useResponsiveMode } from "@/hooks/useResponsiveMode";
+import { useVisualizerStore } from "@/store/useVisualizerStore";
 import { VisualizerCanvas } from "@/components/canvas/VisualizerCanvas";
 import { ControlDock } from "@/components/controls/ControlDock";
 import { AlgorithmPicker } from "@/components/controls/AlgorithmPicker";
 import { ViewModeToggle } from "@/components/controls/ViewModeToggle";
+import { DisplayModeToggle } from "@/components/controls/DisplayModeToggle";
 import { GridEditor } from "@/components/controls/GridEditor";
 import { StepContextBand } from "@/components/codex/StepContextBand";
+import { DigitsGridView } from "@/components/display/DigitsGridView";
 import { CodexPanel } from "./CodexPanel";
 import { MobileCheatSheet } from "@/components/mobile/MobileCheatSheet";
 
 export function AppShell() {
   const { isMobile } = useResponsiveMode();
+  const displayMode = useVisualizerStore((s) => s.displayMode);
 
   if (isMobile) {
     return (
@@ -31,6 +35,7 @@ export function AppShell() {
           </h1>
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <DisplayModeToggle />
           <ViewModeToggle />
         </div>
       </header>
@@ -48,7 +53,7 @@ export function AppShell() {
 
         <main className="flex min-h-0 flex-col gap-3">
           <div className="min-h-0 flex-1">
-            <VisualizerCanvas />
+            {displayMode === "dots" ? <VisualizerCanvas /> : <DigitsGridView />}
           </div>
           <StepContextBand />
           <ControlDock />

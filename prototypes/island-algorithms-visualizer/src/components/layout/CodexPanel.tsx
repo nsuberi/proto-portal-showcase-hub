@@ -5,6 +5,7 @@ import { ALGORITHMS } from "@/algorithms/registry";
 import { ComplexityTable } from "@/components/codex/ComplexityTable";
 import { DataStructurePanel } from "@/components/codex/DataStructurePanel";
 import { VisitedTrail } from "@/components/codex/VisitedTrail";
+import { CellLifecyclePanel } from "@/components/codex/CellLifecyclePanel";
 import { WhenToUsePanel } from "@/components/codex/WhenToUsePanel";
 import { PseudocodeBlock } from "@/components/codex/PseudocodeBlock";
 import { GotchasPanel } from "@/components/codex/GotchasPanel";
@@ -12,6 +13,7 @@ import { GotchasPanel } from "@/components/codex/GotchasPanel";
 export function CodexPanel() {
   const algorithm = useVisualizerStore((s) => s.algorithm);
   const meta = ALGORITHMS[algorithm].meta;
+  const showVisited = algorithm === "dfs" || algorithm === "bfs";
 
   return (
     <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto rounded-lg border border-border bg-surface/50 p-4">
@@ -27,16 +29,23 @@ export function CodexPanel() {
 
       <Accordion.Root
         type="multiple"
-        defaultValue={["datastructure", "visited", "pseudocode", "when", "gotchas"]}
+        defaultValue={["datastructure", "lifecycle", "visited", "pseudocode", "when", "gotchas"]}
         className="space-y-2"
       >
         <Section id="datastructure" title="Live data structure">
           <DataStructurePanel />
         </Section>
-        <Section id="visited" title="Visited trail">
-          <VisitedTrail />
-        </Section>
-        <Section id="pseudocode" title="Pseudocode (line highlights step)">
+        {showVisited && (
+          <Section id="lifecycle" title="Why cells change color twice">
+            <CellLifecyclePanel />
+          </Section>
+        )}
+        {showVisited && (
+          <Section id="visited" title="Visited trail">
+            <VisitedTrail />
+          </Section>
+        )}
+        <Section id="pseudocode" title="Runnable Python (highlights current line)">
           <PseudocodeBlock />
         </Section>
         <Section id="when" title="When to use">

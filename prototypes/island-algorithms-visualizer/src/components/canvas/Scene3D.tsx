@@ -11,6 +11,8 @@ interface Props {
   scanCursor: number;
 }
 
+const DOT_RADIUS_3D = 0.18;
+
 export function Scene3D({ grid, cells, scanCursor }: Props) {
   const extent = Math.max(grid.width, grid.height, grid.depth);
   return (
@@ -30,14 +32,14 @@ export function Scene3D({ grid, cells, scanCursor }: Props) {
         width={grid.width}
         height={grid.height}
         depth={grid.depth}
-        shape="sphere"
+        radius={DOT_RADIUS_3D}
       />
       <ScanCursor
         cursorIndex={scanCursor}
         width={grid.width}
         height={grid.height}
         depth={grid.depth}
-        shape="sphere"
+        radius={DOT_RADIUS_3D + 0.12}
       />
     </>
   );

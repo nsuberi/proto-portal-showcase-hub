@@ -8,7 +8,8 @@ interface Props {
   height: number;
   depth: number;
   spacing?: number;
-  shape: "cube" | "sphere";
+  /** Radius of the outline ring — typically matches CellInstances radius + a hair. */
+  radius?: number;
 }
 
 export function ScanCursor({
@@ -17,13 +18,9 @@ export function ScanCursor({
   height,
   depth,
   spacing = 1.1,
-  shape,
+  radius = 0.45,
 }: Props) {
-  const geometry = useMemo(() => {
-    if (shape === "sphere") return new THREE.SphereGeometry(0.5, 24, 16);
-    return new THREE.BoxGeometry(1, 1, 0.35);
-  }, [shape]);
-
+  const geometry = useMemo(() => new THREE.SphereGeometry(radius, 24, 16), [radius]);
   const edges = useMemo(() => new THREE.EdgesGeometry(geometry), [geometry]);
 
   if (cursorIndex < 0) return null;

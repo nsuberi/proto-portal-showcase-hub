@@ -18,7 +18,14 @@ const ROLE_HEX: Record<CellRole, number> = {
 };
 
 const ISLAND_HEX = [
-  0x00e5ff, 0xff00cc, 0x00ff88, 0xff6600, 0x8855ff, 0xffdd00, 0xff2255, 0x00aaff,
+  0xff7b2e, // orange
+  0x35cf77, // green
+  0xb56cff, // violet
+  0xff4f7d, // rose
+  0x5a9bff, // periwinkle
+  0xffa726, // amber
+  0x9effe0, // light mint
+  0xe04dff, // orchid
 ];
 
 export function roleColor(role: CellRole): THREE.Color {

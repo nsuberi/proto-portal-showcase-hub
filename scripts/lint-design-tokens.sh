@@ -118,16 +118,29 @@ if [ -n "$TW_MATCHES" ]; then
   echo ""
 fi
 
-# 4. Check that all prototype CSS files import tokens.css or a theme override
+# 4. Check that each prototype has a tokens file — shared baseline OR prototype-local.
+#    Accepted patterns (any one satisfies):
+#      - @proto-portal/design-tokens/css/tokens.css     (opt-in shared baseline)
+#      - design-system/theme.css                         (ffx-skill-map-style local theme)
+#      - any CSS file named tokens.css or theme.css      (prototype-local tokens)
+#      - :root { --... } CSS custom property declarations (prototype defines tokens inline)
 echo "Checking prototype CSS imports..."
 for proto_dir in prototypes/*/; do
   proto_name=$(basename "$proto_dir")
   CSS_FILES=$(find "$proto_dir/src" -name "*.css" -not -path "*/node_modules/*" 2>/dev/null || true)
 
   if [ -n "$CSS_FILES" ]; then
-    HAS_TOKENS_IMPORT=$(grep -rl "design-tokens/css/tokens.css\|design-system/theme.css" $CSS_FILES 2>/dev/null || true)
-    if [ -z "$HAS_TOKENS_IMPORT" ]; then
-      echo -e "  ${RED}$proto_name: No tokens.css or theme.css import found${NC}"
+    # Accept shared or local tokens/theme imports
+    HAS_TOKENS_IMPORT=$(grep -rlE "design-tokens/css/tokens\.css|design-system/theme\.css|tokens\.css|theme\.css" $CSS_FILES 2>/dev/null || true)
+
+    # Also accept a file that defines CSS custom properties directly (:root { --... })
+    HAS_INLINE_TOKENS=$(grep -rlE ":root\s*\{[^}]*--" $CSS_FILES 2>/dev/null || true)
+
+    # Or a file that is itself named tokens.css or theme.css
+    HAS_LOCAL_TOKENS_FILE=$(echo "$CSS_FILES" | grep -E "(tokens|theme)\.css$" || true)
+
+    if [ -z "$HAS_TOKENS_IMPORT" ] && [ -z "$HAS_INLINE_TOKENS" ] && [ -z "$HAS_LOCAL_TOKENS_FILE" ]; then
+      echo -e "  ${RED}$proto_name: No tokens file found. Define tokens.css/theme.css with CSS custom properties, or import @proto-portal/design-tokens/css/tokens.css${NC}"
       VIOLATIONS=$((VIOLATIONS + 1))
     fi
   fi

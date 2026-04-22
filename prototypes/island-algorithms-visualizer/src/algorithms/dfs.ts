@@ -4,6 +4,19 @@ import { neighbors2D, neighbors3D } from "@/lib/neighbors";
 import { cloneStepState, initialStepState, ROLE_CODES } from "@/lib/step-state";
 import type { AlgorithmStep, AuxView } from "./types";
 
+/**
+ * Line numbers in src/data/pseudocode.ts → dfs.
+ * Bump these when the Python text is edited.
+ */
+const LINE = {
+  outerLoop: 4, // for y in range(len(grid)):
+  scanSkip: 7, //     continue  (water OR already-visited)
+  newComponent: 8, // count += 1
+  push: 17, // stack.append((nx, ny))
+  pop: 19, // stack.pop()
+  done: 20, // return count
+} as const;
+
 function idxOf(grid: Grid, x: number, y: number, z: number): number {
   if (grid.mode === "2d") return indexOf2D(grid as Grid2D, x, y);
   return indexOf3D(grid as Grid3D, x, y, z);
@@ -36,7 +49,7 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
   yield {
     reason: "Initialize: sweep every cell. Whenever we hit unvisited land, launch a DFS from it.",
-    sourceLine: 2,
+    sourceLine: LINE.outerLoop,
     state: cloneStepState(state),
     aux: { kind: "stack", items: [] },
     visited: [...visited],
@@ -51,13 +64,12 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
         // algorithm's O(1) check — so the cursor never retreads a component.
         if (state.islands[start] !== 255) continue;
 
-        // Scan step — visible outer-loop cursor
         state = cloneStepState(state);
         state.scanCursor = start;
         if (!grid.cells[start]) {
           yield {
             reason: `Scan ${coordLabel(grid, x, y, z)} — water, skip.`,
-            sourceLine: 3,
+            sourceLine: LINE.scanSkip,
             state: cloneStepState(state),
             aux: { kind: "stack", items: [] },
             visited: [...visited],
@@ -77,7 +89,7 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
         yield {
           reason: `Scan ${coordLabel(grid, x, y, z)} — new island #${islandCount}! Push onto the stack.`,
-          sourceLine: 5,
+          sourceLine: LINE.newComponent,
           state: cloneStepState(state),
           aux: stackAux(stack, grid),
           visited: [...visited],
@@ -103,7 +115,7 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
 
             yield {
               reason: `Push neighbor ${coordLabel(grid, nx, ny, nz)} — DFS dives deeper.`,
-              sourceLine: 10,
+              sourceLine: LINE.push,
               state: cloneStepState(state),
               aux: stackAux(stack, grid),
               visited: [...visited],
@@ -124,7 +136,7 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
             });
             yield {
               reason: `No more neighbors — pop ${coordLabel(grid, top.x, top.y, top.z)} and backtrack.`,
-              sourceLine: 13,
+              sourceLine: LINE.pop,
               state: cloneStepState(state),
               aux: stackAux(stack, grid),
               visited: [...visited],
@@ -140,7 +152,7 @@ export function* dfsSteps(grid: Grid): Generator<AlgorithmStep> {
   state.scanCursor = -1;
   yield {
     reason: `Scan complete — ${islandCount} connected component${islandCount === 1 ? "" : "s"} discovered.`,
-    sourceLine: 16,
+    sourceLine: LINE.done,
     state: cloneStepState(state),
     aux: { kind: "stack", items: [] },
     visited: [...visited],

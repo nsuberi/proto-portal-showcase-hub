@@ -6,8 +6,11 @@ import { PRESETS_2D } from "@/data/grid-presets-2d";
 import { PRESETS_3D } from "@/data/grid-presets-3d";
 import { toggleCell2D, toggleCell3D } from "@/lib/grid";
 
+export type DisplayMode = "dots" | "digits";
+
 interface StoreState {
   viewMode: ViewMode;
+  displayMode: DisplayMode;
   algorithm: AlgorithmId;
   preset2DId: string;
   preset3DId: string;
@@ -18,6 +21,7 @@ interface StoreState {
   fps: number;
 
   setViewMode: (mode: ViewMode) => void;
+  setDisplayMode: (mode: DisplayMode) => void;
   setAlgorithm: (id: AlgorithmId) => void;
   loadPreset: (id: string) => void;
   toggleCell: (x: number, y: number, z?: number) => void;
@@ -42,6 +46,7 @@ const initialSteps = runAlgorithm("dfs", initial2D.grid);
 
 export const useVisualizerStore = create<StoreState>((set, get) => ({
   viewMode: "2d",
+  displayMode: "dots",
   algorithm: "dfs",
   preset2DId: initial2D.id,
   preset3DId: PRESETS_3D[0].id,
@@ -66,6 +71,8 @@ export const useVisualizerStore = create<StoreState>((set, get) => ({
       isPlaying: false,
     });
   },
+
+  setDisplayMode: (mode) => set({ displayMode: mode }),
 
   setAlgorithm: (id) => {
     const { grid } = get();
