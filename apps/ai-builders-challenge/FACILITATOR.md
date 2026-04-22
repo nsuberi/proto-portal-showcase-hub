@@ -11,7 +11,7 @@ For workshop leads and reviewers. Participants should not read this file before 
 | 1:30–2:15 | Hypothesis + failing test | `pytest tests/test_property_retrieval.py` fails with the expected mismatch assertion |
 | 2:15–3:00 | Fix + test passes | `pytest` green; `CODE_HASH` changes between pre- and post-fix runs |
 | 3:00–3:30 | Deploy + re-pull logs | `docker compose up --build` runs; `/logs` shows scope-correct retrievals |
-| 3:30–4:00 | Storytelling | One-page handoff doc or 5-slide deck: evidence → hypothesis → fix → validation |
+| 3:30–4:00 | Storytelling + video | One-page handoff doc **and** a 5–8 min walkthrough video presenting the one-pager alongside a live prototype demo (chat round-trip + Logs view showing corrected `retrieved_ids`) |
 
 ## The embedded bug
 
@@ -29,6 +29,7 @@ plus replacing `kb` with `candidates` in the scorer list comprehension.
 - Their failing test asserts on a **log field** (like `retrieved_ids`), not just on response text, because response text depends on the LLM's mood.
 - They notice that `CODE_HASH` moves when they change code — and use it in their story as a deployment-traceability artifact.
 - They name at least one harness improvement beyond the one-line fix (confidence threshold, typed error when KB empty, prompt guardrail forbidding conflation).
+- Their video actually **shows** the prototype — a live `/chat` round-trip and the Logs view before vs. after the fix — not just a slide-deck read-aloud.
 
 ## Common stumbles
 
