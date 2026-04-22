@@ -1,0 +1,7 @@
+{"session_id":"sess_004","property_id":"prop_104","turn":1,"role":"user","text":"I want to understand my comps. Can you tell me about them?"}
+{"session_id":"sess_004","property_id":"prop_104","turn":2,"role":"agent","text":"Your comparable sales at 2418 SE Hawthorne Blvd include 2390 SE Hawthorne at $478,000 and two others."}
+{"session_id":"sess_004","property_id":"prop_104","turn":3,"role":"user","text":"Hawthorne? My home is on N Williams Ave. Are you looking at the wrong record?"}
+{"session_id":"sess_004","property_id":"prop_104","turn":4,"role":"agent","text":"Let me pull that again. The comps for your property on N Williams are at 2390 SE Hawthorne and two others."}
+{"session_id":"sess_004","property_id":"prop_104","turn":5,"role":"user","text":"That can't be right, those aren't anywhere near my neighborhood."}
+{"session_id":"sess_004","property_id":"prop_104","turn":6,"role":"user","text":"I'm getting frustrated. Can you look up property prop_104?"}
+{"session_id":"sess_004","property_id":"prop_104","turn":7,"role":"agent","text":"I apologize for the repeated error."}

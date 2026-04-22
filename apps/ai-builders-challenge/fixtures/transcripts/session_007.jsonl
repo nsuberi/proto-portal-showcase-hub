@@ -1,0 +1,10 @@
+{"session_id":"sess_007","property_id":"prop_091","turn":1,"role":"user","text":"What's the appraised value?"}
+{"session_id":"sess_007","property_id":"prop_091","turn":2,"role":"agent","text":"The appraised value is $485,000."}
+{"session_id":"sess_007","property_id":"prop_091","turn":3,"role":"user","text":"Hmm, okay."}
+{"session_id":"sess_007","property_id":"prop_091","turn":4,"role":"user","text":"Can you also tell me the appraised value?"}
+{"session_id":"sess_007","property_id":"prop_091","turn":5,"role":"agent","text":"The appraised value is $485,000."}
+{"session_id":"sess_007","property_id":"prop_091","turn":6,"role":"user","text":"And how many bedrooms?"}
+{"session_id":"sess_007","property_id":"prop_091","turn":7,"role":"agent","text":"Three bedrooms, two bathrooms."}
+{"session_id":"sess_007","property_id":"prop_091","turn":8,"role":"user","text":"I thought my home was four bedrooms. Let me check again."}
+{"session_id":"sess_007","property_id":"prop_091","turn":9,"role":"user","text":"How many bedrooms does my home have?"}
+{"session_id":"sess_007","property_id":"prop_091","turn":10,"role":"agent","text":"Three bedrooms, two bathrooms."}

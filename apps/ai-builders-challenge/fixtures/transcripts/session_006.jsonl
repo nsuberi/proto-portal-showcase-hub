@@ -1,0 +1,7 @@
+{"session_id":"sess_006","property_id":"prop_078","turn":1,"role":"user","text":"When was my home built?"}
+{"session_id":"sess_006","property_id":"prop_078","turn":2,"role":"agent","text":"Your home at 2418 SE Hawthorne was built in 2012."}
+{"session_id":"sess_006","property_id":"prop_078","turn":3,"role":"user","text":"Hmm, I thought mine was older. Let me double check with my paperwork."}
+{"session_id":"sess_006","property_id":"prop_078","turn":4,"role":"user","text":"Actually my address is on NE 33rd Ave, not Hawthorne. Can you try again?"}
+{"session_id":"sess_006","property_id":"prop_078","turn":5,"role":"agent","text":"Sorry about that. Your home at 4433 NE 33rd Ave was built in 2012."}
+{"session_id":"sess_006","property_id":"prop_078","turn":6,"role":"user","text":"Still 2012? That doesn't match what I saw on Zillow."}
+{"session_id":"sess_006","property_id":"prop_078","turn":7,"role":"user","text":"I'll look at the paper appraisal instead."}
