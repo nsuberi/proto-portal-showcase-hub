@@ -4,9 +4,9 @@ Flow: request_received -> retrieval -> llm_call -> response_sent.
 Each step emits a structured log event so the Log Analyst skill can
 reason about what happened.
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from . import logger
@@ -22,10 +22,9 @@ def _read(name: str) -> str:
 
 def respond(session_id: str, property_id: str, message: str) -> dict:
     span_id = logger.new_span_id()
+    logger.bind_context(session_id=session_id, span_id=span_id)
     logger.info(
         "request_received",
-        session_id=session_id,
-        span_id=span_id,
         property_id=property_id,
         message_chars=len(message),
     )
@@ -46,11 +45,10 @@ def respond(session_id: str, property_id: str, message: str) -> dict:
 
     logger.info(
         "response_sent",
-        session_id=session_id,
-        span_id=span_id,
         property_id=property_id,
         answer_chars=len(answer),
     )
+    logger.clear_context()
     return {
         "session_id": session_id,
         "span_id": span_id,

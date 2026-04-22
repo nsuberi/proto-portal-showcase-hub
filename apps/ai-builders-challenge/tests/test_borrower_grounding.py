@@ -5,6 +5,7 @@ Uses deepeval's FaithfulnessMetric when available and an API key is set,
 otherwise falls back to a lightweight keyword-overlap check so the test
 file is still runnable offline.
 """
+
 from __future__ import annotations
 
 import os
@@ -17,6 +18,7 @@ def _faithfulness_available() -> bool:
         return False
     try:
         import deepeval  # noqa: F401
+
         return True
     except Exception:
         return False
@@ -41,14 +43,11 @@ def test_answer_references_only_requested_property(
     # answer. (Addresses are distinctive; this is a crude but honest
     # proxy that doesn't need the LLM to be live.)
     other_addresses = [
-        p["address"].lower()
-        for p in properties
-        if p["property_id"] != property_id
+        p["address"].lower() for p in properties if p["property_id"] != property_id
     ]
     leaked = [a for a in other_addresses if a.split(",")[0] in answer]
     assert not leaked, (
-        f"answer for {property_id} referenced another property's "
-        f"address: {leaked}"
+        f"answer for {property_id} referenced another property's " f"address: {leaked}"
     )
 
 
@@ -59,6 +58,7 @@ def test_answer_references_only_requested_property(
 def test_faithfulness_with_deepeval(chat, properties):
     from deepeval import evaluate
     from deepeval.metrics import FaithfulnessMetric
+    from deepeval.models import AnthropicModel
     from deepeval.test_case import LLMTestCase
 
     target = next(p for p in properties if p["property_id"] == "prop_042")
@@ -72,5 +72,9 @@ def test_faithfulness_with_deepeval(chat, properties):
         actual_output=result["answer"],
         retrieval_context=[target["text"]],
     )
-    metric = FaithfulnessMetric(threshold=0.7)
+    judge = AnthropicModel(
+        model="claude-sonnet-4-6",
+        api_key=os.environ["ANTHROPIC_API_KEY"],
+    )
+    metric = FaithfulnessMetric(threshold=0.7, model=judge)
     evaluate([case], [metric])

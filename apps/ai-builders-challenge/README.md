@@ -22,6 +22,19 @@ cp .env.example .env   # fill in ANTHROPIC_API_KEY if you have one
 ./scripts/run_local.sh
 ```
 
+Then open http://localhost:5100 — there is a troubleshooter UI with a chat,
+live log stream, property browser, transcript reader, and behavioral signals
+dashboard. The UI ships pre-built in `app/static/`. To rebuild it:
+
+```bash
+cd web && yarn install && yarn build     # or npm install && npm run build
+```
+
+For UI development with hot reload, run Flask on `:5100` and in another shell:
+```bash
+cd web && yarn dev                       # serves on :5173, proxies API to :5100
+```
+
 In another shell:
 ```bash
 pytest tests/ -v

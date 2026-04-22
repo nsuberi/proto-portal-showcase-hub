@@ -5,3 +5,10 @@ __pycache__/
 .mypy_cache/
 .env
 *.tar.gz
+
+# DeepEval local cache/telemetry
+.deepeval/
+
+# Web build incremental state and deps
+web/node_modules/
+web/tsconfig.tsbuildinfo

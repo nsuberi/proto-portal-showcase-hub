@@ -135,7 +135,8 @@
     "shared/mcp-cli",
     "shared/mcp-servers/design-tokens",
     "shared/ui-components",
-    "apps/ai-builders-portal"
+    "apps/ai-builders-portal",
+    "apps/ai-builders-challenge/web"
   ],
   "packageManager": "yarn@4.9.2"
 }
