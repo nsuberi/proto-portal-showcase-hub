@@ -1,11 +1,75 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
 import thisIsMe from "@/assets/this-is-me.jpg";
+import {
+  type Prototype,
+  type Theme,
+} from "./PortfolioPrototypeCard";
+import { PortfolioThemeRail, type ThemeRailItem } from "./PortfolioThemeRail";
+import { PortfolioThemeSection } from "./PortfolioThemeSection";
+
+interface ThemeMeta {
+  id: Theme;
+  railLabel: string;
+  title: string;
+  blurb: string;
+}
+
+const THEMES: ReadonlyArray<ThemeMeta> = [
+  {
+    id: "coding-data-structures",
+    railLabel: "Coding & Data Structures",
+    title: "Coding & Data Structures Fundamentals",
+    blurb:
+      "Building intuition for the algorithms and data structures that power software — visual, scrubbable, and studyable.",
+  },
+  {
+    id: "organizing-community-transformation",
+    railLabel: "Organizing Community Transformation",
+    title: "Organizing Community Transformation",
+    blurb:
+      "Tools for moving teams together through new capabilities, shared goals, and collective learning.",
+  },
+  {
+    id: "enterprise-ai",
+    railLabel: "Enterprise AI",
+    title: "Enterprise AI",
+    blurb:
+      "Governance, evaluation, and strategy patterns for shipping AI inside larger organizations.",
+  },
+  {
+    id: "enabling-ai-agents",
+    railLabel: "Enabling AI Agents",
+    title: "Enabling AI Agents",
+    blurb:
+      "Infrastructure, benchmarks, and simulations that make AI agents more effective collaborators on real work.",
+  },
+  {
+    id: "domain-expertise-onboarding",
+    railLabel: "Domain Expertise & Onboarding",
+    title: "Domain Expertise & Onboarding",
+    blurb:
+      "Making complex professional domains learnable for newcomers stepping into the field.",
+  },
+  {
+    id: "ai-augmented-knowledge-work",
+    railLabel: "AI-Augmented Knowledge Work",
+    title: "AI-Augmented Knowledge Work",
+    blurb:
+      "Platforms where AI extends what one person can research, synthesize, and publish.",
+  },
+  {
+    id: "interactive-learning-patterns",
+    railLabel: "Interactive Learning Patterns",
+    title: "Interactive Learning Patterns",
+    blurb:
+      "Reusable interaction patterns for guided exploration, progress, and discovery across any domain.",
+  },
+];
 
 const Portfolio = () => {
-  const implementedPrototypes = [
+  const implementedPrototypes: ReadonlyArray<Prototype> = [
     {
       title: "AI Builders Portal: Community of Practice",
       description:
@@ -13,6 +77,7 @@ const Portfolio = () => {
       link: "/prototypes/ai-builders/",
       tags: ["Community of Practice", "AI Builder", "Professional Development", "Challenges"],
       status: "Live Demo Available",
+      theme: "organizing-community-transformation",
     },
     {
       title: "AI Testing Resource: Governance-First Development",
@@ -21,6 +86,7 @@ const Portfolio = () => {
       link: "/prototypes/ai-evals/",
       tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
       status: "Live Demo Available",
+      theme: "enterprise-ai",
     },
     {
       title: "Research Workspace: AI-Powered Knowledge Platform",
@@ -29,6 +95,7 @@ const Portfolio = () => {
       link: "/prototypes/research-workspace/",
       tags: ["Research Platform", "Claude Code", "Knowledge Management", "Automated Research"],
       status: "Live Demo Available",
+      theme: "ai-augmented-knowledge-work",
     },
     {
       title: "Your Learning Adventure Map",
@@ -37,6 +104,7 @@ const Portfolio = () => {
       link: "/prototypes/ffx-skill-map/",
       tags: ["Skill Mapping", "Graph Database", "Learning Pathways"],
       status: "Live Demo Available",
+      theme: "organizing-community-transformation",
     },
     {
       title: "Learning Path: Recipes Explorer",
@@ -45,6 +113,7 @@ const Portfolio = () => {
       link: "/prototypes/learning-path/",
       tags: ["Data Viz", "Interaction", "Synchronization"],
       status: "Live Demo Available",
+      theme: "interactive-learning-patterns",
     },
     {
       title: "Home Lending Learning Platform",
@@ -53,6 +122,7 @@ const Portfolio = () => {
       link: "/prototypes/home-lending-learning/",
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
       status: "Live Demo Available",
+      theme: "domain-expertise-onboarding",
     },
     {
       title: "AI Integration Strategy Visualizer",
@@ -61,6 +131,7 @@ const Portfolio = () => {
       link: "/prototypes/ai-integration-visualizer/",
       tags: ["AI Strategy", "Data Pipeline", "Visualization", "Organization Design"],
       status: "Live Demo Available",
+      theme: "enterprise-ai",
     },
     {
       title: "Island Algorithms Visualizer",
@@ -69,10 +140,11 @@ const Portfolio = () => {
       link: "/prototypes/island-algorithms-visualizer/",
       tags: ["Algorithms", "WebGL", "DFS/BFS", "Dijkstra", "Dynamic Programming"],
       status: "Live Demo Available",
+      theme: "coding-data-structures",
     },
   ];
 
-  const prototypeIdeas = [
+  const prototypeIdeas: ReadonlyArray<Prototype> = [
     {
       title: "Onboarding Advisor Council",
       description:
@@ -80,6 +152,7 @@ const Portfolio = () => {
       link: "#prototype1",
       tags: ["Multi-agent", "Memory", "Onboarding"],
       status: "Concept",
+      theme: "domain-expertise-onboarding",
     },
     {
       title: "Fog of Work: Priority Discovery Game",
@@ -88,6 +161,7 @@ const Portfolio = () => {
       link: "#prototype2",
       tags: ["Visualization", "Organizational Learning", "AI Assessment"],
       status: "Concept",
+      theme: "organizing-community-transformation",
     },
     {
       title: "Mind Palace: Gesture-Driven Knowledge Explorer",
@@ -96,6 +170,7 @@ const Portfolio = () => {
       link: "#prototype3",
       tags: ["Spatial UI", "Knowledge Management", "Gesture Control", "Voice Interface"],
       status: "Concept",
+      theme: "ai-augmented-knowledge-work",
     },
     {
       title: "Guitar Spiral + Music Learning",
@@ -104,6 +179,7 @@ const Portfolio = () => {
       link: "#prototype4",
       tags: ["Music", "Visualization", "Learning"],
       status: "Concept",
+      theme: "interactive-learning-patterns",
     },
     {
       title: "Conversing Forest / Living Museum",
@@ -112,6 +188,7 @@ const Portfolio = () => {
       link: "#prototype5",
       tags: ["Embodied AI", "Museum", "Interaction"],
       status: "Concept",
+      theme: "interactive-learning-patterns",
     },
     {
       title: "Story Tags: QR Characters in the Wild",
@@ -120,6 +197,7 @@ const Portfolio = () => {
       link: "#prototype6",
       tags: ["Location-based", "Storytelling", "Tourism"],
       status: "Concept",
+      theme: "interactive-learning-patterns",
     },
     {
       title: "AI Development Team Simulation",
@@ -128,6 +206,7 @@ const Portfolio = () => {
       link: "#prototype7",
       tags: ["Dev Team", "Automation", "Collaboration"],
       status: "Concept",
+      theme: "enabling-ai-agents",
     },
     {
       title: "IAM Governance: Path to Production",
@@ -136,6 +215,7 @@ const Portfolio = () => {
       link: "#prototype8",
       tags: ["Infrastructure", "Security", "Automation"],
       status: "Concept",
+      theme: "enterprise-ai",
     },
     {
       title: "InfraOracle: Cost-Aware Architecture",
@@ -144,8 +224,19 @@ const Portfolio = () => {
       link: "#prototype9",
       tags: ["Cloud", "Cost Optimization", "AI Analysis"],
       status: "Concept",
+      theme: "enabling-ai-agents",
     },
   ];
+
+  const allPrototypes: ReadonlyArray<Prototype> = [
+    ...implementedPrototypes,
+    ...prototypeIdeas,
+  ];
+
+  const railItems: ReadonlyArray<ThemeRailItem> = THEMES.map((t) => ({
+    id: t.id,
+    label: t.railLabel,
+  }));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -189,103 +280,33 @@ const Portfolio = () => {
         </div>
       </section>
 
-      {/* Implemented Prototypes Section */}
+      {/* Themed Prototypes Section */}
       <section id="prototypes-section" className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12 lg:mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Live Prototypes
+              Explore by Theme
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Interactive learning experiences ready to explore
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Like a thesaurus organizes words by meaning rather than spelling,
+              these prototypes are grouped by the questions they explore — not
+              the order I built them.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-            {implementedPrototypes.map((prototype, index) => (
-              <Card
-                key={index}
-                className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-primary/30 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent" />
-                <CardContent className="p-6 relative">
-                  <h3 className="text-xl font-semibold group-hover:text-primary transition-smooth mb-3">
-                    {prototype.title}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    {prototype.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {prototype.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <a
-                    href={prototype.link}
-                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gradient-primary text-primary-foreground hover:shadow-glow h-9 rounded-md px-3 w-full transition-smooth"
-                  >
-                    Try Live Demo
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Prototype Ideas Section */}
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Prototype Ideas
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Concepts and ideas exploring the future of human-AI collaboration
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {prototypeIdeas.map((prototype, index) => (
-              <Card
-                key={index}
-                className="group hover:shadow-elegant transition-smooth border-border/50 hover:border-muted-foreground/20 opacity-80"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-semibold group-hover:text-primary transition-smooth">
-                      {prototype.title}
-                    </h3>
-                    <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded-full font-medium">
-                      {prototype.status}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    {prototype.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {prototype.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-2 py-1 text-xs bg-muted/50 text-muted-foreground rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full transition-smooth"
-                    disabled
-                  >
-                    Coming Soon
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
+            <PortfolioThemeRail items={railItems} />
+            <div className="mt-8 lg:mt-0">
+              {THEMES.map((t) => (
+                <PortfolioThemeSection
+                  key={t.id}
+                  id={t.id}
+                  title={t.title}
+                  blurb={t.blurb}
+                  prototypes={allPrototypes.filter((p) => p.theme === t.id)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
