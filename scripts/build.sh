@@ -99,6 +99,15 @@ echo "📋 Copying AI Integration Visualizer build to main dist..."
 mkdir -p dist/prototypes/ai-integration-visualizer
 cp -r prototypes/ai-integration-visualizer/dist/* dist/prototypes/ai-integration-visualizer/
 
+# Build Island Algorithms Visualizer
+echo "🏝️ Building Island Algorithms Visualizer..."
+yarn workspace @proto-portal/island-algorithms-visualizer build
+
+# Copy Island Algorithms Visualizer build to main dist directory
+echo "📋 Copying Island Algorithms Visualizer build to main dist..."
+mkdir -p dist/prototypes/island-algorithms-visualizer
+cp -r prototypes/island-algorithms-visualizer/dist/* dist/prototypes/island-algorithms-visualizer/
+
 # Verify copy integrity for large bundles
 echo "🔍 Verifying bundle copy integrity..."
 INTEGRITY_OK=true
