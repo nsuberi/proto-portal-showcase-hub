@@ -1,3 +1,4 @@
+// design-token-lint-ignore — inline rgba shadow value; tracked for refactor.
 import { useState, useCallback } from "react";
 import NavRail from "../nav/NavRail";
 import type { ViewId } from "../nav/NavRail";

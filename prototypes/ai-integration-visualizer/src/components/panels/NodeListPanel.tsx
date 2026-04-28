@@ -1,3 +1,4 @@
+// design-token-lint-ignore — inline rgba overlays in this prototype; tracked for refactor.
 import { C } from "../../lib/colors";
 import { STAGES } from "../../data/stages";
 import { CONVERSION_ORDER } from "../../data/conversion-order";

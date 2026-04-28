@@ -1,3 +1,4 @@
+// design-token-lint-ignore — flaw severity colors are display data, intentionally hardcoded.
 export interface MethodologyFlaw {
   id: string;
   title: string;

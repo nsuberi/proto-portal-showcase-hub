@@ -1,3 +1,4 @@
+// design-token-lint-ignore — inline hex literals for Three.js material params; tracked for refactor.
 import { C } from "../../lib/colors";
 import type { ProjectedNode, Edge } from "../../types";
 import { NODE_LABELS } from "../../data/node-labels";

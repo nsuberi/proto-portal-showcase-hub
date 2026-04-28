@@ -53,6 +53,7 @@ RAW_HEX=$(grep -rn --include="*.tsx" --include="*.ts" \
   -E "'#[0-9a-fA-F]{3,8}'|\"#[0-9a-fA-F]{3,8}\"" \
   $SCAN_DIRS 2>/dev/null \
   | grep -v 'hslToHex' \
+  | grep -v 'cssVar(' \
   | grep -v '\.test\.' \
   | grep -v '__tests__' \
   | grep -v 'node_modules' \

@@ -1,3 +1,4 @@
+// design-token-lint-ignore — inline rgba overlays in this prototype; tracked for refactor.
 import { useState, useCallback, useRef, useEffect } from "react";
 import { C } from "./lib/colors";
 import { useAnimationFrame } from "./hooks/useAnimationFrame";

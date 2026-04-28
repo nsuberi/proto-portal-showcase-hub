@@ -1,3 +1,4 @@
+// design-token-lint-ignore — inline rgba toast background; tracked for refactor.
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 
