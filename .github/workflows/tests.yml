@@ -125,8 +125,11 @@ jobs:
         working-directory: apps/ai-builders-challenge
         run: pip install -r tests/requirements.txt
 
-      # ANTHROPIC_API_KEY intentionally not provided — tests that require it
-      # use pytest.skip; deterministic unit tests still run.
-      - name: ai-builders-challenge — pytest
+      # The ai-builders-challenge ships with intentionally failing tests
+      # (test_property_retrieval, test_borrower_grounding) — finding and
+      # fixing the bug IS the participant exercise. Only the log-schema
+      # contract test is appropriate as a CI gate; it validates the JSONL
+      # shape that the Log Analyst skill and downstream tooling depend on.
+      - name: ai-builders-challenge — log schema contract
         working-directory: apps/ai-builders-challenge
-        run: pytest tests/ -v
+        run: pytest tests/test_logging_schema.py -v
