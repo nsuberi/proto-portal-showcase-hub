@@ -62,7 +62,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "LambdaPermissions"
+        Sid    = "LambdaPermissions"
         Effect = "Allow"
         Action = [
           "lambda:CreateFunction",
@@ -84,7 +84,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
       },
       {
-        Sid = "APIGatewayPermissions"
+        Sid    = "APIGatewayPermissions"
         Effect = "Allow"
         Action = [
           "apigateway:POST",
@@ -129,7 +129,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "LambdaInvokePermissions"
+        Sid    = "LambdaInvokePermissions"
         Effect = "Allow"
         Action = [
           "lambda:AddPermission",
@@ -139,7 +139,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
       },
       {
-        Sid = "SSMParameterStorePermissions"
+        Sid    = "SSMParameterStorePermissions"
         Effect = "Allow"
         Action = [
           "ssm:PutParameter",
@@ -158,7 +158,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         ]
       },
       {
-        Sid = "RDSPermissions"
+        Sid    = "RDSPermissions"
         Effect = "Allow"
         Action = [
           "rds:DescribeDBSubnetGroups",
@@ -177,7 +177,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ServiceDiscoveryPermissions"
+        Sid    = "ServiceDiscoveryPermissions"
         Effect = "Allow"
         Action = [
           "servicediscovery:CreatePrivateDnsNamespace",
@@ -197,7 +197,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ECSPermissions"
+        Sid    = "ECSPermissions"
         Effect = "Allow"
         Action = [
           "ecs:CreateCluster",
@@ -221,7 +221,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ECRPermissions"
+        Sid    = "ECRPermissions"
         Effect = "Allow"
         Action = [
           "ecr:CreateRepository",
@@ -242,7 +242,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:ecr:*:${data.aws_caller_identity.current.account_id}:repository/*"
       },
       {
-        Sid = "ELBPermissions"
+        Sid    = "ELBPermissions"
         Effect = "Allow"
         Action = [
           "elasticloadbalancing:CreateLoadBalancer",
@@ -269,7 +269,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "VPCAndNetworkingPermissions"
+        Sid    = "VPCAndNetworkingPermissions"
         Effect = "Allow"
         Action = [
           "ec2:CreateVpc",
@@ -309,7 +309,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "SecretsManagerPermissions"
+        Sid    = "SecretsManagerPermissions"
         Effect = "Allow"
         Action = [
           "secretsmanager:CreateSecret",
@@ -325,7 +325,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:*"
       },
       {
-        Sid = "APIGatewayV2Permissions"
+        Sid    = "APIGatewayV2Permissions"
         Effect = "Allow"
         Action = [
           "apigateway:POST",
@@ -353,7 +353,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "CognitoPermissions"
+        Sid    = "CognitoPermissions"
         Effect = "Allow"
         Action = [
           "cognito-idp:CreateUserPool",
@@ -382,7 +382,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "EFSPermissions"
+        Sid    = "EFSPermissions"
         Effect = "Allow"
         Action = [
           "elasticfilesystem:CreateFileSystem",
@@ -404,7 +404,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "DynamoDBPermissions"
+        Sid    = "DynamoDBPermissions"
         Effect = "Allow"
         Action = [
           "dynamodb:CreateTable",
@@ -422,7 +422,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ELBListenerRulePermissions"
+        Sid    = "ELBListenerRulePermissions"
         Effect = "Allow"
         Action = [
           "elasticloadbalancing:CreateRule",
@@ -433,7 +433,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "SNSPermissions"
+        Sid    = "SNSPermissions"
         Effect = "Allow"
         Action = [
           "sns:CreateTopic",
@@ -451,7 +451,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "CloudWatchAlarmsPermissions"
+        Sid    = "CloudWatchAlarmsPermissions"
         Effect = "Allow"
         Action = [
           "cloudwatch:PutMetricAlarm",
@@ -464,7 +464,7 @@ resource "aws_iam_policy" "research_workspace_permissions" {
         Resource = "*"
       },
       {
-        Sid = "BudgetsPermissions"
+        Sid    = "BudgetsPermissions"
         Effect = "Allow"
         Action = [
           "budgets:CreateBudget",
@@ -485,4 +485,54 @@ resource "aws_iam_policy" "research_workspace_permissions" {
 resource "aws_iam_role_policy_attachment" "research_workspace_permissions" {
   role       = aws_iam_role.terraform_role.name
   policy_arn = aws_iam_policy.research_workspace_permissions.arn
+}
+# ----------------------------------------------------------------------------
+# GitHub Actions: Anthropic key reader (PR/issue context, not just main)
+# ----------------------------------------------------------------------------
+# Smaller-scope role for the Claude Code Review and @claude action workflows,
+# which need to fetch the Anthropic API key but run on PR/issue events that
+# don't carry the `environment:production` OIDC subject claim.
+
+resource "aws_iam_role" "github_actions_anthropic_reader" {
+  name = "github-actions-anthropic-reader"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowGitHubOIDCAnyContext"
+        Effect = "Allow"
+        Principal = {
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+          StringLike = {
+            # Any workflow in this repo. The IAM policy below is the only thing
+            # this role can do, so a wider trust subject is acceptable.
+            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/proto-portal-showcase-hub:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github_actions_anthropic_reader" {
+  name = "read-anthropic-key-only"
+  role = aws_iam_role.github_actions_anthropic_reader.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = "arn:aws:secretsmanager:us-east-1:${data.aws_caller_identity.current.account_id}:secret:portfolio-prod/anthropic-api-key*"
+      }
+    ]
+  })
 }

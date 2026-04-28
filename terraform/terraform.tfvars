@@ -2,5 +2,6 @@ bucket_name = "portfolio-portal-code"
 aws_region  = "us-east-1"
 environment = "production"
 
-# AI Evals Anthropic key is passed via TF_VAR_ai_evals_anthropic_api_key in CI
-# or -var flag locally. Do not commit the actual key here.
+# All sensitive values (Anthropic key, OIDC keypair, GitHub OAuth credentials)
+# are read from AWS Secrets Manager via terraform data sources. Bootstrap with
+# z_creds/bootstrap.sh. No secret values are passed via TF_VAR_*.

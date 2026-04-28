@@ -2,7 +2,7 @@
 # Co-hosted on ai-evals cluster, Cognito-authenticated at ALB
 
 locals {
-  application_root  = "/prototypes/research-workspace/vault"
+  application_root = "/prototypes/research-workspace/vault"
   # Express backend serves /healthz
   health_check_path = "/healthz"
   cluster_name      = split("/", var.ecs_cluster_arn)[1]
@@ -176,26 +176,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
-  name = "${var.name_prefix}-secrets-access"
-  role = aws_iam_role.ecs_task_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = [
-          aws_secretsmanager_secret.anthropic_api_key.arn
-        ]
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role" "ecs_task" {
   name = "${var.name_prefix}-ecs-task"
 
@@ -303,19 +283,6 @@ resource "aws_iam_role_policy" "ecs_task_deny_cost_generating" {
       }
     ]
   })
-}
-
-# --- Secrets Manager for Anthropic API Key ---
-
-resource "aws_secretsmanager_secret" "anthropic_api_key" {
-  name                    = "${var.name_prefix}/anthropic-api-key"
-  recovery_window_in_days = 0
-}
-
-resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
-  count         = var.anthropic_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.anthropic_api_key.id
-  secret_string = var.anthropic_api_key
 }
 
 # --- Sandbox Security Group (restrictive egress) ---
@@ -455,12 +422,9 @@ resource "aws_ecs_task_definition" "main" {
         }
       ]
 
-      secrets = var.anthropic_api_key != "" ? [
-        {
-          name      = "ANTHROPIC_API_KEY"
-          valueFrom = aws_secretsmanager_secret.anthropic_api_key.arn
-        }
-      ] : []
+      # No server-side ANTHROPIC_API_KEY: apps/research-workspace/src/server.js
+      # explicitly deletes ANTHROPIC_API_KEY from the spawned-process env so
+      # Claude Code uses per-user OAuth instead.
 
       logConfiguration = {
         logDriver = "awslogs"

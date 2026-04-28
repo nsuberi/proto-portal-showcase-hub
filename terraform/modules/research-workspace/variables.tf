@@ -83,13 +83,6 @@ variable "container_memory" {
   default     = 2048
 }
 
-variable "anthropic_api_key" {
-  description = "Anthropic API key for Claude Code chat integration"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 # Security & monitoring
 variable "alert_email" {
   description = "Email for CloudWatch alarm and budget notifications"

@@ -5,7 +5,7 @@ data "aws_route53_zone" "main" {
 
 # ACM Certificate for portfolio.cookinupideas.com
 resource "aws_acm_certificate" "portfolio" {
-  domain_name       = "portfolio.cookinupideas.com"
+  domain_name = "portfolio.cookinupideas.com"
   subject_alternative_names = [
     "learningpath.cookinupideas.com"
   ]

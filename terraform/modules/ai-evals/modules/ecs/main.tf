@@ -2,9 +2,9 @@
 
 # ECR Repository
 resource "aws_ecr_repository" "main" {
-  name                 = "${var.name_prefix}"
+  name                 = var.name_prefix
   image_tag_mutability = "MUTABLE"
-  force_delete         = true  # For dev - allows deletion even with images
+  force_delete         = true # For dev - allows deletion even with images
 
   image_scanning_configuration {
     scan_on_push = true
@@ -53,7 +53,7 @@ resource "aws_ecs_cluster" "main" {
 
   setting {
     name  = "containerInsights"
-    value = "disabled"  # Disable for cost savings
+    value = "disabled" # Disable for cost savings
   }
 
   tags = {
@@ -283,13 +283,13 @@ resource "aws_ecs_service" "main" {
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
     weight            = 1
-    base              = 1  # Ensure at least 1 task runs on regular Fargate
+    base              = 1 # Ensure at least 1 task runs on regular Fargate
   }
 
   network_configuration {
     subnets          = var.public_subnet_ids
     security_groups  = [var.ecs_security_group_id]
-    assign_public_ip = true  # Required for public subnet without NAT
+    assign_public_ip = true # Required for public subnet without NAT
   }
 
   # Register with ALB target group (if provided)

@@ -8,7 +8,7 @@ resource "aws_lb" "main" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnet_ids
 
-  enable_deletion_protection = false  # For dev - set to true for production
+  enable_deletion_protection = false # For dev - set to true for production
 
   # 5 minute idle timeout for WebSocket connections (OAuth auth flow, chat streaming)
   idle_timeout = 300

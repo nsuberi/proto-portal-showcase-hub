@@ -44,14 +44,20 @@ CloudFront Distribution
 | `bucket_name` | No | S3 bucket for static hosting |
 | `aws_region` | No | AWS region (default: us-east-1) |
 | `environment` | No | Environment name (default: production) |
-| `jwt_secret` | Yes | API authentication |
-| `api_key_salt` | Yes | API key generation |
 | `claude_api_url` | No | Claude endpoint (default: api.anthropic.com) |
 | `claude_model` | No | Model ID (default: claude-3-5-sonnet-20241022) |
-| `api_gateway_api_key_value` | Yes | API Gateway key |
-| `ai_evals_anthropic_api_key` | Yes | AI Evals Claude API key |
+| `api_gateway_enforcement` | No | Toggle for app-layer client-key check coordination |
+| `sandbox_alert_email` | No | Destination for sandbox CloudWatch + budget notifications |
 
-**Note**: The Claude API key is stored in AWS Secrets Manager (`prod/proto-portal/claude-api-key`), NOT passed as a Terraform variable.
+**Secrets**: All sensitive values (Anthropic API key, OIDC RSA keypair, GitHub OAuth credentials) live in AWS Secrets Manager and are read by terraform via `data "aws_secretsmanager_secret_version"` blocks in `main.tf` and `research-workspace.tf`. Bootstrap them with `z_creds/bootstrap.sh`. No secret values are accepted as terraform variables — `terraform apply` only needs the deploy role assumed.
+
+| Secret name | Consumer |
+|-------------|----------|
+| `portfolio-prod/anthropic-api-key` | ai-evals ECS task + shared API Lambda |
+| `research-workspace-prod/oidc-private-key` | OIDC proxy Lambda |
+| `research-workspace-prod/oidc-public-key` | OIDC proxy Lambda |
+| `research-workspace-prod/github-oauth-client-id` | Cognito IDP + OIDC proxy Lambda |
+| `research-workspace-prod/github-oauth-client-secret` | Cognito IDP + OIDC proxy Lambda |
 
 ## Commands
 
@@ -102,8 +108,8 @@ Pushing a new image to ECR does NOT automatically deploy it. ECS tasks only pull
 ### 3. IAM Role Credentials Don't Persist
 Each shell invocation (each Bash tool call) starts a fresh shell. `eval $(aws sts assume-role ...)` only sets env vars for THAT shell. Chain all AWS commands in a single `eval ... && cmd1 && cmd2` invocation, or re-assume in each command.
 
-### 4. Cognito OAuth Variables
-The `github_oauth_client_id` and `github_oauth_client_secret` variables are NOT in `terraform.tfvars`. Running `terraform apply` without them will **destroy the Cognito identity provider** (`count = var.github_oauth_client_id != "" ? 1 : 0`), breaking all authentication. Always pass them or use `-target` to limit scope.
+### 4. Secrets via Data Sources
+Cognito's GitHub IDP, the OIDC proxy Lambda, and the shared API Lambda all read their secrets via `data "aws_secretsmanager_secret_version"` blocks. If you delete a secret out of band (or before the consumer is updated), the next `terraform plan` fails with `secret not found`. To rotate or replace a secret, update the value in Secrets Manager (`aws secretsmanager put-secret-value`) and re-apply terraform — no `-var` arguments needed.
 
 ### 5. ALB Path Prefix Forwarding
 The ALB forwards the FULL CloudFront path to containers (no path stripping). If CloudFront routes `/prototypes/foo/bar/*` to the ALB, the container receives requests at `/prototypes/foo/bar/endpoint`. The container must either strip the prefix or register routes with the full path.

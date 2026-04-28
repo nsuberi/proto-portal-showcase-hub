@@ -1,20 +1,25 @@
 # Research Workspace Platform
 # Cognito (GitHub OAuth), DynamoDB, EFS, IAM for the research workspace
+#
+# All secrets read from AWS Secrets Manager via data sources. Bootstrap with
+# z_creds/bootstrap.sh before running terraform apply.
 
-# --- Variables ---
+# --- Secrets Manager data sources ---
 
-variable "github_oauth_client_id" {
-  description = "GitHub OAuth App client ID for Cognito"
-  type        = string
-  sensitive   = true
-  default     = ""
+data "aws_secretsmanager_secret_version" "oidc_private_key" {
+  secret_id = "research-workspace-prod/oidc-private-key"
 }
 
-variable "github_oauth_client_secret" {
-  description = "GitHub OAuth App client secret for Cognito"
-  type        = string
-  sensitive   = true
-  default     = ""
+data "aws_secretsmanager_secret_version" "oidc_public_key" {
+  secret_id = "research-workspace-prod/oidc-public-key"
+}
+
+data "aws_secretsmanager_secret_version" "github_oauth_client_id" {
+  secret_id = "research-workspace-prod/github-oauth-client-id"
+}
+
+data "aws_secretsmanager_secret_version" "github_oauth_client_secret" {
+  secret_id = "research-workspace-prod/github-oauth-client-secret"
 }
 
 # --- Cognito User Pool ---
@@ -38,10 +43,10 @@ resource "aws_cognito_user_pool" "research_workspace" {
   }
 
   schema {
-    name                     = "email"
-    attribute_data_type      = "String"
-    required                 = true
-    mutable                  = true
+    name                = "email"
+    attribute_data_type = "String"
+    required            = true
+    mutable             = true
     string_attribute_constraints {
       min_length = 1
       max_length = 256
@@ -69,8 +74,8 @@ resource "aws_iam_role" "github_oidc_proxy" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
@@ -104,13 +109,13 @@ resource "aws_lambda_function" "github_oidc_proxy" {
 
   environment {
     variables = {
-      GITHUB_CLIENT_ID     = var.github_oauth_client_id
-      GITHUB_CLIENT_SECRET = var.github_oauth_client_secret
-      OIDC_PRIVATE_KEY     = file("${path.module}/../infrastructure/github-oidc-proxy/private.pem")
-      OIDC_PUBLIC_KEY      = file("${path.module}/../infrastructure/github-oidc-proxy/public.pem")
+      GITHUB_CLIENT_ID     = data.aws_secretsmanager_secret_version.github_oauth_client_id.secret_string
+      GITHUB_CLIENT_SECRET = data.aws_secretsmanager_secret_version.github_oauth_client_secret.secret_string
+      OIDC_PRIVATE_KEY     = data.aws_secretsmanager_secret_version.oidc_private_key.secret_string
+      OIDC_PUBLIC_KEY      = data.aws_secretsmanager_secret_version.oidc_public_key.secret_string
       # ISSUER_URL derived at runtime from event.requestContext.domainName
       # This avoids a circular dependency (Lambda -> Function URL -> Lambda env var)
-      ISSUER_URL           = "placeholder"
+      ISSUER_URL = "placeholder"
     }
   }
 
@@ -130,14 +135,13 @@ resource "aws_lambda_function_url" "github_oidc_proxy" {
 
 # GitHub as OIDC Identity Provider via the proxy
 resource "aws_cognito_identity_provider" "github" {
-  count         = var.github_oauth_client_id != "" ? 1 : 0
   user_pool_id  = aws_cognito_user_pool.research_workspace.id
   provider_name = "GitHub"
   provider_type = "OIDC"
 
   provider_details = {
-    client_id                     = var.github_oauth_client_id
-    client_secret                 = var.github_oauth_client_secret
+    client_id                     = data.aws_secretsmanager_secret_version.github_oauth_client_id.secret_string
+    client_secret                 = data.aws_secretsmanager_secret_version.github_oauth_client_secret.secret_string
     authorize_scopes              = "openid email profile"
     oidc_issuer                   = trimsuffix(aws_lambda_function_url.github_oidc_proxy.function_url, "/")
     attributes_url_add_attributes = "false"
@@ -176,7 +180,7 @@ resource "aws_cognito_user_pool_client" "research_workspace" {
     "https://portfolio.cookinupideas.com/prototypes/research-workspace/"
   ]
 
-  supported_identity_providers = var.github_oauth_client_id != "" ? ["GitHub", "COGNITO"] : ["COGNITO"]
+  supported_identity_providers = ["GitHub", "COGNITO"]
 
   depends_on = [aws_cognito_identity_provider.github]
 }
@@ -356,9 +360,9 @@ resource "aws_iam_role_policy" "research_workspace_append_only" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "S3AppendContent"
-        Effect = "Allow"
-        Action = ["s3:PutObject"]
+        Sid      = "S3AppendContent"
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
         Resource = "arn:aws:s3:::${var.bucket_name}/prototypes/research-workspace/*"
       },
       {
@@ -371,9 +375,9 @@ resource "aws_iam_role_policy" "research_workspace_append_only" {
         ]
       },
       {
-        Sid    = "S3ListContentPrefix"
-        Effect = "Allow"
-        Action = ["s3:ListBucket"]
+        Sid      = "S3ListContentPrefix"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
         Condition = {
           StringLike = {
@@ -396,9 +400,9 @@ resource "aws_iam_role_policy" "research_workspace_append_only" {
         ]
       },
       {
-        Sid    = "CloudFrontInvalidate"
-        Effect = "Allow"
-        Action = ["cloudfront:CreateInvalidation"]
+        Sid      = "CloudFrontInvalidate"
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
         Resource = aws_cloudfront_distribution.website.arn
       }
     ]

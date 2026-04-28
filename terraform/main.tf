@@ -243,13 +243,20 @@ EOT
 # }
 
 # AI Evals in Context module
+# Shared Anthropic API key — single source of truth in Secrets Manager.
+# Bootstrapped via z_creds/bootstrap.sh, consumed by both ai-evals ECS task and
+# the shared API Lambda (which fetches by name at runtime via AWS_SECRETS_ENABLED).
+data "aws_secretsmanager_secret" "anthropic_api_key" {
+  name = "portfolio-prod/anthropic-api-key"
+}
+
 module "ai_evals" {
   source = "./modules/ai-evals"
 
-  environment       = "prod"
-  app_name          = "ai-testing-resource"
-  anthropic_api_key = var.ai_evals_anthropic_api_key
-  certificate_arn   = aws_acm_certificate.portfolio.arn
+  environment                  = "prod"
+  app_name                     = "ai-testing-resource"
+  anthropic_api_key_secret_arn = data.aws_secretsmanager_secret.anthropic_api_key.arn
+  certificate_arn              = aws_acm_certificate.portfolio.arn
 }
 
 # Research Workspace module — code-server on ECS, co-hosted on ai-evals cluster
@@ -273,8 +280,8 @@ module "research_workspace" {
   cognito_user_pool_client_id = aws_cognito_user_pool_client.research_workspace.id
   cognito_domain              = aws_cognito_user_pool_domain.research_workspace.domain
 
-  # Claude Code integration
-  anthropic_api_key = var.research_workspace_anthropic_api_key
+  # Claude Code uses per-user OAuth (server.js deletes ANTHROPIC_API_KEY); no
+  # server-side Anthropic key is needed.
 
   # Security monitoring
   alert_email = var.sandbox_alert_email
