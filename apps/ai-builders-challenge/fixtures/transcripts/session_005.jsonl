@@ -1,0 +1,5 @@
+{"session_id":"sess_005","property_id":"prop_055","turn":1,"role":"user","text":"Does my unit come with parking?"}
+{"session_id":"sess_005","property_id":"prop_055","turn":2,"role":"agent","text":"No parking space is included with unit #306 at 1420 NW Lovejoy St. Street parking is paid and nearby."}
+{"session_id":"sess_005","property_id":"prop_055","turn":3,"role":"user","text":"Got it. And the building amenities?"}
+{"session_id":"sess_005","property_id":"prop_055","turn":4,"role":"agent","text":"The building has a fitness center and a rooftop deck."}
+{"session_id":"sess_005","property_id":"prop_055","turn":5,"role":"user","text":"Perfect, thank you."}

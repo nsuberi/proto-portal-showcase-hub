@@ -1,0 +1,44 @@
+:root {
+  /* Surfaces */
+  --bg: #070b14;
+  --surface: #0d1526;
+  --surface-2: #132035;
+  --border: #1a2e4a;
+
+  /* Primary — neon cyan */
+  --cyan: #00e5ff;
+  --cyan-dim: #0099b3;
+  --cyan-glow: rgba(0, 229, 255, 0.25);
+
+  /* Accent — magenta */
+  --magenta: #ff00cc;
+  --magenta-glow: rgba(255, 0, 204, 0.2);
+
+  /* Text */
+  --text: #c8f0f8;
+  --text-mid: #5a8fa0;
+  --text-dim: #2a4a5a;
+
+  /* Algorithm state colors */
+  --cell-filled: #00e5ff;
+  --cell-frontier: #ff00cc;
+  --cell-visited: #003d4d;
+  --cell-current: #ffffff;
+  --cell-empty: #0d1526;
+
+  /* Island palette — 8-cycle. Reserved colors (must NOT appear here):
+     cyan #00e5ff (unclaimed filled), magenta #ff00cc (frontier),
+     yellow #ffdd00 (path), white (current). */
+  --island-0: #ff7b2e;   /* orange */
+  --island-1: #35cf77;   /* green */
+  --island-2: #b56cff;   /* violet */
+  --island-3: #ff4f7d;   /* rose */
+  --island-4: #5a9bff;   /* periwinkle */
+  --island-5: #ffa726;   /* amber */
+  --island-6: #9effe0;   /* light mint */
+  --island-7: #e04dff;   /* orchid */
+
+  /* Typography */
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: "Inter", sans-serif;
+}

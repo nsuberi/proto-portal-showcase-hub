@@ -1,6 +1,6 @@
 ---
 name: new-prototype
-description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', or any request to create something new in the portfolio."
+description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo, (5) Publish any new content, feature, or experience to the production site. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', 'I want an app on my site', 'publish to the site', 'create a gallery', 'add to my portfolio', or any description of a new publicly-visible experience on portfolio.cookinupideas.com — even if the user doesn't use the word 'prototype'."
 ---
 
 # New Prototype Launch Skill
@@ -37,7 +37,8 @@ prototypes/{name}/
 ├── src/
 │   ├── App.tsx               # Main component with Navigation + routes
 │   ├── main.tsx              # React entry point
-│   ├── index.css             # Import design tokens CSS
+│   ├── index.css             # Import prototype-local tokens (see Phase 3)
+│   ├── styles/tokens.css     # Prototype-local CSS custom properties (default)
 │   ├── components/           # (empty, ready for components)
 │   │   └── Navigation.tsx    # Top nav matching other prototypes
 │   ├── data/                 # (if static data needed)
@@ -67,43 +68,116 @@ These are the existing files that MUST be updated when adding a new prototype:
 
 **This is the most important part of the skill.** Missing any of these means documentation drifts from reality. Update them during scaffolding, not "later."
 
-### Phase 3: Integrate Design System
+### Phase 3: Set Up the Design System
 
-Every prototype should use the shared design tokens:
+**Default: each prototype owns its own design system.** Different prototypes serve different purposes, so a single shared visual language no longer fits. Define tokens locally, then opt in to shared pieces only where it helps.
+
+#### 3a. Own the visual tokens (default)
+
+Create a prototype-local tokens file with your color palette, typography, radii, etc.:
+
+```css
+/* src/styles/tokens.css */
+:root {
+  --surface: #fafafa;
+  --on-surface: #111;
+  --border: #e5e5e5;
+  --primary: #4a8a38;
+  --on-primary: #fff;
+  /* ...whatever visual language this prototype needs */
+}
+```
+
+Import it from `src/index.css`:
 
 ```css
 /* src/index.css */
-@import "@proto-portal/design-tokens/css/tokens.css";
-@import "@proto-portal/design-tokens/css/utilities.css";
+@import "./styles/tokens.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 ```
 
+Reference tokens via CSS custom properties or Tailwind arbitrary values:
+
+```tsx
+<div className="bg-[var(--surface)] text-[var(--on-surface)] border-[color:var(--border)]">
+```
+
+Or map tokens to semantic Tailwind colors in your prototype's own `tailwind.config.ts` so `bg-surface` / `text-on-surface` work.
+
+#### 3b. Share structural layout — always
+
+Structural patterns (fixed sidebar + scrolling viewport, fixed-header + scrolling-body panels, collapsible icon rails, bottom sheets) are hard to reimplement correctly. Use the shared primitives:
+
+```tsx
+import {
+  AppShell,
+  ScrollViewport,
+  ContextPanel,
+  SidebarRail,
+  BottomSheet,
+} from "@proto-portal/layout-primitives";
+```
+
+These components are headless for visuals — they encode the layout and scroll behavior only. Style them with your prototype's own classes via the `className` prop. See `shared/layout-primitives/README.md` for usage.
+
+Add the peer dep in the prototype's `package.json`:
+
+```json
+"dependencies": {
+  "@proto-portal/layout-primitives": "workspace:*"
+}
+```
+
+#### 3b-i. Do you need a new layout primitive?
+
+Before writing a bespoke shell, sidebar, panel, or sheet in a new prototype, **pause and have a conversation with the user** about whether the layout pattern is genuinely new, or a variant of an existing primitive.
+
+Ask together:
+
+1. **What is the structural goal?** — describe the layout in terms of "what is fixed, what scrolls, what collapses, what overlays." Strip away the visual intent.
+2. **Can an existing primitive express this?** — can `AppShell` + `ScrollViewport`, `ContextPanel`, `SidebarRail`, or `BottomSheet` (possibly composed) cover it? If yes, use them and apply the prototype's own styling via `className`. Custom visuals don't justify a new primitive.
+3. **If not, is the pattern generalizable?** — would at least one other prototype plausibly want this layout? A one-off visual effect is not a primitive. A reusable structural pattern (e.g. a split-pane with persistent left rail and right drawer; a floating action panel that pins on scroll) likely is.
+4. **Where should it live?**
+   - **Contribute it back** to `@proto-portal/layout-primitives` when the pattern is structural, visually unopinionated, and plausibly reusable. Match the existing contract: structural Tailwind classes only, `className` prop for consumer styling, no color/font opinions.
+   - **Keep it local** in the prototype when the layout is tightly coupled to that prototype's visuals, content model, or state — build it in `src/components/layout/` and revisit promotion later if a second prototype wants the same shape.
+
+When contributing back, open the conversation explicitly: *"I think this layout pattern could be shared — should I extract it to `@proto-portal/layout-primitives` or keep it prototype-local for now?"* Default to keeping it local until there's a second consumer; premature extraction is worse than mild duplication.
+
+Update `shared/layout-primitives/README.md` when you add a new primitive, and include it in the doc-sync checklist above.
+
+#### 3c. Opt in to shared visuals only when it helps
+
+If your prototype wants the shared baseline look (e.g. dark-mode aware, same radii/shadows as the rest of the portfolio):
+
+```css
+/* src/index.css — opt-in shared baseline */
+@import "@proto-portal/design-tokens/css/tokens.css";
+@import "@proto-portal/design-tokens/css/utilities.css";
+```
+
 ```ts
 // tailwind.config.ts
 import { baseTailwindConfig } from "@proto-portal/design-tokens/tailwind/base-config";
-
 export default {
   ...baseTailwindConfig,
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  // Add prototype-specific overrides here
 };
 ```
 
-**If the prototype needs a custom theme** (like FFX's light mode), create a preset override:
+Similarly, `@proto-portal/ui-components` offers shared buttons/cards/etc. — opt in when your prototype doesn't need its own visual vocabulary.
 
-```ts
-// In shared/design-tokens/index.ts, add to presetOverrides:
-export const presetOverrides = {
-  ffxSkillMap: { /* ... */ },
-  newPrototype: {
-    colors: { /* custom colors */ },
-    // ... other overrides
-  },
-};
-```
+#### When to share vs own
+
+| Layer | Default | Notes |
+|---|---|---|
+| **Structural layout** (shells, sidebars, panels) | **Always share** via `@proto-portal/layout-primitives` | Layout bugs hide here; don't reinvent |
+| **Visual tokens** (colors, type, motion) | **Own per prototype** | Each prototype has its own identity |
+| **Baseline tokens** (`@proto-portal/design-tokens`) | **Opt-in** | Use when your prototype wants the portfolio baseline look |
+| **Shared UI components** (`@proto-portal/ui-components`) | **Opt-in** | Use when you don't need a bespoke visual vocabulary |
+| **Lint rule** | `yarn lint:tokens` still bans hardcoded hex/rgb and non-semantic Tailwind color classes | Keeps theming/dark-mode viable later |
 
 ### Phase 4: Set Up Testing
 
@@ -162,15 +236,35 @@ mkdir -p dist/prototypes/{name}
 cp -r prototypes/{name}/dist/* dist/prototypes/{name}/
 ```
 
-#### CloudFront Function Update
+#### CloudFront / Terraform Updates
 
-In `terraform/main.tf`, add the new prototype name to the CloudFront Function's list:
+In `terraform/main.tf`, TWO changes are required:
+
+**1. Add prototype to the CloudFront Function's known-prototype list:**
 
 ```javascript
 if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' ||
     prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' ||
     prototypeName === '{name}') {
 ```
+
+**2. Add an `ordered_cache_behavior` block** for the new prototype (copy an existing one, change `path_pattern`):
+
+```terraform
+ordered_cache_behavior {
+  path_pattern           = "/prototypes/{name}/*"
+  allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+  cached_methods         = ["GET", "HEAD"]
+  target_origin_id       = "S3-${var.bucket_name}"
+  ...
+  function_association {
+    event_type   = "viewer-request"
+    function_arn = aws_cloudfront_function.prototype_router.arn
+  }
+}
+```
+
+**Important:** The `/*` path pattern does NOT match `/prototypes/{name}` (no trailing slash). The `default_cache_behavior` also has the CloudFront function attached to handle this case — do NOT remove it. Both the ordered behavior and the default behavior need the function for slash-agnostic routing to work.
 
 ### Phase 6: Write AGENTS.md
 
@@ -219,7 +313,9 @@ These existing assets can be leveraged in new prototypes:
 
 | Asset | Location | How to Use |
 |-------|----------|------------|
-| Design tokens | `shared/design-tokens/` | CSS imports + Tailwind config extension |
+| **Layout primitives** (always share) | `shared/layout-primitives/` | `import { AppShell, ContextPanel, SidebarRail, BottomSheet } from "@proto-portal/layout-primitives"` |
+| Design tokens (opt-in baseline) | `shared/design-tokens/` | CSS imports + Tailwind config extension — skip if you want your own visual language |
+| UI components (opt-in) | `shared/ui-components/` | Buttons, cards, badges — skip if your prototype needs a bespoke visual vocabulary |
 | Claude API proxy | `shared/api/` | POST to `localhost:3004/api/v1/...` |
 | Navigation component pattern | Any prototype's `Navigation.tsx` | Copy and adapt |
 | Instructions modal pattern | `documentation-explorer/InstructionsModal.tsx` | Copy for onboarding |

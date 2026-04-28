@@ -1,0 +1,135 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'prototypes/**'
+      - 'shared/**'
+      - 'apps/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'prototypes/**'
+      - 'shared/**'
+      - 'apps/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/tests.yml'
+
+jobs:
+  test-js:
+    name: JavaScript Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --mode=update-lockfile
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
+
+      # Focus installs only the workspaces we test, with their dev deps.
+      - name: Prepare test workspaces
+        run: |
+          yarn workspaces focus \
+            @proto-portal/design-tokens \
+            @proto-portal/mcp-server-design-tokens \
+            @proto-portal/ffx-skill-map \
+            @proto-portal/home-lending-learning \
+            @proto-portal/documentation-explorer \
+            @proto-portal/learning-path \
+            @proto-portal/research-workspace
+
+      # mcp-server-design-tokens uses Node's built-in test runner against the
+      # compiled output, so it needs both packages built first.
+      - name: Build design-tokens packages
+        run: |
+          yarn workspace @proto-portal/design-tokens build
+          yarn workspace @proto-portal/mcp-server-design-tokens build
+
+      - name: mcp-server-design-tokens — unit
+        run: yarn workspace @proto-portal/mcp-server-design-tokens test
+
+      - name: ffx-skill-map — unit
+        run: yarn workspace @proto-portal/ffx-skill-map test
+        env:
+          CI: true
+
+      - name: home-lending-learning — unit
+        run: yarn workspace @proto-portal/home-lending-learning test
+        env:
+          CI: true
+
+      - name: documentation-explorer — unit
+        run: yarn workspace @proto-portal/documentation-explorer test
+        env:
+          CI: true
+
+      - name: learning-path — unit
+        run: yarn workspace @proto-portal/learning-path test
+        env:
+          CI: true
+
+      - name: research-workspace — unit
+        run: yarn workspace @proto-portal/research-workspace test
+        env:
+          CI: true
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-coverage
+          path: |
+            prototypes/ffx-skill-map/coverage/
+            prototypes/home-lending-learning/coverage/
+            prototypes/documentation-explorer/coverage/
+            prototypes/learning-path/coverage/
+            prototypes/research-workspace/coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  test-python:
+    name: Python Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('apps/ai-builders-challenge/tests/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install ai-builders-challenge test deps
+        working-directory: apps/ai-builders-challenge
+        run: pip install -r tests/requirements.txt
+
+      # The ai-builders-challenge ships with intentionally failing tests
+      # (test_property_retrieval, test_borrower_grounding) — finding and
+      # fixing the bug IS the participant exercise. Only the log-schema
+      # contract test is appropriate as a CI gate; it validates the JSONL
+      # shape that the Log Analyst skill and downstream tooling depend on.
+      - name: ai-builders-challenge — log schema contract
+        working-directory: apps/ai-builders-challenge
+        run: pytest tests/test_logging_schema.py -v

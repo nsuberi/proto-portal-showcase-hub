@@ -11,6 +11,10 @@ on:
 jobs:
   force-unlock:
     runs-on: ubuntu-latest
+    environment: production # required for the OIDC subject claim on the deploy role
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,12 +24,10 @@ jobs:
         with:
           terraform_version: 1.6.0
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::671388079324:role/terraform-cooking-up-ideas
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
       - name: Force unlock state (auto-accept)

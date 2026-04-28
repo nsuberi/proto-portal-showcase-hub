@@ -40,7 +40,7 @@ resource "aws_iam_role_policy" "ai_api_lambda_policy" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:prod/proto-portal/claude-api-key*"
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:portfolio-prod/anthropic-api-key*"
       }
     ]
   })
@@ -51,7 +51,7 @@ resource "null_resource" "copy_docs" {
   triggers = {
     always_run = timestamp()
   }
-  
+
   provisioner "local-exec" {
     command = <<-EOT
       rm -rf ../shared/api/docs
@@ -67,10 +67,10 @@ data "archive_file" "ai_api_lambda_zip" {
   type        = "zip"
   output_path = "ai-api-lambda.zip"
   source_dir  = "../shared/api"
-  
+
   excludes = [
     ".env",
-    ".env.example", 
+    ".env.example",
     "README.md",
     "*.test.js",
     "node_modules/.cache",
@@ -78,19 +78,19 @@ data "archive_file" "ai_api_lambda_zip" {
     "node_modules/.bin/eslint*",
     "node_modules/@types/**"
   ]
-  
+
   depends_on = [null_resource.copy_docs]
 }
 
 # Lambda function
 resource "aws_lambda_function" "ai_api" {
-  filename         = data.archive_file.ai_api_lambda_zip.output_path
-  function_name    = "${var.bucket_name}-ai-api"
-  role            = aws_iam_role.ai_api_lambda_role.arn
-  handler         = "lambda.handler"
-  runtime         = "nodejs18.x"
-  timeout         = 30
-  memory_size     = 256
+  filename      = data.archive_file.ai_api_lambda_zip.output_path
+  function_name = "${var.bucket_name}-ai-api"
+  role          = aws_iam_role.ai_api_lambda_role.arn
+  handler       = "lambda.handler"
+  runtime       = "nodejs18.x"
+  timeout       = 30
+  memory_size   = 256
 
   source_code_hash = data.archive_file.ai_api_lambda_zip.output_base64sha256
 
@@ -98,17 +98,18 @@ resource "aws_lambda_function" "ai_api" {
 
   environment {
     variables = {
-      NODE_ENV               = var.environment
-      JWT_SECRET            = var.jwt_secret
-      API_KEY_SALT          = var.api_key_salt
-      API_GATEWAY_ENFORCEMENT = var.api_gateway_enforcement ? "true" : "false"
+      NODE_ENV                 = var.environment
+      API_GATEWAY_ENFORCEMENT  = var.api_gateway_enforcement ? "true" : "false"
       TEMP_ALLOW_NO_CLIENT_KEY = "true"
-      AWS_SECRETS_ENABLED   = "true"
-      CLAUDE_SECRET_NAME    = "prod/proto-portal/claude-api-key"
-      CLAUDE_API_URL        = var.claude_api_url
-      CLAUDE_MODEL          = var.claude_model
-      LOG_LEVEL            = var.environment == "production" ? "info" : "debug"
-      CORS_ORIGIN          = "https://portfolio.cookinupideas.com"
+      AWS_SECRETS_ENABLED      = "true"
+      CLAUDE_SECRET_NAME       = "portfolio-prod/anthropic-api-key"
+      CLAUDE_API_URL           = var.claude_api_url
+      CLAUDE_MODEL             = var.claude_model
+      LOG_LEVEL                = var.environment == "production" ? "info" : "debug"
+      CORS_ORIGIN              = "https://portfolio.cookinupideas.com"
+      # JWT_SECRET / API_KEY_SALT intentionally omitted: TEMP_ALLOW_NO_CLIENT_KEY
+      # short-circuits client-key validation. Re-add via Secrets Manager data source
+      # if/when client-key enforcement is re-enabled.
     }
   }
 
@@ -182,8 +183,8 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   http_method = aws_api_gateway_method.proxy_method.http_method
 
   integration_http_method = "POST"
-  type                   = "AWS_PROXY"
-  uri                    = aws_lambda_function.ai_api.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.ai_api.invoke_arn
 }
 
 # API Gateway Method for OPTIONS (CORS preflight)
@@ -299,9 +300,9 @@ resource "random_string" "api_key" {
 }
 
 resource "aws_api_gateway_api_key" "approved_prototypes" {
-  name      = "${var.bucket_name}-approved-prototypes"
-  enabled   = true
-  value     = var.api_gateway_api_key_value != "" ? nonsensitive(var.api_gateway_api_key_value) : random_string.api_key.result
+  name    = "${var.bucket_name}-approved-prototypes"
+  enabled = true
+  value   = random_string.api_key.result
 }
 
 resource "aws_api_gateway_usage_plan" "ai_api_plan" {
@@ -326,7 +327,7 @@ resource "aws_api_gateway_usage_plan_key" "approved_prototypes_key_link" {
 
 # Lambda Function URL (requires lambda:CreateFunctionUrlConfig permission)
 resource "aws_lambda_function_url" "ai_api" {
-  function_name      = aws_lambda_function.ai_api.function_name
+  function_name = aws_lambda_function.ai_api.function_name
   # Lock down Function URL to IAM to prevent public invocation
   authorization_type = "AWS_IAM"
 }

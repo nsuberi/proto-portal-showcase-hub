@@ -1,0 +1,12 @@
+services:
+  borrower-agent:
+    build: .
+    ports:
+      - "5100:5100"
+    environment:
+      - PORT=5100
+      - CODE_HASH=${CODE_HASH:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - LLM_PROXY_URL=${LLM_PROXY_URL:-}
+    volumes:
+      - ./fixtures:/app/fixtures:ro

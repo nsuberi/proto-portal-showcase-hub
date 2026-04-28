@@ -1,0 +1,498 @@
+@import "./design-system/tokens.css";
+@import "./design-system/syntax-forest.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === Workspace layout === */
+
+.workspace-layout {
+  height: 100dvh;
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
+/* Prevent scroll chaining from content areas to the shell */
+.overflow-y-auto {
+  overscroll-behavior: contain;
+}
+
+/* Sage dot-grid backdrop (light nature theme) */
+/* design-token-lint-ignore */
+.workspace-backdrop {
+  background-color: var(--color-surface);
+  background-image: radial-gradient(circle, rgba(74, 138, 56, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Bark card (replaces glass-widget — light paper with earth border) */
+/* design-token-lint-ignore */
+.bark-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 3px rgba(107, 91, 74, 0.08),
+    0 4px 12px rgba(107, 91, 74, 0.04);
+  overflow: hidden;
+}
+
+/* Keep glass-widget as alias for backward compatibility during migration */
+.glass-widget {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 3px rgba(107, 91, 74, 0.08),
+    0 4px 12px rgba(107, 91, 74, 0.04);
+  overflow: hidden;
+}
+
+/* Branch header bars inside cards (replaces glass-header) */
+.branch-header {
+  background: rgba(232, 237, 219, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+/* Keep glass-header as alias for backward compatibility */
+.glass-header {
+  background: rgba(232, 237, 219, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+/* --- Milkdown editor: fill card + force dark text on light --- */
+
+.milkdown-editor-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.milkdown-editor-root .milkdown {
+  background: transparent !important;
+  color: var(--color-on-surface) !important;
+  font-family: var(--font-body);
+  padding: 1rem 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.milkdown-editor-root .milkdown .editor {
+  outline: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  cursor: text;
+}
+
+.milkdown-editor-root .milkdown .ProseMirror {
+  outline: none;
+  flex: 1;
+  cursor: text;
+  overflow-y: auto;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.milkdown-editor-root .milkdown,
+.milkdown-editor-root .milkdown > *,
+.milkdown-editor-root .milkdown .editor,
+.milkdown-editor-root .milkdown .ProseMirror,
+.milkdown-editor-root .milkdown .ProseMirror > * {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* All text: force dark on light — override nord theme */
+.milkdown-editor-root .milkdown,
+.milkdown-editor-root .milkdown * {
+  color: var(--color-on-surface) !important;
+}
+
+.milkdown-editor-root .milkdown h1,
+.milkdown-editor-root .milkdown h2,
+.milkdown-editor-root .milkdown h3,
+.milkdown-editor-root .milkdown h4,
+.milkdown-editor-root .milkdown h5,
+.milkdown-editor-root .milkdown h6 {
+  font-family: var(--font-headline);
+}
+
+.milkdown-editor-root .milkdown h1 {
+  font-size: 1.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown h2 {
+  font-size: 1.35rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.milkdown-editor-root .milkdown h3 {
+  font-size: 1.15rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.milkdown-editor-root .milkdown p {
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown a {
+  color: var(--color-primary) !important;
+  text-decoration: underline;
+  cursor: pointer !important;
+}
+
+/* design-token-lint-ignore */
+.milkdown-editor-root .milkdown code {
+  font-family: var(--font-mono);
+  background: rgba(74, 138, 56, 0.08);
+  color: var(--color-on-surface) !important;
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+}
+
+/* design-token-lint-ignore */
+.milkdown-editor-root .milkdown pre {
+  background: rgba(30, 45, 26, 0.04);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.milkdown-editor-root .milkdown pre code {
+  background: none;
+  padding: 0;
+  color: var(--color-on-surface) !important;
+}
+
+.milkdown-editor-root .milkdown blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1rem;
+  color: var(--color-on-surface-variant) !important;
+  margin: 0.75rem 0;
+}
+
+.milkdown-editor-root .milkdown ul,
+.milkdown-editor-root .milkdown ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.milkdown-editor-root .milkdown li {
+  margin-bottom: 0.25rem;
+}
+
+/* design-token-lint-ignore */
+.milkdown-editor-root .milkdown hr {
+  border: none;
+  border-top: 1px solid rgba(107, 91, 74, 0.15);
+  margin: 1.5rem 0;
+}
+
+.milkdown-editor-root .milkdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+}
+
+/* design-token-lint-ignore */
+.milkdown-editor-root .milkdown th,
+.milkdown-editor-root .milkdown td {
+  border: 1px solid rgba(107, 91, 74, 0.15);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+/* design-token-lint-ignore */
+.milkdown-editor-root .milkdown th {
+  background: rgba(74, 138, 56, 0.06);
+  font-family: var(--font-label);
+  font-weight: 600;
+}
+
+/* Placeholder text for empty editor */
+.milkdown-editor-root .milkdown .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--color-on-surface-variant);
+}
+
+/* Hero section animations */
+@keyframes float-dot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* design-token-lint-ignore */
+@keyframes focus-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* === Nav rail (icon sidebar) === */
+
+/* design-token-lint-ignore */
+.nav-rail {
+  width: 56px;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(232, 237, 219, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-right: 1px solid var(--color-outline-variant);
+  border-radius: 0;
+  flex-shrink: 0;
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-rail.expanded {
+  width: 200px;
+}
+
+/* Keep sidebar-rail as alias during migration */
+.sidebar-rail {
+  width: 56px;
+  background: rgba(232, 237, 219, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-right: 1px solid var(--color-outline-variant);
+  border-radius: 0;
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* design-token-lint-ignore */
+.sidebar-rail.expanded {
+  width: 320px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-outline-variant);
+  box-shadow:
+    0 1px 3px rgba(107, 91, 74, 0.08),
+    0 4px 12px rgba(107, 91, 74, 0.04);
+}
+
+.sidebar-content {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 180ms ease-out 60ms, transform 180ms ease-out 60ms;
+}
+
+.sidebar-rail.expanded .sidebar-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* === Context panel (right-side artifact panel) === */
+
+/* design-token-lint-ignore */
+.context-panel {
+  width: 420px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-left: 1px solid var(--color-outline-variant);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  box-shadow: -4px 0 24px rgba(107, 91, 74, 0.06);
+  animation: slide-in-right 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* === Agent activity strip === */
+
+.ambient-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: ambient-pulse 3s ease-in-out infinite;
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+/* Attention state bar (amber tint for blocked/error) */
+/* design-token-lint-ignore */
+.activity-bar.attention {
+  background: rgba(139, 115, 85, 0.06);
+  border-color: rgba(139, 115, 85, 0.15);
+}
+
+/* Tool call card styles */
+.tool-call-card {
+  background: transparent;
+  border-bottom: 1px solid var(--color-outline-variant);
+  transition: background-color 150ms ease;
+}
+
+/* design-token-lint-ignore */
+.tool-call-card:hover {
+  background: rgba(74, 138, 56, 0.04);
+}
+
+/* design-token-lint-ignore */
+.tool-call-card[data-status="running"] {
+  background: rgba(74, 138, 56, 0.06);
+  border-left: 2px solid var(--color-primary);
+}
+
+/* design-token-lint-ignore */
+.tool-call-card[data-status="blocked"] {
+  background: rgba(186, 26, 26, 0.04);
+  border-left: 2px solid var(--color-error);
+}
+
+@keyframes tool-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tool-call-enter {
+  animation: tool-slide-in 200ms ease-out;
+}
+
+@keyframes tool-complete-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.tool-call-complete-icon {
+  animation: tool-complete-pop 300ms ease-out;
+}
+
+@keyframes tool-running-border {
+  0%, 100% { border-left-color: var(--color-primary); }
+  50% { border-left-color: transparent; }
+}
+
+.tool-call-running {
+  border-left: 2px solid var(--color-primary);
+  animation: tool-running-border 2s ease-in-out infinite;
+}
+
+.tool-call-failed-border {
+  border-left: 2px solid var(--color-error);
+}
+
+@keyframes ambient-badge-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-ambient-pulse {
+  animation: ambient-badge-pulse 2s ease-in-out infinite;
+}
+
+/* react-resizable-panels resize handle */
+[data-panel-resize-handle-id] {
+  background: transparent;
+}
+
+[data-panel-resize-handle-id]:hover {
+  background: transparent;
+}
+
+/* === Mobile bottom sheet === */
+
+/* design-token-lint-ignore */
+.mobile-bottom-sheet {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  box-shadow: 0 -8px 32px rgba(107, 91, 74, 0.12);
+  animation: sheet-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.mobile-bottom-sheet-closing {
+  animation: sheet-slide-down 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes sheet-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* === Mobile tab bar === */
+
+/* design-token-lint-ignore */
+.mobile-tab-bar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 0.5px solid rgba(196, 184, 164, 0.4);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-tab-bar button {
+  min-height: 49px;
+}
+
+/* === Safe area utilities === */
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* === Mobile file browser overlay === */
+
+.mobile-editor-overlay {
+  animation: mobile-slide-in 250ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes mobile-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

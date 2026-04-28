@@ -30,18 +30,6 @@ module "database" {
   db_username          = var.db_username
 }
 
-# Store Anthropic API key in Secrets Manager
-resource "aws_secretsmanager_secret" "anthropic_api_key" {
-  name                    = "${local.name_prefix}/anthropic-api-key"
-  recovery_window_in_days = 0
-}
-
-resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
-  count         = var.anthropic_api_key != "" ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.anthropic_api_key.id
-  secret_string = var.anthropic_api_key
-}
-
 # ALB: Application Load Balancer
 module "alb" {
   source = "./modules/alb"
@@ -73,7 +61,7 @@ module "ecs" {
   db_username            = var.db_username
   db_password_secret_arn = module.database.db_password_secret_arn
 
-  anthropic_api_key_secret_arn = aws_secretsmanager_secret.anthropic_api_key.arn
+  anthropic_api_key_secret_arn = var.anthropic_api_key_secret_arn
 
   target_group_arn = module.alb.target_group_arn
 }

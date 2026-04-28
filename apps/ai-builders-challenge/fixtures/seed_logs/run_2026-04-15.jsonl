@@ -1,0 +1,16 @@
+{"ts":"2026-04-15T14:02:11.412Z","level":"INFO","code_hash":"a3f91b02c7de","event":"request_received","session_id":"sess_001","span_id":"s-9e41a2b0","property_id":"prop_017","message_chars":48}
+{"ts":"2026-04-15T14:02:11.498Z","level":"INFO","code_hash":"a3f91b02c7de","event":"retrieval","query":"Hi, I'm asking about my property appraisal. What's my appraised value?","property_id":"prop_017","retrieved_ids":["prop_017"],"top_score":0.7812,"candidate_count":8}
+{"ts":"2026-04-15T14:02:12.910Z","level":"INFO","code_hash":"a3f91b02c7de","event":"llm_call","mode":"anthropic","model":"claude-sonnet-4-6","latency_ms":1412,"output_chars":124}
+{"ts":"2026-04-15T14:02:12.914Z","level":"INFO","code_hash":"a3f91b02c7de","event":"response_sent","session_id":"sess_001","span_id":"s-9e41a2b0","property_id":"prop_017","answer_chars":124}
+{"ts":"2026-04-15T14:04:03.112Z","level":"INFO","code_hash":"a3f91b02c7de","event":"request_received","session_id":"sess_002","span_id":"s-1f02e91c","property_id":"prop_042","message_chars":52}
+{"ts":"2026-04-15T14:04:03.201Z","level":"INFO","code_hash":"a3f91b02c7de","event":"retrieval","query":"Can you tell me the appraised value of my property?","property_id":"prop_042","retrieved_ids":["prop_017"],"top_score":0.6893,"candidate_count":8}
+{"ts":"2026-04-15T14:04:04.902Z","level":"INFO","code_hash":"a3f91b02c7de","event":"llm_call","mode":"anthropic","model":"claude-sonnet-4-6","latency_ms":1701,"output_chars":91}
+{"ts":"2026-04-15T14:04:04.905Z","level":"INFO","code_hash":"a3f91b02c7de","event":"response_sent","session_id":"sess_002","span_id":"s-1f02e91c","property_id":"prop_042","answer_chars":91}
+{"ts":"2026-04-15T14:04:31.008Z","level":"INFO","code_hash":"a3f91b02c7de","event":"request_received","session_id":"sess_002","span_id":"s-2a9d7ef0","property_id":"prop_042","message_chars":63}
+{"ts":"2026-04-15T14:04:31.094Z","level":"INFO","code_hash":"a3f91b02c7de","event":"retrieval","query":"Wait, my address is on Burnside, not Hawthorne. That's not my property.","property_id":"prop_042","retrieved_ids":["prop_017"],"top_score":0.5104,"candidate_count":8}
+{"ts":"2026-04-15T14:04:32.613Z","level":"INFO","code_hash":"a3f91b02c7de","event":"llm_call","mode":"anthropic","model":"claude-sonnet-4-6","latency_ms":1519,"output_chars":102}
+{"ts":"2026-04-15T14:04:32.617Z","level":"INFO","code_hash":"a3f91b02c7de","event":"response_sent","session_id":"sess_002","span_id":"s-2a9d7ef0","property_id":"prop_042","answer_chars":102}
+{"ts":"2026-04-15T14:07:44.221Z","level":"INFO","code_hash":"a3f91b02c7de","event":"request_received","session_id":"sess_004","span_id":"s-5b11cd28","property_id":"prop_104","message_chars":44}
+{"ts":"2026-04-15T14:07:44.309Z","level":"INFO","code_hash":"a3f91b02c7de","event":"retrieval","query":"I want to understand my comps. Can you tell me about them?","property_id":"prop_104","retrieved_ids":["prop_017"],"top_score":0.5321,"candidate_count":8}
+{"ts":"2026-04-15T14:07:45.988Z","level":"INFO","code_hash":"a3f91b02c7de","event":"llm_call","mode":"anthropic","model":"claude-sonnet-4-6","latency_ms":1679,"output_chars":138}
+{"ts":"2026-04-15T14:07:45.991Z","level":"INFO","code_hash":"a3f91b02c7de","event":"response_sent","session_id":"sess_004","span_id":"s-5b11cd28","property_id":"prop_104","answer_chars":138}

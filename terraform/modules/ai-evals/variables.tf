@@ -10,10 +10,9 @@ variable "app_name" {
   default     = "ai-testing-resource"
 }
 
-variable "anthropic_api_key" {
-  description = "Anthropic API key for Claude"
+variable "anthropic_api_key_secret_arn" {
+  description = "ARN of the externally-managed Secrets Manager secret holding the Anthropic API key"
   type        = string
-  sensitive   = true
 }
 
 variable "certificate_arn" {

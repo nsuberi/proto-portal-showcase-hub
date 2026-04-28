@@ -62,18 +62,29 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid = "LambdaFunctionURLPermissions"
+        Sid    = "LambdaPermissions"
         Effect = "Allow"
         Action = [
+          "lambda:CreateFunction",
+          "lambda:DeleteFunction",
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:ListVersionsByFunction",
+          "lambda:PublishVersion",
           "lambda:CreateFunctionUrlConfig",
           "lambda:DeleteFunctionUrlConfig",
           "lambda:GetFunctionUrlConfig",
-          "lambda:UpdateFunctionUrlConfig"
+          "lambda:UpdateFunctionUrlConfig",
+          "lambda:TagResource",
+          "lambda:UntagResource",
+          "lambda:ListTags"
         ]
         Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
       },
       {
-        Sid = "APIGatewayPermissions"
+        Sid    = "APIGatewayPermissions"
         Effect = "Allow"
         Action = [
           "apigateway:POST",
@@ -118,7 +129,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "LambdaInvokePermissions"
+        Sid    = "LambdaInvokePermissions"
         Effect = "Allow"
         Action = [
           "lambda:AddPermission",
@@ -128,7 +139,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*"
       },
       {
-        Sid = "SSMParameterStorePermissions"
+        Sid    = "SSMParameterStorePermissions"
         Effect = "Allow"
         Action = [
           "ssm:PutParameter",
@@ -147,7 +158,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         ]
       },
       {
-        Sid = "RDSPermissions"
+        Sid    = "RDSPermissions"
         Effect = "Allow"
         Action = [
           "rds:DescribeDBSubnetGroups",
@@ -166,7 +177,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ServiceDiscoveryPermissions"
+        Sid    = "ServiceDiscoveryPermissions"
         Effect = "Allow"
         Action = [
           "servicediscovery:CreatePrivateDnsNamespace",
@@ -186,7 +197,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ECSPermissions"
+        Sid    = "ECSPermissions"
         Effect = "Allow"
         Action = [
           "ecs:CreateCluster",
@@ -210,7 +221,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "ECRPermissions"
+        Sid    = "ECRPermissions"
         Effect = "Allow"
         Action = [
           "ecr:CreateRepository",
@@ -231,7 +242,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:ecr:*:${data.aws_caller_identity.current.account_id}:repository/*"
       },
       {
-        Sid = "ELBPermissions"
+        Sid    = "ELBPermissions"
         Effect = "Allow"
         Action = [
           "elasticloadbalancing:CreateLoadBalancer",
@@ -258,7 +269,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "VPCAndNetworkingPermissions"
+        Sid    = "VPCAndNetworkingPermissions"
         Effect = "Allow"
         Action = [
           "ec2:CreateVpc",
@@ -298,7 +309,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "*"
       },
       {
-        Sid = "SecretsManagerPermissions"
+        Sid    = "SecretsManagerPermissions"
         Effect = "Allow"
         Action = [
           "secretsmanager:CreateSecret",
@@ -314,7 +325,7 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
         Resource = "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:*"
       },
       {
-        Sid = "APIGatewayV2Permissions"
+        Sid    = "APIGatewayV2Permissions"
         Effect = "Allow"
         Action = [
           "apigateway:POST",
@@ -328,6 +339,199 @@ resource "aws_iam_role_policy" "comprehensive_permissions" {
           "arn:aws:apigateway:*::/vpclinks*",
           "arn:aws:apigateway:*::/tags*"
         ]
+      }
+    ]
+  })
+}
+
+# Managed policy for research-workspace services (Cognito, EFS, DynamoDB, ELB rules)
+# Separate from inline policy to stay under the 10KB inline policy size limit.
+resource "aws_iam_policy" "research_workspace_permissions" {
+  name = "research-workspace-terraform-permissions"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "CognitoPermissions"
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:CreateUserPool",
+          "cognito-idp:DeleteUserPool",
+          "cognito-idp:DescribeUserPool",
+          "cognito-idp:UpdateUserPool",
+          "cognito-idp:CreateUserPoolClient",
+          "cognito-idp:DeleteUserPoolClient",
+          "cognito-idp:DescribeUserPoolClient",
+          "cognito-idp:UpdateUserPoolClient",
+          "cognito-idp:CreateUserPoolDomain",
+          "cognito-idp:DeleteUserPoolDomain",
+          "cognito-idp:DescribeUserPoolDomain",
+          "cognito-idp:CreateIdentityProvider",
+          "cognito-idp:DeleteIdentityProvider",
+          "cognito-idp:DescribeIdentityProvider",
+          "cognito-idp:UpdateIdentityProvider",
+          "cognito-idp:GetUserPoolMfaConfig",
+          "cognito-idp:SetUserPoolMfaConfig",
+          "cognito-idp:ListUserPoolClients",
+          "cognito-idp:ListIdentityProviders",
+          "cognito-idp:TagResource",
+          "cognito-idp:UntagResource",
+          "cognito-idp:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "EFSPermissions"
+        Effect = "Allow"
+        Action = [
+          "elasticfilesystem:CreateFileSystem",
+          "elasticfilesystem:DeleteFileSystem",
+          "elasticfilesystem:DescribeFileSystems",
+          "elasticfilesystem:CreateMountTarget",
+          "elasticfilesystem:DeleteMountTarget",
+          "elasticfilesystem:DescribeMountTargets",
+          "elasticfilesystem:DescribeMountTargetSecurityGroups",
+          "elasticfilesystem:CreateAccessPoint",
+          "elasticfilesystem:DeleteAccessPoint",
+          "elasticfilesystem:DescribeAccessPoints",
+          "elasticfilesystem:PutLifecycleConfiguration",
+          "elasticfilesystem:DescribeLifecycleConfiguration",
+          "elasticfilesystem:TagResource",
+          "elasticfilesystem:UntagResource",
+          "elasticfilesystem:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "DynamoDBPermissions"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:CreateTable",
+          "dynamodb:DeleteTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:UpdateTable",
+          "dynamodb:UpdateContinuousBackups",
+          "dynamodb:UpdateTimeToLive",
+          "dynamodb:TagResource",
+          "dynamodb:UntagResource",
+          "dynamodb:ListTagsOfResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ELBListenerRulePermissions"
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:CreateRule",
+          "elasticloadbalancing:DeleteRule",
+          "elasticloadbalancing:DescribeRules",
+          "elasticloadbalancing:ModifyRule"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SNSPermissions"
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+          "sns:Subscribe",
+          "sns:Unsubscribe",
+          "sns:GetSubscriptionAttributes",
+          "sns:ListSubscriptionsByTopic",
+          "sns:TagResource",
+          "sns:UntagResource",
+          "sns:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudWatchAlarmsPermissions"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "BudgetsPermissions"
+        Effect = "Allow"
+        Action = [
+          "budgets:CreateBudget",
+          "budgets:ModifyBudget",
+          "budgets:DeleteBudget",
+          "budgets:ViewBudget",
+          "budgets:DescribeBudget",
+          "budgets:ListTagsForResource",
+          "budgets:TagResource",
+          "budgets:UntagResource"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "research_workspace_permissions" {
+  role       = aws_iam_role.terraform_role.name
+  policy_arn = aws_iam_policy.research_workspace_permissions.arn
+}
+# ----------------------------------------------------------------------------
+# GitHub Actions: Anthropic key reader (PR/issue context, not just main)
+# ----------------------------------------------------------------------------
+# Smaller-scope role for the Claude Code Review and @claude action workflows,
+# which need to fetch the Anthropic API key but run on PR/issue events that
+# don't carry the `environment:production` OIDC subject claim.
+
+resource "aws_iam_role" "github_actions_anthropic_reader" {
+  name = "github-actions-anthropic-reader"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowGitHubOIDCAnyContext"
+        Effect = "Allow"
+        Principal = {
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+          StringLike = {
+            # Any workflow in this repo. The IAM policy below is the only thing
+            # this role can do, so a wider trust subject is acceptable.
+            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/proto-portal-showcase-hub:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "github_actions_anthropic_reader" {
+  name = "read-anthropic-key-only"
+  role = aws_iam_role.github_actions_anthropic_reader.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = "arn:aws:secretsmanager:us-east-1:${data.aws_caller_identity.current.account_id}:secret:portfolio-prod/anthropic-api-key*"
       }
     ]
   })

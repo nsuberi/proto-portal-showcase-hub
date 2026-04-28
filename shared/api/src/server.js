@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { aiAnalysisRoutes } from './routes/ai-analysis.js';
 import documentationRoutes from './routes/documentation.js';
+import inferenceInsightsRoutes from './routes/inference-insights.js';
+import researchWorkspaceRoutes from './routes/research-workspace.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handlers.js';
 import { logger } from './utils/logger.js';
 
@@ -32,13 +34,15 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:3001', 
   'http://localhost:3002', 
   'http://localhost:3004',
-  'http://localhost:3005', 
+  'http://localhost:3005',
+  'http://localhost:3006',
+  'http://localhost:3009',
   'http://localhost:8080',
   'http://localhost:8082'
 ];
 app.use(cors({
   origin: corsOrigins,
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Client-Key'],
   credentials: false // No cookies needed
 }));
@@ -90,6 +94,8 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/v1', aiAnalysisRoutes);
 app.use('/api/v1', documentationRoutes);
+app.use('/api/v1', inferenceInsightsRoutes);
+app.use('/api/v1/research-workspace', researchWorkspaceRoutes);
 
 // Error handling
 app.use(notFoundHandler);

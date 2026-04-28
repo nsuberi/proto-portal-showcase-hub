@@ -86,13 +86,13 @@ output "ai_evals_api_gateway_url" {
   value       = module.ai_evals.api_gateway_url
 }
 
-# Code Dojo Outputs
-output "code_dojo_ecr_repository_url" {
-  description = "Code Dojo ECR repository URL"
-  value       = module.code_dojo.ecr_repository_url
+# Research Workspace Outputs
+output "research_workspace_ecr_repository_url" {
+  description = "Research Workspace ECR repository URL"
+  value       = module.research_workspace.ecr_repository_url
 }
 
-output "code_dojo_ecs_service_name" {
-  description = "Code Dojo ECS service name"
-  value       = module.code_dojo.ecs_service_name
+output "research_workspace_ecs_service_name" {
+  description = "Research Workspace ECS service name"
+  value       = module.research_workspace.ecs_service_name
 }

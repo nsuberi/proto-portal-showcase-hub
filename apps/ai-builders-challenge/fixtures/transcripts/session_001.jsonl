@@ -1,0 +1,5 @@
+{"session_id":"sess_001","property_id":"prop_017","turn":1,"role":"user","text":"Hi, I'm asking about my property appraisal. What's my appraised value?"}
+{"session_id":"sess_001","property_id":"prop_017","turn":2,"role":"agent","text":"The appraised value for the property at 2418 SE Hawthorne Blvd is $485,000, based on three comparable sales within a few blocks."}
+{"session_id":"sess_001","property_id":"prop_017","turn":3,"role":"user","text":"Great. What year was it built?"}
+{"session_id":"sess_001","property_id":"prop_017","turn":4,"role":"agent","text":"Your home was built in 2012."}
+{"session_id":"sess_001","property_id":"prop_017","turn":5,"role":"user","text":"Thanks, that matches my paperwork."}

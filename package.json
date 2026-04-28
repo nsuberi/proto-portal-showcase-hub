@@ -22,6 +22,16 @@
     "build:documentation-explorer": "cd prototypes/documentation-explorer && npm run build",
     "dev:learning-path": "cd prototypes/learning-path && npm run dev",
     "build:learning-path": "cd prototypes/learning-path && npm run build",
+    "dev:inference-insights": "cd prototypes/inference-insights && npm run dev",
+    "build:inference-insights": "cd prototypes/inference-insights && npm run build",
+    "dev:research-workspace": "cd prototypes/research-workspace && npm run dev",
+    "build:research-workspace": "cd prototypes/research-workspace && npm run build",
+    "dev:ai-visualizer": "cd prototypes/ai-integration-visualizer && npm run dev",
+    "build:ai-visualizer": "cd prototypes/ai-integration-visualizer && npm run build",
+    "dev:island-viz": "cd prototypes/island-algorithms-visualizer && npm run dev",
+    "build:island-viz": "cd prototypes/island-algorithms-visualizer && npm run build",
+    "dev:gitnexus-benchmark": "cd prototypes/gitnexus-benchmark && npm run dev",
+    "build:gitnexus-benchmark": "cd prototypes/gitnexus-benchmark && npm run build",
     "dev:ai-builders": "cd apps/ai-builders-portal && npm run dev",
     "build:ai-builders": "cd apps/ai-builders-portal && npm run build",
     "dev:proxy": "node scripts/dev-proxy.js",
@@ -34,7 +44,9 @@
     "test:watch": "echo \"No test watch configured\"",
     "build:mcp": "yarn workspace @proto-portal/design-tokens build && yarn workspace @proto-portal/mcp-server-design-tokens build && yarn workspace @proto-portal/mcp-cli build",
     "mcp:list": "node shared/mcp-cli/dist/cli.js list",
-    "mcp:start": "node shared/mcp-cli/dist/cli.js start"
+    "mcp:start": "node shared/mcp-cli/dist/cli.js start",
+    "build:souschef": "yarn workspace @proto-portal/souschef build",
+    "souschef": "node packages/souschef/dist/cli.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -121,12 +133,20 @@
     "prototypes/home-lending-learning",
     "prototypes/documentation-explorer",
     "prototypes/learning-path",
+    "prototypes/inference-insights",
+    "prototypes/research-workspace",
+    "prototypes/ai-integration-visualizer",
+    "prototypes/island-algorithms-visualizer",
+    "prototypes/gitnexus-benchmark",
     "shared/design-tokens",
     "shared/api",
     "shared/mcp-cli",
     "shared/mcp-servers/design-tokens",
     "shared/ui-components",
-    "apps/ai-builders-portal"
+    "shared/layout-primitives",
+    "apps/ai-builders-portal",
+    "apps/ai-builders-challenge/web",
+    "packages/souschef"
   ],
   "packageManager": "yarn@4.9.2"
 }

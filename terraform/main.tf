@@ -64,6 +64,23 @@ resource "aws_s3_bucket_policy" "website" {
 }
 
 # CloudFront Function for prototype SPA routing
+# Vault path rewriter: strips /prototypes/research-workspace/vault prefix
+# so code-server (which runs at root /) receives clean paths.
+resource "aws_cloudfront_function" "vault_path_rewriter" {
+  name    = "${var.bucket_name}-vault-path-rewriter"
+  runtime = "cloudfront-js-2.0"
+  code    = <<-EOT
+function handler(event) {
+    var request = event.request;
+    var prefix = '/prototypes/research-workspace/vault';
+    if (request.uri.startsWith(prefix)) {
+        request.uri = request.uri.substring(prefix.length) || '/';
+    }
+    return request;
+}
+EOT
+}
+
 resource "aws_cloudfront_function" "prototype_router" {
   name    = "${var.bucket_name}-prototype-router"
   runtime = "cloudfront-js-1.0"
@@ -94,7 +111,7 @@ function handler(event) {
         if (pathParts.length >= 3 && !uri.includes('.')) {
             var prototypeName = pathParts[2];
             // Only handle known prototypes
-            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'ai-builders') {
+            if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' || prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' || prototypeName === 'research-workspace' || prototypeName === 'ai-builders' || prototypeName === 'ai-integration-visualizer') {
                 request.uri = '/prototypes/' + prototypeName + '/index.html';
             }
         }
@@ -226,18 +243,25 @@ EOT
 # }
 
 # AI Evals in Context module
+# Shared Anthropic API key — single source of truth in Secrets Manager.
+# Bootstrapped via z_creds/bootstrap.sh, consumed by both ai-evals ECS task and
+# the shared API Lambda (which fetches by name at runtime via AWS_SECRETS_ENABLED).
+data "aws_secretsmanager_secret" "anthropic_api_key" {
+  name = "portfolio-prod/anthropic-api-key"
+}
+
 module "ai_evals" {
   source = "./modules/ai-evals"
 
-  environment       = "prod"
-  app_name          = "ai-testing-resource"
-  anthropic_api_key = var.ai_evals_anthropic_api_key
-  certificate_arn   = aws_acm_certificate.portfolio.arn
+  environment                  = "prod"
+  app_name                     = "ai-testing-resource"
+  anthropic_api_key_secret_arn = data.aws_secretsmanager_secret.anthropic_api_key.arn
+  certificate_arn              = aws_acm_certificate.portfolio.arn
 }
 
-# Code Dojo module — co-hosted on ai-evals infrastructure
-module "code_dojo" {
-  source = "./modules/code-dojo"
+# Research Workspace module — code-server on ECS, co-hosted on ai-evals cluster
+module "research_workspace" {
+  source = "./modules/research-workspace"
 
   # Shared infrastructure from ai-evals
   vpc_id                 = module.ai_evals.vpc_id
@@ -247,17 +271,20 @@ module "code_dojo" {
   alb_https_listener_arn = module.ai_evals.alb_https_listener_arn
   alb_security_group_id  = module.ai_evals.alb_security_group_id
 
-  # Shared database
-  db_host                = module.ai_evals.rds_endpoint
-  db_port                = module.ai_evals.db_port
-  db_password_secret_arn = module.ai_evals.db_password_secret_arn
+  # EFS
+  efs_file_system_id  = aws_efs_file_system.research_workspace.id
+  efs_access_point_id = aws_efs_access_point.nathan.id
 
-  # Code Dojo secrets
-  anthropic_api_key = var.code_dojo_anthropic_api_key
-  github_token      = var.code_dojo_github_token
-  openai_api_key    = var.code_dojo_openai_api_key
-  langsmith_api_key = var.code_dojo_langsmith_api_key
-  flask_secret_key  = var.code_dojo_flask_secret_key
+  # Cognito
+  cognito_user_pool_arn       = aws_cognito_user_pool.research_workspace.arn
+  cognito_user_pool_client_id = aws_cognito_user_pool_client.research_workspace.id
+  cognito_domain              = aws_cognito_user_pool_domain.research_workspace.domain
+
+  # Claude Code uses per-user OAuth (server.js deletes ANTHROPIC_API_KEY); no
+  # server-side Anthropic key is needed.
+
+  # Security monitoring
+  alert_email = var.sandbox_alert_email
 }
 
 # CloudFront distribution
@@ -283,9 +310,9 @@ resource "aws_cloudfront_distribution" "website" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  # Code Dojo cache behavior — routes /code-dojo/* to the shared ECS ALB
+  # ALB OAuth callback — Cognito's auth redirect must reach the ALB, not S3
   ordered_cache_behavior {
-    path_pattern           = "/code-dojo/*"
+    path_pattern           = "/oauth2/*"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "ai-evals-api"
@@ -413,6 +440,72 @@ resource "aws_cloudfront_distribution" "website" {
     }
   }
 
+  # Research Workspace vault — authenticated via ALB/Cognito
+  # Full path passes through to ALB (no rewriting) — Express backend handles all vault paths
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/research-workspace/vault*"
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ai-evals-api"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+  }
+
+  # Research Workspace public gallery — static S3
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/research-workspace/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
+  # AI Integration Visualizer cache behavior
+  ordered_cache_behavior {
+    path_pattern           = "/prototypes/ai-integration-visualizer/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
+  }
+
   # AI Builders cache behavior
   ordered_cache_behavior {
     path_pattern           = "/prototypes/ai-builders/*"
@@ -456,11 +549,28 @@ resource "aws_cloudfront_distribution" "website" {
     min_ttl     = 0
     default_ttl = 3600
     max_ttl     = 86400
+
+    # Prototype router function handles:
+    # - trailing slash → append index.html
+    # - /prototypes/{name} (no slash) → rewrite to /prototypes/{name}/index.html
+    # - SPA deep-link routing within prototypes
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.prototype_router.arn
+    }
   }
 
   # Main SPA routing - redirect 404s to index.html (for main site only)
   custom_error_response {
     error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  # S3 returns 403 for directory-like paths (e.g. /prototypes/research-workspace)
+  # The CloudFront function handles rewriting these, but as a safety net:
+  custom_error_response {
+    error_code         = 403
     response_code      = 200
     response_page_path = "/index.html"
   }

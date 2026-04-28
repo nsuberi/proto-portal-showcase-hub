@@ -5,14 +5,17 @@ echo "🔨 Building AI Portfolio application..."
 
 # Setup environment
 echo "🔧 Setting up environment..."
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-nvm use 18 &> /dev/null || echo "Node 18 already active"
-corepack enable &> /dev/null || echo "Corepack already enabled"
+if [ -z "$CI" ]; then
+  # Local dev: use NVM if available
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  nvm use 18 &> /dev/null || true
+fi
+corepack enable &> /dev/null || true
 
-# Install dependencies for main project
+# Install dependencies — CI already ran install, so --immutable just validates
 echo "📦 Installing main project dependencies..."
-yarn install --immutable
+yarn install
 
 # Build main portfolio for production
 echo "🏗️ Building main portfolio..."
@@ -66,6 +69,18 @@ echo "📋 Copying Learning Path build to main dist..."
 mkdir -p dist/prototypes/learning-path
 cp -r prototypes/learning-path/dist/* dist/prototypes/learning-path/
 
+# Build Research Workspace gallery prototype
+echo "🔬 Building Research Workspace gallery..."
+yarn workspace @proto-portal/research-workspace build
+
+echo "📋 Copying Research Workspace build to main dist..."
+mkdir -p dist/prototypes/research-workspace
+cp -r prototypes/research-workspace/dist/* dist/prototypes/research-workspace/
+
+# Copy data files needed at runtime
+cp -r prototypes/research-workspace/data dist/prototypes/research-workspace/ 2>/dev/null || true
+cp -r prototypes/research-workspace/content dist/prototypes/research-workspace/ 2>/dev/null || true
+
 # Build AI Builders Portal
 echo "🏗️ Building AI Builders Portal..."
 yarn workspace @proto-portal/ai-builders-portal build
@@ -74,6 +89,53 @@ yarn workspace @proto-portal/ai-builders-portal build
 echo "📋 Copying AI Builders build to main dist..."
 mkdir -p dist/prototypes/ai-builders
 cp -r apps/ai-builders-portal/dist/* dist/prototypes/ai-builders/
+
+# Build AI Integration Visualizer
+echo "🔮 Building AI Integration Visualizer..."
+yarn workspace @proto-portal/ai-integration-visualizer build
+
+# Copy AI Integration Visualizer build to main dist directory
+echo "📋 Copying AI Integration Visualizer build to main dist..."
+mkdir -p dist/prototypes/ai-integration-visualizer
+cp -r prototypes/ai-integration-visualizer/dist/* dist/prototypes/ai-integration-visualizer/
+
+# Build Island Algorithms Visualizer
+echo "🏝️ Building Island Algorithms Visualizer..."
+yarn workspace @proto-portal/island-algorithms-visualizer build
+
+# Copy Island Algorithms Visualizer build to main dist directory
+echo "📋 Copying Island Algorithms Visualizer build to main dist..."
+mkdir -p dist/prototypes/island-algorithms-visualizer
+cp -r prototypes/island-algorithms-visualizer/dist/* dist/prototypes/island-algorithms-visualizer/
+
+# Verify copy integrity for large bundles
+echo "🔍 Verifying bundle copy integrity..."
+INTEGRITY_OK=true
+for proto_dir in dist/prototypes/*/; do
+  proto_name=$(basename "$proto_dir")
+  # Check both prototypes/ and apps/ source locations
+  source_dir="prototypes/$proto_name/dist"
+  [ -d "$source_dir" ] || source_dir="apps/$proto_name/dist"
+  [ -d "$source_dir" ] || source_dir="apps/${proto_name}-portal/dist"
+  [ -d "$source_dir" ] || continue
+  for f in "$source_dir"/assets/index-*.js; do
+    [ -f "$f" ] || continue
+    fname=$(basename "$f")
+    dst_file="$proto_dir/assets/$fname"
+    [ -f "$dst_file" ] || continue
+    src_size=$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f" 2>/dev/null)
+    dst_size=$(stat -f%z "$dst_file" 2>/dev/null || stat -c%s "$dst_file" 2>/dev/null)
+    if [ "$src_size" != "$dst_size" ]; then
+      echo "❌ ERROR: $dst_file size mismatch (expected $src_size, got $dst_size)"
+      INTEGRITY_OK=false
+    fi
+  done
+done
+if [ "$INTEGRITY_OK" = false ]; then
+  echo "❌ Bundle integrity check failed! Aborting."
+  exit 1
+fi
+echo "✅ Bundle integrity verified"
 
 # Create a prototypes index.html that redirects to ffx-skill-map
 echo "📋 Creating prototypes index redirect..."

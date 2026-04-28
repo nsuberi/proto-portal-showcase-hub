@@ -1,0 +1,14 @@
+{
+  "name": "@proto-portal/ai-builders-challenge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Downloadable 4-hour challenge for product managers: evidence-based discovery on an agentic home-lending app.",
+  "scripts": {
+    "dev": "./scripts/run_local.sh",
+    "dev:web": "yarn workspace ai-builders-challenge-web dev",
+    "build:web": "yarn workspace ai-builders-challenge-web build",
+    "test": "pytest tests/ -v",
+    "export": "python -m cli export",
+    "hash": "python -m cli hash"
+  }
+}

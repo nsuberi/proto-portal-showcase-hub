@@ -20,11 +20,26 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::671388079324:role/github-actions-anthropic-reader
+          aws-region: us-east-1
+
+      - name: Fetch Anthropic API key from Secrets Manager
+        run: |
+          KEY=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio-prod/anthropic-api-key \
+            --region us-east-1 \
+            --query SecretString --output text)
+          echo "::add-mask::$KEY"
+          echo "ANTHROPIC_API_KEY=$KEY" >> $GITHUB_ENV
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'

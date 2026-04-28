@@ -112,6 +112,24 @@ npm run dev
 
 The API server runs on port 3004. Prototypes work without it but AI features will be unavailable.
 
+### Code Intelligence (GitNexus)
+
+This repo uses [GitNexus](https://github.com/abhigyanpatwari/GitNexus) to maintain a local knowledge graph for AI-assisted development. Claude Code uses it to understand call chains, dependencies, and blast radius across the monorepo.
+
+**First-time setup** (run once after cloning):
+
+```bash
+npx gitnexus analyze
+```
+
+**Re-index after significant changes** (new prototypes, major refactors):
+
+```bash
+npx gitnexus analyze --force
+```
+
+The index is stored in `.gitnexus/` (gitignored) and the MCP server is wired into `.mcp.json` — it starts automatically when Claude Code loads the project.
+
 ### AI Evals App (Flask) — First-Time Setup
 
 Before `dev-start.sh` can run the AI Evals app, create the `.env` file:
