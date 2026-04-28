@@ -258,11 +258,11 @@ const Portfolio = () => {
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
-              Explore the Future of Learning with AI
+              The Future is AI Native
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Create AI-powered interactions. Bring people together.<br />
-              Enhance human connection. Grow and access opportunities.
+              Build on your strenghts. Bring people together.<br />
+              Create AI-powered interactions. Grow and access opportunities.
             </p>
           </div>
           <Button
@@ -288,9 +288,10 @@ const Portfolio = () => {
               Explore by Theme
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Like a thesaurus organizes words by meaning rather than spelling,
-              these prototypes are grouped by the questions they explore — not
-              the order I built them.
+              In her book "Exophony: Voyages Outside The Mother Tongue" by Yoko Tawada, Yoko presents a series of beautiful and witty essays.
+              In one she describes how a thesaurus is unique from a dictionary, organizing words by meaning rather than spelling.
+              These prototypes are part of my explorations of AI capabilities, platforms to organize people's personal discovery and growth, and design. 
+              They are grouped Thesauratically by the questions they explore.
             </p>
           </div>
 
@@ -325,15 +326,12 @@ const Portfolio = () => {
             </div>
             <div className="w-full md:w-2/3 text-center md:text-left">
               <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-                As an experienced educator and lifelong learner, I'm passionate about
-                helping others learn and grow. I explore how AI can create meaningful 
-                interactions between people through thoughtful design of learning experiences.
+                I'm passionate about helping others learn and grow, and building things that matter. 
+                I explore how AI can create meaningful interactions for people and communities.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Each prototype in this portfolio investigates ways technology can enhance
-                the human experience by helping to reveal opportunities for personal and communal growth.
-                Immersive storytelling that bridges digital and physical worlds
-                to create real opportunity for people and their communities is the future of learning.
+                I see immersive storytelling that bridges digital and physical worlds
+                to create real opportunity for people and their communities as the future of learning.
               </p>
             </div>
           </div>
@@ -347,8 +345,8 @@ const Portfolio = () => {
             Let's Connect
           </h2>
           <p className="mobile-text text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-mobile-safe">
-            Interested in exploring how AI can enhance human connection and the future of learning and education?<br />
-            Let's discuss ideas and collaborate!
+            Interested in exploring how AI can enhance human connection and the future of learning, education, and creation?<br />
+            Let's collaborate!
           </p>
 
           <div className="btn-group-mobile max-w-none sm:max-w-fit mx-auto">
