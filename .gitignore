@@ -55,3 +55,6 @@ test-results/
 
 # Vendored static assets (downloaded dependencies, not source)
 apps/ai-evals-in-context/ai-testing-resource/static/vendor/
+
+# GitNexus knowledge graph index (local only)
+.gitnexus/
