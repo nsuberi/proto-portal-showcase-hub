@@ -45,7 +45,7 @@ resource "aws_iam_role" "terraform_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/proto-portal-showcase-hub:environment:production"
+            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/ai-prototype-hub:environment:production"
           }
         }
       }
@@ -513,7 +513,7 @@ resource "aws_iam_role" "github_actions_anthropic_reader" {
           StringLike = {
             # Any workflow in this repo. The IAM policy below is the only thing
             # this role can do, so a wider trust subject is acceptable.
-            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/proto-portal-showcase-hub:*"
+            "token.actions.githubusercontent.com:sub" = "repo:nsuberi/ai-prototype-hub:*"
           }
         }
       }
