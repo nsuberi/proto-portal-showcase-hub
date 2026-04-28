@@ -1,0 +1,7 @@
+{"session_id":"sess_008","property_id":"prop_061","turn":1,"role":"user","text":"Tell me about my property."}
+{"session_id":"sess_008","property_id":"prop_061","turn":2,"role":"agent","text":"Your property is a three bedroom, two bathroom Craftsman in SE Portland, built in 2012."}
+{"session_id":"sess_008","property_id":"prop_061","turn":3,"role":"user","text":"Could you repeat that?"}
+{"session_id":"sess_008","property_id":"prop_061","turn":4,"role":"agent","text":"Your property is a three bedroom, two bathroom Craftsman in SE Portland, built in 2012."}
+{"session_id":"sess_008","property_id":"prop_061","turn":5,"role":"user","text":"Is that really my property? Can you say the address?"}
+{"session_id":"sess_008","property_id":"prop_061","turn":6,"role":"agent","text":"2418 SE Hawthorne Blvd."}
+{"session_id":"sess_008","property_id":"prop_061","turn":7,"role":"user","text":"Hmm. I'll come back later."}

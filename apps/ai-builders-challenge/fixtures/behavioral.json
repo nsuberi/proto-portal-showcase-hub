@@ -1,0 +1,66 @@
+{
+  "sess_001": {
+    "property_id": "prop_017",
+    "retrieval_count": 2,
+    "repeated_question_rate": 0.0,
+    "avg_turn_latency_ms": 820,
+    "abandonment_flag": false,
+    "satisfaction_proxy": 0.92
+  },
+  "sess_002": {
+    "property_id": "prop_042",
+    "retrieval_count": 4,
+    "repeated_question_rate": 0.40,
+    "avg_turn_latency_ms": 1180,
+    "abandonment_flag": true,
+    "satisfaction_proxy": 0.18
+  },
+  "sess_003": {
+    "property_id": "prop_033",
+    "retrieval_count": 2,
+    "repeated_question_rate": 0.0,
+    "avg_turn_latency_ms": 750,
+    "abandonment_flag": false,
+    "satisfaction_proxy": 0.95
+  },
+  "sess_004": {
+    "property_id": "prop_104",
+    "retrieval_count": 5,
+    "repeated_question_rate": 0.57,
+    "avg_turn_latency_ms": 1340,
+    "abandonment_flag": true,
+    "satisfaction_proxy": 0.11
+  },
+  "sess_005": {
+    "property_id": "prop_055",
+    "retrieval_count": 2,
+    "repeated_question_rate": 0.0,
+    "avg_turn_latency_ms": 790,
+    "abandonment_flag": false,
+    "satisfaction_proxy": 0.94
+  },
+  "sess_006": {
+    "property_id": "prop_078",
+    "retrieval_count": 3,
+    "repeated_question_rate": 0.33,
+    "avg_turn_latency_ms": 1090,
+    "abandonment_flag": true,
+    "satisfaction_proxy": 0.22
+  },
+  "sess_007": {
+    "property_id": "prop_091",
+    "retrieval_count": 4,
+    "repeated_question_rate": 0.50,
+    "avg_turn_latency_ms": 950,
+    "abandonment_flag": false,
+    "satisfaction_proxy": 0.41
+  },
+  "sess_008": {
+    "property_id": "prop_061",
+    "retrieval_count": 3,
+    "repeated_question_rate": 0.33,
+    "avg_turn_latency_ms": 880,
+    "abandonment_flag": false,
+    "satisfaction_proxy": 0.48
+  }
+}

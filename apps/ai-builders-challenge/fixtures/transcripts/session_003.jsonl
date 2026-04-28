@@ -1,0 +1,5 @@
+{"session_id":"sess_003","property_id":"prop_033","turn":1,"role":"user","text":"What's the appraised value of my home?"}
+{"session_id":"sess_003","property_id":"prop_033","turn":2,"role":"agent","text":"Your home at 1809 42nd Ave E in Seattle's Madison Park appraised at $1,420,000."}
+{"session_id":"sess_003","property_id":"prop_033","turn":3,"role":"user","text":"Perfect. And the year built?"}
+{"session_id":"sess_003","property_id":"prop_033","turn":4,"role":"agent","text":"1998, with substantial updates in 2019."}
+{"session_id":"sess_003","property_id":"prop_033","turn":5,"role":"user","text":"Thank you."}

@@ -1,6 +1,6 @@
 ---
 name: new-prototype
-description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', or any request to create something new in the portfolio."
+description: "Launch checklist and integration workflow for adding a new prototype to the portfolio monorepo. Use when the user wants to: (1) Start a new prototype or portfolio item, (2) Dream up or brainstorm a new project, (3) Plan a new interactive demo, (4) Add a new app to the monorepo, (5) Publish any new content, feature, or experience to the production site. Triggers include phrases like 'new prototype', 'new project', 'new portfolio item', 'add a new app', 'I have an idea for', 'let's build', 'I want an app on my site', 'publish to the site', 'create a gallery', 'add to my portfolio', or any description of a new publicly-visible experience on portfolio.cookinupideas.com — even if the user doesn't use the word 'prototype'."
 ---
 
 # New Prototype Launch Skill
@@ -162,15 +162,35 @@ mkdir -p dist/prototypes/{name}
 cp -r prototypes/{name}/dist/* dist/prototypes/{name}/
 ```
 
-#### CloudFront Function Update
+#### CloudFront / Terraform Updates
 
-In `terraform/main.tf`, add the new prototype name to the CloudFront Function's list:
+In `terraform/main.tf`, TWO changes are required:
+
+**1. Add prototype to the CloudFront Function's known-prototype list:**
 
 ```javascript
 if (prototypeName === 'ffx-skill-map' || prototypeName === 'home-lending-learning' ||
     prototypeName === 'documentation-explorer' || prototypeName === 'learning-path' ||
     prototypeName === '{name}') {
 ```
+
+**2. Add an `ordered_cache_behavior` block** for the new prototype (copy an existing one, change `path_pattern`):
+
+```terraform
+ordered_cache_behavior {
+  path_pattern           = "/prototypes/{name}/*"
+  allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+  cached_methods         = ["GET", "HEAD"]
+  target_origin_id       = "S3-${var.bucket_name}"
+  ...
+  function_association {
+    event_type   = "viewer-request"
+    function_arn = aws_cloudfront_function.prototype_router.arn
+  }
+}
+```
+
+**Important:** The `/*` path pattern does NOT match `/prototypes/{name}` (no trailing slash). The `default_cache_behavior` also has the CloudFront function attached to handle this case — do NOT remove it. Both the ordered behavior and the default behavior need the function for slash-agnostic routing to work.
 
 ### Phase 6: Write AGENTS.md
 

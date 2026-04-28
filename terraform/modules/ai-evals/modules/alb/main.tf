@@ -10,6 +10,9 @@ resource "aws_lb" "main" {
 
   enable_deletion_protection = false  # For dev - set to true for production
 
+  # 5 minute idle timeout for WebSocket connections (OAuth auth flow, chat streaming)
+  idle_timeout = 300
+
   tags = {
     Name = "${var.name_prefix}-alb"
   }

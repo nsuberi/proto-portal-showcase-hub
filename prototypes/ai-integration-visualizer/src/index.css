@@ -1,0 +1,149 @@
+@import "./design-system/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-white);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ── Desktop sidebar wrappers ──
+   alignItems: stretch on the parent makes these match
+   the SVG's rendered height. overflow-y lets them scroll. */
+.sidebar-desktop {
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sidebar-desktop .node-list-panel {
+  width: 160px;
+  height: auto;
+}
+
+/* ── Desktop drawer wrapper ──
+   Absolute-positioned, height set by JS to match SVG. */
+.drawer-desktop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 380px;
+  z-index: 10;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Mobile-only elements: hidden on desktop ── */
+.mobile-panel-toggles,
+.mobile-panel-sheet,
+.drawer-mobile {
+  display: none;
+}
+
+/* ═══════════════════════════════════════
+   MOBILE (< 768px)
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Stack controls vertically */
+  .controls-row {
+    flex-direction: column !important;
+  }
+  .controls-row > div {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .controls-row .legend-panel {
+    display: none;
+  }
+
+  /* Hide desktop sidebars and drawer */
+  .sidebar-desktop {
+    display: none;
+  }
+  .drawer-desktop {
+    display: none;
+  }
+
+  /* Show mobile panel toggle buttons */
+  .mobile-panel-toggles {
+    display: flex !important;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  /* Mobile sliding panel (remaining / converted) */
+  .mobile-panel-sheet {
+    display: flex !important;
+    flex-direction: column;
+    max-height: 50vh;
+    border-bottom: 1px solid var(--color-line);
+    background: rgba(8, 8, 12, 0.97);
+  }
+  .mobile-panel-sheet .node-list-panel {
+    width: 100% !important;
+    height: auto !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  /* Mobile node detail drawer — bottom sheet */
+  .drawer-mobile {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 70vh;
+    z-index: 20;
+    overflow-y: auto;
+    border-top: 1px solid var(--color-line);
+    border-radius: 12px 12px 0 0;
+    background: rgba(8, 8, 12, 0.97);
+  }
+  .drawer-mobile .node-detail-drawer {
+    border-left: none !important;
+    height: auto !important;
+  }
+
+  /* Stack bottom info */
+  .bottom-info {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .bottom-info .insight-panel {
+    width: 100% !important;
+  }
+
+  /* Progress bar wraps on small screens */
+  .stage-progress-bar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .stage-progress-bar > div {
+    border-right: none !important;
+    min-width: 45% !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   TABLET (769–1024px)
+   ═══════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar-desktop .node-list-panel {
+    width: 130px !important;
+  }
+  .drawer-desktop {
+    width: 320px;
+  }
+}

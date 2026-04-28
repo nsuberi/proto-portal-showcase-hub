@@ -1,0 +1,7 @@
+{"session_id":"sess_002","property_id":"prop_042","turn":1,"role":"user","text":"Can you tell me the appraised value of my property?"}
+{"session_id":"sess_002","property_id":"prop_042","turn":2,"role":"agent","text":"The appraised value is $485,000 for the property at 2418 SE Hawthorne Blvd."}
+{"session_id":"sess_002","property_id":"prop_042","turn":3,"role":"user","text":"Wait, my address is on Burnside, not Hawthorne. That's not my property."}
+{"session_id":"sess_002","property_id":"prop_042","turn":4,"role":"agent","text":"Apologies, let me look that up again. Your property at 3105 NE Burnside St appraised at $485,000."}
+{"session_id":"sess_002","property_id":"prop_042","turn":5,"role":"user","text":"You said the same number. Is that right? I thought mine was different."}
+{"session_id":"sess_002","property_id":"prop_042","turn":6,"role":"agent","text":"I apologize for the confusion. Let me re-retrieve the record."}
+{"session_id":"sess_002","property_id":"prop_042","turn":7,"role":"user","text":"Never mind, I'll call my loan officer."}

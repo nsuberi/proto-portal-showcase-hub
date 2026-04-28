@@ -68,6 +68,14 @@ variable "ai_evals_anthropic_api_key" {
   default     = ""
 }
 
+# Research Workspace Configuration
+variable "research_workspace_anthropic_api_key" {
+  description = "Anthropic API key for Research Workspace Claude chat"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Code Dojo Configuration
 variable "code_dojo_anthropic_api_key" {
   description = "Anthropic API key for Code Dojo"
@@ -102,4 +110,11 @@ variable "code_dojo_flask_secret_key" {
   type        = string
   sensitive   = true
   default     = ""
+}
+
+# Sandbox security monitoring
+variable "sandbox_alert_email" {
+  description = "Email for sandbox security alerts and budget notifications"
+  type        = string
+  default     = "nsuberi@gmail.com"
 }

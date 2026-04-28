@@ -96,3 +96,14 @@ output "code_dojo_ecs_service_name" {
   description = "Code Dojo ECS service name"
   value       = module.code_dojo.ecs_service_name
 }
+
+# Research Workspace Outputs
+output "research_workspace_ecr_repository_url" {
+  description = "Research Workspace ECR repository URL"
+  value       = module.research_workspace.ecr_repository_url
+}
+
+output "research_workspace_ecs_service_name" {
+  description = "Research Workspace ECS service name"
+  value       = module.research_workspace.ecs_service_name
+}

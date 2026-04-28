@@ -1,0 +1,98 @@
+[
+  {
+    "property_id": "prop_017",
+    "address": "2418 SE Hawthorne Blvd, Portland OR 97214",
+    "text": "Charming 3 bedroom, 2 bathroom Craftsman in Portland's SE Hawthorne district. Built in 2012. Recently remodeled kitchen with quartz counters and shaker cabinets. Hardwood floors throughout the main level. Detached 1-car garage. Fenced backyard with mature landscaping. Appraisal draws on three nearby comps with similar square footage and year built.",
+    "appraised_value": 485000,
+    "year_built": 2012,
+    "comps": [
+      {"address": "2390 SE Hawthorne Blvd", "value": 478000},
+      {"address": "2444 SE Belmont St", "value": 491000},
+      {"address": "2402 SE Division St", "value": 482000}
+    ]
+  },
+  {
+    "property_id": "prop_042",
+    "address": "3105 NE Burnside St, Portland OR 97232",
+    "text": "Three bedroom, two bathroom Craftsman-influenced home in NE Portland's Laurelhurst edge. Built in 2014. Open floor plan with hardwood floors and a renovated kitchen featuring quartz counters. Single-car garage. Landscaped backyard. Appraised using three comparable sales within one mile, all built between 2010 and 2015.",
+    "appraised_value": 492000,
+    "year_built": 2014,
+    "comps": [
+      {"address": "3088 NE Burnside St", "value": 487000},
+      {"address": "3210 NE Couch St", "value": 495000},
+      {"address": "3162 NE Glisan St", "value": 490000}
+    ]
+  },
+  {
+    "property_id": "prop_033",
+    "address": "1809 42nd Ave E, Seattle WA 98112",
+    "text": "Four bedroom, three bathroom traditional two-story in Seattle's Madison Park. Built in 1998, extensively updated 2019. Territorial view of Lake Washington. Finished basement with media room. Two-car attached garage. Appraisal uses three high-end comps reflecting the neighborhood premium.",
+    "appraised_value": 1420000,
+    "year_built": 1998,
+    "comps": [
+      {"address": "1847 42nd Ave E", "value": 1395000},
+      {"address": "1912 40th Ave E", "value": 1445000},
+      {"address": "1788 43rd Ave E", "value": 1410000}
+    ]
+  },
+  {
+    "property_id": "prop_055",
+    "address": "1420 NW Lovejoy St #306, Portland OR 97209",
+    "text": "One bedroom, one bathroom condominium in Portland's Pearl District. Built in 2008. Floor-to-ceiling windows with city views. Building amenities include fitness center and rooftop deck. No parking space included; paid street parking nearby.",
+    "appraised_value": 310000,
+    "year_built": 2008,
+    "comps": [
+      {"address": "1420 NW Lovejoy St #412", "value": 318000},
+      {"address": "1310 NW Everett St #204", "value": 298000},
+      {"address": "1500 NW Overton St #509", "value": 324000}
+    ]
+  },
+  {
+    "property_id": "prop_061",
+    "address": "7822 N Lombard St, Portland OR 97203",
+    "text": "Two bedroom, one bathroom bungalow in Portland's St Johns neighborhood. Built in 1942, cosmetic updates 2020. Original hardwood floors under carpet per disclosure. Detached single-car garage. Deep lot with alley access. Appraisal notes limited comparable inventory in the immediate area.",
+    "appraised_value": 395000,
+    "year_built": 1942,
+    "comps": [
+      {"address": "7744 N Lombard St", "value": 387000},
+      {"address": "7910 N Burlington Ave", "value": 402000},
+      {"address": "7680 N Fessenden St", "value": 389000}
+    ]
+  },
+  {
+    "property_id": "prop_078",
+    "address": "4433 NE 33rd Ave, Portland OR 97211",
+    "text": "Three bedroom, two bathroom Cape Cod in Portland's Beaumont-Wilshire. Built in 1948, addition in 2011. Updated kitchen and primary bath. Two-car garage with workshop space. Mature landscaping with drip irrigation. Appraisal based on three Cape Cod / Tudor-influenced comps in Beaumont.",
+    "appraised_value": 625000,
+    "year_built": 1948,
+    "comps": [
+      {"address": "4488 NE 32nd Ave", "value": 618000},
+      {"address": "4502 NE 34th Ave", "value": 635000},
+      {"address": "4387 NE Alameda St", "value": 622000}
+    ]
+  },
+  {
+    "property_id": "prop_091",
+    "address": "11208 SE 65th Dr, Happy Valley OR 97086",
+    "text": "Four bedroom, two and a half bathroom contemporary in Happy Valley. Built in 2018. Open great room, gourmet kitchen with gas range and island seating. Primary suite on main level. Two-car attached garage. Covered back patio. HOA covers common area landscaping.",
+    "appraised_value": 715000,
+    "year_built": 2018,
+    "comps": [
+      {"address": "11199 SE 65th Dr", "value": 702000},
+      {"address": "11270 SE 64th Ln", "value": 728000},
+      {"address": "11150 SE 66th Dr", "value": 710000}
+    ]
+  },
+  {
+    "property_id": "prop_104",
+    "address": "2201 N Williams Ave, Portland OR 97227",
+    "text": "Three bedroom, two bathroom modern row home in Portland's Eliot neighborhood. Built in 2013. Three levels with rooftop deck. Quartz counters and hardwood floors. Tandem two-car garage. Small fenced patio. Appraised using three similar row-home comps built between 2012 and 2016.",
+    "appraised_value": 498000,
+    "year_built": 2013,
+    "comps": [
+      {"address": "2188 N Williams Ave", "value": 489000},
+      {"address": "2244 N Mississippi Ave", "value": 505000},
+      {"address": "2310 N Vancouver Ave", "value": 493000}
+    ]
+  }
+]

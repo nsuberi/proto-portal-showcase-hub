@@ -23,6 +23,14 @@ const Portfolio = () => {
       status: "Live Demo Available",
     },
     {
+      title: "Research Workspace: AI-Powered Knowledge Platform",
+      description:
+        "A multi-user research platform with a public gallery and authenticated workspaces. Set learning intentions to have Claude Code research arXiv papers, then synthesize findings into cross-article narratives and architecture diagrams. Built with code-server, Foam, and Claude Code on ECS Fargate with per-user EFS vaults and Cognito authentication.",
+      link: "/prototypes/research-workspace/",
+      tags: ["Research Platform", "Claude Code", "Knowledge Management", "Automated Research"],
+      status: "Live Demo Available",
+    },
+    {
       title: "Your Learning Adventure Map",
       description:
         "Ready to level up as a team? Set shared goals, share your personal growth dreams, and let AI be your career compass! Inspired by Final Fantasy X's Skill Sphere Grid, this interactive map helps you discover the perfect next skills to master, connects you with ideal mentors, and shows you who you could guide. It's like having a career GPS that knows where your team wants to go AND where your heart wants to grow. Adventure awaits!",
@@ -44,6 +52,14 @@ const Portfolio = () => {
         "Get a behind-the-scenes peek at the home loan journey! Explore interactive process maps, discover who's involved at each step, and learn what documents you'll need. Test your knowledge with fun quiz cards. For educational purposes only - your actual mortgage adventure may vary!",
       link: "/prototypes/home-lending-learning/",
       tags: ["Education", "Financial Services", "Process Flow", "Knowledge Testing"],
+      status: "Live Demo Available",
+    },
+    {
+      title: "AI Integration Strategy Visualizer",
+      description:
+        "A leadership communication tool that visualizes three organizational strategies for integrating AI into existing business systems. Animated 3D sphere constellations show how different team structures operate on the same data pipeline, with progressive disclosure into the before/after data model at each stage.",
+      link: "/prototypes/ai-integration-visualizer/",
+      tags: ["AI Strategy", "Data Pipeline", "Visualization", "Organization Design"],
       status: "Live Demo Available",
     },
   ];
