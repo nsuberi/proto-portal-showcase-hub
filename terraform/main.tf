@@ -252,31 +252,6 @@ module "ai_evals" {
   certificate_arn   = aws_acm_certificate.portfolio.arn
 }
 
-# Code Dojo module — co-hosted on ai-evals infrastructure
-module "code_dojo" {
-  source = "./modules/code-dojo"
-
-  # Shared infrastructure from ai-evals
-  vpc_id                 = module.ai_evals.vpc_id
-  public_subnet_ids      = module.ai_evals.public_subnet_ids
-  ecs_cluster_arn        = module.ai_evals.ecs_cluster_arn
-  ecs_security_group_id  = module.ai_evals.ecs_security_group_id
-  alb_https_listener_arn = module.ai_evals.alb_https_listener_arn
-  alb_security_group_id  = module.ai_evals.alb_security_group_id
-
-  # Shared database
-  db_host                = module.ai_evals.rds_endpoint
-  db_port                = module.ai_evals.db_port
-  db_password_secret_arn = module.ai_evals.db_password_secret_arn
-
-  # Code Dojo secrets
-  anthropic_api_key = var.code_dojo_anthropic_api_key
-  github_token      = var.code_dojo_github_token
-  openai_api_key    = var.code_dojo_openai_api_key
-  langsmith_api_key = var.code_dojo_langsmith_api_key
-  flask_secret_key  = var.code_dojo_flask_secret_key
-}
-
 # Research Workspace module — code-server on ECS, co-hosted on ai-evals cluster
 module "research_workspace" {
   source = "./modules/research-workspace"
@@ -331,19 +306,6 @@ resource "aws_cloudfront_distribution" "website" {
   # ALB OAuth callback — Cognito's auth redirect must reach the ALB, not S3
   ordered_cache_behavior {
     path_pattern           = "/oauth2/*"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "ai-evals-api"
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-
-    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-  }
-
-  # Code Dojo cache behavior — routes /code-dojo/* to the shared ECS ALB
-  ordered_cache_behavior {
-    path_pattern           = "/code-dojo/*"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "ai-evals-api"
