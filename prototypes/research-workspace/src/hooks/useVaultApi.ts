@@ -89,6 +89,31 @@ export function useVaultFile(filePath: string | null) {
   return { content, loading, error, refetch };
 }
 
+/** A single hit returned by GET /api/vault/search?q= */
+export interface VaultSearchResult {
+  path: string;
+  snippet: string;
+}
+
+/**
+ * Full-text search across the vault's markdown files.
+ * Returns matching files with a surrounding snippet.
+ */
+export async function searchVault(
+  query: string,
+  signal?: AbortSignal
+): Promise<VaultSearchResult[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const res = await fetch(
+    apiUrl(`/api/vault/search?q=${encodeURIComponent(trimmed)}`),
+    { signal }
+  );
+  if (!res.ok) throw new Error(`Search failed: HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.results ?? []) as VaultSearchResult[];
+}
+
 /** Save (PUT) file content. */
 export async function saveVaultFile(
   filePath: string,
