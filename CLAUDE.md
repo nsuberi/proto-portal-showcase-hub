@@ -24,7 +24,6 @@ Portfolio monorepo: interactive prototypes (React/Vite) + AI Evals app (Flask/EC
 | Research Workspace | 3009 | `/prototypes/research-workspace/` |
 | AI Visualizer | 3010 | `/prototypes/ai-integration-visualizer/` |
 | Island Algorithms | 3012 | `/prototypes/island-algorithms-visualizer/` |
-| GitNexus Benchmark | 3013 | `/prototypes/gitnexus-benchmark/` |
 | AI Evals (Flask) | 5000 | `/prototypes/ai-evals/` |
 | Neo4j | 7474/7687 | - |
 
@@ -77,12 +76,23 @@ AI Evals tests: see `apps/ai-evals-in-context/.claude/CLAUDE.md`
 ./scripts/deploy-site.sh        # Site content only
 ```
 
-**IAM Role:** Local deploys require assuming the `terraform-cooking-up-ideas` role first:
+**IAM Role:** Local deploys assume the `terraform-cooking-up-ideas` role via a named AWS CLI profile. The CLI assumes the role automatically on every call — **credentials are never printed to stdout, so they never land in shell history or agent transcripts.**
+
+One-time setup (your `nsuberi` IAM user keys live only in `~/.aws/credentials` under the `default` profile; the secret value is never typed on the command line):
 ```bash
-eval $(aws sts assume-role --role-arn "arn:aws:iam::671388079324:role/terraform-cooking-up-ideas" \
-  --role-session-name "deploy-session" --output json \
-  | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')")
+aws configure                        # enter the nsuberi access key + secret ONCE; stored in ~/.aws/credentials
+aws configure set role_arn       arn:aws:iam::671388079324:role/terraform-cooking-up-ideas --profile deploy
+aws configure set source_profile default      --profile deploy
+aws configure set region         us-east-1     --profile deploy
 ```
+
+Per session — just select the profile, then run any `aws`/`terraform` command. No secrets in output:
+```bash
+export AWS_PROFILE=deploy
+aws sts get-caller-identity          # verifies; the CLI assumes the role under the hood
+```
+
+> ⚠️ **NEVER** use `eval $(aws sts assume-role ... | python3 -c "print('export AWS_SECRET_ACCESS_KEY=...')")` or otherwise echo/`export` raw credential values — that writes the live secret into the transcript. `AWS_PROFILE` also fixes the "creds don't persist between shells" problem, since the role is re-assumed automatically on each invocation. A PreToolUse guard hook (`.claude/hooks/guard-secrets.sh`) blocks credential-leaking commands.
 
 **ARM64:** ECS uses Graviton. Do NOT add `--platform linux/amd64` to Docker builds. CI uses ARM64 runners.
 
@@ -99,47 +109,3 @@ Use breadboarding before building new features. Skill: `.claude/skills/breadboar
 ## Doc Explorer Sync
 
 Keep `prototypes/documentation-explorer/src/data/documentsData.ts` in sync when changing skills, MCP servers, or significant memories. Categories: amber=memory, violet=skill, blue=MCP tool, teal=concept.
-
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
-
-This project is indexed by GitNexus as **proto-portal-showcase-hub** (12913 symbols, 18372 relationships, 208 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
-
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
-
-## Always Do
-
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
-
-## Never Do
-
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/proto-portal-showcase-hub/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/proto-portal-showcase-hub/clusters` | All functional areas |
-| `gitnexus://repo/proto-portal-showcase-hub/processes` | All execution flows |
-| `gitnexus://repo/proto-portal-showcase-hub/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-<!-- gitnexus:end -->

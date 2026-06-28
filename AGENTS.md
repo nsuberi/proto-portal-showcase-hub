@@ -162,6 +162,19 @@ When the user starts dreaming up a new project, this skill provides the full int
 
 Each prototype has its own `AGENTS.md` with prototype-specific guidance. Read it before working on that prototype.
 
+### Visual Verification (ALWAYS use Playwright)
+
+Whenever a task involves the visuals — a layout/styling bug, a UI change, "this looks wrong", "the X doesn't render right", or confirming a CSS/layout fix — **do not reason about the rendered result from the source alone, and do not use raw headless Chrome.** Drive the running app with Playwright, screenshot it, and read the screenshot back.
+
+Playwright is already set up: `@playwright/test` is hoisted to the root `node_modules`, browsers are installed, and each prototype has a `playwright.config.ts` with e2e specs.
+
+Quick visual check workflow:
+1. Start the dev server (`yarn workspace @proto-portal/<prototype> dev`) if it isn't already up; note the actual port from the Vite output (it auto-increments when the default is taken).
+2. Screenshot the page: `node scripts/screenshot.mjs <url> <outfile>` (run from repo root). Add `--full` for full-page, `--width/--height` to test responsive/mobile breakpoints.
+3. `Read` the screenshot to inspect the actual rendered layout, then iterate.
+
+Why Playwright over raw `chrome --headless --screenshot`: it waits for `networkidle`, so client-side fetches and WebSocket state settle before capture (e.g. you see "Connected", not a transient "Disconnected"), giving an accurate picture of the real UX.
+
 ## Sculptor (AI Agent Sandbox) Workflow
 
 When working with Sculptor, dev servers inside the sandbox aren't directly accessible from the browser.
@@ -171,47 +184,3 @@ When working with Sculptor, dev servers inside the sandbox aren't directly acces
 **Sync to Local**: Pull completed changes from the sculptor task branch, then run locally.
 
 **Build Verification**: Agent can run `yarn build:{prototype}` inside the sandbox to check for compilation errors without visual verification.
-
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
-
-This project is indexed by GitNexus as **proto-portal-showcase-hub** (12913 symbols, 18372 relationships, 208 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
-
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
-
-## Always Do
-
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
-
-## Never Do
-
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/proto-portal-showcase-hub/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/proto-portal-showcase-hub/clusters` | All functional areas |
-| `gitnexus://repo/proto-portal-showcase-hub/processes` | All execution flows |
-| `gitnexus://repo/proto-portal-showcase-hub/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-<!-- gitnexus:end -->
