@@ -1,36 +1,10 @@
-output "api_gateway_url" {
-  description = "API Gateway endpoint URL"
-  value       = module.api_gateway.api_endpoint
-}
-
-output "api_gateway_domain" {
-  description = "API Gateway domain name (for CloudFront origin configuration)"
-  value       = module.api_gateway.api_domain
-}
-
-output "ecr_repository_url" {
-  description = "ECR repository URL for Docker images"
-  value       = module.ecs.ecr_repository_url
-}
+# NOTE: The AI Evals Flask app, its RDS database, API Gateway, and ECR repo
+# were retired on 2026-06-28 to stop hosting costs. The outputs below are the
+# shared infrastructure still consumed by the Research Workspace service.
 
 output "ecs_cluster_name" {
   description = "ECS cluster name"
   value       = module.ecs.cluster_name
-}
-
-output "ecs_service_name" {
-  description = "ECS service name"
-  value       = module.ecs.service_name
-}
-
-output "rds_endpoint" {
-  description = "RDS PostgreSQL endpoint"
-  value       = module.database.db_endpoint
-}
-
-output "cloudwatch_log_group" {
-  description = "CloudWatch log group for ECS tasks"
-  value       = module.ecs.log_group_name
 }
 
 output "vpc_id" {
@@ -39,7 +13,7 @@ output "vpc_id" {
 }
 
 output "alb_dns_name" {
-  description = "ALB DNS name (for CloudFront origin)"
+  description = "ALB DNS name (for CloudFront origin + Cognito OAuth callback)"
   value       = module.alb.alb_dns_name
 }
 
@@ -72,14 +46,4 @@ output "public_subnet_ids" {
 output "ecs_security_group_id" {
   description = "ECS security group ID"
   value       = module.networking.ecs_security_group_id
-}
-
-output "db_port" {
-  description = "RDS database port"
-  value       = module.database.db_port
-}
-
-output "db_password_secret_arn" {
-  description = "ARN of Secrets Manager secret for DB password"
-  value       = module.database.db_password_secret_arn
 }
