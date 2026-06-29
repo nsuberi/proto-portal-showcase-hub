@@ -22,6 +22,14 @@ data "aws_secretsmanager_secret_version" "github_oauth_client_secret" {
   secret_id = "research-workspace-prod/github-oauth-client-secret"
 }
 
+# The Claude Agent SDK authenticates with a research-workspace-scoped operator
+# key. The secret is populated from prototypes/research-workspace/.env via
+# scripts/research-workspace-sync-key.sh (run BEFORE plan/apply); its ARN is
+# injected into the ECS task as ANTHROPIC_API_KEY.
+data "aws_secretsmanager_secret" "research_workspace_anthropic_api_key" {
+  name = "research-workspace-prod/anthropic-api-key"
+}
+
 # --- Cognito User Pool ---
 
 resource "aws_cognito_user_pool" "research_workspace" {
@@ -223,6 +231,12 @@ resource "aws_dynamodb_table" "research_workspace" {
 
   point_in_time_recovery {
     enabled = true
+  }
+
+  # Quota items (pk=USER#<sub>/ORG, sk=DAY#<date>) self-expire via this attribute.
+  ttl {
+    attribute_name = "expiresAt"
+    enabled        = true
   }
 
   tags = {

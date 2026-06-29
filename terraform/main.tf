@@ -280,8 +280,13 @@ module "research_workspace" {
   cognito_user_pool_client_id = aws_cognito_user_pool_client.research_workspace.id
   cognito_domain              = aws_cognito_user_pool_domain.research_workspace.domain
 
-  # Claude Code uses per-user OAuth (server.js deletes ANTHROPIC_API_KEY); no
-  # server-side Anthropic key is needed.
+  # Agent auth + quota: single operator ANTHROPIC_API_KEY (commercial API),
+  # injected from Secrets Manager; per-user budget tracked in the DynamoDB table.
+  quota_table_name             = aws_dynamodb_table.research_workspace.name
+  quota_table_arn              = aws_dynamodb_table.research_workspace.arn
+  anthropic_api_key_secret_arn = data.aws_secretsmanager_secret.research_workspace_anthropic_api_key.arn
+  allowlist                    = var.research_workspace_allowlist
+  enable_scheduler             = var.research_workspace_enable_scheduler
 
   # Security monitoring
   alert_email = var.sandbox_alert_email

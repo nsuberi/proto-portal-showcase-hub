@@ -139,13 +139,18 @@ git push origin main >> "$LOG_FILE" 2>> "$ERR_FILE" || {
 # Deploy to production
 log "Deploying to production..."
 
-# Assume IAM role for deployment
-eval $(aws sts assume-role \
-  --role-arn "arn:aws:iam::671388079324:role/terraform-cooking-up-ideas" \
-  --role-session-name "inference-insights-deploy" \
-  --output json \
-  | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')" \
-) 2>> "$ERR_FILE" || {
+# Assume the IAM role for deployment via a named profile.
+# The CLI assumes the role automatically on each call using the ambient (env-var) Tier 1
+# credentials as the source. Credential VALUES are never printed to stdout/logs — only the
+# profile config is written, so nothing sensitive can leak into $LOG_FILE/$ERR_FILE.
+aws configure set role_arn          "arn:aws:iam::671388079324:role/terraform-cooking-up-ideas" --profile deploy 2>> "$ERR_FILE"
+aws configure set role_session_name "inference-insights-deploy"                                  --profile deploy 2>> "$ERR_FILE"
+aws configure set credential_source Environment                                                  --profile deploy 2>> "$ERR_FILE"
+aws configure set region            "${AWS_DEFAULT_REGION:-us-east-1}"                            --profile deploy 2>> "$ERR_FILE"
+export AWS_PROFILE=deploy
+
+# Verify the role was assumed (no secrets in this output)
+aws sts get-caller-identity --query Arn --output text >> "$LOG_FILE" 2>> "$ERR_FILE" || {
   err "IAM role assumption failed"
   exit 1
 }

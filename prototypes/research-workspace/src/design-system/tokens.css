@@ -1,62 +1,66 @@
 :root {
-  /* Surface hierarchy (light sage, layered paper) */
-  --color-surface: #f4f7ec;
-  --color-surface-dim: #eaeddf;
+  /* === Garden theme — warm paper ground, deep forest-green type, bark-brown
+     structure. Tuned for high contrast (dark on light) so greens & browns read
+     cleanly instead of blending. === */
+
+  /* Surface hierarchy — warm cream paper; cards lift to pure white */
+  --color-surface: #faf8f1;
+  --color-surface-dim: #efe9da;
   --color-surface-bright: #ffffff;
-  --color-surface-container-lowest: #fafcf5;
-  --color-surface-container-low: #f0f4e6;
-  --color-surface-container: #e8eddb;
-  --color-surface-container-high: #dfe5cf;
-  --color-surface-container-highest: #d4dbb4;
-  --color-surface-variant: #d4dbb4;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f2e8;
+  --color-surface-container: #f0ebdd;
+  --color-surface-container-high: #e8e1cf;
+  --color-surface-container-highest: #ded5be;
+  --color-surface-variant: #e8e1cf;
 
-  /* Primary — leaf green */
-  --color-primary: #4a8a38;
-  --color-primary-container: #d4edcc;
+  /* Primary — deep forest green (anchors type & CTAs; ~7:1 on cream, AA) */
+  --color-primary: #1a5c2c;
+  --color-primary-container: #cdeac2;
   --color-primary-fixed: #b8d9ac;
-  --color-primary-fixed-dim: #7bb661;
+  --color-primary-fixed-dim: #5aa83f;
   --color-on-primary: #ffffff;
-  --color-on-primary-container: #2d5a22;
-  --color-on-primary-fixed: #1a3314;
+  --color-on-primary-container: #0b3b18;
+  --color-on-primary-fixed: #0b3b18;
 
-  /* Secondary — ruby-red (Chikorita eyes, flowers) */
-  --color-secondary: #8b2252;
+  /* Secondary — deep rose (flowers) */
+  --color-secondary: #9d2b5f;
   --color-secondary-container: #f5d0e0;
   --color-on-secondary: #ffffff;
-  --color-on-secondary-container: #6b1040;
+  --color-on-secondary-container: #5e0f37;
 
-  /* Tertiary — warm amber-brown (branches, structure) */
-  --color-tertiary: #8b7355;
-  --color-tertiary-container: #f0e4d4;
+  /* Tertiary — deep bark brown (branches, structure; readable on cream) */
+  --color-tertiary: #6b4423;
+  --color-tertiary-container: #ecdcc6;
   --color-on-tertiary: #ffffff;
-  --color-on-tertiary-container: #5a4830;
+  --color-on-tertiary-container: #432d18;
 
-  /* Text / surface roles */
-  --color-on-surface: #1e2d1a;
-  --color-on-surface-variant: #4a5a42;
-  --color-on-background: #1e2d1a;
-  --color-inverse-surface: #2d4a28;
-  --color-inverse-on-surface: #e3ebd8;
-  --color-inverse-primary: #7bb661;
+  /* Text / surface roles — high contrast on warm paper */
+  --color-on-surface: #13231a;
+  --color-on-surface-variant: #364229;
+  --color-on-background: #16271a;
+  --color-inverse-surface: #1f3a23;
+  --color-inverse-on-surface: #f0ebdd;
+  --color-inverse-primary: #86c66a;
 
-  /* Borders — earth tones */
+  /* Borders — visible warm tan / bark */
   --color-outline: #6b5b4a;
-  --color-outline-variant: #c4b8a4;
+  --color-outline-variant: #c6b89c;
 
   /* Error */
-  --color-error: #ba1a1a;
+  --color-error: #b3261e;
   --color-error-container: #ffdad6;
   --color-on-error: #ffffff;
   --color-on-error-container: #410002;
 
-  /* Accent — success/positive (bright leaf) */
-  --color-accent-success: #5daa45;
+  /* Accent — success/positive (leaf green) */
+  --color-accent-success: #2e8b3f;
 
   /* Tree semantic tokens */
-  --color-root: #6b5b4a;
-  --color-branch: #8b7355;
-  --color-leaf: #7bb661;
-  --color-flower: #8b2252;
+  --color-root: #6b4f2a;
+  --color-branch: #8a6234;
+  --color-leaf: #3f7e2e;
+  --color-flower: #9d2b5f;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -76,7 +80,7 @@
 
   /* Font Families */
   --font-headline: "Space Grotesk", sans-serif;
-  --font-body: "Newsreader", serif;
+  --font-body: "Inter", system-ui, sans-serif;
   --font-label: "Inter", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
 }

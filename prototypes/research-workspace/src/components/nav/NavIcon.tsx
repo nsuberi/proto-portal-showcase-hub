@@ -8,6 +8,7 @@ interface NavIconProps {
   isExpanded?: boolean;
   badge?: number;
   pulse?: boolean;
+  circled?: boolean;
   onClick: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function NavIcon({
   isExpanded = false,
   badge = 0,
   pulse = false,
+  circled = false,
   onClick,
 }: NavIconProps) {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -33,7 +35,7 @@ export default function NavIcon({
         } h-[44px] rounded-lg transition-colors ${
           isActive
             ? "bg-primary/12 text-primary"
-            : "text-on-surface-variant/60 hover:text-on-surface-variant hover:bg-on-surface/[0.04]"
+            : "text-on-surface-variant hover:text-on-surface hover:bg-on-surface/[0.06]"
         }`}
         title={isExpanded ? undefined : label}
       >
@@ -42,11 +44,21 @@ export default function NavIcon({
           <span className="absolute left-0.5 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-primary" />
         )}
 
-        <Icon className="w-[20px] h-[20px] flex-shrink-0" />
+        {/* Fixed icon slot so circled + plain icons share one leading box →
+            labels and icon centers always line up. */}
+        <span className="flex items-center justify-center w-8 h-8 flex-shrink-0">
+          {circled ? (
+            <span className="flex items-center justify-center w-[26px] h-[26px] rounded-full bg-primary text-on-primary">
+              <Icon className="w-[17px] h-[17px]" strokeWidth={2.75} />
+            </span>
+          ) : (
+            <Icon className="w-[24px] h-[24px]" />
+          )}
+        </span>
 
         {/* Inline label when expanded */}
         {isExpanded && (
-          <span className="font-label text-[13px] truncate">
+          <span className="font-label text-base font-medium truncate">
             {label}
           </span>
         )}

@@ -141,22 +141,25 @@ Tier 2: IAM Role (assumed at runtime via setup script)
 
 ### Setup Script (runs once per cloud task session)
 
-The cloud task's environment setup script assumes the role and exports temporary credentials:
+The cloud task's environment setup script configures a named profile that assumes the scoped role
+automatically. **No credential values are ever extracted into shell variables or printed** — the CLI
+re-assumes the role per call using the ambient Tier 1 env-var credentials as the source:
 
 ```bash
-# Assume the scoped role (Tier 1 keys → Tier 2 temp credentials)
-CREDS=$(aws sts assume-role \
-  --role-arn "arn:aws:iam::671388079324:role/inference-insights-append-only" \
-  --role-session-name "insights-$(date +%s)" \
-  --duration-seconds 3600 \
-  --output json)
-
-# Export temporary credentials (expire in 1 hour)
-export AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r '.Credentials.AccessKeyId')
-export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
-export AWS_SESSION_TOKEN=$(echo $CREDS | jq -r '.Credentials.SessionToken')
+# Configure the scoped profile (Tier 1 env keys → Tier 2 temp credentials, assumed automatically)
+aws configure set role_arn          "arn:aws:iam::671388079324:role/inference-insights-append-only" --profile insights
+aws configure set credential_source Environment                                                      --profile insights
+aws configure set duration_seconds  3600                                                             --profile insights
+aws configure set region            us-east-1                                                        --profile insights
+export AWS_PROFILE=insights
 export AWS_DEFAULT_REGION=us-east-1
+
+# Verify (no secrets in output)
+aws sts get-caller-identity
 ```
+
+> ⚠️ Do not `export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq ...)` — capturing the secret into a
+> variable risks it being echoed/logged. The profile keeps it out of process output entirely.
 
 ### Additional Hardening
 

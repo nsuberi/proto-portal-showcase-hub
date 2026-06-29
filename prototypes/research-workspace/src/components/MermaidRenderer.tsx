@@ -77,7 +77,7 @@ export default function MermaidRenderer({ chart }: Props) {
           {error}
         </pre>
         <details className="mt-3">
-          <summary className="font-label text-xs text-on-surface-variant/60 cursor-pointer">
+          <summary className="font-label text-xs text-on-surface-variant/80 cursor-pointer">
             Show source
           </summary>
           <pre className="mt-2 font-mono text-xs text-on-surface-variant/80 whitespace-pre-wrap bg-surface-container-lowest p-3 rounded-md">

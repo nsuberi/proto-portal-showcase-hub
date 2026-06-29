@@ -63,9 +63,10 @@ Save these three files exactly as shown.
 # existing value from ai-testing-resource-prod/anthropic-api-key in AWS Secrets
 # Manager (populated by past terraform applies).
 #
-# Note: the research-workspace ECS task does NOT need this — it explicitly
-# deletes ANTHROPIC_API_KEY before spawning Claude Code so each user authenticates
-# through Claude.ai OAuth instead.
+# Note: the research-workspace ECS task uses a SEPARATE, scoped secret
+# (research-workspace-prod/anthropic-api-key) sourced from
+# prototypes/research-workspace/.env via scripts/research-workspace-sync-key.sh.
+# This shared key below is only for ai-evals + the shared API Lambda.
 ANTHROPIC_API_KEY=
 
 # --- GitHub OAuth App (research workspace login) -----------------------------
@@ -86,10 +87,9 @@ GITHUB_OAUTH_CLIENT_SECRET=
 # the portfolio infrastructure needs. Idempotent: re-running updates values.
 #
 # Prerequisites:
-#   1. Assume the deploy role first:
-#        eval $(aws sts assume-role --role-arn arn:aws:iam::671388079324:role/terraform-cooking-up-ideas \
-#          --role-session-name "deploy-session" --output json \
-#          | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')")
+#   1. Select the deploy profile (assumes the role automatically; no creds printed):
+#        export AWS_PROFILE=deploy
+#      (one-time setup of the profile is documented under "Assume the deploy role" below)
 #   2. Copy secrets.env.example to secrets.env and fill in the values.
 #   3. Run: bash bootstrap.sh
 
@@ -260,22 +260,34 @@ must paste a value yourself.
 
 ---
 
-## Step 4 — Assume the deploy role
+## Step 4 — Assume the deploy role (via a named profile)
 
-You need `nsuberi` IAM user credentials configured first. If `aws sts get-caller-identity` shows the
-plain user, run:
+You need `nsuberi` IAM user credentials configured first (`aws configure` → stored in `~/.aws/credentials`
+under the `default` profile). Then create a `deploy` profile **once**; the CLI assumes the role
+automatically on every call, so **no credential values are ever printed to stdout** (nothing leaks into
+shell history or agent transcripts):
 
 ```bash
-eval $(aws sts assume-role --role-arn arn:aws:iam::671388079324:role/terraform-cooking-up-ideas \
-  --role-session-name "manual-deploy-session" --output json \
-  | python3 -c "import json,sys;c=json.load(sys.stdin)['Credentials'];print(f'export AWS_ACCESS_KEY_ID={c[\"AccessKeyId\"]} AWS_SECRET_ACCESS_KEY={c[\"SecretAccessKey\"]} AWS_SESSION_TOKEN={c[\"SessionToken\"]}')")
+aws configure set role_arn       arn:aws:iam::671388079324:role/terraform-cooking-up-ideas --profile deploy
+aws configure set source_profile default      --profile deploy
+aws configure set region         us-east-1     --profile deploy
 ```
+
+Per session, just select the profile:
+
+```bash
+export AWS_PROFILE=deploy
+```
+
+> ⚠️ Do **not** use `eval $(aws sts assume-role ... | python3 -c "print('export AWS_SECRET_ACCESS_KEY=...')")`.
+> That echoes the live secret into the transcript. The profile approach keeps it out of process output
+> entirely and re-assumes the role automatically on each command (so credentials "persist" across shells).
 
 Verify:
 
 ```bash
 aws sts get-caller-identity
-# Arn should end in: assumed-role/terraform-cooking-up-ideas/manual-deploy-session
+# Arn should end in: assumed-role/terraform-cooking-up-ideas/<your-session>
 ```
 
 The shell with the `AWS_*` env vars stays good for ~1 hour.
@@ -393,3 +405,20 @@ shred -u z_creds/private.pem z_creds/public.pem z_creds/secrets.env
 | `research-workspace-prod/oidc-public-key` | OIDC proxy Lambda |
 | `research-workspace-prod/github-oauth-client-id` | Cognito IDP + OIDC proxy Lambda |
 | `research-workspace-prod/github-oauth-client-secret` | Cognito IDP + OIDC proxy Lambda |
+
+### Separate: research-workspace agent key
+
+The research-workspace ECS task reads its own Anthropic key from
+`research-workspace-prod/anthropic-api-key`. It is **not** created by
+`bootstrap.sh` — it's sourced from `prototypes/research-workspace/.env` and
+synced with a dedicated script (so the key lives in one place for both local dev
+and deploy):
+
+```bash
+export AWS_PROFILE=deploy
+./scripts/research-workspace-sync-key.sh      # reads prototypes/research-workspace/.env
+```
+
+Run this **before** `terraform plan/apply` (the module reads the secret via a
+data source) and again whenever you rotate the key, followed by an ECS
+force-deploy (Layer 3 in `prototypes/research-workspace/AGENTS.md`).

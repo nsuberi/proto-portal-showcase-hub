@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import type { ContentItem, ContentType } from "../types";
 import ContentCard from "../components/ContentCard";
 import ContentTypeTabs from "../components/ContentTypeTabs";
-import HeroSection from "../components/HeroSection";
+import ResearchLauncher from "../components/ResearchLauncher";
+import TreeIcon from "../components/icons/TreeIcon";
 import { usePublishedItems } from "../hooks/usePublishedContent";
 import { useAuthStatus } from "../hooks/useAuthStatus";
 import { Lock, LogOut, ArrowRight } from "lucide-react";
@@ -55,15 +56,13 @@ export default function GalleryPage() {
       <header className="border-b border-outline-variant/30 bg-surface-container-low/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div>
-              <h1 className="font-headline text-2xl sm:text-3xl font-bold text-on-surface">
-                Research Workspace
-              </h1>
-              <p className="font-label text-sm text-on-surface-variant mt-1">
-                Set learning goals. Watch Claude investigate. Curate insights into a knowledge gallery.
-              </p>
+            <div className="flex items-center gap-2.5">
+              <TreeIcon className="w-7 h-7 text-primary flex-shrink-0" />
+              <span className="font-headline text-xl font-semibold text-on-surface">
+                Your Research
+              </span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               {isAuthenticated ? (
                 <>
                   <Link
@@ -75,7 +74,7 @@ export default function GalleryPage() {
                   </Link>
                   <button
                     onClick={logout}
-                    className="inline-flex items-center gap-1.5 font-label text-sm text-on-surface-variant/50 hover:text-on-surface-variant/80 transition-colors"
+                    className="inline-flex items-center gap-1.5 font-label text-sm text-on-surface-variant/72 hover:text-on-surface-variant/80 transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     Logout
@@ -101,10 +100,15 @@ export default function GalleryPage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <HeroSection isAuthenticated={isAuthenticated} />
+      {/* Input-led hero */}
+      <ResearchLauncher isAuthenticated={isAuthenticated} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8" id="gallery">
+        {/* Section heading */}
+        <h2 className="font-headline text-xl sm:text-2xl font-semibold text-on-surface mb-5">
+          Your published insights
+        </h2>
+
         {/* Content Type Tabs */}
         <div className="mb-6">
           <ContentTypeTabs
@@ -151,7 +155,7 @@ export default function GalleryPage() {
                 ? "No published insights yet"
                 : "No content matches your filters"}
             </p>
-            <p className="font-body text-on-surface-variant/60">
+            <p className="font-body text-on-surface-variant/80">
               {items.length === 0
                 ? "Be the first to set an intention and share what you learn."
                 : "Try adjusting your content type or tag filters."}
@@ -165,7 +169,7 @@ export default function GalleryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center">
           <a
             href="/"
-            className="font-label text-xs text-on-surface-variant/40 hover:text-on-surface-variant/70 transition-colors"
+            className="font-label text-xs text-on-surface-variant/65 hover:text-on-surface-variant/85 transition-colors"
           >
             &larr; Back to Portfolio
           </a>

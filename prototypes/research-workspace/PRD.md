@@ -18,8 +18,8 @@ The UI follows a **Claude.ai-inspired layout** (centered chat, icon sidebar, con
 CloudFront
 ├── /prototypes/research-workspace/vault/api/vault/published*  →  ALB → ECS (no auth, public)
 ├── /prototypes/research-workspace/vault*  →  ALB → Cognito → ECS (Express.js)
-│   ├── REST: file CRUD, tree, conversations, runs, activity, config, auth
-│   ├── WS: chat (stream-json Claude), run PTY streams
+│   ├── REST: file CRUD, tree, conversations, runs, activity, config, quota, projects, sources, me
+│   ├── WS: chat (Agent SDK stream), run log streams
 │   └── /healthz
 ├── /prototypes/research-workspace/*       →  S3 (React SPA)
 │   ├── /                    Gallery (public)
@@ -29,7 +29,7 @@ CloudFront
 └── /api/v1/research-workspace/*           →  API Gateway → Lambda (DynamoDB)
 ```
 
-**Stack:** React 18 + Vite + D3.js (SPA) | Express.js + node-pty + ws (backend) | ECS Fargate + EFS + Cognito (infra)
+**Stack:** React 18 + Vite + D3.js (SPA) | Express.js + ws + Claude Agent SDK (backend) | ECS Fargate + EFS + Cognito + DynamoDB (infra). Agent auth: single operator `ANTHROPIC_API_KEY` (commercial API); per-user budgets enforced via DynamoDB quota.
 
 ## Banyan Tree Data Model
 
@@ -210,11 +210,12 @@ Displays Claude Code configuration at `GET /api/vault/config`:
 
 Three intention types (research/synthesis/review) with recurring schedules. Stored as `.intentions.json`. Auto-migrated to Banyan Tree branches on first load. The form-based IntentionsPanel is retained for backward compatibility but the primary interface is now the chat.
 
-### 11. Concurrent Interactive Runs (Shipped)
+### 11. Concurrent Agent Runs (Shipped)
 
-- `POST /api/vault/runs` spawns interactive Claude Code PTY sessions
-- Research prompt auto-injected after startup detection
-- Multiple runs execute simultaneously as separate PTY sessions
+- `POST /api/vault/runs` launches a Claude Agent SDK run (quota-gated)
+- Default model Haiku 4.5; synthesis/review opt up to Sonnet 4.6
+- Multiple runs execute concurrently; the run WS streams a read-only log
+- Each run is bounded by `maxBudgetUsd` (= min $1, remaining daily budget) and `maxTurns`
 - Tool activity logged via hooks, polled via REST
 - Run status: running → completed/failed/cancelled
 
@@ -226,12 +227,24 @@ Publish vault files to the public gallery:
 - Tag system with content-derived suggestions
 - `GET /api/vault/published` — public listing (no auth)
 
-### 13. Token Security (Shipped)
+### 13. Cost & Access Controls (Shipped)
 
-- OAuth tokens on encrypted EFS (AES-256 at rest)
-- `.claude/` → 0700, credentials → 0600
-- One-click revoke via `DELETE /api/vault/auth`
-- Per-user vault isolation via Cognito JWT + path validation
+- Single operator `ANTHROPIC_API_KEY` (commercial API), injected from Secrets Manager — never in the image or task def plaintext
+- Per-user quota (DynamoDB): 5 runs/day, $5/day, 1 concurrent run; per-run cap = min($1, remaining)
+- Org-wide daily cap (soft) + Anthropic Console workspace spend limit (hard floor)
+- Allowlist (Cognito `sub`) for invite-only access — non-transferable; empty = open
+- Per-user vault isolation via Cognito JWT + path validation + EFS access points
+- `GET /api/vault/quota` drives the UI budget banner
+
+### 13b. Scale-to-Zero Infrastructure (Shipped)
+
+Idle infrastructure cost → ~$0. The ECS service idles at `desired_count=0`; a scaler Lambda owns scaling at runtime.
+
+- **Wake-on-request:** SPA `BackendGate` shows a "Starting…" splash, calls the unauthenticated `/vault/_control/wake` (ALB → Lambda, no Cognito), polls `/vault/_control/status` until the task is healthy (~20–40s cold start), then renders the workspace
+- **Idle reap:** EventBridge (every 5 min) scales to 0 when the activity heartbeat is stale > 15 min; nightly cron backstop
+- **Heartbeat-guarded:** backend refreshes a DynamoDB heartbeat while a run/chat/HTTP session is active, so active agent runs are never reaped mid-flight
+- **Compute:** `FARGATE_SPOT`, right-sized to 0.5 vCPU / 1 GB (~$28/mo always-on → ~$0 idle + cents per active hour)
+- Public gallery reads published content from the Lambda API, so visitors never wake (or pay for) the backend
 
 ### 14. Mobile Experience (Shipped)
 
@@ -247,11 +260,31 @@ Claude-app-inspired mobile layout:
 
 ### 15. Scheduler (Shipped)
 
-Automated recurring intention execution every 60s. Iterates all vaults, checks schedules, spawns PTY sessions. Logs to `.scheduler-log.jsonl`.
+Automated recurring intention execution (60s loop). **Off by default** — enabled only with `ENABLE_SCHEDULER=1`. When on, each due intention runs through the Agent SDK and the same per-user/org quota gate (skips when over budget). Logs to `.scheduler-log.jsonl`.
 
 ### 16. Vault Download/Export (Shipped)
 
 `GET /api/vault/download` — streams vault contents as ZIP, excludes dotfiles.
+
+### 17. Account Menu (Shipped)
+
+Top-right user chip showing the signed-in GitHub identity (display only — no link to a user page). `GET /api/vault/me` returns the GitHub login (`preferred_username`), display name (`name`), and avatar (`picture`) parsed from the Cognito/ALB OIDC JWT, plus `githubConnected` and a `vaultItemCount` (recursive file count, excludes dotfiles). The avatar renders the GitHub image when available, otherwise the GitHub octocat mark. Clicking it reveals the login + vault item count; in local dev (`githubConnected: false`) it says "Dev mode / Not connected to GitHub". The "Back to Gallery" and "Logout" actions (icon buttons with hover tooltips) sit beside it.
+
+### 18. Projects — Isolated Workspaces (Shipped)
+
+A user vault holds multiple **projects**, each an isolated mini-vault under `vaults/{userId}/projects/{projectId}/` with its own `.tree.json`, `.sources.json`, leaves, and `.claude/` config. A `.projects.json` manifest lists them. The active project is chosen by the client (`X-Project-Id` header on REST, `?project=` on the chat WS) and defaults to `default`, so legacy single-vault callers keep working. A global `fetch` wrapper injects the header so every existing call site is project-scoped without per-site edits.
+
+- `GET /api/vault/projects` — list projects with `itemCount` + `sourceCount`
+- `POST /api/vault/projects` `{name}` — create (name → slug)
+- Top-bar **ProjectSwitcher**: switch projects, create new ones; switching reconnects the chat WS and re-scopes all data.
+
+### 19. Sources & Source Reliability (Shipped)
+
+Surfaces exactly what the agent searched and fetched to fill a project — a clear window into agent behavior. `WebSearch` queries and `WebFetch` URLs from `tool_use` events are de-duped and persisted per-project in `.sources.json`.
+
+- `GET /api/vault/sources` — the active project's sources (searches + pages read, with counts)
+- **Sources** nav view: lists searches and fetched pages (clickable links), refreshes live during a run.
+- **Meta-questions** — one-click chips that ask the agent about its own sourcing: "How reliable are these sources?", "Why these sources — and what else?", "What did each source contribute?". Each chip sends a grounded prompt (the actual source list) into chat.
 
 ## Data Model
 
@@ -310,7 +343,7 @@ EFS (AES-256 at rest, transit encryption)
             └── flowers/                ← Captured insights
 ```
 
-**Identity flow:** ALB Cognito JWT → server middleware → `sanitizePath()` against vault root → Claude Code spawned with per-user HOME.
+**Identity flow:** ALB Cognito JWT (GitHub OAuth) → server middleware → `sanitizePath()` against vault root → Agent SDK invoked with `cwd`/`HOME` = the user's vault. Agent auth is the operator `ANTHROPIC_API_KEY`, not per-user credentials.
 
 ### Hardening Summary
 
@@ -330,7 +363,7 @@ EFS (AES-256 at rest, transit encryption)
 
 ### Current Limitation: Single Shared ECS Task
 
-All users share one Fargate task. User isolation is application-layer. Suitable for internal teams and portfolio demonstrations, not multi-tenant production.
+All users share one Fargate task. User isolation is application-layer. Suitable for internal teams and portfolio demonstrations, not multi-tenant production. The task scales to zero when idle (see Feature 13b), so a cold start (~20–40s, surfaced as a "Starting…" splash) precedes the first request after an idle period.
 
 ## Future Work
 

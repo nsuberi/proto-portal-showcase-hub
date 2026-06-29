@@ -105,8 +105,16 @@ aws ecs update-service --cluster <cluster> --service <service> \
 ### 2. ECR Image vs Running Container
 Pushing a new image to ECR does NOT automatically deploy it. ECS tasks only pull the `latest` tag when a new task starts. You need `--force-new-deployment` to trigger a new task pull.
 
-### 3. IAM Role Credentials Don't Persist
-Each shell invocation (each Bash tool call) starts a fresh shell. `eval $(aws sts assume-role ...)` only sets env vars for THAT shell. Chain all AWS commands in a single `eval ... && cmd1 && cmd2` invocation, or re-assume in each command.
+### 3. Use a named AWS profile, not `eval $(aws sts assume-role ...)`
+Each Bash tool call starts a fresh shell, so env vars don't persist between calls. **Do NOT** solve this with `eval $(aws sts assume-role ... | python3 -c "print('export AWS_SECRET_ACCESS_KEY=...')")` — that prints the live secret to stdout, where it gets captured into the agent transcript and shell history (a real credential leak).
+
+Instead, configure a named profile once and select it per session:
+```bash
+aws configure set role_arn arn:aws:iam::671388079324:role/terraform-cooking-up-ideas --profile deploy
+aws configure set source_profile default --profile deploy
+export AWS_PROFILE=deploy
+```
+`AWS_PROFILE` makes the CLI re-assume the role automatically on **every** call, so credentials effectively persist across separate shells with **no secret values in any command output** — and you no longer need to chain commands with `&&`. (For cloud/cron contexts where Tier 1 keys arrive as env vars, use `credential_source = Environment` instead of `source_profile`.) A PreToolUse guard hook (`.claude/hooks/guard-secrets.sh`) blocks the leaky patterns.
 
 ### 4. Secrets via Data Sources
 Cognito's GitHub IDP, the OIDC proxy Lambda, and the shared API Lambda all read their secrets via `data "aws_secretsmanager_secret_version"` blocks. If you delete a secret out of band (or before the consumer is updated), the next `terraform plan` fails with `secret not found`. To rotate or replace a secret, update the value in Secrets Manager (`aws secretsmanager put-secret-value`) and re-apply terraform — no `-var` arguments needed.

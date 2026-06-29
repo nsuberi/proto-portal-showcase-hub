@@ -76,7 +76,7 @@ export default function AmbientStatusBar({
             <span className="font-label text-[11px] text-on-surface-variant truncate">
               Running "{activeRun.title}"
             </span>
-            <span className="font-label text-[10px] text-on-surface-variant/40">
+            <span className="font-label text-[10px] text-on-surface-variant/65">
               {activeRun.toolCalls.length > 0 &&
                 activeRun.toolCalls[activeRun.toolCalls.length - 1]
                   .description}
@@ -84,10 +84,10 @@ export default function AmbientStatusBar({
           </>
         ) : lastFinished ? (
           <>
-            <span className="font-label text-[11px] text-on-surface-variant/60">
+            <span className="font-label text-[11px] text-on-surface-variant/80">
               Last run: "{lastFinished.title}"
             </span>
-            <span className="font-label text-[10px] text-on-surface-variant/30">
+            <span className="font-label text-[10px] text-on-surface-variant/60">
               {lastFinished.status === "completed"
                 ? "completed"
                 : lastFinished.status}{" "}
@@ -95,7 +95,7 @@ export default function AmbientStatusBar({
             </span>
           </>
         ) : (
-          <span className="font-label text-[11px] text-on-surface-variant/40">
+          <span className="font-label text-[11px] text-on-surface-variant/65">
             Ready
           </span>
         )}
@@ -104,19 +104,19 @@ export default function AmbientStatusBar({
       {/* Right side stats */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {activeRun && (
-          <span className="font-mono text-[10px] text-on-surface-variant/30">
+          <span className="font-mono text-[10px] text-on-surface-variant/60">
             {formatElapsed(activeRun.elapsedMs)}
           </span>
         )}
         {totalToolCalls > 0 && (
-          <span className="font-label text-[9px] text-on-surface-variant/30 bg-on-surface/[0.04] px-1.5 py-0.5 rounded-full">
+          <span className="font-label text-[9px] text-on-surface-variant/60 bg-on-surface/[0.04] px-1.5 py-0.5 rounded-full">
             {totalToolCalls} tools
           </span>
         )}
         {isExpanded ? (
-          <ChevronDown className="w-3 h-3 text-on-surface-variant/30" />
+          <ChevronDown className="w-3 h-3 text-on-surface-variant/60" />
         ) : (
-          <ChevronUp className="w-3 h-3 text-on-surface-variant/30" />
+          <ChevronUp className="w-3 h-3 text-on-surface-variant/60" />
         )}
       </div>
     </button>

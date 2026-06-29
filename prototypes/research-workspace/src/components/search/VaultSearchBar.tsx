@@ -124,7 +124,7 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
   return (
     <div ref={containerRef} className="relative w-full max-w-md">
       <div className="relative flex items-center">
-        <Search className="absolute left-3 w-3.5 h-3.5 text-on-surface-variant/40 pointer-events-none" />
+        <Search className="absolute left-3 w-3.5 h-3.5 text-on-surface-variant/65 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -137,7 +137,7 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
           onKeyDown={handleKeyDown}
           placeholder="Search your vault..."
           aria-label="Search your vault"
-          className="w-full pl-9 pr-9 py-1.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/40 font-label text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary/50 focus:bg-surface-bright transition-colors"
+          className="w-full pl-9 pr-9 py-1.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/40 font-label text-xs text-on-surface placeholder:text-on-surface-variant/65 focus:outline-none focus:border-primary/50 focus:bg-surface-bright transition-colors"
         />
         {query ? (
           <button
@@ -146,12 +146,12 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
               inputRef.current?.focus();
             }}
             aria-label="Clear search"
-            className="absolute right-2.5 p-0.5 rounded text-on-surface-variant/40 hover:text-on-surface-variant transition-colors"
+            className="absolute right-2.5 p-0.5 rounded text-on-surface-variant/65 hover:text-on-surface-variant transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <kbd className="absolute right-2.5 px-1.5 py-0.5 rounded border border-outline-variant/40 font-mono text-[10px] text-on-surface-variant/40 pointer-events-none">
+          <kbd className="absolute right-2.5 px-1.5 py-0.5 rounded border border-outline-variant/40 font-mono text-[10px] text-on-surface-variant/65 pointer-events-none">
             /
           </kbd>
         )}
@@ -162,7 +162,7 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
           {loading ? (
             <div className="flex items-center gap-2 px-4 py-3">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/50" />
-              <span className="font-label text-xs text-on-surface-variant/50">
+              <span className="font-label text-xs text-on-surface-variant/72">
                 Searching...
               </span>
             </div>
@@ -171,7 +171,7 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
               {error}
             </div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-3 font-label text-xs text-on-surface-variant/50">
+            <div className="px-4 py-3 font-label text-xs text-on-surface-variant/72">
               No matches for &ldquo;{query.trim()}&rdquo;
             </div>
           ) : (
@@ -192,19 +192,19 @@ export default function VaultSearchBar({ onSelectResult }: VaultSearchBarProps) 
                           : "hover:bg-surface-container-low/60"
                       }`}
                     >
-                      <FileText className="w-3.5 h-3.5 mt-0.5 text-on-surface-variant/40 flex-shrink-0" />
+                      <FileText className="w-3.5 h-3.5 mt-0.5 text-on-surface-variant/65 flex-shrink-0" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-1.5">
                           <span className="font-label text-xs font-medium text-on-surface truncate">
                             {fileName}
                           </span>
                           {dir && (
-                            <span className="font-mono text-[10px] text-on-surface-variant/40 truncate">
+                            <span className="font-mono text-[10px] text-on-surface-variant/65 truncate">
                               {dir}
                             </span>
                           )}
                         </span>
-                        <span className="block font-body text-[11px] text-on-surface-variant/60 truncate mt-0.5">
+                        <span className="block font-body text-[11px] text-on-surface-variant/80 truncate mt-0.5">
                           {result.snippet}
                         </span>
                       </span>

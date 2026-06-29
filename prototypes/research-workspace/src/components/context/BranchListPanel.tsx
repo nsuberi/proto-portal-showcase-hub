@@ -46,7 +46,7 @@ export default function BranchListPanel({ highlightBranchId }: BranchListPanelPr
         {branches.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <Sprout className="w-8 h-8 text-on-surface-variant/15 mb-2" />
-            <p className="font-label text-xs text-on-surface-variant/40">
+            <p className="font-label text-xs text-on-surface-variant/65">
               No branches yet. Tell the Gardener what you want to explore.
             </p>
           </div>
@@ -80,7 +80,7 @@ export default function BranchListPanel({ highlightBranchId }: BranchListPanelPr
                         {branch.title}
                       </p>
                       {branch.description && (
-                        <p className="font-body text-[10px] text-on-surface-variant/60 mt-0.5 line-clamp-2">
+                        <p className="font-body text-[10px] text-on-surface-variant/80 mt-0.5 line-clamp-2">
                           {branch.description}
                         </p>
                       )}
@@ -112,7 +112,7 @@ export default function BranchListPanel({ highlightBranchId }: BranchListPanelPr
 
       {/* Add branch hint */}
       <div className="px-4 py-2 border-t border-outline-variant/20">
-        <p className="font-label text-[10px] text-on-surface-variant/40 flex items-center gap-1">
+        <p className="font-label text-[10px] text-on-surface-variant/65 flex items-center gap-1">
           <Plus className="w-3 h-3" />
           Tell the Gardener "I want to learn about..." to grow a new branch
         </p>

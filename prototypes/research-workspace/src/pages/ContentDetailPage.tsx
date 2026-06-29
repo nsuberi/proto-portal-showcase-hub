@@ -122,7 +122,7 @@ export default function ContentDetailPage() {
             {item.summary}
           </p>
           {item.author && (
-            <p className="font-label text-sm text-on-surface-variant/60 mt-2">
+            <p className="font-label text-sm text-on-surface-variant/80 mt-2">
               by {item.author}
             </p>
           )}

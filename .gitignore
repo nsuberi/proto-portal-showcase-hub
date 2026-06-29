@@ -45,6 +45,7 @@ playwright-report/*
 
 # Terraform build artifacts
 terraform/*.zip
+terraform/modules/**/*.zip
 # Terraform plan files may contain secrets (creds, tokens, sensitive vars) — never commit.
 terraform/tfplan
 terraform/tfplan.*
