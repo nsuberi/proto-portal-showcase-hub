@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
-import heroPoster from "@/assets/find_your_path-poster.jpg";
 import thisIsMe from "@/assets/this-is-me.jpg";
 import {
   type Prototype,
@@ -11,8 +11,9 @@ import { PortfolioThemeRail, type ThemeRailItem } from "./PortfolioThemeRail";
 import { PortfolioThemeSection } from "./PortfolioThemeSection";
 
 // Inlined low-quality placeholder (first video frame, 32px wide, ~284 bytes) so the
-// hero paints instantly with zero network round-trip — eliminates the black flash
-// while the poster JPG and full video stream in. Average frame color is the fallback.
+// hero paints instantly with zero network round-trip — eliminates the black flash.
+// Rendered as an <img> with the SAME classes as the <video> so framing is pixel-
+// identical (no horizontal squish on the swap); the video crossfades in once it can play.
 const HERO_LQIP =
   "data:image/jpeg;base64,/9j//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgYGBwYHCEhISEhISckJygoKCcnJycoKCgrKyszMzMrKysoKCsrMDAzMzc5NzQ0MzQ5OTw8PEhIRUVUVFdnZ3z/xABnAAACAwEBAQAAAAAAAAAAAAADAgYFBwAEAQEBAQEBAAAAAAAAAAAAAAAAAgEAAxAAAgEDAQkBAAAAAAAAAAAAAQACFBNxYQMSETHRYoFCMkERAQEBAQAAAAAAAAAAAAAAAAABERL/wAARCAAYACADASIAAhEAAxEA/9oADAMBAAIRAxEAPwCdVeH5WYYFLdj7E4HVrbpCuI2tPrT2p63SLlt4rXzo3iJqMnaE/p8oxJ8a0eb2BYB7isPkoCg3/9k=";
 
@@ -76,6 +77,9 @@ const THEMES: ReadonlyArray<ThemeMeta> = [
 ];
 
 const Portfolio = () => {
+  // Hero video crossfades in over the instant LQIP placeholder once it can paint frames.
+  const [heroVideoReady, setHeroVideoReady] = useState(false);
+
   const implementedPrototypes: ReadonlyArray<Prototype> = [
     {
       title: "AI Builders Portal: Community of Practice",
@@ -249,22 +253,25 @@ const Portfolio = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Instant placeholder: same element type + classes as the video, so framing
+            is pixel-identical (no horizontal squish when the video swaps in). */}
+        <img
+          src={HERO_LQIP}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45 transition-opacity duration-700"
+          style={{ opacity: heroVideoReady ? 0 : 0.45 }}
+        />
         <video
-          className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45"
-          style={{
-            // design-token-lint-ignore — average color of the hero video's first frame, sampled from the binary asset
-            backgroundColor: "#767784",
-            backgroundImage: `url("${HERO_LQIP}")`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
+          className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover transition-opacity duration-700"
+          style={{ opacity: heroVideoReady ? 0.45 : 0 }}
           autoPlay
           loop
           muted
           playsInline
           webkit-playsinline="true"
-          poster={heroPoster}
           preload="auto"
+          onCanPlay={() => setHeroVideoReady(true)}
         >
           <source src={heroVideo} type="video/mp4" />
           Your browser does not support the video tag.
