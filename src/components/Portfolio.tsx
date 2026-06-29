@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
+import heroPoster from "@/assets/find_your_path-poster.jpg";
 import thisIsMe from "@/assets/this-is-me.jpg";
 import {
   type Prototype,
@@ -8,6 +9,12 @@ import {
 } from "./PortfolioPrototypeCard";
 import { PortfolioThemeRail, type ThemeRailItem } from "./PortfolioThemeRail";
 import { PortfolioThemeSection } from "./PortfolioThemeSection";
+
+// Inlined low-quality placeholder (first video frame, 32px wide, ~284 bytes) so the
+// hero paints instantly with zero network round-trip — eliminates the black flash
+// while the poster JPG and full video stream in. Average frame color is the fallback.
+const HERO_LQIP =
+  "data:image/jpeg;base64,/9j//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgYGBwYHCEhISEhISckJygoKCcnJycoKCgrKyszMzMrKysoKCsrMDAzMzc5NzQ0MzQ5OTw8PEhIRUVUVFdnZ3z/xABnAAACAwEBAQAAAAAAAAAAAAADAgYFBwAEAQEBAQEBAAAAAAAAAAAAAAAAAgEAAxAAAgEDAQkBAAAAAAAAAAAAAQACFBNxYQMSETHRYoFCMkERAQEBAQAAAAAAAAAAAAAAAAABERL/wAARCAAYACADASIAAhEAAxEA/9oADAMBAAIRAxEAPwCdVeH5WYYFLdj7E4HVrbpCuI2tPrT2p63SLlt4rXzo3iJqMnaE/p8oxJ8a0eb2BYB7isPkoCg3/9k=";
 
 interface ThemeMeta {
   id: Theme;
@@ -80,15 +87,6 @@ const Portfolio = () => {
       theme: "organizing-community-transformation",
     },
     {
-      title: "AI Testing Resource: Governance-First Development",
-      description:
-        "How do you ship AI features with confidence? Walk through a 5-phase SDLC journey that shows how traditional software testing applies to AI — from requirements and architecture through build, evaluation, and production monitoring. Includes an interactive trace inspector, iteration timeline comparing three bot versions, and a hands-on evaluation workshop covering RAG metrics, inter-rater reliability, and improvement loops.",
-      link: "/prototypes/ai-evals/",
-      tags: ["AI Evaluation", "SDLC Governance", "Testing", "RAG", "Trace Inspection"],
-      status: "Live Demo Available",
-      theme: "enterprise-ai",
-    },
-    {
       title: "Research Workspace: AI-Powered Knowledge Platform",
       description:
         "A multi-user research platform with a public gallery and authenticated workspaces. Set learning intentions to have Claude Code research arXiv papers, then synthesize findings into cross-article narratives and architecture diagrams. Built with code-server, Foam, and Claude Code on ECS Fargate with per-user EFS vaults and Cognito authentication.",
@@ -145,6 +143,15 @@ const Portfolio = () => {
   ];
 
   const prototypeIdeas: ReadonlyArray<Prototype> = [
+    {
+      title: "Eval Trace Workspace: From Traces to Product Insight",
+      description:
+        "A reimagining of my earlier AI testing prototype. The first version walked through AI evaluation as an SDLC discipline; the next one is a workspace that automatically processes evaluation traces — clustering failures, surfacing recurring patterns, and turning raw eval runs into concrete, prioritized product-improvement recommendations. The original hosted demo has been retired while this trace-processing pipeline is built.",
+      link: "#eval-trace-workspace",
+      tags: ["AI Evaluation", "Trace Analysis", "Product Insights", "Eval Pipeline"],
+      status: "Concept",
+      theme: "enterprise-ai",
+    },
     {
       title: "Onboarding Advisor Council",
       description:
@@ -244,11 +251,19 @@ const Portfolio = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <video
           className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45"
+          style={{
+            // design-token-lint-ignore — average color of the hero video's first frame, sampled from the binary asset
+            backgroundColor: "#767784",
+            backgroundImage: `url("${HERO_LQIP}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
           autoPlay
           loop
           muted
           playsInline
           webkit-playsinline="true"
+          poster={heroPoster}
           preload="auto"
         >
           <source src={heroVideo} type="video/mp4" />

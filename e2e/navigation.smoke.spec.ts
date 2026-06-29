@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Steel-thread navigation smoke test: portfolio -> each prototype -> back
-// Covers: FFX Skill Map, Learning Path, Home Lending, Agent Memory Explorer, AI Testing Resource
+// Covers: FFX Skill Map, Learning Path, Home Lending, Agent Memory Explorer
 
 const PORTFOLIO_HEADING = 'Explore the Future of Learning with AI';
 
@@ -110,10 +110,7 @@ test.describe('Portfolio + Prototypes: end-to-end navigation', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Documentation Explorer');
   });
 
-  test('direct access: AI Testing Resource loads', async ({ page, baseURL }) => {
-    const root = baseURL ?? 'https://portfolio.cookinupideas.com';
-    await page.goto(`${root}/ai-evals/`);
-    await page.waitForLoadState('networkidle');
-    await expect(page).toHaveTitle(/AI Testing Resource/i);
-  });
+  // The AI Testing Resource (ai-evals) hosted demo was retired on 2026-06-28 to
+  // stop hosting costs; it now appears as a "coming soon" concept on the
+  // portfolio. Its direct-access smoke test was removed with the hosting.
 });

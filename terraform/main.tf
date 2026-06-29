@@ -323,18 +323,10 @@ resource "aws_cloudfront_distribution" "website" {
     origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
   }
 
-  # AI Evals cache behavior — routes /prototypes/ai-evals/* to the ECS ALB
-  ordered_cache_behavior {
-    path_pattern           = "/prototypes/ai-evals/*"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "ai-evals-api"
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-
-    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-  }
+  # NOTE: The AI Evals app (path /prototypes/ai-evals/*) was retired on
+  # 2026-06-28; its CloudFront behavior was removed. The "ai-evals-api" ALB
+  # origin and the /oauth2/* behavior above are retained because the Research
+  # Workspace Cognito OAuth callback routes through the same ALB.
 
   # FFX Skill Map cache behavior
   ordered_cache_behavior {

@@ -12,7 +12,7 @@ A portfolio monorepo showcasing interactive prototypes deployed to AWS. Each pro
 | [Home Lending Learning](prototypes/home-lending-learning/) | Interactive mortgage education with AI assessments | Claude API, adaptive difficulty |
 | [Documentation Explorer](prototypes/documentation-explorer/) | AI-powered code documentation search with floating cards | Framer Motion, react-markdown |
 | [Learning Path](prototypes/learning-path/) | Geospatial recipe explorer with pre-computed country boundaries | Hex grids, progress tracking |
-| [AI Evals in Context](apps/ai-evals-in-context/) | AI evaluation in the testing pyramid (Flask/ECS) | Flask, ChromaDB, deepeval |
+| [AI Evals in Context](apps/ai-evals-in-context/) | AI evaluation in the testing pyramid (Flask/ECS). **Hosted demo retired 2026-06-28** to stop costs; source runs locally only, being reimagined as an eval-trace workspace. | Flask, ChromaDB, deepeval |
 
 ## Architecture
 
@@ -30,7 +30,7 @@ proto-portal-showcase-hub/
 └── .github/workflows/                # CI/CD pipeline
 ```
 
-**How it deploys**: React prototypes build to `dist/prototypes/{name}/` and serve from S3 via CloudFront. The shared API runs as a Lambda function behind API Gateway. The AI Evals app deploys to ECS Fargate. CloudFront routes between all three.
+**How it deploys**: React prototypes build to `dist/prototypes/{name}/` and serve from S3 via CloudFront. The shared API runs as a Lambda function behind API Gateway. The Research Workspace runs on ECS Fargate behind the shared ALB. (The AI Evals app previously deployed to ECS Fargate as well; its hosted demo was retired on 2026-06-28.)
 
 ## Getting Started
 
