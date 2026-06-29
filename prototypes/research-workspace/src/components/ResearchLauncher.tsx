@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Send, Sprout, Search, Merge, Compass, Shield } from "lucide-react";
 import TreeIcon from "./icons/TreeIcon";
+import BackendStartingSplash from "./BackendStartingSplash";
+import { useWakeNavigation } from "../hooks/useWakeNavigation";
+
+const VAULT_AUTH_URL = "/prototypes/research-workspace/vault/";
 
 interface Props {
   isAuthenticated: boolean;
@@ -25,6 +29,7 @@ const PENDING_INTENT_KEY = "rw:pendingIntent";
 export default function ResearchLauncher({ isAuthenticated }: Props) {
   const [input, setInput] = useState("");
   const navigate = useNavigate();
+  const { waking, phase, elapsed, wakeThenNavigate, retry } = useWakeNavigation();
 
   const start = (text: string) => {
     const intent = text.trim();
@@ -33,7 +38,8 @@ export default function ResearchLauncher({ isAuthenticated }: Props) {
     if (isAuthenticated) {
       navigate("/workspace");
     } else {
-      window.location.href = "/prototypes/research-workspace/vault/";
+      // Backend may be scaled to zero — wake it before the Cognito /vault redirect.
+      wakeThenNavigate(VAULT_AUTH_URL);
     }
   };
 
@@ -50,6 +56,8 @@ export default function ResearchLauncher({ isAuthenticated }: Props) {
   };
 
   return (
+    <>
+      {waking && <BackendStartingSplash phase={phase} elapsed={elapsed} onRetry={retry} />}
     <section className="relative overflow-hidden border-b border-outline-variant/10">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-14 sm:py-20 flex flex-col items-center text-center">
         {/* Brand mark */}
@@ -116,5 +124,6 @@ export default function ResearchLauncher({ isAuthenticated }: Props) {
         </Link>
       </div>
     </section>
+    </>
   );
 }

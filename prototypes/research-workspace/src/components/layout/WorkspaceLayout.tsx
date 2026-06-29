@@ -19,6 +19,8 @@ import FilePreviewPanel from "../context/FilePreviewPanel";
 import ToolPolicyEditor from "../config/ToolPolicyEditor";
 import VaultSearchBar from "../search/VaultSearchBar";
 import ToastContainer from "../ui/ToastContainer";
+import BackendStartingSplash from "../BackendStartingSplash";
+import { useWakeNavigation } from "../../hooks/useWakeNavigation";
 import { useChatContext } from "../../contexts/ChatContext";
 import { useConversationPhase } from "../../hooks/useConversationPhase";
 import type { ConversationPhase } from "../../hooks/useConversationPhase";
@@ -49,7 +51,16 @@ const PHASE_PANEL_TITLE: Partial<Record<ConversationPhase, string>> = {
   connecting: "Connections",
 };
 
+const VAULT_AUTH_URL = "/prototypes/research-workspace/vault/";
+
 export default function WorkspaceLayout() {
+  const {
+    waking,
+    phase: wakePhase,
+    elapsed: wakeElapsed,
+    wakeThenNavigate,
+    retry: wakeRetry,
+  } = useWakeNavigation();
   const [activeView, setActiveView] = useState<ViewId>("chat");
   const [policyEditorOpen, setPolicyEditorOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
@@ -156,7 +167,8 @@ export default function WorkspaceLayout() {
       <button
         onClick={() => {
           logout();
-          window.location.href = "/prototypes/research-workspace/workspace";
+          // Re-auth requires the Cognito /vault route — wake the backend first.
+          wakeThenNavigate(VAULT_AUTH_URL);
         }}
         className="font-label text-xs font-semibold px-3 py-1.5 rounded-lg bg-tertiary text-on-tertiary hover:bg-tertiary/90 active:bg-tertiary/80 transition-colors whitespace-nowrap"
       >
@@ -185,6 +197,7 @@ export default function WorkspaceLayout() {
 
     return (
       <div className="workspace-layout workspace-backdrop overflow-hidden flex flex-col">
+        {waking && <BackendStartingSplash phase={wakePhase} elapsed={wakeElapsed} onRetry={wakeRetry} />}
         {policyEditorOpen && (
           <ToolPolicyEditor onClose={() => setPolicyEditorOpen(false)} />
         )}
@@ -344,6 +357,7 @@ export default function WorkspaceLayout() {
 
   return (
     <div className="workspace-layout workspace-backdrop flex">
+      {waking && <BackendStartingSplash phase={wakePhase} elapsed={wakeElapsed} onRetry={wakeRetry} />}
       <ToastContainer />
       {/* Tool policy editor modal */}
       {policyEditorOpen && (

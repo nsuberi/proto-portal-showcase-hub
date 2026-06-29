@@ -7,7 +7,11 @@ import ResearchLauncher from "../components/ResearchLauncher";
 import TreeIcon from "../components/icons/TreeIcon";
 import { usePublishedItems } from "../hooks/usePublishedContent";
 import { useAuthStatus } from "../hooks/useAuthStatus";
+import { useWakeNavigation } from "../hooks/useWakeNavigation";
+import BackendStartingSplash from "../components/BackendStartingSplash";
 import { Lock, LogOut, ArrowRight } from "lucide-react";
+
+const VAULT_AUTH_URL = "/prototypes/research-workspace/vault/";
 
 export default function GalleryPage() {
   const [staticItems, setStaticItems] = useState<ContentItem[]>([]);
@@ -15,6 +19,7 @@ export default function GalleryPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const { isAuthenticated, logout } = useAuthStatus();
   const publishedItems = usePublishedItems();
+  const { waking, phase, elapsed, wakeThenNavigate, retry } = useWakeNavigation();
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + "data/content-index.json")
@@ -52,6 +57,7 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-surface">
+      {waking && <BackendStartingSplash phase={phase} elapsed={elapsed} onRetry={retry} />}
       {/* Header */}
       <header className="border-b border-outline-variant/30 bg-surface-container-low/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
@@ -81,13 +87,14 @@ export default function GalleryPage() {
                   </button>
                 </>
               ) : (
-                <a
-                  href="/prototypes/research-workspace/vault/"
+                <button
+                  type="button"
+                  onClick={() => wakeThenNavigate(VAULT_AUTH_URL)}
                   className="inline-flex items-center gap-1.5 font-label text-sm text-tertiary hover:text-tertiary/80 transition-colors"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   Sign in to publish
-                </a>
+                </button>
               )}
               <a
                 href="/"
