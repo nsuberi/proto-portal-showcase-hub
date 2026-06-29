@@ -18,6 +18,8 @@ export interface Prototype {
   tags: string[];
   status: "Live Demo Available" | "Concept";
   theme: Theme;
+  /** Optional still-frame preview image (imported asset URL). */
+  preview?: string;
 }
 
 interface PortfolioPrototypeCardProps {
