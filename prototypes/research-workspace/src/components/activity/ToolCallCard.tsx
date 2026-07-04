@@ -66,7 +66,7 @@ function DetailField({
   if (!value) return null;
   return (
     <div className="flex gap-2 py-0.5">
-      <span className="font-label text-[9px] text-on-surface-variant/40 w-16 flex-shrink-0 text-right">
+      <span className="font-label text-[9px] text-on-surface-variant/65 w-16 flex-shrink-0 text-right">
         {label}
       </span>
       <span
@@ -329,11 +329,11 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
         className="flex items-center gap-2 px-3 py-1.5 hover:bg-on-surface/[0.04] transition-colors w-full text-left cursor-pointer"
       >
         <ChevronRight
-          className={`w-2.5 h-2.5 text-on-surface-variant/30 flex-shrink-0 transition-transform ${
+          className={`w-2.5 h-2.5 text-on-surface-variant/60 flex-shrink-0 transition-transform ${
             expanded ? "rotate-90" : ""
           }`}
         />
-        <span className="font-mono text-[9px] text-on-surface-variant/30 w-14 flex-shrink-0">
+        <span className="font-mono text-[9px] text-on-surface-variant/60 w-14 flex-shrink-0">
           {time}
         </span>
         <span
@@ -345,7 +345,7 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
           {call.description}
         </span>
         {call.durationMs != null && call.status === "completed" && (
-          <span className="font-mono text-[9px] text-on-surface-variant/30 flex-shrink-0">
+          <span className="font-mono text-[9px] text-on-surface-variant/60 flex-shrink-0">
             {formatDuration(call.durationMs)}
           </span>
         )}
@@ -358,7 +358,7 @@ export default function ToolCallCard({ call }: { call: ToolCall }) {
         <div className="pl-[68px] pr-3 pb-2 pt-0.5 border-b border-outline-variant/20">
           {renderToolDetails(call.tool, call.input)}
           <div className="flex gap-2 py-0.5 mt-0.5">
-            <span className="font-label text-[9px] text-on-surface-variant/40 w-16 flex-shrink-0 text-right">
+            <span className="font-label text-[9px] text-on-surface-variant/65 w-16 flex-shrink-0 text-right">
               Decision
             </span>
             <span

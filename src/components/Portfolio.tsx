@@ -1,14 +1,30 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Github, Mail, Linkedin } from "lucide-react";
+import { Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
 import heroPoster from "@/assets/find_your_path-poster.jpg";
 import thisIsMe from "@/assets/this-is-me.jpg";
+import previewResearchWorkspace from "@/assets/preview-research-workspace.png";
+import previewIslandAlgorithms from "@/assets/preview-island-algorithms.png";
 import {
   type Prototype,
   type Theme,
 } from "./PortfolioPrototypeCard";
 import { PortfolioThemeRail, type ThemeRailItem } from "./PortfolioThemeRail";
 import { PortfolioThemeSection } from "./PortfolioThemeSection";
+import { FeaturedProjectsDrawer } from "./FeaturedProjectsDrawer";
+
+// Title uses Futura where installed (common on macOS/iOS), falling back to the
+// Helvetica family elsewhere — a clean geometric/grotesque sans either way.
+const DISPLAY_FONT =
+  "Futura, 'Futura PT', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+
+// Inlined low-quality placeholder (first video frame, 32px wide, ~284 bytes) so the
+// hero paints instantly with zero network round-trip — eliminates the black flash.
+// Rendered as an <img> with the SAME classes as the <video> so framing is pixel-
+// identical (no horizontal squish on the swap); the video crossfades in once it can play.
+const HERO_LQIP =
+  "data:image/jpeg;base64,/9j//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgYGBwYHCEhISEhISckJygoKCcnJycoKCgrKyszMzMrKysoKCsrMDAzMzc5NzQ0MzQ5OTw8PEhIRUVUVFdnZ3z/xABnAAACAwEBAQAAAAAAAAAAAAADAgYFBwAEAQEBAQEBAAAAAAAAAAAAAAAAAgEAAxAAAgEDAQkBAAAAAAAAAAAAAQACFBNxYQMSETHRYoFCMkERAQEBAQAAAAAAAAAAAAAAAAABERL/wAARCAAYACADASIAAhEAAxEA/9oADAMBAAIRAxEAPwCdVeH5WYYFLdj7E4HVrbpCuI2tPrT2p63SLlt4rXzo3iJqMnaE/p8oxJ8a0eb2BYB7isPkoCg3/9k=";
 
 // Inlined low-quality placeholder (first video frame, 32px wide, ~284 bytes) so the
 // hero paints instantly with zero network round-trip — eliminates the black flash
@@ -76,6 +92,9 @@ const THEMES: ReadonlyArray<ThemeMeta> = [
 ];
 
 const Portfolio = () => {
+  // Hero video crossfades in over the instant LQIP placeholder once it can paint frames.
+  const [heroVideoReady, setHeroVideoReady] = useState(false);
+
   const implementedPrototypes: ReadonlyArray<Prototype> = [
     {
       title: "AI Builders Portal: Community of Practice",
@@ -94,6 +113,7 @@ const Portfolio = () => {
       tags: ["Research Platform", "Claude Code", "Knowledge Management", "Automated Research"],
       status: "Live Demo Available",
       theme: "ai-augmented-knowledge-work",
+      preview: previewResearchWorkspace,
     },
     {
       title: "Your Learning Adventure Map",
@@ -139,6 +159,7 @@ const Portfolio = () => {
       tags: ["Algorithms", "WebGL", "DFS/BFS", "Dijkstra", "Dynamic Programming"],
       status: "Live Demo Available",
       theme: "coding-data-structures",
+      preview: previewIslandAlgorithms,
     },
   ];
 
@@ -269,129 +290,135 @@ const Portfolio = () => {
           <source src={heroVideo} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
+  // Only these two are surfaced on the homepage right now. The rest of the
+  // prototype data above is intentionally kept around but not rendered.
+  const FEATURED_LINKS = [
+    "/prototypes/research-workspace/",
+    "/prototypes/island-algorithms-visualizer/",
+  ];
+  const featuredPrototypes: ReadonlyArray<Prototype> = FEATURED_LINKS.map(
+    (link) => implementedPrototypes.find((p) => p.link === link)!,
+  );
 
-        <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-          <div className="bg-background/20 backdrop-blur-sm rounded-lg px-6 py-8 mb-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
-              The Future is AI Native
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Build on your strenghts. Bring people together.<br />
-              Create AI-powered interactions. Grow and access opportunities.
-            </p>
-          </div>
-          <Button
-            size="lg"
-            className="bg-gradient-primary text-white hover:shadow-glow transition-smooth text-lg md:text-xl px-8 py-6"
-            onClick={() => {
-              document.getElementById("prototypes-section")?.scrollIntoView({
-                behavior: "smooth",
-              });
-            }}
+  return (
+    <div className="bg-background text-foreground">
+      {/* Single-screen hero: video fills the viewport on desktop with all content
+          overlaid; on mobile the video is a banner and the widgets stack below. */}
+      <section className="relative lg:h-screen lg:overflow-hidden">
+        {/* Background media — banner height on mobile, full-bleed on desktop */}
+        <div className="relative h-[40vh] sm:h-[48vh] lg:absolute lg:inset-0 lg:h-auto overflow-hidden">
+          {/* Instant placeholder: same element type + classes as the video, so framing
+              is pixel-identical (no horizontal squish when the video swaps in). */}
+          <img
+            src={HERO_LQIP}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover transition-opacity duration-700"
+            style={{ opacity: heroVideoReady ? 0 : 1 }}
+          />
+          <video
+            className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover transition-opacity duration-700"
+            style={{ opacity: heroVideoReady ? 1 : 0 }}
+            autoPlay
+            loop
+            muted
+            playsInline
+            webkit-playsinline="true"
+            preload="auto"
+            onCanPlay={() => setHeroVideoReady(true)}
           >
-            Explore My Work
-            <ExternalLink className="ml-2 h-6 w-6" />
-          </Button>
+            <source src={heroVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          {/* Subtle scrim so overlaid text stays legible over bright frames */}
+          <div className="absolute inset-0 bg-black/25" />
         </div>
-      </section>
 
-      {/* Themed Prototypes Section */}
-      <section id="prototypes-section" className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Explore by Theme
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              In her book "Exophony: Voyages Outside The Mother Tongue" by Yoko Tawada, Yoko presents a series of beautiful and witty essays.
-              In one she describes how a thesaurus is unique from a dictionary, organizing words by meaning rather than spelling.
-              These prototypes are part of my explorations of AI capabilities, platforms to organize people's personal discovery and growth, and design. 
-              They are grouped Thesauratically by the questions they explore.
-            </p>
-          </div>
+        {/* Foreground content — overlaid on desktop, normal flow on mobile */}
+        <div className="relative z-10 lg:absolute lg:inset-0 flex flex-col gap-5 sm:gap-6 p-5 sm:p-8 lg:p-10">
+          {/* Name */}
+          <h1
+            className="text-white uppercase font-extrabold tracking-tight leading-[0.9] text-5xl sm:text-7xl lg:text-8xl drop-shadow-lg"
+            style={{ fontFamily: DISPLAY_FONT }}
+          >
+            Nathan Suberi
+          </h1>
 
-          <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
-            <PortfolioThemeRail items={railItems} />
-            <div className="mt-8 lg:mt-0">
-              {THEMES.map((t) => (
-                <PortfolioThemeSection
-                  key={t.id}
-                  id={t.id}
-                  title={t.title}
-                  blurb={t.blurb}
-                  prototypes={allPrototypes.filter((p) => p.theme === t.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section className="py-20 px-6 bg-gradient-subtle">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent text-center">About Me</h2>
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="w-full md:w-1/3">
-              <img 
-                src={thisIsMe} 
-                alt="Nathan Suberi" 
-                className="rounded-lg shadow-lg w-full h-auto object-cover"
+          {/* Bottom row: featured projects (left) + about panel (right),
+              both anchored to the bottom of the screen on desktop. */}
+          <div className="flex flex-col lg:flex-row lg:items-end gap-5 sm:gap-6 lg:mt-auto">
+            {/* About panel — translucent black rounded rectangle, bottom-right */}
+            <aside className="order-1 lg:order-2 lg:w-[360px] xl:w-[400px] shrink-0 flex flex-col gap-5 rounded-2xl bg-black/45 backdrop-blur-md border border-white/15 p-5 sm:p-6 text-white lg:max-h-[78vh] lg:overflow-y-auto">
+              <img
+                src={thisIsMe}
+                alt="Nathan Suberi"
+                className="rounded-xl w-full aspect-[4/3] object-cover shadow-lg"
               />
-            </div>
-            <div className="w-full md:w-2/3 text-center md:text-left">
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-                I'm passionate about helping others learn and grow, and building things that matter. 
-                I explore how AI can create meaningful interactions for people and communities.
-              </p>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                I see immersive storytelling that bridges digital and physical worlds
-                to create real opportunity for people and their communities as the future of learning.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Contact Section - Mobile Responsive */}
-      <section className="mobile-section max-vw-100">
-        <div className="container-mobile text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8">
-            Let's Connect
-          </h2>
-          <p className="mobile-text text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto text-mobile-safe">
-            Interested in exploring how AI can enhance human connection and the future of learning, education, and creation?<br />
-            Let's collaborate!
-          </p>
+              <div>
+                <h2
+                  className="text-xl font-semibold uppercase tracking-wide mb-2"
+                  style={{ fontFamily: DISPLAY_FONT }}
+                >
+                  About Me
+                </h2>
+                <p className="text-sm leading-relaxed text-white/80 mb-3">
+                  I'm passionate about helping others learn and grow, and building
+                  things that matter. I explore how AI can create meaningful
+                  interactions for people and communities.
+                </p>
+                <p className="text-sm leading-relaxed text-white/80">
+                  I see immersive storytelling that bridges digital and physical
+                  worlds to create real opportunity for people and their
+                  communities as the future of learning.
+                </p>
+              </div>
 
-          <div className="btn-group-mobile max-w-none sm:max-w-fit mx-auto">
-            <Button
-              variant="outline"
-              size="default"
-              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
-              onClick={() => window.location.href = "mailto:nsuberi@gmail.com"}
-            >
-              <Mail className="mr-2 mobile-icon" />
-              <span className="mobile-text">Email</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
-              onClick={() => window.open("https://www.linkedin.com/in/nathan-suberi-3b13a818/", "_blank")}
-            >
-              <Linkedin className="mr-2 mobile-icon" />
-              <span className="mobile-text">LinkedIn</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="btn-mobile hover:bg-primary hover:text-primary-foreground transition-smooth"
-              onClick={() => window.open("https://github.com/nsuberi", "_blank")}
-            >
-              <Github className="mr-2 mobile-icon" />
-              <span className="mobile-text">GitHub</span>
-            </Button>
+              <div className="mt-auto">
+                <h2
+                  className="text-xl font-semibold uppercase tracking-wide mb-3"
+                  style={{ fontFamily: DISPLAY_FONT }}
+                >
+                  Let's Connect
+                </h2>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start border-white/30 bg-transparent text-white hover:bg-white hover:text-black transition-smooth"
+                    onClick={() => (window.location.href = "mailto:nsuberi@gmail.com")}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start border-white/30 bg-transparent text-white hover:bg-white hover:text-black transition-smooth"
+                    onClick={() =>
+                      window.open(
+                        "https://www.linkedin.com/in/nathan-suberi-3b13a818/",
+                        "_blank",
+                      )
+                    }
+                  >
+                    <Linkedin className="mr-2 h-4 w-4" />
+                    LinkedIn
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start border-white/30 bg-transparent text-white hover:bg-white hover:text-black transition-smooth"
+                    onClick={() => window.open("https://github.com/nsuberi", "_blank")}
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </Button>
+                </div>
+              </div>
+            </aside>
+
+            {/* Featured projects — yellow CTA that opens the drawer, bottom-left */}
+            <div className="order-2 lg:order-1 flex-1 min-w-0 flex flex-col justify-end items-start">
+              <FeaturedProjectsDrawer prototypes={featuredPrototypes} />
+            </div>
           </div>
         </div>
       </section>

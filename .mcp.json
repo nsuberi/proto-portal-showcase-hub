@@ -3,10 +3,6 @@
     "design-tokens": {
       "command": "node",
       "args": ["shared/mcp-cli/dist/cli.js", "start", "design-tokens"]
-    },
-    "gitnexus": {
-      "command": "npx",
-      "args": ["gitnexus", "mcp"]
     }
   }
 }

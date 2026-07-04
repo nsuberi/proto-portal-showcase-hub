@@ -47,3 +47,16 @@ variable "sandbox_alert_email" {
   type        = string
   default     = "nsuberi@gmail.com"
 }
+
+# Research workspace agent quota / access
+variable "research_workspace_allowlist" {
+  description = "Comma-separated Cognito subs allowed to run agents. Empty = open to any logged-in user."
+  type        = string
+  default     = ""
+}
+
+variable "research_workspace_enable_scheduler" {
+  description = "\"1\" enables autonomous recurring runs (quota-gated); \"0\" disables them."
+  type        = string
+  default     = "0"
+}

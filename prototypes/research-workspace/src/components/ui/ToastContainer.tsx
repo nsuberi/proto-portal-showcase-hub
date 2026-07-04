@@ -76,12 +76,12 @@ export default function ToastContainer() {
             }}
           >
             <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${ICON_COLORS[toast.type]}`} />
-            <p className="font-label text-xs text-on-surface/80 flex-1 leading-relaxed">
+            <p className="font-label text-xs text-on-surface/88 flex-1 leading-relaxed">
               {toast.message}
             </p>
             <button
               onClick={() => dismiss(toast.id)}
-              className="p-0.5 text-on-surface-variant/30 hover:text-on-surface-variant/80 transition-colors flex-shrink-0"
+              className="p-0.5 text-on-surface-variant/60 hover:text-on-surface-variant/80 transition-colors flex-shrink-0"
             >
               <X className="w-3 h-3" />
             </button>

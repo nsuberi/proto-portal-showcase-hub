@@ -285,6 +285,47 @@ resource "aws_iam_role_policy" "ecs_task_deny_cost_generating" {
   })
 }
 
+# Task role: read/write the quota table (per-user budget tracking).
+resource "aws_iam_role_policy" "ecs_task_quota" {
+  name = "${var.name_prefix}-quota-access"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "QuotaTableAccess"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = var.quota_table_arn
+      }
+    ]
+  })
+}
+
+# Execution role: let ECS pull the ANTHROPIC_API_KEY secret to inject at launch.
+resource "aws_iam_role_policy" "ecs_execution_secrets" {
+  name = "${var.name_prefix}-secret-access"
+  role = aws_iam_role.ecs_task_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "ReadAnthropicKey"
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.anthropic_api_key_secret_arn
+      }
+    ]
+  })
+}
+
 # --- Sandbox Security Group (restrictive egress) ---
 # Replaces the shared ECS SG for research-workspace tasks.
 # Only allows HTTPS, DNS, and NFS egress — blocks arbitrary outbound ports
@@ -410,6 +451,31 @@ resource "aws_ecs_task_definition" "main" {
         {
           name  = "MAX_VAULT_SIZE_MB"
           value = "1024"
+        },
+        {
+          name  = "AWS_REGION"
+          value = data.aws_region.current.name
+        },
+        {
+          name  = "QUOTA_TABLE"
+          value = var.quota_table_name
+        },
+        {
+          name  = "ALLOWLIST"
+          value = var.allowlist
+        },
+        {
+          name  = "ENABLE_SCHEDULER"
+          value = var.enable_scheduler
+        }
+      ]
+
+      # Operator commercial-API key, injected from Secrets Manager at runtime
+      # (never stored in plaintext in the task definition).
+      secrets = [
+        {
+          name      = "ANTHROPIC_API_KEY"
+          valueFrom = var.anthropic_api_key_secret_arn
         }
       ]
 
@@ -422,9 +488,9 @@ resource "aws_ecs_task_definition" "main" {
         }
       ]
 
-      # No server-side ANTHROPIC_API_KEY: apps/research-workspace/src/server.js
-      # explicitly deletes ANTHROPIC_API_KEY from the spawned-process env so
-      # Claude Code uses per-user OAuth instead.
+      # ANTHROPIC_API_KEY is supplied via the `secrets` block above. The agent
+      # runs through the Claude Agent SDK authenticated by this single operator
+      # key (commercial API); there is no per-user subscription OAuth.
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -485,18 +551,24 @@ resource "aws_ecs_service" "main" {
   name            = var.name_prefix
   cluster         = var.ecs_cluster_arn
   task_definition = aws_ecs_task_definition.main.arn
-  desired_count   = 1
+  # Scale-to-zero: starts idle ($0). The scaler Lambda owns desired_count at
+  # runtime (wake on request, reap when idle), so Terraform must not reset it.
+  desired_count = 0
 
+  # Cost: pin the steady-state task to Spot (~70% cheaper). base=1 on Spot keeps
+  # the single always-on task on Spot; FARGATE (on-demand) stays as a weighted
+  # fallback so transient deploy tasks / Spot-capacity gaps can still place.
+  # Tradeoff: a possible ~2-min interruption mid-run, acceptable for a demo.
   capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
-    weight            = 2
-    base              = 0
+    weight            = 4
+    base              = 1
   }
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
     weight            = 1
-    base              = 1
+    base              = 0
   }
 
   network_configuration {
@@ -519,7 +591,7 @@ resource "aws_ecs_service" "main" {
   deployment_minimum_healthy_percent = 100
 
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes = [task_definition, desired_count]
   }
 
   tags = {

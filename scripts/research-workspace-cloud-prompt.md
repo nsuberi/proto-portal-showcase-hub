@@ -95,8 +95,12 @@ aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID \
 ## Setup Script (runs before this prompt)
 
 ```bash
-CREDS=$(aws sts assume-role --role-arn "$ROLE_ARN" --role-session-name "insights-$(date +%s)" --duration-seconds 3600 --output json)
-export AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r '.Credentials.AccessKeyId')
-export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r '.Credentials.SecretAccessKey')
-export AWS_SESSION_TOKEN=$(echo $CREDS | jq -r '.Credentials.SessionToken')
+# Configure a named profile that assumes $ROLE_ARN automatically using the ambient Tier 1
+# env-var credentials. No credential VALUES are ever extracted or printed.
+aws configure set role_arn          "$ROLE_ARN" --profile insights
+aws configure set credential_source Environment --profile insights
+aws configure set duration_seconds  3600        --profile insights
+aws configure set region            us-east-1   --profile insights
+export AWS_PROFILE=insights
+# ⚠️ Never `export AWS_SECRET_ACCESS_KEY=$(...)` — that risks the secret being echoed/logged.
 ```

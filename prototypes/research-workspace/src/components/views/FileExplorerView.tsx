@@ -20,10 +20,10 @@ function EditorEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-8">
       <FileText className="w-16 h-16 text-on-surface-variant/20 mb-4" />
-      <h2 className="font-headline text-xl text-on-surface-variant/60 mb-2">
+      <h2 className="font-headline text-xl text-on-surface-variant/80 mb-2">
         No file selected
       </h2>
-      <p className="font-body text-sm text-on-surface-variant/40 max-w-md">
+      <p className="font-body text-sm text-on-surface-variant/65 max-w-md">
         Select a file from the browser to start editing.
       </p>
     </div>
@@ -63,10 +63,10 @@ export default function FileExplorerView() {
                 onClick={() => setSelectedFile(null)}
                 className="p-1.5 -ml-1 rounded-lg active:bg-on-surface/[0.06] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-on-surface-variant/60" />
+                <ArrowLeft className="w-5 h-5 text-on-surface-variant/80" />
               </button>
-              <FileText className="w-3.5 h-3.5 text-on-surface-variant/40 flex-shrink-0" />
-              <span className="font-mono text-xs text-on-surface-variant/70 truncate">
+              <FileText className="w-3.5 h-3.5 text-on-surface-variant/65 flex-shrink-0" />
+              <span className="font-mono text-xs text-on-surface-variant/85 truncate">
                 {fileName}
               </span>
             </div>

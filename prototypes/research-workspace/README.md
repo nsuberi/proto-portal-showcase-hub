@@ -30,7 +30,7 @@ Express.js backend on ECS Fargate with a glassmorphism five-panel React SPA:
 - **Files** — vault file browser (EFS-backed, drag-and-drop, create/delete/rename)
 - **Intentions** — create research/synthesis/review plans with recurring schedules
 - **Editor** — Milkdown WYSIWYG for markdown, regex syntax highlighting for code files
-- **Claude Terminal** — tabbed xterm.js: interactive Claude Code session + per-run output tabs
+- **Run tabs** — per-run, read-only output log of each agent run (Agent SDK; quota-gated)
 - **Hooks & Activity** — real-time PreToolUse hook log showing every tool invocation
 
 Additional capabilities:
@@ -38,7 +38,7 @@ Additional capabilities:
 - **Voice input** — hold spacebar to dictate (Web Speech API transcription into terminal)
 - **Publishing** — tag-based publishing from vault to public gallery
 - **Session config** — read-only viewer for Claude Code skills, hooks, and tool policies
-- **Scheduler** — recurring intention automation (checks every 60s, spawns PTY sessions)
+- **Scheduler** — recurring intention automation (60s loop; off unless `ENABLE_SCHEDULER=1`; quota-gated)
 - **Download/export** — download folder or entire vault as ZIP
 - **EFS** persistent storage per user
 
@@ -87,10 +87,10 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 
 **Why:** Mermaid is the most widely supported diagramming format in markdown renderers (GitHub, VS Code, HedgeDoc). It renders client-side via mermaid.js with no server needed. Alternatives (D2, PlantUML) require server-side rendering. The gallery SPA dynamically imports mermaid.js to avoid bundling its full weight on pages that don't need diagrams.
 
-### 9. Max Plan Auth via `claude login` in Interactive Terminal
-**Decision:** Users authenticate Claude Code with their own Max plan by running `claude login` in the interactive terminal or via the chat panel's auth flow.
+### 9. Agent Execution via the Claude Agent SDK + Operator API Key
+**Decision:** Agent execution uses the **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`) authenticated by a single operator `ANTHROPIC_API_KEY` (commercial Developer Platform key), with per-user budgets enforced in DynamoDB. Users do **not** authenticate Claude individually.
 
-**Why:** The Claude Code CLI's OAuth device-code flow works in the container because it doesn't require a local callback server — it displays a URL and code that the user enters in their browser. The chat WebSocket handler also supports `claude auth login --claudeai` with a REST fallback for code submission. The OAuth token is stored at `~/.claude/` in the user's vault root (`HOME=/workspace/vaults/{userId}/`), persisting across container restarts on EFS. Each user authenticates independently — no shared credentials.
+**Why:** The original design screen-scraped the interactive `claude` CLI authenticated with a personal Claude.ai subscription. Anthropic's terms do not permit using a consumer subscription to power a multi-user backend, and screen-scraping a TUI over a PTY is fragile. The Agent SDK runs the same engine programmatically: it streams structured events, takes `cwd`/`HOME` per user (preserving vault isolation, skills, and command hooks via `settingSources`), and authenticates with a commercial API key — the supported path for an app serving others. Because all usage now bills to one operator account, every run is gated by a per-user quota (runs/day, $/day, concurrency) plus an org-wide cap and the Anthropic Console spend limit. Access is restricted to an allowlist of Cognito `sub`s (invite-only, non-transferable). The interactive terminal was retired — a free-form session can't be metered against a per-run budget.
 
 ### 10. CloudFront Path-Based Routing (Vault vs Gallery)
 **Decision:** CloudFront uses ordered cache behaviors to route `/vault/*` to ALB (authenticated) and `/*` to S3 (public).
@@ -110,7 +110,7 @@ A Claude Code Cloud Scheduled Task (4x/day) reads active intentions from DynamoD
 | GitHub OIDC Proxy | Lambda | Translates GitHub OAuth to OIDC for Cognito |
 | DynamoDB | Metadata | Content index, intentions, feedback, user profiles |
 | EFS | Storage | Per-user persistent vaults with access point isolation |
-| ECS Fargate | Compute | Express.js + node-pty backend (ARM64, Fargate Spot) |
+| ECS Fargate | Compute | Express.js + Claude Agent SDK backend (ARM64, Fargate Spot) |
 | ECR | Registry | Docker images for the workspace |
 | S3 | Content | Published gallery content (.md, .cells.json) + static SPA |
 | CloudFront | CDN | Path-based routing (public vs authenticated) |
@@ -127,11 +127,13 @@ Layer 1: Cognito + GitHub OAuth (at ALB)                    ✓ Shipped
 Layer 2: Per-User Application-Level Path Isolation          ✓ Shipped
   Each user scoped to /workspace/vaults/{cognito-sub}/
   sanitizePath() validates every path against user's vault root
-  Claude Code spawned with HOME set to user's vault directory
+  Agent SDK invoked with cwd/HOME set to the user's vault directory
 
-Layer 3: Per-User Claude OAuth                              ✓ Shipped
-  Each user's .claude/ token stored in their vault directory
-  Credential scrubbing: ANTHROPIC_API_KEY, AWS_* stripped from spawned processes
+Layer 3: Operator API Key + Per-User Quota                 ✓ Shipped
+  Single operator ANTHROPIC_API_KEY from Secrets Manager (commercial API)
+  Per-user budget in DynamoDB: 5 runs/day, $5/day, 1 concurrent; per-run cap min($1, remaining)
+  Org-wide daily cap (soft) + Anthropic Console spend limit (hard)
+  Allowlist of Cognito subs (invite-only, non-transferable); empty = open
 ```
 
 ### Planned Isolation (Not Yet Implemented)

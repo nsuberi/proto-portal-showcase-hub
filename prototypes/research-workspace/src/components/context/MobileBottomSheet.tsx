@@ -77,7 +77,7 @@ export default function MobileBottomSheet({
           </span>
           <button
             onClick={handleClose}
-            className="p-2 -mr-2 rounded-full text-on-surface-variant/50 active:bg-on-surface/[0.06] transition-colors"
+            className="p-2 -mr-2 rounded-full text-on-surface-variant/72 active:bg-on-surface/[0.06] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

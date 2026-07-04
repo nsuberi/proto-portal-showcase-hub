@@ -35,7 +35,7 @@ export default function ContentTypeTabs({ activeTab, onTabChange, counts }: Prop
               className={`font-label text-xs px-1.5 py-0.5 rounded-full ${
                 isActive
                   ? "bg-primary/20 text-primary"
-                  : "bg-surface-container-high text-on-surface-variant/60"
+                  : "bg-surface-container-high text-on-surface-variant/80"
               }`}
             >
               {counts[tab.key]}
