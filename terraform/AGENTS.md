@@ -137,6 +137,17 @@ A complete ECS container deployment requires ALL of these steps:
 2. For destructive changes (resource replacement), confirm with the user
 3. After modifying CloudFront config, remember it takes ~5 minutes to propagate globally
 4. After adding/removing a prototype, update the CloudFront function's prototype list
+5. **Update the cost model** — see "Cost Impact of Changes" below
+
+## Cost Impact of Changes (MANDATORY)
+
+Whenever you add, remove, resize, or reschedule any deployed resource — Terraform, ECS task sizing, Lambda schedules, desired counts, log retention, anything that bills — you MUST:
+
+1. Estimate the monthly cost delta of the change before applying it (state it to the user).
+2. Update [`/billing.md`](../billing.md): adjust the expected steady-state table / scenarios and append a row to its **Update log** with date, change, and expected impact.
+3. If the change is meant to reduce cost, reconcile against Cost Explorer a few days later (commands are in `billing.md`) to confirm the daily rate actually moved.
+
+Rules of thumb for this account: the target idle run rate is **~$0.90/day (~$30/mo)**; the dominant fixed cost is the ALB + its 2 public IPv4s (~$24/mo). Anything always-on (NAT gateway, RDS, `desired_count >= 1` Fargate, ALB/NLB, EIP, provisioned capacity) needs explicit justification — the architecture here is deliberately scale-to-zero.
 
 ## Related
 
