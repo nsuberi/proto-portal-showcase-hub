@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Github, Mail, Linkedin } from "lucide-react";
 import heroVideo from "@/assets/find_your_path.mp4";
+import heroPoster from "@/assets/find_your_path-poster.jpg";
 import thisIsMe from "@/assets/this-is-me.jpg";
 import previewResearchWorkspace from "@/assets/preview-research-workspace.png";
 import previewIslandAlgorithms from "@/assets/preview-island-algorithms.png";
@@ -22,6 +23,12 @@ const DISPLAY_FONT =
 // hero paints instantly with zero network round-trip — eliminates the black flash.
 // Rendered as an <img> with the SAME classes as the <video> so framing is pixel-
 // identical (no horizontal squish on the swap); the video crossfades in once it can play.
+const HERO_LQIP =
+  "data:image/jpeg;base64,/9j//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgYGBwYHCEhISEhISckJygoKCcnJycoKCgrKyszMzMrKysoKCsrMDAzMzc5NzQ0MzQ5OTw8PEhIRUVUVFdnZ3z/xABnAAACAwEBAQAAAAAAAAAAAAADAgYFBwAEAQEBAQEBAAAAAAAAAAAAAAAAAgEAAxAAAgEDAQkBAAAAAAAAAAAAAQACFBNxYQMSETHRYoFCMkERAQEBAQAAAAAAAAAAAAAAAAABERL/wAARCAAYACADASIAAhEAAxEA/9oADAMBAAIRAxEAPwCdVeH5WYYFLdj7E4HVrbpCuI2tPrT2p63SLlt4rXzo3iJqMnaE/p8oxJ8a0eb2BYB7isPkoCg3/9k=";
+
+// Inlined low-quality placeholder (first video frame, 32px wide, ~284 bytes) so the
+// hero paints instantly with zero network round-trip — eliminates the black flash
+// while the poster JPG and full video stream in. Average frame color is the fallback.
 const HERO_LQIP =
   "data:image/jpeg;base64,/9j//gAQTGF2YzYyLjExLjEwMAD/2wBDAAgYGBwYHCEhISEhISckJygoKCcnJycoKCgrKyszMzMrKysoKCsrMDAzMzc5NzQ0MzQ5OTw8PEhIRUVUVFdnZ3z/xABnAAACAwEBAQAAAAAAAAAAAAADAgYFBwAEAQEBAQEBAAAAAAAAAAAAAAAAAgEAAxAAAgEDAQkBAAAAAAAAAAAAAQACFBNxYQMSETHRYoFCMkERAQEBAQAAAAAAAAAAAAAAAAABERL/wAARCAAYACADASIAAhEAAxEA/9oADAMBAAIRAxEAPwCdVeH5WYYFLdj7E4HVrbpCuI2tPrT2p63SLlt4rXzo3iJqMnaE/p8oxJ8a0eb2BYB7isPkoCg3/9k=";
 
@@ -259,6 +266,30 @@ const Portfolio = () => {
     label: t.railLabel,
   }));
 
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <video
+          className="absolute inset-0 min-w-full min-h-full w-auto h-auto object-cover opacity-45"
+          style={{
+            // design-token-lint-ignore — average color of the hero video's first frame, sampled from the binary asset
+            backgroundColor: "#767784",
+            backgroundImage: `url("${HERO_LQIP}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+          autoPlay
+          loop
+          muted
+          playsInline
+          webkit-playsinline="true"
+          poster={heroPoster}
+          preload="auto"
+        >
+          <source src={heroVideo} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
   // Only these two are surfaced on the homepage right now. The rest of the
   // prototype data above is intentionally kept around but not rendered.
   const FEATURED_LINKS = [
