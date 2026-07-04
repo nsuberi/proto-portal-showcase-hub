@@ -111,15 +111,15 @@ function ConversationCard({
             <p className="font-label text-sm text-on-surface font-medium truncate flex-1">
               {conversation.title}
             </p>
-            <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant/30 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant/60 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
 
           <div className="flex items-center gap-2 mt-1">
-            <span className="font-label text-[10px] text-on-surface-variant/40 flex items-center gap-1">
+            <span className="font-label text-[10px] text-on-surface-variant/65 flex items-center gap-1">
               <Clock className="w-2.5 h-2.5" />
               {formatRelativeTime(conversation.lastMessageAt)}
             </span>
-            <span className="font-label text-[10px] text-on-surface-variant/30">
+            <span className="font-label text-[10px] text-on-surface-variant/60">
               {conversation.messageCount} messages
             </span>
             {conversation.toolUseCount > 0 && (
@@ -167,13 +167,13 @@ function ConversationDetailView({
           onClick={onBack}
           className="p-1 -ml-1 rounded-lg hover:bg-on-surface/[0.04] active:bg-on-surface/[0.06] transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-on-surface-variant/60" />
+          <ArrowLeft className="w-5 h-5 text-on-surface-variant/80" />
         </button>
         <div className="flex-1 min-w-0">
           <p className="font-label text-sm font-medium text-on-surface truncate">
             {detail.title}
           </p>
-          <p className="font-label text-[10px] text-on-surface-variant/40">
+          <p className="font-label text-[10px] text-on-surface-variant/65">
             {new Date(detail.createdAt).toLocaleString()} &middot;{" "}
             {detail.messages.length} messages
           </p>
@@ -186,7 +186,7 @@ function ConversationDetailView({
         td.flowers.length > 0 ||
         td.roots.length > 0) && (
         <div className="px-4 py-3 border-b border-outline-variant/15 bg-surface-container-lowest/50 shrink-0">
-          <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant/40 mb-2">
+          <p className="font-label text-[10px] uppercase tracking-wider text-on-surface-variant/65 mb-2">
             Knowledge Tree
           </p>
           <div className="space-y-1.5">
@@ -196,8 +196,8 @@ function ConversationDetailView({
                 className="flex items-center gap-2 text-[11px]"
               >
                 <TreeDeciduous className="w-3 h-3 text-root flex-shrink-0" />
-                <span className="text-on-surface/70">{r.label}</span>
-                <span className="text-on-surface-variant/30 font-label text-[9px]">
+                <span className="text-on-surface/85">{r.label}</span>
+                <span className="text-on-surface-variant/60 font-label text-[9px]">
                   root
                 </span>
               </div>
@@ -208,8 +208,8 @@ function ConversationDetailView({
                 className="flex items-center gap-2 text-[11px]"
               >
                 <GitBranch className="w-3 h-3 text-branch flex-shrink-0" />
-                <span className="text-on-surface/70">{b.title}</span>
-                <span className="text-on-surface-variant/30 font-label text-[9px]">
+                <span className="text-on-surface/85">{b.title}</span>
+                <span className="text-on-surface-variant/60 font-label text-[9px]">
                   {b.status}
                 </span>
               </div>
@@ -220,7 +220,7 @@ function ConversationDetailView({
                 className="flex items-center gap-2 text-[11px]"
               >
                 <Leaf className="w-3 h-3 text-leaf flex-shrink-0" />
-                <span className="text-on-surface/70 truncate">
+                <span className="text-on-surface/85 truncate">
                   {l.summary}
                 </span>
               </div>
@@ -231,7 +231,7 @@ function ConversationDetailView({
                 className="flex items-center gap-2 text-[11px]"
               >
                 <Flower2 className="w-3 h-3 text-flower flex-shrink-0" />
-                <span className="text-on-surface/70 truncate">
+                <span className="text-on-surface/85 truncate">
                   {f.insight}
                 </span>
               </div>
@@ -247,11 +247,11 @@ function ConversationDetailView({
           className="flex items-center gap-2 px-4 py-2 border-b border-outline-variant/15 hover:bg-on-surface/[0.02] transition-colors text-left shrink-0"
         >
           <Wrench className="w-3.5 h-3.5 text-primary/50" />
-          <span className="font-label text-xs text-on-surface-variant/60 flex-1">
+          <span className="font-label text-xs text-on-surface-variant/80 flex-1">
             {detail.toolUses.length} tool calls
           </span>
           <ChevronRight
-            className={`w-3 h-3 text-on-surface-variant/30 transition-transform ${showTools ? "rotate-90" : ""}`}
+            className={`w-3 h-3 text-on-surface-variant/60 transition-transform ${showTools ? "rotate-90" : ""}`}
           />
         </button>
       )}
@@ -265,8 +265,8 @@ function ConversationDetailView({
                 key={i}
                 className="flex items-center gap-2 py-1 text-[10px]"
               >
-                <Icon className="w-2.5 h-2.5 text-on-surface-variant/40 flex-shrink-0" />
-                <span className="font-label text-on-surface-variant/60 flex-1 truncate">
+                <Icon className="w-2.5 h-2.5 text-on-surface-variant/65 flex-shrink-0" />
+                <span className="font-label text-on-surface-variant/80 flex-1 truncate">
                   {tu.tool}
                   {tu.input?.file_path
                     ? `: ${String(tu.input.file_path).split("/").pop()}`
@@ -276,7 +276,7 @@ function ConversationDetailView({
                         ? `: ${String(tu.input.command).slice(0, 40)}`
                         : ""}
                 </span>
-                <span className="text-on-surface-variant/30 font-mono">
+                <span className="text-on-surface-variant/60 font-mono">
                   {new Date(tu.timestamp).toLocaleTimeString()}
                 </span>
               </div>
@@ -304,7 +304,7 @@ function ConversationDetailView({
                 )}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <span className="font-label text-[10px] font-medium text-on-surface-variant/50 mb-0.5 block">
+                <span className="font-label text-[10px] font-medium text-on-surface-variant/72 mb-0.5 block">
                   {msg.role === "user" ? "You" : "Gardener"}
                 </span>
                 {msg.role === "user" ? (
@@ -376,7 +376,7 @@ export default function ConversationHistory({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="font-label text-sm text-on-surface-variant/40">
+        <span className="font-label text-sm text-on-surface-variant/65">
           Loading conversations...
         </span>
       </div>
@@ -388,10 +388,10 @@ export default function ConversationHistory({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <MessageCircle className="w-12 h-12 text-on-surface-variant/15 mb-3" />
-        <h3 className="font-headline text-lg text-on-surface-variant/50 mb-1">
+        <h3 className="font-headline text-lg text-on-surface-variant/72 mb-1">
           No conversations yet
         </h3>
-        <p className="font-body text-sm text-on-surface-variant/40 max-w-sm">
+        <p className="font-body text-sm text-on-surface-variant/65 max-w-sm">
           Start chatting with the Gardener. Your conversation history will appear
           here with tree associations and tool audit trails.
         </p>
@@ -416,13 +416,13 @@ export default function ConversationHistory({
             onClick={onClose}
             className="p-1 -ml-1 rounded-lg hover:bg-on-surface/[0.04] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-on-surface-variant/60" />
+            <ArrowLeft className="w-5 h-5 text-on-surface-variant/80" />
           </button>
         )}
         <h3 className="font-label text-sm font-semibold text-on-surface flex-1">
           Conversation History
         </h3>
-        <span className="font-label text-[10px] text-on-surface-variant/40 bg-on-surface/[0.04] px-2 py-0.5 rounded-full">
+        <span className="font-label text-[10px] text-on-surface-variant/65 bg-on-surface/[0.04] px-2 py-0.5 rounded-full">
           {conversations.length}
         </span>
       </div>
@@ -431,7 +431,7 @@ export default function ConversationHistory({
       <div className="flex-1 overflow-y-auto">
         {loadingDetail && (
           <div className="flex items-center justify-center py-8">
-            <span className="font-label text-xs text-on-surface-variant/40">
+            <span className="font-label text-xs text-on-surface-variant/65">
               Loading conversation...
             </span>
           </div>

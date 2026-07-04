@@ -5,6 +5,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Full-height chain so the app shell (and its sidebar) can fill the viewport.
+   Without this, .workspace-layout's `-webkit-fill-available` resolves against an
+   auto-height ancestor and collapses to content height. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Readability: raise the base font size so all rem-based type scales up
+   (research workspace text was noticeably smaller than comparable apps). */
+html {
+  font-size: 19px;
+}
+
 body {
   margin: 0;
   background-color: var(--color-surface);
@@ -38,20 +53,7 @@ body {
 /* Bark card (replaces glass-widget — light paper with earth border) */
 /* design-token-lint-ignore */
 .bark-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 3px rgba(107, 91, 74, 0.08),
-    0 4px 12px rgba(107, 91, 74, 0.04);
-  overflow: hidden;
-}
-
-/* Keep glass-widget as alias for backward compatibility during migration */
-.glass-widget {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--color-outline-variant);
@@ -258,56 +260,21 @@ body {
 
 /* === Nav rail (icon sidebar) === */
 
-/* design-token-lint-ignore */
+/* Colorless nav rail — same surface as the page so icons/widgets float on the
+   shared dot-grid background (no fill, no blur, no divider border). */
 .nav-rail {
   width: 56px;
   height: 100%;
   overflow: hidden;
-  background: rgba(232, 237, 219, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-right: 1px solid var(--color-outline-variant);
+  background: transparent;
+  border-right: none;
   border-radius: 0;
   flex-shrink: 0;
   transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-rail.expanded {
-  width: 200px;
-}
-
-/* Keep sidebar-rail as alias during migration */
-.sidebar-rail {
-  width: 56px;
-  background: rgba(232, 237, 219, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-right: 1px solid var(--color-outline-variant);
-  border-radius: 0;
-  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-/* design-token-lint-ignore */
-.sidebar-rail.expanded {
-  width: 320px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-outline-variant);
-  box-shadow:
-    0 1px 3px rgba(107, 91, 74, 0.08),
-    0 4px 12px rgba(107, 91, 74, 0.04);
-}
-
-.sidebar-content {
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: opacity 180ms ease-out 60ms, transform 180ms ease-out 60ms;
-}
-
-.sidebar-rail.expanded .sidebar-content {
-  opacity: 1;
-  transform: translateX(0);
+  width: 272px;
 }
 
 /* === Context panel (right-side artifact panel) === */

@@ -45,7 +45,7 @@ export default function CodeCanvas({ cell }: Props) {
       {/* Output */}
       {showOutput && (
         <div className="border-t border-outline-variant/20 bg-surface-container-low p-4">
-          <p className="font-label text-[10px] text-on-surface-variant/50 uppercase tracking-wider mb-2">
+          <p className="font-label text-[10px] text-on-surface-variant/72 uppercase tracking-wider mb-2">
             Output ({cell.mock_output.type})
           </p>
           <pre className="font-mono text-sm text-on-surface-variant whitespace-pre-wrap leading-relaxed">

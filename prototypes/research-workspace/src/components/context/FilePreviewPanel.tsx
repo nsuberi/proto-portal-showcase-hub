@@ -52,8 +52,8 @@ export default function FilePreviewPanel({ filePath }: FilePreviewPanelProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-6">
         <AlertCircle className="w-6 h-6 text-error/40 mb-2" />
-        <p className="font-label text-xs text-on-surface-variant/60">{error}</p>
-        <p className="font-mono text-[10px] text-on-surface-variant/40 mt-1">
+        <p className="font-label text-xs text-on-surface-variant/80">{error}</p>
+        <p className="font-mono text-[10px] text-on-surface-variant/65 mt-1">
           {filePath}
         </p>
       </div>
@@ -64,8 +64,8 @@ export default function FilePreviewPanel({ filePath }: FilePreviewPanelProps) {
     <div className="flex flex-col h-full">
       {/* File header */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-outline-variant/20">
-        <FileText className="w-3.5 h-3.5 text-on-surface-variant/40" />
-        <span className="font-mono text-xs text-on-surface-variant/70 truncate">
+        <FileText className="w-3.5 h-3.5 text-on-surface-variant/65" />
+        <span className="font-mono text-xs text-on-surface-variant/85 truncate">
           {fileName}
         </span>
       </div>
@@ -77,7 +77,7 @@ export default function FilePreviewPanel({ filePath }: FilePreviewPanelProps) {
             <MarkdownRenderer content={content} />
           </div>
         ) : (
-          <pre className="font-mono text-xs text-on-surface/80 whitespace-pre-wrap break-words">
+          <pre className="font-mono text-xs text-on-surface/88 whitespace-pre-wrap break-words">
             {content}
           </pre>
         )}

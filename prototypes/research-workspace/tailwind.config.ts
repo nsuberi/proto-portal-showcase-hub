@@ -28,6 +28,8 @@ export default {
         "on-tertiary": "var(--color-on-tertiary)",
         "on-surface": "var(--color-on-surface)",
         "on-surface-variant": "var(--color-on-surface-variant)",
+        "inverse-surface": "var(--color-inverse-surface)",
+        "inverse-on-surface": "var(--color-inverse-on-surface)",
         outline: "var(--color-outline)",
         "outline-variant": "var(--color-outline-variant)",
         error: "var(--color-error)",
@@ -49,6 +51,15 @@ export default {
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+      },
+      // Restore non-default widths used throughout the app (were silent no-ops):
+      // ensures input borders and focus rings actually render (accessibility).
+      borderWidth: {
+        "1.5": "1.5px",
+        "3": "3px",
+      },
+      ringWidth: {
+        "3": "3px",
       },
     },
   },

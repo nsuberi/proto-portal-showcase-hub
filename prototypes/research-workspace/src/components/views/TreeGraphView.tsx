@@ -469,7 +469,7 @@ function Legend() {
               borderColor: NODE_COLORS[type],
             }}
           />
-          <span className="text-on-surface-variant/60">{label}</span>
+          <span className="text-on-surface-variant/80">{label}</span>
         </span>
       ))}
     </div>
@@ -492,7 +492,7 @@ export default function TreeGraphView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="font-label text-sm text-on-surface-variant/60">
+        <span className="font-label text-sm text-on-surface-variant/80">
           Loading knowledge map...
         </span>
       </div>
@@ -503,14 +503,14 @@ export default function TreeGraphView() {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <TreeDeciduous className="w-16 h-16 text-on-surface-variant/15 mb-4" />
-        <h2 className="font-headline text-xl text-on-surface-variant/50 mb-2">
+        <h2 className="font-headline text-xl text-on-surface-variant/72 mb-2">
           Your knowledge garden is empty
         </h2>
-        <p className="font-body text-sm text-on-surface-variant/40 max-w-md mb-6">
+        <p className="font-body text-sm text-on-surface-variant/65 max-w-md mb-6">
           Start a conversation to plant your first intention. As you explore
           topics, your tree will grow with branches, leaves, and flowers.
         </p>
-        <div className="flex gap-3 text-xs font-label text-on-surface-variant/40">
+        <div className="flex gap-3 text-xs font-label text-on-surface-variant/65">
           <span className="flex items-center gap-1">
             <span
               className="w-2.5 h-2.5 rounded-full border-2"
@@ -600,7 +600,7 @@ function Stat({
       >
         {count}
       </span>
-      <span className="font-label text-[10px] text-on-surface-variant/50">
+      <span className="font-label text-[10px] text-on-surface-variant/72">
         {label}
       </span>
     </div>

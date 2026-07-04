@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code CLI (npm global install works reliably on all architectures)
-RUN npm install -g @anthropic-ai/claude-code
+# The Claude Code engine is bundled by @anthropic-ai/claude-agent-sdk (installed
+# below via `npm install`), so no global CLI install is needed. Auth is via the
+# ANTHROPIC_API_KEY env var (injected from Secrets Manager), not subscription OAuth.
 
 # Install AWS CLI v2
 RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscli.zip \

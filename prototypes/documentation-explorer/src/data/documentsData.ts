@@ -76,16 +76,16 @@ When adding a new prototype or making structural changes, update ALL documentati
 
 ---
 
-The ai-evals-in-context project (Flask, ECS Fargate) has been brought into the proto-portal monorepo at \`apps/ai-evals-in-context/\`. It has its own:
+The ai-evals-in-context project (Flask, ECS Fargate) lives in the proto-portal monorepo at \`apps/ai-evals-in-context/\`. The app source is retained, but its **hosted demo was retired on 2026-06-28** to stop AWS costs (ECS Fargate task + RDS Postgres + API Gateway all torn down). The shared ECS cluster, ALB, and VPC stay up because the Research Workspace service runs on them.
 
-- Terraform infrastructure (separate state in \`ai-evals-terraform-state\` S3 bucket)
-- ECS Fargate deployment (not S3/CloudFront like the React prototypes)
-- Python toolchain (black, flake8, pytest)
-- Docker Compose for local dev
+On the portfolio it now appears as a "coming soon" concept: a reimagined **eval-trace workspace** that automatically processes evaluation traces — clustering failures and turning eval runs into prioritized product-improvement recommendations.
 
-**Why:** Nathan wants a single portfolio repo that demonstrates range (React + Python, S3 + ECS, client-side + server-side).
+- Source toolchain: Python (black, flake8, pytest), Docker Compose for local dev
+- The old SDLC-walkthrough demo is no longer served at \`/prototypes/ai-evals/\`
 
-**How to apply:** When working on ai-evals, use \`python3\` not \`python\`, and follow the Flask conventions documented in its AGENTS.md.
+**Why:** Nathan is rethinking the prototype's strategy and didn't want to keep paying to host a site that only explains the role of evals.
+
+**How to apply:** When working on the ai-evals source, use \`python3\` not \`python\`. Don't re-enable the old ECS/RDS hosting — the next version is a from-scratch trace-processing workspace.
 
 ---
 

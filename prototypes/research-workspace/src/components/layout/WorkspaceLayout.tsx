@@ -1,6 +1,10 @@
 // design-token-lint-ignore — inline rgba shadow value; tracked for refactor.
 import { useState, useCallback } from "react";
 import NavRail from "../nav/NavRail";
+import UserMenu from "./UserMenu";
+import IconActionButton from "./IconActionButton";
+import ProjectSwitcher from "../projects/ProjectSwitcher";
+import SourcesPanel from "../sources/SourcesPanel";
 import type { ViewId } from "../nav/NavRail";
 import ChatView from "../views/ChatView";
 import FileExplorerView from "../views/FileExplorerView";
@@ -13,7 +17,10 @@ import BranchListPanel from "../context/BranchListPanel";
 import ActivityPanel from "../context/ActivityPanel";
 import FilePreviewPanel from "../context/FilePreviewPanel";
 import ToolPolicyEditor from "../config/ToolPolicyEditor";
+import VaultSearchBar from "../search/VaultSearchBar";
 import ToastContainer from "../ui/ToastContainer";
+import BackendStartingSplash from "../BackendStartingSplash";
+import { useWakeNavigation } from "../../hooks/useWakeNavigation";
 import { useChatContext } from "../../contexts/ChatContext";
 import { useConversationPhase } from "../../hooks/useConversationPhase";
 import type { ConversationPhase } from "../../hooks/useConversationPhase";
@@ -25,6 +32,8 @@ import {
   Network,
   Settings2,
   ArrowLeft,
+  LayoutGrid,
+  Globe,
   LogOut,
   Leaf,
 } from "lucide-react";
@@ -32,7 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useAuthStatus } from "../../hooks/useAuthStatus";
 
-type MobileTab = "chat" | "history" | "files" | "tree" | "config";
+type MobileTab = "chat" | "history" | "files" | "sources" | "tree" | "config";
 
 const PHASE_PANEL_TITLE: Partial<Record<ConversationPhase, string>> = {
   intending: "Your Branches",
@@ -42,7 +51,16 @@ const PHASE_PANEL_TITLE: Partial<Record<ConversationPhase, string>> = {
   connecting: "Connections",
 };
 
+const VAULT_AUTH_URL = "/prototypes/research-workspace/vault/";
+
 export default function WorkspaceLayout() {
+  const {
+    waking,
+    phase: wakePhase,
+    elapsed: wakeElapsed,
+    wakeThenNavigate,
+    retry: wakeRetry,
+  } = useWakeNavigation();
   const [activeView, setActiveView] = useState<ViewId>("chat");
   const [policyEditorOpen, setPolicyEditorOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
@@ -56,7 +74,17 @@ export default function WorkspaceLayout() {
   const { isAuthenticated, logout } = useAuthStatus();
 
   // Chat state from shared context
-  const { messages, isStreaming, newChat } = useChatContext();
+  const { messages, isStreaming, newChat, sendMessage } = useChatContext();
+
+  // Meta-questions from the Sources panel: jump to chat and ask.
+  const handleAskInChat = useCallback(
+    (prompt: string) => {
+      setActiveView("chat");
+      setMobileTab("chat");
+      sendMessage(prompt);
+    },
+    [sendMessage],
+  );
   const { phase, reviewFilePath } = useConversationPhase(messages, isStreaming);
 
   // Reset dismissal when phase changes (desktop)
@@ -80,14 +108,12 @@ export default function WorkspaceLayout() {
   );
 
   // Determine whether to show context panel (desktop)
-  // Phase-based panels (excluding "researching" — activity is now on-demand)
   const showPhasePanel =
     !contextDismissed &&
     activeView === "chat" &&
     !isMobile &&
     phase !== "idle" &&
-    phase !== "exploring" &&
-    phase !== "researching";
+    phase !== "exploring";
 
   const showContextPanel = showPhasePanel || (!!artifactFile && !isMobile) || (activityPanelOpen && !isMobile);
 
@@ -119,6 +145,7 @@ export default function WorkspaceLayout() {
   ) : (
     <>
       {phase === "intending" && <BranchListPanel />}
+      {phase === "researching" && <ActivityPanel />}
       {phase === "reviewing" && reviewFilePath && (
         <FilePreviewPanel filePath={reviewFilePath} />
       )}
@@ -134,13 +161,14 @@ export default function WorkspaceLayout() {
   const sessionExpiredBanner = !isAuthenticated && (
     <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-tertiary-container border-b border-tertiary/20">
       <LogIn className="w-4 h-4 text-tertiary flex-shrink-0" />
-      <p className="font-label text-xs text-on-surface/70 flex-1">
+      <p className="font-label text-xs text-on-surface/85 flex-1">
         Your session has expired. Sign in again to continue.
       </p>
       <button
         onClick={() => {
           logout();
-          window.location.href = "/prototypes/research-workspace/workspace";
+          // Re-auth requires the Cognito /vault route — wake the backend first.
+          wakeThenNavigate(VAULT_AUTH_URL);
         }}
         className="font-label text-xs font-semibold px-3 py-1.5 rounded-lg bg-tertiary text-on-tertiary hover:bg-tertiary/90 active:bg-tertiary/80 transition-colors whitespace-nowrap"
       >
@@ -162,12 +190,14 @@ export default function WorkspaceLayout() {
       { id: "chat", icon: MessageCircle, label: "Chat" },
       { id: "history", icon: History, label: "History" },
       { id: "files", icon: FolderOpen, label: "Vault" },
+      { id: "sources", icon: Globe, label: "Sources" },
       { id: "tree", icon: Network, label: "Tree" },
       { id: "config", icon: Settings2, label: "Personalization" },
     ];
 
     return (
       <div className="workspace-layout workspace-backdrop overflow-hidden flex flex-col">
+        {waking && <BackendStartingSplash phase={wakePhase} elapsed={wakeElapsed} onRetry={wakeRetry} />}
         {policyEditorOpen && (
           <ToolPolicyEditor onClose={() => setPolicyEditorOpen(false)} />
         )}
@@ -177,31 +207,38 @@ export default function WorkspaceLayout() {
         <div className="flex items-center justify-between px-4 pt-3 pb-1 shrink-0">
           <button
             onClick={() => navigate("/")}
-            className="inline-flex items-center gap-1.5 font-label text-xs text-on-surface-variant/50 active:text-on-surface-variant transition-colors py-1"
+            className="inline-flex items-center gap-1.5 font-label text-xs text-on-surface-variant/72 active:text-on-surface-variant transition-colors py-1"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
-          {/* Center brand */}
-          <div className="flex items-center gap-1.5">
-            <Leaf className="w-4 h-4 text-primary" />
-            <span className="font-headline text-sm text-on-surface/80">
-              Gardener
-            </span>
+          {/* Center: project switcher (replaces static brand on mobile) */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <ProjectSwitcher />
             {isStreaming && (
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
             )}
           </div>
 
-          <button
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-            className="inline-flex items-center font-label text-xs text-on-surface-variant/40 active:text-on-surface-variant/60 transition-colors py-1"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              className="inline-flex items-center font-label text-xs text-on-surface-variant/65 active:text-on-surface-variant/80 transition-colors py-1"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+            <UserMenu size="sm" />
+          </div>
+        </div>
+
+        {/* Vault search */}
+        <div className="px-4 pb-2 pt-1 shrink-0">
+          <VaultSearchBar
+            onSelectResult={(filePath) => handleOpenFile(filePath)}
+          />
         </div>
 
         {/* View content — edge-to-edge */}
@@ -220,6 +257,13 @@ export default function WorkspaceLayout() {
             className={`absolute inset-0 p-2 ${mobileTab === "files" ? "" : "hidden"}`}
           >
             <FileExplorerView />
+          </div>
+          <div
+            className={`absolute inset-0 p-2 ${mobileTab === "sources" ? "" : "hidden"}`}
+          >
+            <div className="bark-card h-full overflow-hidden p-3">
+              <SourcesPanel onAskInChat={handleAskInChat} />
+            </div>
           </div>
           <div
             className={`absolute inset-0 p-2 ${mobileTab === "tree" ? "" : "hidden"}`}
@@ -250,7 +294,7 @@ export default function WorkspaceLayout() {
                 className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors relative ${
                   isActive
                     ? "text-primary"
-                    : "text-on-surface-variant/40 active:text-on-surface-variant/60"
+                    : "text-on-surface-variant/65 active:text-on-surface-variant/80"
                 }`}
               >
                 <div className="relative">
@@ -313,6 +357,7 @@ export default function WorkspaceLayout() {
 
   return (
     <div className="workspace-layout workspace-backdrop flex">
+      {waking && <BackendStartingSplash phase={wakePhase} elapsed={wakeElapsed} onRetry={wakeRetry} />}
       <ToastContainer />
       {/* Tool policy editor modal */}
       {policyEditorOpen && (
@@ -336,24 +381,37 @@ export default function WorkspaceLayout() {
       <main className="flex-1 flex flex-col min-w-0">
         {sessionExpiredBanner}
         {/* Top bar */}
-        <div className="flex items-center justify-between shrink-0 px-4 py-2">
-          <button
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-1.5 font-label text-xs text-on-surface-variant/60 hover:text-on-surface-variant transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Gallery
-          </button>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-            className="inline-flex items-center gap-1.5 font-label text-xs text-on-surface-variant/40 hover:text-on-surface-variant/60 transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
+        <div className="flex items-center gap-4 shrink-0 px-4 py-2">
+          {/* Project switcher — isolated workspaces */}
+          <ProjectSwitcher />
+
+          {/* Centered vault search — GitHub-style */}
+          <div className="flex-1 flex justify-center min-w-0">
+            <VaultSearchBar
+              onSelectResult={(filePath) => {
+                setActiveView("chat");
+                handleOpenFile(filePath);
+              }}
+            />
+          </div>
+
+          {/* Right cluster: gallery/logout actions + account chip (flush right) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <IconActionButton
+              icon={LayoutGrid}
+              label="Back to Gallery"
+              onClick={() => navigate("/")}
+            />
+            <IconActionButton
+              icon={LogOut}
+              label="Log out"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+            />
+            <UserMenu />
+          </div>
         </div>
 
         {/* View area + context panel */}
@@ -369,6 +427,13 @@ export default function WorkspaceLayout() {
               </div>
             )}
             {activeView === "files" && <FileExplorerView />}
+            {activeView === "sources" && (
+              <div className="flex justify-center h-full p-2">
+                <div className="w-full max-w-3xl bark-card p-4 overflow-hidden">
+                  <SourcesPanel onAskInChat={handleAskInChat} />
+                </div>
+              </div>
+            )}
             {activeView === "tree" && (
               <div className="flex justify-center h-full p-2">
                 <div className="w-full max-w-4xl bark-card">

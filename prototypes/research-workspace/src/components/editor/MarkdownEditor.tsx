@@ -129,7 +129,7 @@ export default function MarkdownEditor({
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/40" />
+        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/65" />
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function MarkdownEditor({
           <SaveStatusBadge status={saveStatus} />
           <button
             onClick={handleManualSave}
-            className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/60 hover:text-on-surface/70"
+            className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/80 hover:text-on-surface/85"
             title={`Save (${MOD}+S)`}
           >
             <Save className="w-3.5 h-3.5" />
@@ -173,7 +173,7 @@ export default function MarkdownEditor({
               className={`p-1 rounded transition-colors ${
                 publishStatus === "published"
                   ? "text-accent-success"
-                  : "text-on-surface-variant/60 hover:text-on-surface/70 hover:bg-on-surface/[0.08]"
+                  : "text-on-surface-variant/80 hover:text-on-surface/85 hover:bg-on-surface/[0.08]"
               }`}
               title="Publish to gallery"
             >
@@ -201,7 +201,7 @@ export default function MarkdownEditor({
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setShowHotkeys(!showHotkeys); }}
-              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/40 hover:text-on-surface-variant"
+              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/65 hover:text-on-surface-variant"
               title="Keyboard shortcuts"
             >
               <Keyboard className="w-3.5 h-3.5" />
@@ -212,7 +212,7 @@ export default function MarkdownEditor({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="px-3 py-1.5 border-b border-outline-variant/30">
-                  <span className="font-label text-[10px] text-on-surface-variant/60 uppercase tracking-wider">
+                  <span className="font-label text-[10px] text-on-surface-variant/80 uppercase tracking-wider">
                     Shortcuts
                   </span>
                 </div>
@@ -224,7 +224,7 @@ export default function MarkdownEditor({
                     <span className="font-label text-[10px] text-on-surface-variant">
                       {action}
                     </span>
-                    <kbd className="font-mono text-[9px] text-on-surface-variant/60 bg-on-surface/[0.06] px-1.5 py-0.5 rounded">
+                    <kbd className="font-mono text-[9px] text-on-surface-variant/80 bg-on-surface/[0.06] px-1.5 py-0.5 rounded">
                       {keys}
                     </kbd>
                   </div>
@@ -237,7 +237,7 @@ export default function MarkdownEditor({
           {onFullscreen && (
             <button
               onClick={onFullscreen}
-              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/40 hover:text-on-surface/70"
+              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/65 hover:text-on-surface/85"
               title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
             >
               {isFullscreen ? (

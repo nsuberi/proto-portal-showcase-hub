@@ -65,7 +65,7 @@ function ConfirmDeleteModal({
           </h3>
           <p className="font-label text-xs text-on-surface-variant/80 leading-relaxed">
             Are you sure you want to delete{" "}
-            <span className="text-on-surface/80 font-mono">{node.name}</span>?
+            <span className="text-on-surface/88 font-mono">{node.name}</span>?
             {isFolder && " The folder must be empty to delete."}
             {" "}This cannot be undone.
           </p>
@@ -264,7 +264,7 @@ function TreeNode({
                   creatingType === "folder" ? "folder name" : "file.md"
                 }
                 autoFocus
-                className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface text-xs font-mono px-2 py-1 rounded border border-outline-variant/30 focus:border-primary/50 focus:outline-none placeholder:text-on-surface-variant/40"
+                className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface text-xs font-mono px-2 py-1 rounded border border-outline-variant/30 focus:border-primary/50 focus:outline-none placeholder:text-on-surface-variant/65"
               />
             </div>
           )}
@@ -480,27 +480,27 @@ export default function FileBrowser({
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="glass-header flex items-center justify-between px-3 py-2">
-        <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
+        <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/80">
           Files
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={refetch}
-            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/60 hover:text-on-surface-variant"
+            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/80 hover:text-on-surface-variant"
             title="Refresh"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => startCreating("file")}
-            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/60 hover:text-on-surface-variant"
+            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/80 hover:text-on-surface-variant"
             title="New file"
           >
             <FilePlus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => startCreating("folder")}
-            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/60 hover:text-on-surface-variant"
+            className="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant/80 hover:text-on-surface-variant"
             title="New folder"
           >
             <FolderPlus className="w-3.5 h-3.5" />
@@ -510,7 +510,7 @@ export default function FileBrowser({
             onClick={() =>
               downloadVault().catch((err) => alert(err.message))
             }
-            className="p-1 rounded hover:bg-primary/20 transition-colors text-on-surface-variant/60 hover:text-primary"
+            className="p-1 rounded hover:bg-primary/20 transition-colors text-on-surface-variant/80 hover:text-primary"
             title="Download vault as ZIP"
           >
             <Download className="w-3.5 h-3.5" />
@@ -538,7 +538,7 @@ export default function FileBrowser({
               creatingRoot === "folder" ? "folder name" : "path/to/file.md"
             }
             autoFocus
-            className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface text-xs font-mono px-2 py-1.5 rounded border border-outline-variant/30 focus:border-primary/50 focus:outline-none placeholder:text-on-surface-variant/40"
+            className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface text-xs font-mono px-2 py-1.5 rounded border border-outline-variant/30 focus:border-primary/50 focus:outline-none placeholder:text-on-surface-variant/65"
           />
         </div>
       )}
@@ -551,7 +551,7 @@ export default function FileBrowser({
         onDrop={handleRootDrop}
       >
         {loading && (
-          <div className="flex items-center gap-2 px-3 py-4 text-on-surface-variant/60">
+          <div className="flex items-center gap-2 px-3 py-4 text-on-surface-variant/80">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="font-label text-xs">Loading files...</span>
           </div>
@@ -593,7 +593,7 @@ export default function FileBrowser({
           tree &&
           (!tree.children || tree.children.length === 0) && (
             <div className="px-3 py-4 text-center">
-              <p className="font-label text-xs text-on-surface-variant/60">
+              <p className="font-label text-xs text-on-surface-variant/80">
                 Vault is empty
               </p>
             </div>

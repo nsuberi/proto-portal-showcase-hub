@@ -50,9 +50,9 @@ function ToolBreakdownBar({ byTool }: { byTool: Record<string, number> }) {
         {entries.map(([tool, count]) => (
           <span
             key={tool}
-            className="font-label text-[9px] text-on-surface-variant/60"
+            className="font-label text-[9px] text-on-surface-variant/80"
           >
-            {tool} <span className="text-on-surface-variant/30">{count}</span>
+            {tool} <span className="text-on-surface-variant/60">{count}</span>
           </span>
         ))}
       </div>
@@ -87,14 +87,14 @@ export default function RunSummaryView({
         ) : (
           <XCircle className="w-4 h-4 text-error/70" />
         )}
-        <span className="font-label text-sm text-on-surface/70">
+        <span className="font-label text-sm text-on-surface/85">
           {isSuccess ? "Completed" : "Failed"} in{" "}
           {formatElapsed(run.elapsedMs)}
         </span>
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-on-surface-variant/60 font-label text-[11px]">
+      <div className="flex items-center gap-4 text-on-surface-variant/80 font-label text-[11px]">
         <span className="flex items-center gap-1">
           <span className="text-on-surface-variant font-medium">
             {summary.totalCalls}

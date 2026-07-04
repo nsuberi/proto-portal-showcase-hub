@@ -49,7 +49,7 @@ export default function ConfigView({ onOpenFile }: ConfigViewProps) {
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <Settings2 className="w-10 h-10 text-on-surface-variant/10 mb-3" />
-            <p className="font-label text-sm text-on-surface-variant/40">
+            <p className="font-label text-sm text-on-surface-variant/65">
               Select a skill or hook to view details
             </p>
             <p className="font-label text-xs text-on-surface-variant/25 mt-1">

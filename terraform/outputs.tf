@@ -56,34 +56,16 @@ output "api_gateway_id" {
 }
 
 # AI Evals in Context Outputs
+# The Flask app, RDS, API Gateway, and ECR were retired on 2026-06-28. Only the
+# shared ALB + ECS cluster (used by Research Workspace) remain.
 output "ai_evals_alb_dns_name" {
-  description = "AI Evals ALB DNS name"
+  description = "Shared ALB DNS name (Research Workspace origin + OAuth callback)"
   value       = module.ai_evals.alb_dns_name
 }
 
-output "ai_evals_ecr_repository_url" {
-  description = "AI Evals ECR repository URL"
-  value       = module.ai_evals.ecr_repository_url
-}
-
 output "ai_evals_ecs_cluster_name" {
-  description = "AI Evals ECS cluster name"
+  description = "Shared ECS cluster name"
   value       = module.ai_evals.ecs_cluster_name
-}
-
-output "ai_evals_ecs_service_name" {
-  description = "AI Evals ECS service name"
-  value       = module.ai_evals.ecs_service_name
-}
-
-output "ai_evals_rds_endpoint" {
-  description = "AI Evals RDS endpoint"
-  value       = module.ai_evals.rds_endpoint
-}
-
-output "ai_evals_api_gateway_url" {
-  description = "AI Evals API Gateway URL"
-  value       = module.ai_evals.api_gateway_url
 }
 
 # Research Workspace Outputs

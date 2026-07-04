@@ -71,15 +71,15 @@ function SectionHeader({
       className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-on-surface/[0.04] transition-colors text-left cursor-pointer"
     >
       <ChevronRight
-        className={`w-2.5 h-2.5 text-on-surface-variant/30 flex-shrink-0 transition-transform ${
+        className={`w-2.5 h-2.5 text-on-surface-variant/60 flex-shrink-0 transition-transform ${
           expanded ? "rotate-90" : ""
         }`}
       />
-      <Icon className="w-3 h-3 text-on-surface-variant/50" />
-      <span className="font-label text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/50 flex-1">
+      <Icon className="w-3 h-3 text-on-surface-variant/72" />
+      <span className="font-label text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/72 flex-1">
         {label}
       </span>
-      <span className="font-label text-[9px] text-on-surface-variant/30 bg-on-surface/[0.06] px-1.5 py-0.5 rounded-full">
+      <span className="font-label text-[9px] text-on-surface-variant/60 bg-on-surface/[0.06] px-1.5 py-0.5 rounded-full">
         {count}
       </span>
     </button>
@@ -134,14 +134,14 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
       {/* Header */}
       <div className="glass-header flex items-center justify-between px-3 py-1.5">
         <div className="flex items-center gap-1.5">
-          <Settings2 className="w-3.5 h-3.5 text-on-surface-variant/60" />
-          <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
+          <Settings2 className="w-3.5 h-3.5 text-on-surface-variant/80" />
+          <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/80">
             Personalization
           </span>
         </div>
         <button
           onClick={fetchConfig}
-          className="p-0.5 text-on-surface-variant/40 hover:text-on-surface-variant transition-colors"
+          className="p-0.5 text-on-surface-variant/65 hover:text-on-surface-variant transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
@@ -152,7 +152,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
         {loading && !config && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <Settings2 className="w-8 h-8 text-on-surface-variant/15 mb-2 animate-pulse" />
-            <p className="font-label text-[10px] text-on-surface-variant/30">
+            <p className="font-label text-[10px] text-on-surface-variant/60">
               Loading config...
             </p>
           </div>
@@ -172,7 +172,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
               {skillsOpen && (
                 <div className="px-3 pb-2">
                   {config.skills.length === 0 ? (
-                    <p className="font-label text-[10px] text-on-surface-variant/30 pl-5">
+                    <p className="font-label text-[10px] text-on-surface-variant/60 pl-5">
                       No skills configured
                     </p>
                   ) : (
@@ -188,11 +188,11 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
                         >
                           <Sparkles className={`w-3 h-3 flex-shrink-0 mt-0.5 ${isSelected ? "text-primary" : "text-tertiary/70"}`} />
                           <div className="min-w-0">
-                            <p className={`font-label text-[11px] truncate ${isSelected ? "text-primary font-semibold" : "text-on-surface/70 group-hover:text-on-surface/70"}`}>
+                            <p className={`font-label text-[11px] truncate ${isSelected ? "text-primary font-semibold" : "text-on-surface/85 group-hover:text-on-surface/85"}`}>
                               {skill.name}
                             </p>
                             {skill.description && (
-                              <p className="font-label text-[9px] text-on-surface-variant/40 leading-tight line-clamp-2">
+                              <p className="font-label text-[9px] text-on-surface-variant/65 leading-tight line-clamp-2">
                                 {skill.description}
                               </p>
                             )}
@@ -217,7 +217,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
               {hooksOpen && (
                 <div className="px-3 pb-2">
                   {hookCount === 0 ? (
-                    <p className="font-label text-[10px] text-on-surface-variant/30 pl-5">
+                    <p className="font-label text-[10px] text-on-surface-variant/60 pl-5">
                       No hooks configured
                     </p>
                   ) : (
@@ -236,10 +236,10 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
                           >
                             <Webhook className={`w-3 h-3 flex-shrink-0 mt-0.5 ${isSelected ? "text-primary" : "text-accent-success/70"}`} />
                             <div className="min-w-0">
-                              <p className={`font-label text-[11px] ${isSelected ? "text-primary font-semibold" : "text-on-surface/70 group-hover:text-on-surface"}`}>
+                              <p className={`font-label text-[11px] ${isSelected ? "text-primary font-semibold" : "text-on-surface/85 group-hover:text-on-surface"}`}>
                                 {event}
                               </p>
-                              <p className="font-mono text-[9px] text-on-surface-variant/40 truncate">
+                              <p className="font-mono text-[9px] text-on-surface-variant/65 truncate">
                                 {hook.matcher || "*"} &rarr;{" "}
                                 {hook.command.split("/").pop()}
                               </p>
@@ -268,7 +268,7 @@ export default function SessionConfigPanel({ onSelectFile, onOpenPolicyEditor, s
                 {onOpenPolicyEditor && (
                   <button
                     onClick={onOpenPolicyEditor}
-                    className="p-1 mr-2 text-on-surface-variant/30 hover:text-primary/70 transition-colors"
+                    className="p-1 mr-2 text-on-surface-variant/60 hover:text-primary/70 transition-colors"
                     title="Edit tool policy"
                   >
                     <SlidersHorizontal className="w-3 h-3" />

@@ -32,7 +32,7 @@ export default function RunTabBar({
           className={`flex items-center gap-1 px-2 py-1.5 border-b-2 transition-colors ${
             activeRunId === run.id
               ? "border-primary text-on-primary"
-              : "border-transparent text-on-surface-variant/60 hover:text-on-surface-variant"
+              : "border-transparent text-on-surface-variant/80 hover:text-on-surface-variant"
           }`}
         >
           <button
@@ -55,7 +55,7 @@ export default function RunTabBar({
                 e.stopPropagation();
                 onStopRun(run.id);
               }}
-              className="p-0.5 text-on-surface-variant/30 hover:text-error transition-colors"
+              className="p-0.5 text-on-surface-variant/60 hover:text-error transition-colors"
               title="Stop run"
             >
               <Square className="w-2.5 h-2.5" />
@@ -68,7 +68,7 @@ export default function RunTabBar({
                 e.stopPropagation();
                 onCloseRun(run.id);
               }}
-              className="p-0.5 text-on-surface-variant/30 hover:text-on-surface-variant/80 transition-colors"
+              className="p-0.5 text-on-surface-variant/60 hover:text-on-surface-variant/80 transition-colors"
               title="Close tab"
             >
               <X className="w-2.5 h-2.5" />

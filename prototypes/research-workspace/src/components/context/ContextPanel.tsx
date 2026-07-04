@@ -21,7 +21,7 @@ export default function ContextPanel({
         </span>
         <button
           onClick={onClose}
-          className="p-1 rounded-md text-on-surface-variant/60 hover:text-on-surface-variant hover:bg-on-surface/[0.04] transition-colors"
+          className="p-1 rounded-md text-on-surface-variant/80 hover:text-on-surface-variant hover:bg-on-surface/[0.04] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>

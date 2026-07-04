@@ -90,14 +90,14 @@ function HighlightedView({ content, lang }: { content: string; lang: string }) {
       .map((line, i) => {
         const num = String(i + 1).padStart(4, " ");
         const highlighted = highlightLine(line, lang);
-        return `<span class="text-on-surface-variant/30 select-none">${num}  </span>${highlighted}`;
+        return `<span class="text-on-surface-variant/60 select-none">${num}  </span>${highlighted}`;
       })
       .join("\n");
   }, [content, lang]);
 
   return (
     <pre
-      className="highlight-dark font-mono text-sm leading-relaxed text-on-surface/70 p-4 h-full overflow-auto whitespace-pre"
+      className="highlight-dark font-mono text-sm leading-relaxed text-on-surface/85 p-4 h-full overflow-auto whitespace-pre"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
@@ -183,7 +183,7 @@ export default function CodeEditor({
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/40" />
+        <Loader2 className="w-6 h-6 animate-spin text-on-surface-variant/65" />
       </div>
     );
   }
@@ -204,7 +204,7 @@ export default function CodeEditor({
       {/* Toolbar */}
       <div className="glass-header flex items-center justify-between px-4 py-1.5">
         <div className="flex items-center gap-2">
-          <Code2 className="w-3.5 h-3.5 text-on-surface-variant/60" />
+          <Code2 className="w-3.5 h-3.5 text-on-surface-variant/80" />
           <span className="font-mono text-xs text-on-surface-variant truncate">{filePath}</span>
           <span className="font-label text-[9px] text-primary/60 bg-primary/10 px-1.5 py-0.5 rounded">
             {lang}
@@ -214,7 +214,7 @@ export default function CodeEditor({
           <button
             onClick={() => setEditing(!editing)}
             className={`px-2 py-0.5 rounded text-[10px] font-label transition-colors ${
-              editing ? "bg-tertiary/20 text-tertiary" : "text-on-surface-variant/60 hover:text-on-surface-variant"
+              editing ? "bg-tertiary/20 text-tertiary" : "text-on-surface-variant/80 hover:text-on-surface-variant"
             }`}
           >
             {editing ? "Preview" : "Edit"}
@@ -222,7 +222,7 @@ export default function CodeEditor({
           <SaveStatusBadge status={saveStatus} />
           <button
             onClick={handleManualSave}
-            className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/60 hover:text-on-surface-variant"
+            className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/80 hover:text-on-surface-variant"
             title="Save (Ctrl+S)"
           >
             <Save className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export default function CodeEditor({
           {onFullscreen && (
             <button
               onClick={onFullscreen}
-              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/40 hover:text-on-surface/70"
+              className="p-1 rounded hover:bg-on-surface/[0.08] transition-colors text-on-surface-variant/65 hover:text-on-surface/85"
               title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
             >
               {isFullscreen ? (
@@ -250,7 +250,7 @@ export default function CodeEditor({
             value={localContent}
             onChange={(e) => handleChange(e.target.value)}
             spellCheck={false}
-            className="w-full h-full bg-transparent text-on-primary font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed placeholder:text-on-surface-variant/40 [tab-size:2]"
+            className="w-full h-full bg-transparent text-on-primary font-mono text-sm p-4 resize-none focus:outline-none border-none leading-relaxed placeholder:text-on-surface-variant/65 [tab-size:2]"
             placeholder="Enter code..."
           />
         ) : (

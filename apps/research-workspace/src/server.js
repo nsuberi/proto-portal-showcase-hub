@@ -1,7 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs/promises';
@@ -9,16 +8,32 @@ import { existsSync, createReadStream, statSync } from 'fs';
 import { glob } from 'glob';
 import { randomUUID } from 'crypto';
 import archiver from 'archiver';
+import * as quota from './quota.js';
+import { runAgent, pickModel } from './claude-runner.js';
 
 const VAULT_ROOT = process.env.VAULT_ROOT || '/workspace';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const API_PREFIX = '/api/vault';
 
+// --- Scale-to-zero activity tracking ---
+// The scaler Lambda reaps this service when the DynamoDB heartbeat goes stale.
+// We refresh the heartbeat on a timer while there's any sign of life so the
+// reaper never kills an active session or an in-flight agent run.
+let lastActivityAt = Date.now();
+let openChatConnections = 0;
+const ACTIVITY_WINDOW_MS = 5 * 60_000;
+
 // The ALB forwards the full CloudFront path to the container.
 const VAULT_BASE_PATH = '/prototypes/research-workspace/vault';
 
 // Default user for dev mode (no ALB/Cognito)
-const DEV_USER = { userId: 'dev-local', userEmail: 'dev@localhost' };
+const DEV_USER = {
+  userId: 'dev-local',
+  userEmail: 'dev@localhost',
+  githubLogin: 'dev-local',
+  displayName: 'Local Dev',
+  avatarUrl: '',
+};
 
 const app = express();
 
@@ -43,9 +58,14 @@ function parseUserIdentity(req) {
       const parts = jwt.split('.');
       if (parts.length >= 2) {
         const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+        // GitHub profile claims are mapped through the OIDC proxy + Cognito:
+        // preferred_username = GitHub login, picture = avatar_url, name = display name.
         return {
           userId: payload.sub || payload.username || 'unknown',
           userEmail: payload.email || '',
+          githubLogin: payload.preferred_username || payload['cognito:username'] || '',
+          displayName: payload.name || '',
+          avatarUrl: payload.picture || '',
         };
       }
     } catch {
@@ -56,44 +76,124 @@ function parseUserIdentity(req) {
 }
 
 app.use((req, _res, next) => {
+  if (req.path !== '/healthz') lastActivityAt = Date.now();
   const identity = parseUserIdentity(req);
   req.userId = identity.userId;
   req.userEmail = identity.userEmail;
+  req.githubLogin = identity.githubLogin || '';
+  req.displayName = identity.displayName || '';
+  req.avatarUrl = identity.avatarUrl || '';
+  // True only when a real Cognito/ALB OIDC JWT was present (i.e. signed in via
+  // GitHub). False in local dev where we fall back to DEV_USER.
+  req.githubConnected = !!req.headers['x-amzn-oidc-data'];
+  // Active project — from the X-Project-Id header (REST) or ?project= (used by
+  // WS upgrades). Defaults to the 'default' project.
+  req.projectId = sanitizeProjectId(
+    req.headers['x-project-id'] || req.query.project || DEFAULT_PROJECT_ID
+  );
   next();
 });
 
 // --- Per-User Vault Roots ---
 // Each user gets an isolated directory under VAULT_ROOT/vaults/{userId}/
 
-function getUserVaultRoot(userId) {
+// --- Projects (isolated workspaces within a user vault) ---
+// Each user vault holds one or more *projects*, each an isolated mini-vault
+// with its own .tree.json, .sources.json, leaves/, and .claude/ config:
+//   VAULT_ROOT/vaults/{userId}/projects/{projectId}/
+// A .projects.json manifest at the user base lists them. Legacy single-vault
+// callers default to the 'default' project, so nothing breaks.
+
+const PROJECTS_DIRNAME = 'projects';
+const DEFAULT_PROJECT_ID = 'default';
+const PROJECTS_MANIFEST = '.projects.json';
+
+/** Normalize an arbitrary project name/id to a safe slug. */
+function sanitizeProjectId(raw) {
+  const slug = String(raw || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return slug || DEFAULT_PROJECT_ID;
+}
+
+/** Base directory for a user (holds projects/ and the manifest). */
+function getUserBaseRoot(userId) {
   return path.join(VAULT_ROOT, 'vaults', userId);
+}
+
+/** Project-scoped vault root. Defaults to the 'default' project. */
+function getUserVaultRoot(userId, projectId = DEFAULT_PROJECT_ID) {
+  return path.join(getUserBaseRoot(userId), PROJECTS_DIRNAME, sanitizeProjectId(projectId));
+}
+
+async function readProjectsManifest(userId) {
+  const manifestPath = path.join(getUserBaseRoot(userId), PROJECTS_MANIFEST);
+  try {
+    const raw = await fs.readFile(manifestPath, 'utf-8');
+    const list = JSON.parse(raw);
+    if (Array.isArray(list)) return list;
+  } catch {
+    // missing or malformed → empty
+  }
+  return [];
+}
+
+async function writeProjectsManifest(userId, projects) {
+  const base = getUserBaseRoot(userId);
+  await fs.mkdir(base, { recursive: true });
+  await fs.writeFile(
+    path.join(base, PROJECTS_MANIFEST),
+    JSON.stringify(projects, null, 2)
+  );
+}
+
+/** Ensure a project appears in the manifest (idempotent). */
+async function ensureProjectInManifest(userId, projectId, name) {
+  const projects = await readProjectsManifest(userId);
+  if (!projects.find((p) => p.id === projectId)) {
+    projects.push({
+      id: projectId,
+      name: name || projectId,
+      createdAt: new Date().toISOString(),
+    });
+    await writeProjectsManifest(userId, projects);
+  }
+  return projects;
 }
 
 const initializedVaults = new Set();
 
-async function ensureUserVault(userId) {
-  const vaultDir = getUserVaultRoot(userId);
-  if (!initializedVaults.has(userId)) {
+async function ensureUserVault(userId, projectId = DEFAULT_PROJECT_ID) {
+  const pid = sanitizeProjectId(projectId);
+  const vaultDir = getUserVaultRoot(userId, pid);
+  const key = `${userId}/${pid}`;
+  if (!initializedVaults.has(key)) {
     if (!existsSync(vaultDir)) {
       await fs.mkdir(vaultDir, { recursive: true });
       await fs.writeFile(path.join(vaultDir, 'README.md'),
         '# My Research Vault\n\nWelcome to your personal research workspace.\n');
-      console.log(`[vault] Created vault for user ${userId}`);
+      console.log(`[vault] Created vault for ${userId}/${pid}`);
     }
     // Initialize Claude Code config + harden permissions (once per session)
     await initClaudeCodeConfig(vaultDir).catch(err =>
-      console.warn(`[init] Config init failed for ${userId}:`, err.message));
+      console.warn(`[init] Config init failed for ${userId}/${pid}:`, err.message));
     // Clear old activity log so all events have runId tagging
     const activityLog = path.join(vaultDir, '.tool-activity.jsonl');
     if (existsSync(activityLog)) {
       await fs.unlink(activityLog).catch(() => {});
-      console.log(`[init] Cleared activity log for ${userId}`);
+      console.log(`[init] Cleared activity log for ${userId}/${pid}`);
     }
     // Migrate .intentions.json → .tree.json if tree doesn't exist yet
     await migrateIntentionsToTree(vaultDir).catch(err =>
-      console.warn(`[init] Tree migration failed for ${userId}:`, err.message));
+      console.warn(`[init] Tree migration failed for ${userId}/${pid}:`, err.message));
     await hardenUserVault(vaultDir).catch(() => {});
-    initializedVaults.add(userId);
+    // Register in the manifest (Default gets a friendly display name).
+    await ensureProjectInManifest(
+      userId, pid, pid === DEFAULT_PROJECT_ID ? 'Default' : pid
+    ).catch(() => {});
+    initializedVaults.add(key);
   }
   return vaultDir;
 }
@@ -192,22 +292,10 @@ async function migrateIntentionsToTree(vaultDir) {
   console.log(`[migration] Migrated ${intentions.length} intentions → .tree.json for vault ${path.basename(vaultDir)}`);
 }
 
-// --- Clean Environment for Spawned Processes ---
-// Remove sensitive variables so Claude Code uses per-user OAuth, not shared API key.
-
-function getCleanEnv(userVaultRoot) {
-  const env = { ...process.env };
-  delete env.ANTHROPIC_API_KEY;
-  delete env.AWS_ACCESS_KEY_ID;
-  delete env.AWS_SECRET_ACCESS_KEY;
-  delete env.AWS_SESSION_TOKEN;
-  env.HOME = userVaultRoot;
-  env.TERM = 'xterm-256color';
-  // Skip the "do you trust this folder?" prompt — the vault is a controlled,
-  // per-user server environment; trust is implicit via Cognito auth.
-  env.CLAUDE_CODE_SANDBOXED = '1';
-  return env;
-}
+// Agent process environment is built inside src/claude-runner.js (it keeps the
+// operator ANTHROPIC_API_KEY and sets HOME=vault so hooks write to the right
+// vault). The old getCleanEnv() — which stripped ANTHROPIC_API_KEY to force
+// per-user subscription OAuth — has been removed along with that auth model.
 
 // --- Path Sanitization (scoped to user vault) ---
 
@@ -221,7 +309,7 @@ function sanitizePath(userVaultRoot, userPath) {
 
 function pathMiddleware(req, res, next) {
   const filePath = req.params[0] || '';
-  const userVault = getUserVaultRoot(req.userId);
+  const userVault = getUserVaultRoot(req.userId, req.projectId);
   const absPath = sanitizePath(userVault, filePath);
   if (!absPath) {
     return res.status(400).json({ error: 'Invalid path' });
@@ -287,13 +375,26 @@ function invalidateVaultSizeCache(userId) {
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Project-Id');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-// --- Shared auth process reference (accessible from both WS and REST) ---
-let pendingAuthProcess = null;
+// --- Request Logging ---
+// Makes it obvious in the server log exactly what is being requested, by whom,
+// and how it resolved. Skips the noisy health check.
+app.use((req, res, next) => {
+  if (req.path === '/healthz') return next();
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const who = req.githubLogin || req.userId || 'anon';
+    console.log(
+      `[http] ${req.method} ${req.originalUrl} → ${res.statusCode} ${ms}ms (${who})`
+    );
+  });
+  next();
+});
 
 // --- Health Check ---
 
@@ -306,18 +407,15 @@ app.get('/', (req, res) => {
   res.redirect('/prototypes/research-workspace/workspace');
 });
 
-// --- Auth Code REST endpoint (fallback when WebSocket drops) ---
-app.post(`${API_PREFIX}/auth-code`, (req, res) => {
-  const { code } = req.body || {};
-  if (!code) {
-    return res.status(400).json({ error: 'code is required' });
+// --- Quota status (drives the per-user budget banner) ---
+app.get(`${API_PREFIX}/quota`, async (req, res) => {
+  try {
+    const usage = await quota.getUsage(req.userId);
+    res.json(usage);
+  } catch (err) {
+    console.warn('[quota] getUsage failed:', err.message);
+    res.status(500).json({ error: 'Could not read quota' });
   }
-  if (!pendingAuthProcess || !pendingAuthProcess.stdin.writable) {
-    return res.status(409).json({ error: 'No auth process waiting for a code. Start /login first.' });
-  }
-  console.log('[auth] Writing auth code via REST endpoint');
-  pendingAuthProcess.stdin.write(code.trim() + '\n');
-  res.json({ status: 'ok', message: 'Code submitted. Check auth status.' });
 });
 
 // --- Directory Tree ---
@@ -356,9 +454,150 @@ async function buildTree(dirPath, basePath = '') {
 
 app.get(`${API_PREFIX}/tree`, async (req, res, next) => {
   try {
-    const userVault = await ensureUserVault(req.userId);
+    const userVault = await ensureUserVault(req.userId, req.projectId);
     const children = await buildTree(userVault);
     res.json({ name: 'vault', type: 'directory', path: '', children });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Recursively count files (not directories) in a tree built by buildTree.
+function countTreeFiles(nodes) {
+  let count = 0;
+  for (const node of nodes) {
+    if (node.type === 'directory') count += countTreeFiles(node.children || []);
+    else count += 1;
+  }
+  return count;
+}
+
+// --- Current user profile ---
+// Returns the GitHub identity from the OIDC/Cognito JWT plus a vault item count.
+// Used by the top-right user menu. No links to a user page — display only.
+app.get(`${API_PREFIX}/me`, async (req, res, next) => {
+  try {
+    const userVault = await ensureUserVault(req.userId, req.projectId);
+    const children = await buildTree(userVault);
+    res.json({
+      userId: req.userId,
+      email: req.userEmail || '',
+      githubLogin: req.githubLogin || '',
+      displayName: req.displayName || '',
+      avatarUrl: req.avatarUrl || '',
+      githubConnected: req.githubConnected,
+      vaultItemCount: countTreeFiles(children),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- Projects ---
+// Isolated workspaces within a user vault. The active project is selected by
+// the client via the X-Project-Id header (see identity middleware).
+
+app.get(`${API_PREFIX}/projects`, async (req, res, next) => {
+  try {
+    // Guarantee a default project always exists.
+    await ensureUserVault(req.userId, DEFAULT_PROJECT_ID);
+    const projects = await readProjectsManifest(req.userId);
+    const enriched = await Promise.all(
+      projects.map(async (p) => {
+        let itemCount = 0;
+        let sourceCount = 0;
+        try {
+          itemCount = countTreeFiles(await buildTree(getUserVaultRoot(req.userId, p.id)));
+        } catch { /* project dir may not exist yet */ }
+        try {
+          sourceCount = (await readSources(req.userId, p.id)).length;
+        } catch { /* no sources yet */ }
+        return { ...p, itemCount, sourceCount };
+      })
+    );
+    res.json({ projects: enriched, activeProjectId: req.projectId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post(`${API_PREFIX}/projects`, async (req, res, next) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'name required' });
+    const id = sanitizeProjectId(name);
+    if (!id) return res.status(400).json({ error: 'name must contain letters or numbers' });
+    // Create the project vault (also adds a manifest entry), then set its name.
+    await ensureUserVault(req.userId, id);
+    const projects = await readProjectsManifest(req.userId);
+    const entry = projects.find((p) => p.id === id);
+    if (entry && entry.name !== name) {
+      entry.name = name;
+      await writeProjectsManifest(req.userId, projects);
+    }
+    console.log(`[projects] ${req.userId} created project "${name}" (${id})`);
+    res.status(201).json({ id, name });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- Sources ---
+// What the agent searched/fetched to fill a project. Captured from WebSearch /
+// WebFetch tool calls during runs and persisted per-project in .sources.json.
+
+const SOURCES_FILE = '.sources.json';
+
+async function readSources(userId, projectId) {
+  const p = path.join(getUserVaultRoot(userId, projectId), SOURCES_FILE);
+  try {
+    const arr = JSON.parse(await fs.readFile(p, 'utf-8'));
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Turn a tool_use event into a source record, or null if not source-bearing. */
+function sourceFromToolUse(tool, input, runId) {
+  const now = new Date().toISOString();
+  if (tool === 'WebFetch' && input?.url) {
+    let host = input.url;
+    try { host = new URL(input.url).hostname.replace(/^www\./, ''); } catch { /* keep url */ }
+    return { type: 'fetch', url: input.url, label: host, firstUsedAt: now, lastUsedAt: now, count: 1, runId };
+  }
+  if (tool === 'WebSearch' && input?.query) {
+    return { type: 'search', query: input.query, label: input.query, firstUsedAt: now, lastUsedAt: now, count: 1, runId };
+  }
+  return null;
+}
+
+/** Append/merge a source record into a project's .sources.json (de-duped). */
+async function recordSource(userId, projectId, tool, input, runId) {
+  const source = sourceFromToolUse(tool, input, runId);
+  if (!source) return;
+  try {
+    const root = getUserVaultRoot(userId, projectId);
+    const list = await readSources(userId, projectId);
+    const key = source.url || source.query;
+    const existing = list.find((s) => (s.url || s.query) === key);
+    if (existing) {
+      existing.count = (existing.count || 1) + 1;
+      existing.lastUsedAt = source.lastUsedAt;
+    } else {
+      list.unshift(source);
+    }
+    await fs.writeFile(path.join(root, SOURCES_FILE), JSON.stringify(list, null, 2));
+  } catch (err) {
+    console.warn(`[sources] Failed to record source for ${userId}/${projectId}:`, err.message);
+  }
+}
+
+app.get(`${API_PREFIX}/sources`, async (req, res, next) => {
+  try {
+    await ensureUserVault(req.userId, req.projectId);
+    const sources = await readSources(req.userId, req.projectId);
+    res.json({ sources });
   } catch (err) {
     next(err);
   }
@@ -500,7 +739,7 @@ app.post(`${API_PREFIX}/folders/*`, pathMiddleware, async (req, res, next) => {
 
 app.get(`${API_PREFIX}/download`, async (req, res, next) => {
   try {
-    const userVault = await ensureUserVault(req.userId);
+    const userVault = await ensureUserVault(req.userId, req.projectId);
     const subPath = req.query.path || '';
     const targetDir = subPath ? sanitizePath(userVault, subPath) : userVault;
 
@@ -542,7 +781,7 @@ app.get(`${API_PREFIX}/download`, async (req, res, next) => {
 
 app.get(`${API_PREFIX}/links`, async (req, res, next) => {
   try {
-    const userVault = await ensureUserVault(req.userId);
+    const userVault = await ensureUserVault(req.userId, req.projectId);
     const mdFiles = await glob('**/*.md', { cwd: userVault });
     const nodes = new Map();
     const edges = [];
@@ -582,7 +821,7 @@ app.get(`${API_PREFIX}/search`, async (req, res, next) => {
   try {
     const query = (req.query.q || '').toLowerCase();
     if (!query) return res.json({ results: [] });
-    const userVault = getUserVaultRoot(req.userId);
+    const userVault = getUserVaultRoot(req.userId, req.projectId);
     const mdFiles = await glob('**/*.md', { cwd: userVault });
     const results = [];
 
@@ -621,7 +860,7 @@ async function ensurePublishedDir() {
 app.post(`${API_PREFIX}/publish`, async (req, res, next) => {
   try {
     await ensurePublishedDir();
-    const userVault = await ensureUserVault(req.userId);
+    const userVault = await ensureUserVault(req.userId, req.projectId);
     const { filePath, title, summary, type, tags, domains, markdown } = req.body;
 
     if (!filePath && !markdown) {
@@ -799,76 +1038,36 @@ server.on('upgrade', (request, socket, head) => {
   }
 });
 
-// Lazy import node-pty (native module)
-let pty;
-try {
-  pty = await import('node-pty');
-} catch (err) {
-  console.warn('[terminal] node-pty not available:', err.message);
-}
-
-wss.on('connection', async (ws, request) => {
-  if (!pty) {
-    ws.send('\r\n[Error: node-pty not available in this environment]\r\n');
-    ws.close();
-    return;
-  }
-
-  // Parse user identity from the upgrade request headers
-  const identity = parseUserIdentity(request);
-  const userVault = await ensureUserVault(identity.userId);
-  console.log(`[terminal] New session for user ${identity.userId}`);
-
-  const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
-    name: 'xterm-256color',
-    cols: 80,
-    rows: 24,
-    cwd: userVault,
-    env: getCleanEnv(userVault),
-  });
-
-  shell.onData((data) => {
-    try {
-      ws.send(data);
-    } catch (e) {
-      // WebSocket closed
-    }
-  });
-
-  ws.on('message', (msg) => {
-    const str = msg.toString();
-    // Handle resize messages
-    if (str.startsWith('\x01')) {
-      try {
-        const { cols, rows } = JSON.parse(str.slice(1));
-        shell.resize(cols, rows);
-      } catch (e) {
-        // Not a resize message, send to pty
-        shell.write(str);
-      }
-    } else {
-      shell.write(str);
-    }
-  });
-
-  ws.on('close', () => {
-    console.log('[terminal] Session closed');
-    shell.kill();
-  });
-
-  shell.onExit(() => {
-    try { ws.close(); } catch (e) { /* already closed */ }
-  });
+// --- Terminal WebSocket (retired) ---
+// The interactive Claude Code TUI (PTY) has been removed. A free-form terminal
+// session can't be metered against a per-run USD cap, so it was an un-quota'd
+// spend hole. All agent interaction now goes through the quota-gated Chat and
+// Run surfaces (Claude Agent SDK). This handler just informs any old client.
+wss.on('connection', (ws) => {
+  try {
+    ws.send('\r\n\x1b[33mThe interactive terminal has been retired. Use the Chat panel to work with the agent.\x1b[0m\r\n');
+  } catch { /* already closed */ }
+  ws.close();
 });
 
-// --- Chat WebSocket Handler (Claude Code integration) ---
+// --- Chat WebSocket Handler (Claude Agent SDK + quota) ---
 
 chatWss.on('connection', async (ws, request) => {
   const chatIdentity = parseUserIdentity(request);
-  const chatUserVault = await ensureUserVault(chatIdentity.userId);
-  console.log(`[chat] New session for user ${chatIdentity.userId}`);
+  // Project comes from the WS URL: .../api/vault/chat?project={id}
+  let chatProjectId = DEFAULT_PROJECT_ID;
+  try {
+    chatProjectId = sanitizeProjectId(
+      new URL(request.url, 'http://localhost').searchParams.get('project') || DEFAULT_PROJECT_ID
+    );
+  } catch { /* default */ }
+  const chatUserVault = await ensureUserVault(chatIdentity.userId, chatProjectId);
+  console.log(`[chat] New session for user ${chatIdentity.userId} (project ${chatProjectId})`);
+  openChatConnections++;
+  lastActivityAt = Date.now();
   let sessionId = null;
-  let activeProcess = null;
+  let busy = false;
+  let abortController = null;
 
   // --- Conversation persistence ---
   const conversationId = randomUUID();
@@ -938,7 +1137,7 @@ chatWss.on('connection', async (ws, request) => {
     }
   }
 
-  ws.on('message', (raw) => {
+  ws.on('message', async (raw) => {
     let msg;
     try {
       msg = JSON.parse(raw.toString());
@@ -947,249 +1146,120 @@ chatWss.on('connection', async (ws, request) => {
       return;
     }
 
-    // Handle auth request — spawns `claude auth login` and captures the URL
-    if (msg.type === 'auth') {
-      if (activeProcess) {
-        sendEvent({ type: 'error', message: 'Please wait for the current operation to finish.' });
-        return;
-      }
-
-      console.log('[chat] Starting auth flow');
-      const authProc = spawn('claude', ['auth', 'login', '--claudeai'], {
-        cwd: chatUserVault,
-        env: getCleanEnv(chatUserVault),
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      activeProcess = authProc;
-      pendingAuthProcess = authProc; // Share ref for REST fallback
-
-      // Keep stdin OPEN — the auth process needs to receive the code
-      // after the user authenticates in the browser
-
-      let authOutput = '';
-      const urlRegex = /(https?:\/\/[^\s\x1b\]]+)/g;
-
-      authProc.stdout.on('data', (chunk) => {
-        const text = chunk.toString();
-        authOutput += text;
-        console.log('[chat] auth stdout:', text.replace(/\x1b\[[0-9;]*m/g, '').trim());
-        const matches = text.match(urlRegex);
-        if (matches) {
-          for (const url of matches) {
-            sendEvent({ type: 'auth_url', url });
-          }
-        }
-      });
-      authProc.stderr.on('data', (chunk) => {
-        const text = chunk.toString();
-        authOutput += text;
-        console.log('[chat] auth stderr:', text.replace(/\x1b\[[0-9;]*m/g, '').trim());
-        const matches = text.match(urlRegex);
-        if (matches) {
-          for (const url of matches) {
-            sendEvent({ type: 'auth_url', url });
-          }
-        }
-      });
-      authProc.on('close', (code) => {
-        activeProcess = null;
-        pendingAuthProcess = null;
-        console.log(`[chat] Auth flow completed with code ${code}`);
-        sendEvent({ type: 'auth_done', success: code === 0 });
-      });
-      return;
-    }
-
-    // Handle auth code — user pastes the code from the OAuth page
-    if (msg.type === 'auth_code' && msg.code) {
-      if (activeProcess && activeProcess.stdin.writable) {
-        console.log('[chat] Writing auth code to stdin');
-        activeProcess.stdin.write(msg.code + '\n');
-      } else {
-        sendEvent({ type: 'error', message: 'No auth process waiting for a code. Try /login again.' });
-      }
-      return;
-    }
-
     if (msg.type !== 'message' || !msg.content) return;
+    const content = msg.content.trim();
+    if (!content) return;
 
-    // Record user message for conversation persistence
-    conversationMessages.push({
-      role: 'user',
-      content: msg.content.trim(),
-      timestamp: new Date().toISOString(),
-    });
-
-    // Handle /login command typed in chat
-    if (msg.content.trim().toLowerCase() === '/login') {
-      if (activeProcess) {
-        sendEvent({ type: 'error', message: 'Please wait for the current operation to finish.' });
-        return;
-      }
-      // Reuse the auth handler
-      ws.emit('message', Buffer.from(JSON.stringify({ type: 'auth' })));
-      return;
-    }
-
-    if (activeProcess) {
+    if (busy) {
       sendEvent({ type: 'error', message: 'A message is already being processed. Please wait.' });
       return;
     }
 
-    const args = [
-      '-p', msg.content,
-      '--output-format', 'stream-json',
-      '--verbose',
-      '--dangerously-skip-permissions',
-      '--max-budget-usd', '2',
-    ];
+    // Record user message for conversation persistence
+    conversationMessages.push({ role: 'user', content, timestamp: new Date().toISOString() });
 
-    if (sessionId) {
-      args.push('--resume', sessionId);
+    // --- Quota gate ---
+    const runId = randomUUID();
+    let reservation;
+    try {
+      reservation = await quota.checkAndReserve(chatIdentity.userId, runId);
+    } catch (err) {
+      console.warn('[chat] quota check failed:', err.message);
+      reservation = { ok: false, reason: 'error' };
+    }
+    if (!reservation.ok) {
+      const snap = await quota.getUsage(chatIdentity.userId).catch(() => null);
+      sendEvent({
+        type: 'blocked',
+        reason: reservation.reason,
+        remainingUsd: snap?.remainingUsd,
+        remainingRuns: snap?.remainingRuns,
+        limits: snap?.limits,
+      });
+      return;
     }
 
-    console.log('[chat] Spawning claude with prompt:', msg.content.slice(0, 80));
-
-    const proc = spawn('claude', args, {
-      cwd: chatUserVault,
-      env: getCleanEnv(chatUserVault),
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    activeProcess = proc;
-
-    // Close stdin immediately — we pass prompt via -p flag, not stdin
-    proc.stdin.end();
-
-    let buffer = '';
-    let lastText = '';
-    let stderrBuffer = '';
-    let gotAnyEvent = false;
+    busy = true;
+    abortController = new AbortController();
     const turnToolUses = [];
+    let finalText = '';
 
-    proc.stdout.on('data', (chunk) => {
-      buffer += chunk.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep incomplete last line
+    // Let the client show what's reserved for this run before tokens flow
+    sendEvent({
+      type: 'quota',
+      remainingUsd: reservation.remainingUsd,
+      remainingRuns: reservation.remainingRuns,
+      perRunCapUsd: reservation.perRunCapUsd,
+    });
 
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        let event;
-        try {
-          event = JSON.parse(line);
-        } catch {
-          continue;
-        }
+    console.log(`[chat] Agent run ${runId.slice(0, 8)} for ${chatIdentity.userId} (cap $${reservation.perRunCapUsd})`);
 
-        gotAnyEvent = true;
-
-        // Extract session ID from init
-        if (event.type === 'system' && event.subtype === 'init') {
-          sessionId = event.session_id;
-          sendEvent({ type: 'init', sessionId });
-          continue;
-        }
-
-        // Stream assistant text
-        if (event.type === 'assistant' && event.message?.content) {
-          const textBlocks = event.message.content.filter(b => b.type === 'text');
-          if (textBlocks.length > 0) {
-            const fullText = textBlocks.map(b => b.text).join('');
-            if (fullText !== lastText) {
-              lastText = fullText;
-              sendEvent({ type: 'assistant_text', content: fullText });
-            }
+    try {
+      const result = await runAgent({
+        prompt: content,
+        vaultDir: chatUserVault,
+        runId,
+        model: pickModel({ kind: 'chat' }),
+        maxBudgetUsd: reservation.perRunCapUsd,
+        resumeSessionId: sessionId,
+        abortController,
+        onEvent: (e) => {
+          if (e.type === 'init') {
+            sessionId = e.sessionId;
+            sendEvent({ type: 'init', sessionId });
+          } else if (e.type === 'assistant_text') {
+            finalText = e.content;
+            sendEvent({ type: 'assistant_text', content: e.content });
+          } else if (e.type === 'tool_use') {
+            turnToolUses.push({ tool: e.tool, input: e.input, timestamp: new Date().toISOString() });
+            sendEvent({ type: 'tool_use', tool: e.tool, input: e.input });
+            // Capture searched/fetched sources for this project.
+            recordSource(chatIdentity.userId, chatProjectId, e.tool, e.input, runId).catch(() => {});
           }
+        },
+      });
 
-          // Report tool use
-          const toolBlocks = event.message.content.filter(b => b.type === 'tool_use');
-          for (const tool of toolBlocks) {
-            sendEvent({ type: 'tool_use', tool: tool.name, input: tool.input || {} });
-            turnToolUses.push({ tool: tool.name, input: tool.input || {}, timestamp: new Date().toISOString() });
-          }
-          continue;
-        }
+      sessionId = result.sessionId || sessionId;
+      finalText = result.finalText || finalText;
 
-        // Result (completion)
-        if (event.type === 'result') {
-          sessionId = event.session_id || sessionId;
-          // Record assistant message + tool uses for conversation persistence
-          if (lastText) {
-            conversationMessages.push({
-              role: 'assistant',
-              content: lastText,
-              toolUses: turnToolUses.length > 0 ? [...turnToolUses] : undefined,
-              timestamp: new Date().toISOString(),
-            });
-          }
-          conversationToolUses.push(...turnToolUses);
-          saveConversation().catch(() => {});
-          sendEvent({ type: 'done', sessionId });
-          continue;
-        }
+      if (finalText) {
+        conversationMessages.push({
+          role: 'assistant',
+          content: finalText,
+          toolUses: turnToolUses.length > 0 ? [...turnToolUses] : undefined,
+          timestamp: new Date().toISOString(),
+        });
       }
-    });
+      conversationToolUses.push(...turnToolUses);
+      saveConversation().catch(() => {});
 
-    proc.stderr.on('data', (chunk) => {
-      const text = chunk.toString().trim();
-      stderrBuffer += text + '\n';
-      console.error('[chat] stderr:', text);
-    });
-
-    proc.on('error', (err) => {
-      console.error('[chat] Process error:', err.message);
-      sendEvent({ type: 'error', message: `Failed to start Claude: ${err.message}` });
-      activeProcess = null;
-    });
-
-    proc.on('close', (code) => {
-      activeProcess = null;
-      // Flush remaining buffer
-      if (buffer.trim()) {
-        try {
-          const event = JSON.parse(buffer);
-          gotAnyEvent = true;
-          if (event.type === 'result') {
-            sessionId = event.session_id || sessionId;
-            sendEvent({ type: 'done', sessionId });
-            return;
-          }
-        } catch {
-          // ignore
-        }
-      }
-      if (code !== 0) {
-        const cleanStderr = stderrBuffer.replace(/\x1b\[[0-9;]*m/g, '').trim();
-        console.warn(`[chat] Claude exited with code ${code}, stderr: ${cleanStderr || '(empty)'}`);
-        const allOutput = cleanStderr || buffer.replace(/\x1b\[[0-9;]*m/g, '').trim();
-        const isAuthError = allOutput.includes('auth') || allOutput.includes('login')
-          || allOutput.includes('credential') || allOutput.includes('API key')
-          || allOutput.includes('not logged in') || allOutput.includes('token');
-        if (isAuthError || !gotAnyEvent) {
-          // If no events received at all, likely an auth issue
-          sendEvent({ type: 'auth_required', message: allOutput || 'Claude is not authenticated. Click "Connect Claude" to sign in.' });
-        } else {
-          sendEvent({ type: 'error', message: allOutput || `Claude exited with code ${code}` });
-        }
-      } else if (!gotAnyEvent) {
-        // Process succeeded but produced no events
-        sendEvent({ type: 'done', sessionId });
-      }
-    });
+      await quota.recordUsage(chatIdentity.userId, result.costUsd);
+      const snap = await quota.getUsage(chatIdentity.userId).catch(() => null);
+      sendEvent({
+        type: 'done',
+        sessionId,
+        costUsd: Math.round((result.costUsd || 0) * 10000) / 10000,
+        remainingUsd: snap?.remainingUsd,
+        remainingRuns: snap?.remainingRuns,
+      });
+    } catch (err) {
+      console.error('[chat] agent error:', err.message);
+      // Release the lock even on failure (records a run with $0 cost).
+      await quota.recordUsage(chatIdentity.userId, 0).catch(() => {});
+      sendEvent({ type: 'error', message: err.message || 'Agent run failed' });
+    } finally {
+      busy = false;
+      abortController = null;
+    }
   });
 
   ws.on('close', () => {
     console.log('[chat] Session closed');
+    openChatConnections = Math.max(0, openChatConnections - 1);
     clearInterval(pingInterval);
-    // Persist conversation on disconnect
     saveConversation().catch(() => {});
-    if (activeProcess) {
-      // Don't kill auth processes — the REST fallback can still submit the code
-      if (activeProcess === pendingAuthProcess) {
-        console.log('[chat] Auth process kept alive for REST fallback');
-      } else {
-        activeProcess.kill();
-      }
-      activeProcess = null;
+    if (abortController) {
+      try { abortController.abort(); } catch { /* noop */ }
     }
   });
 });
@@ -1499,7 +1569,7 @@ async function hardenUserVault(vaultRoot) {
 // Allows verifying what Claude Code sees when it runs the hook.
 
 app.get(`${API_PREFIX}/hook-debug`, async (req, res) => {
-  const userVault = getUserVaultRoot(req.userId);
+  const userVault = getUserVaultRoot(req.userId, req.projectId);
   const claudeDir = path.join(userVault, '.claude');
   const result = {};
 
@@ -1681,7 +1751,7 @@ app.get(`${API_PREFIX}/hook-debug`, async (req, res) => {
 // --- Activity log endpoint ---
 
 app.get(`${API_PREFIX}/activity`, async (req, res) => {
-  const logPath = path.join(getUserVaultRoot(req.userId), '.tool-activity.jsonl');
+  const logPath = path.join(getUserVaultRoot(req.userId, req.projectId), '.tool-activity.jsonl');
   try {
     if (!existsSync(logPath)) return res.json({ events: [] });
     const content = await fs.readFile(logPath, 'utf-8');
@@ -1695,7 +1765,7 @@ app.get(`${API_PREFIX}/activity`, async (req, res) => {
 });
 
 app.delete(`${API_PREFIX}/activity`, async (req, res) => {
-  const logPath = path.join(getUserVaultRoot(req.userId), '.tool-activity.jsonl');
+  const logPath = path.join(getUserVaultRoot(req.userId, req.projectId), '.tool-activity.jsonl');
   try {
     await fs.writeFile(logPath, '');
     res.json({ cleared: true });
@@ -1708,7 +1778,7 @@ app.delete(`${API_PREFIX}/activity`, async (req, res) => {
 
 // List all conversations (summaries only, sorted by most recent)
 app.get(`${API_PREFIX}/conversations`, async (req, res) => {
-  const userVault = await ensureUserVault(req.userId);
+  const userVault = await ensureUserVault(req.userId, req.projectId);
   const convDir = path.join(userVault, '.conversations');
 
   if (!existsSync(convDir)) {
@@ -1749,7 +1819,7 @@ app.get(`${API_PREFIX}/conversations`, async (req, res) => {
 
 // Get full conversation detail
 app.get(`${API_PREFIX}/conversations/:id`, async (req, res) => {
-  const userVault = await ensureUserVault(req.userId);
+  const userVault = await ensureUserVault(req.userId, req.projectId);
   const convPath = path.join(userVault, '.conversations', `${req.params.id}.json`);
 
   if (!existsSync(convPath)) {
@@ -1789,7 +1859,7 @@ app.get(`${API_PREFIX}/conversations/:id`, async (req, res) => {
 // Returns configured skills, hooks, and tool policy for the user's Claude session.
 
 app.get(`${API_PREFIX}/config`, async (req, res) => {
-  const userVault = await ensureUserVault(req.userId);
+  const userVault = await ensureUserVault(req.userId, req.projectId);
   const claudeDir = path.join(userVault, '.claude');
   const result = { skills: [], hooks: {}, toolPolicy: { blocked_tools: [] } };
 
@@ -1861,7 +1931,7 @@ app.get(`${API_PREFIX}/config`, async (req, res) => {
 // Persists tool policy changes from the frontend policy editor.
 
 app.put(`${API_PREFIX}/tool-policy`, async (req, res) => {
-  const userVault = await ensureUserVault(req.userId);
+  const userVault = await ensureUserVault(req.userId, req.projectId);
   const policyPath = path.join(userVault, '.claude', 'tool-policy.json');
 
   try {
@@ -1894,72 +1964,48 @@ app.put(`${API_PREFIX}/tool-policy`, async (req, res) => {
   }
 });
 
-// --- Onboarding status check ---
-// Checks whether Claude Code has completed onboarding in this vault.
-// The frontend uses this to gate run launches with a helpful modal.
-
-app.get(`${API_PREFIX}/onboarding-status`, async (req, res) => {
-  const userVault = await ensureUserVault(req.userId);
-  // Claude Code stores onboarding state in ~/.claude.json (HOME=vault root)
-  const configPath = path.join(userVault, '.claude.json');
-  try {
-    if (!existsSync(configPath)) {
-      return res.json({ ready: false, reason: 'not_launched' });
-    }
-    const config = JSON.parse(await fs.readFile(configPath, 'utf-8'));
-    if (!config.hasCompletedOnboarding) {
-      return res.json({ ready: false, reason: 'not_onboarded' });
-    }
-    // Also check for OAuth credentials (user must have authenticated)
-    const credPath = path.join(userVault, '.claude', 'credentials.json');
-    const altCredPath = path.join(userVault, '.claude', '.credentials.json');
-    if (!existsSync(credPath) && !existsSync(altCredPath)) {
-      return res.json({ ready: false, reason: 'not_authenticated' });
-    }
-    return res.json({ ready: true });
-  } catch {
-    return res.json({ ready: false, reason: 'not_launched' });
-  }
-});
-
-// --- Concurrent Run Manager (interactive PTY) ---
-// Each run spawns a full interactive Claude Code PTY session.
-// The research prompt is auto-injected after Claude Code starts up.
-// Users see the real Claude Code TUI and can interact with it.
+// --- Concurrent Run Manager (Claude Agent SDK + quota) ---
+// Each run executes one agent task via the SDK and streams a readable log to
+// connected clients (read-only — no interactive TUI). Quota is reserved before
+// the run starts and the actual cost is recorded when it finishes.
 
 const activeRuns = new Map();
 
+function summarizeToolInput(tool, input = {}) {
+  if (input.file_path) return String(input.file_path);
+  if (input.pattern) return String(input.pattern);
+  if (input.command) return String(input.command).slice(0, 80);
+  if (input.url) return String(input.url);
+  return '';
+}
+
 app.post(`${API_PREFIX}/runs`, async (req, res) => {
-  const { prompt, title, intentionId } = req.body || {};
+  const { prompt, title, intentionId, type } = req.body || {};
   if (!prompt) {
     return res.status(400).json({ error: 'prompt is required' });
   }
 
-  if (!pty) {
-    return res.status(500).json({ error: 'node-pty not available — cannot spawn interactive terminal' });
-  }
-
-  const userVault = await ensureUserVault(req.userId);
+  const userVault = await ensureUserVault(req.userId, req.projectId);
   const runId = randomUUID();
 
-  console.log(`[run:${runId.slice(0,8)}] Starting interactive PTY for ${req.userId}: ${(title || prompt).slice(0, 60)}`);
-
-  let shell;
-  try {
-    const runEnv = getCleanEnv(userVault);
-    runEnv.CLAUDE_RUN_ID = runId;
-    shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
-      name: 'xterm-256color',
-      cols: 120,
-      rows: 30,
-      cwd: userVault,
-      env: runEnv,
+  // Quota gate (allowlist + per-user runs/$ + concurrency + org cap)
+  const reservation = await quota.checkAndReserve(req.userId, runId).catch((e) => {
+    console.warn('[run] quota check failed:', e.message);
+    return { ok: false, reason: 'error' };
+  });
+  if (!reservation.ok) {
+    const snap = await quota.getUsage(req.userId).catch(() => null);
+    return res.status(429).json({
+      error: 'quota',
+      reason: reservation.reason,
+      remainingUsd: snap?.remainingUsd,
+      remainingRuns: snap?.remainingRuns,
+      limits: snap?.limits,
     });
-  } catch (err) {
-    console.error(`[run:${runId.slice(0,8)}] Failed to spawn PTY:`, err.message);
-    return res.status(500).json({ error: `Failed to spawn Claude Code: ${err.message}` });
   }
 
+  const abortController = new AbortController();
+  const model = pickModel({ intentionType: type });
   const run = {
     id: runId,
     intentionId: intentionId || null,
@@ -1971,8 +2017,8 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     error: null,
     userVault,
     userId: req.userId,
-    shell,
-    promptInjected: false,
+    projectId: req.projectId,
+    abortController,
     clients: new Set(),
     outputBuffer: '',
   };
@@ -1988,92 +2034,40 @@ app.post(`${API_PREFIX}/runs`, async (req, res) => {
     }
   }
 
-  // Stream raw PTY output to all connected WebSocket clients
-  shell.onData((data) => {
-    broadcast(data);
-  });
+  console.log(`[run:${runId.slice(0,8)}] Starting agent for ${req.userId} (model ${model}, cap $${reservation.perRunCapUsd})`);
+  broadcast(`\x1b[2m[run started · ${model} · budget $${reservation.perRunCapUsd}]\x1b[0m\r\n\r\n`);
 
-  // Auto-inject the research prompt after Claude Code starts up.
-  // Wait for output to settle (no new data for 1.5s) with a max wait of 10s.
-  let settleTimer = null;
-  let maxTimer = null;
-  let hasOutput = false;
-
-  function injectPrompt() {
-    if (run.promptInjected) return;
-    run.promptInjected = true;
-    if (settleTimer) clearTimeout(settleTimer);
-    if (maxTimer) clearTimeout(maxTimer);
-    // Write the prompt to the PTY as if the user typed it, then press Enter
-    shell.write(prompt + '\r');
-    console.log(`[run:${runId.slice(0,8)}] Prompt injected (${prompt.length} chars)`);
-  }
-
-  // Reset settle timer on each chunk of output
-  const onDataForInjection = shell.onData(() => {
-    hasOutput = true;
-    if (run.promptInjected) return;
-    if (settleTimer) clearTimeout(settleTimer);
-    settleTimer = setTimeout(injectPrompt, 1500);
-  });
-
-  // Max wait fallback
-  maxTimer = setTimeout(() => {
-    if (!run.promptInjected) {
-      console.log(`[run:${runId.slice(0,8)}] Max wait reached, injecting prompt`);
-      injectPrompt();
-    }
-  }, 10000);
-
-  // --- Task completion detection ---
-  // After the prompt is injected and Claude has done substantial work,
-  // detect when output settles (10s silence) and send /exit.
-  // Thresholds are high to avoid killing runs during thinking pauses.
-  let completionBytes = 0;
-  let completionTimer = null;
-  const COMPLETION_MIN_BYTES = 5000;   // ~5KB of output before considering done
-  const COMPLETION_SETTLE_MS = 10000;  // 10s of silence = task complete
-  const MAX_RUN_DURATION = 30 * 60 * 1000; // 30 minutes
-
-  shell.onData((data) => {
-    if (!run.promptInjected || run.status !== 'running') return;
-    completionBytes += data.length;
-    if (completionBytes < COMPLETION_MIN_BYTES) return;
-    if (completionTimer) clearTimeout(completionTimer);
-    completionTimer = setTimeout(() => {
-      if (run.status === 'running') {
-        console.log(`[run:${runId.slice(0,8)}] Task complete (${completionBytes} bytes, 10s idle), sending /exit`);
-        shell.write('/exit\r');
+  // Run in the background; the HTTP response returns immediately with the runId.
+  runAgent({
+    prompt,
+    vaultDir: userVault,
+    runId,
+    model,
+    maxBudgetUsd: reservation.perRunCapUsd,
+    maxTurns: 30,
+    abortController,
+    onEvent: (e) => {
+      if (e.type === 'assistant_text') {
+        broadcast(`\r\n${e.content}\r\n`);
+      } else if (e.type === 'tool_use') {
+        run.toolCount++;
+        broadcast(`\x1b[36m▸ ${e.tool}\x1b[0m ${summarizeToolInput(e.tool, e.input)}\r\n`);
+        recordSource(run.userId, run.projectId, e.tool, e.input, runId).catch(() => {});
       }
-    }, COMPLETION_SETTLE_MS);
-  });
-
-  // Max duration fallback — force-exit stuck runs
-  const maxRunTimer = setTimeout(() => {
-    if (run.status === 'running') {
-      console.log(`[run:${runId.slice(0,8)}] Max duration reached, forcing exit`);
-      shell.write('/exit\r');
-    }
-  }, MAX_RUN_DURATION);
-
-  shell.onExit(({ exitCode }) => {
-    run.status = exitCode === 0 ? 'completed' : 'failed';
+    },
+  }).then(async (result) => {
+    if (run.status === 'running') run.status = 'completed';
     run.finishedAt = new Date().toISOString();
-    if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
-    console.log(`[run:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
-    // Notify connected clients the session ended, then close the WebSocket
-    // so the frontend's ws.onclose fires and updates the tab icon
-    for (const ws of run.clients) {
-      try {
-        ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`);
-        ws.close();
-      } catch {}
-    }
-    // Clean up timers
-    if (settleTimer) clearTimeout(settleTimer);
-    if (maxTimer) clearTimeout(maxTimer);
-    if (completionTimer) clearTimeout(completionTimer);
-    clearTimeout(maxRunTimer);
+    await quota.recordUsage(req.userId, result.costUsd);
+    broadcast(`\r\n\x1b[32m[run complete · $${Math.round((result.costUsd || 0) * 10000) / 10000}]\x1b[0m\r\n`);
+  }).catch(async (err) => {
+    if (run.status !== 'cancelled') run.status = 'failed';
+    run.finishedAt = new Date().toISOString();
+    run.error = err.message;
+    await quota.recordUsage(req.userId, 0).catch(() => {});
+    broadcast(`\r\n\x1b[31m[run ${run.status}: ${err.message}]\x1b[0m\r\n`);
+  }).finally(() => {
+    for (const ws of run.clients) { try { ws.close(); } catch {} }
     setTimeout(() => activeRuns.delete(runId), 1800000);
   });
 
@@ -2114,16 +2108,17 @@ app.delete(`${API_PREFIX}/runs/:id`, (req, res) => {
   if (entry.userId !== req.userId) {
     return res.status(403).json({ error: 'Not authorized' });
   }
-  if (entry.status === 'running' && entry.shell) {
-    entry.shell.kill();
+  if (entry.status === 'running' && entry.abortController) {
+    try { entry.abortController.abort(); } catch { /* noop */ }
     entry.status = 'cancelled';
     entry.finishedAt = new Date().toISOString();
   }
   res.json({ status: entry.status });
 });
 
-// --- Run Terminal WebSocket Handler ---
-// Bidirectional: streams PTY output to clients, relays client input to PTY.
+// --- Run WebSocket Handler ---
+// Read-only: streams the agent's run log to connected clients. Runs are not
+// interactive under the SDK, so client input is ignored.
 
 runWss.on('connection', (ws, runId, request) => {
   const run = activeRuns.get(runId);
@@ -2150,61 +2145,15 @@ runWss.on('connection', (ws, runId, request) => {
     ws.send(`\r\n\x1b[33m[Session ${run.status}]\x1b[0m\r\n`);
   }
 
-  // Relay client input to the PTY (bidirectional)
-  ws.on('message', (msg) => {
-    if (run.status !== 'running' || !run.shell) return;
-    const str = msg.toString();
-    // Handle resize messages (prefixed with \x01)
-    if (str.startsWith('\x01')) {
-      try {
-        const { cols, rows } = JSON.parse(str.slice(1));
-        run.shell.resize(cols, rows);
-      } catch {
-        // Not a valid resize message — send as input
-        run.shell.write(str);
-      }
-    } else {
-      run.shell.write(str);
-    }
-  });
-
+  // Runs are read-only — ignore any client input.
   ws.on('close', () => {
     run.clients.delete(ws);
     console.log(`[run:${runId.slice(0,8)}] Client disconnected`);
   });
 });
 
-// --- Token Security ---
-
-// Revoke stored auth tokens (per-user)
-app.delete(`${API_PREFIX}/auth`, async (req, res) => {
-  const userVault = getUserVaultRoot(req.userId);
-  const credPaths = [
-    path.join(userVault, '.claude', 'credentials.json'),
-    path.join(userVault, '.claude', '.credentials.json'),
-    path.join(userVault, '.claude.json'),
-  ];
-  let revoked = 0;
-  for (const p of credPaths) {
-    try {
-      if (existsSync(p)) { await fs.unlink(p); revoked++; }
-    } catch { /* best effort */ }
-  }
-  try {
-    const configDir = path.join(userVault, '.claude');
-    if (existsSync(configDir)) {
-      const entries = await fs.readdir(configDir, { withFileTypes: true });
-      for (const entry of entries) {
-        if (entry.isFile() && (entry.name.includes('token') || entry.name.includes('auth') || entry.name.includes('credential'))) {
-          await fs.unlink(path.join(configDir, entry.name));
-          revoked++;
-        }
-      }
-    }
-  } catch { /* directory may not exist */ }
-  console.log(`[auth] Revoked ${revoked} credential files for user ${req.userId}`);
-  res.json({ revoked, message: `Deleted ${revoked} credential file(s). Re-authenticate in the terminal.` });
-});
+// (Removed: DELETE /api/vault/auth — there are no per-user Claude credentials
+// to revoke now that auth is a single operator ANTHROPIC_API_KEY.)
 
 // --- Scheduled Run Executor ---
 // Periodically checks intentions with recurring schedules and spawns runs.
@@ -2272,148 +2221,101 @@ async function runScheduler() {
 
       if ((now - lastRun) < intervalMs) continue;
 
-      // Due — spawn a run
-      if (!pty) {
-        console.warn(`[scheduler] Cannot spawn run — node-pty not available`);
-        continue;
-      }
-
+      // Due — execute a scheduled run via the SDK, gated by quota.
       const prompt = buildServerPrompt(intention);
       const runId = randomUUID();
 
-      console.log(`[scheduler] Triggering run for ${userId}: "${intention.title}" (${runId.slice(0,8)})`);
-
-      try {
-        await ensureUserVault(userId);
-        const runEnv = getCleanEnv(vaultDir);
-        runEnv.CLAUDE_RUN_ID = runId;
-
-        const shell = pty.spawn('claude', ['--dangerously-skip-permissions'], {
-          name: 'xterm-256color',
-          cols: 120,
-          rows: 30,
-          cwd: vaultDir,
-          env: runEnv,
-        });
-
-        const run = {
-          id: runId,
-          intentionId: intention.id || null,
-          title: `[Scheduled] ${intention.title}`,
-          status: 'running',
-          startedAt: new Date().toISOString(),
-          finishedAt: null,
-          toolCount: 0,
-          error: null,
-          userVault: vaultDir,
-          userId,
-          shell,
-          promptInjected: false,
-          clients: new Set(),
-          outputBuffer: '',
-        };
-        activeRuns.set(runId, run);
-
-        // Buffer output (same as manual runs)
-        const MAX_BUFFER = 100 * 1024;
-        function broadcast(text) {
-          run.outputBuffer += text;
-          if (run.outputBuffer.length > MAX_BUFFER) {
-            run.outputBuffer = run.outputBuffer.slice(-MAX_BUFFER);
-          }
-          for (const ws of run.clients) {
-            try { ws.send(text); } catch {}
-          }
-        }
-
-        shell.onData((data) => { broadcast(data); });
-
-        // Prompt injection (same settle pattern)
-        let settleT = null;
-        const maxT = setTimeout(() => {
-          if (!run.promptInjected) {
-            run.promptInjected = true;
-            shell.write(prompt + '\r');
-            console.log(`[scheduler:${runId.slice(0,8)}] Prompt injected`);
-          }
-        }, 10000);
-
-        shell.onData(() => {
-          if (run.promptInjected) return;
-          if (settleT) clearTimeout(settleT);
-          settleT = setTimeout(() => {
-            if (!run.promptInjected) {
-              run.promptInjected = true;
-              if (maxT) clearTimeout(maxT);
-              shell.write(prompt + '\r');
-              console.log(`[scheduler:${runId.slice(0,8)}] Prompt injected`);
-            }
-          }, 1500);
-        });
-
-        // Completion detection (same as manual runs)
-        let compBytes = 0;
-        let compTimer = null;
-        shell.onData((data) => {
-          if (!run.promptInjected || run.status !== 'running') return;
-          compBytes += data.length;
-          if (compBytes < 5000) return;
-          if (compTimer) clearTimeout(compTimer);
-          compTimer = setTimeout(() => {
-            if (run.status === 'running') {
-              shell.write('/exit\r');
-              console.log(`[scheduler:${runId.slice(0,8)}] Task complete (${compBytes} bytes, 10s idle), sending /exit`);
-            }
-          }, 10000);
-        });
-
-        shell.onExit(({ exitCode }) => {
-          run.status = exitCode === 0 ? 'completed' : 'failed';
-          run.finishedAt = new Date().toISOString();
-          if (exitCode !== 0) run.error = `Exited with code ${exitCode}`;
-          console.log(`[scheduler:${runId.slice(0,8)}] ${run.status} (exit ${exitCode})`);
-          for (const ws of run.clients) {
-            try {
-              ws.send(`\r\n\x1b[${exitCode === 0 ? '32' : '31'}m[Session ended]\x1b[0m\r\n`);
-              ws.close();
-            } catch {}
-          }
-          if (settleT) clearTimeout(settleT);
-          clearTimeout(maxT);
-          if (compTimer) clearTimeout(compTimer);
-          appendSchedulerLog(vaultDir, {
-            timestamp: new Date().toISOString(),
-            intentionId: intention.id,
-            title: intention.title,
-            event: run.status,
-            runId,
-            error: run.error || undefined,
-          });
-          setTimeout(() => activeRuns.delete(runId), 1800000);
-        });
-
-        // Update lastRunAt
-        intention.lastRunAt = new Date().toISOString();
-        changed = true;
-
+      await ensureUserVault(userId);
+      const reservation = await quota.checkAndReserve(userId, runId).catch(() => ({ ok: false, reason: 'error' }));
+      if (!reservation.ok) {
+        console.log(`[scheduler] Skipping "${intention.title}" for ${userId}: quota ${reservation.reason}`);
         await appendSchedulerLog(vaultDir, {
           timestamp: new Date().toISOString(),
           intentionId: intention.id,
           title: intention.title,
-          event: 'started',
-          runId,
+          event: 'skipped',
+          reason: reservation.reason,
         });
+        continue;
+      }
 
-      } catch (err) {
-        console.error(`[scheduler] Failed to spawn run for ${userId}:`, err.message);
+      console.log(`[scheduler] Triggering run for ${userId}: "${intention.title}" (${runId.slice(0,8)})`);
+      const schedModel = pickModel({ intentionType: intention.type });
+      const run = {
+        id: runId,
+        intentionId: intention.id || null,
+        title: `[Scheduled] ${intention.title}`,
+        status: 'running',
+        startedAt: new Date().toISOString(),
+        finishedAt: null,
+        toolCount: 0,
+        error: null,
+        userVault: vaultDir,
+        userId,
+        abortController: new AbortController(),
+        clients: new Set(),
+        outputBuffer: '',
+      };
+      activeRuns.set(runId, run);
+
+      const schedBroadcast = (text) => {
+        run.outputBuffer += text;
+        if (run.outputBuffer.length > 100000) run.outputBuffer = run.outputBuffer.slice(-80000);
+        for (const ws of run.clients) { try { ws.send(text); } catch {} }
+      };
+
+      // Fire-and-forget; lastRunAt is bumped immediately so we don't re-trigger.
+      runAgent({
+        prompt,
+        vaultDir,
+        runId,
+        model: schedModel,
+        maxBudgetUsd: reservation.perRunCapUsd,
+        maxTurns: 30,
+        abortController: run.abortController,
+        onEvent: (e) => {
+          if (e.type === 'assistant_text') schedBroadcast(`\r\n${e.content}\r\n`);
+          else if (e.type === 'tool_use') { run.toolCount++; schedBroadcast(`\x1b[36m▸ ${e.tool}\x1b[0m ${summarizeToolInput(e.tool, e.input)}\r\n`); }
+        },
+      }).then(async (result) => {
+        if (run.status === 'running') run.status = 'completed';
+        run.finishedAt = new Date().toISOString();
+        await quota.recordUsage(userId, result.costUsd);
+        await appendSchedulerLog(vaultDir, {
+          timestamp: new Date().toISOString(),
+          intentionId: intention.id,
+          title: intention.title,
+          event: 'completed',
+          runId,
+          costUsd: result.costUsd,
+        });
+      }).catch(async (err) => {
+        run.status = 'failed';
+        run.finishedAt = new Date().toISOString();
+        run.error = err.message;
+        await quota.recordUsage(userId, 0).catch(() => {});
         await appendSchedulerLog(vaultDir, {
           timestamp: new Date().toISOString(),
           intentionId: intention.id,
           title: intention.title,
           event: 'failed',
+          runId,
           error: err.message,
         });
-      }
+      }).finally(() => {
+        for (const ws of run.clients) { try { ws.close(); } catch {} }
+        setTimeout(() => activeRuns.delete(runId), 1800000);
+      });
+
+      intention.lastRunAt = new Date().toISOString();
+      changed = true;
+      await appendSchedulerLog(vaultDir, {
+        timestamp: new Date().toISOString(),
+        intentionId: intention.id,
+        title: intention.title,
+        event: 'started',
+        runId,
+      });
     }
 
     if (changed) {
@@ -2422,16 +2324,49 @@ async function runScheduler() {
   }
 }
 
-// Run scheduler every 60 seconds
-setInterval(runScheduler, 60000);
-// Also run once after startup (with a delay to let the server initialize)
-setTimeout(runScheduler, 5000);
+// Scheduler is OFF by default. Autonomous recurring runs are the biggest
+// silent-spend risk on a single operator API key, so they only run when
+// explicitly enabled — and even then every run goes through the quota gate.
+if (process.env.ENABLE_SCHEDULER === '1') {
+  console.log('[scheduler] Enabled — recurring intentions will run (quota-gated)');
+  setInterval(runScheduler, 60000);
+  setTimeout(runScheduler, 5000);
+} else {
+  console.log('[scheduler] Disabled (set ENABLE_SCHEDULER=1 to enable recurring runs)');
+}
+
+// --- Scale-to-zero heartbeat ---
+// Refresh the activity heartbeat every 60s while there's any sign of life: an
+// in-flight agent run, an open chat WebSocket, or HTTP activity within the last
+// window. When all three are quiet the heartbeat goes stale and the scaler
+// Lambda reaps the service to desired_count=0 (idle cost → $0).
+setInterval(() => {
+  const active =
+    activeRuns.size > 0 ||
+    openChatConnections > 0 ||
+    (Date.now() - lastActivityAt) < ACTIVITY_WINDOW_MS;
+  if (active) quota.touchHeartbeat().catch(() => {});
+}, 60_000);
 
 // --- Start Server ---
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[server] Research Workspace backend listening on port ${PORT}`);
-  console.log(`[server] Vault root: ${VAULT_ROOT}`);
-  console.log(`[server] Per-user vaults: ${VAULT_ROOT}/vaults/{userId}/`);
-  console.log(`[server] API prefix: ${API_PREFIX}`);
+  const hasKey = !!process.env.ANTHROPIC_API_KEY;
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('  Research Workspace backend — Claude Agent SDK');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log(`  Listening      : http://localhost:${PORT}`);
+  console.log(`  Vault root     : ${VAULT_ROOT}`);
+  console.log(`  Per-user vaults: ${VAULT_ROOT}/vaults/{userId}/`);
+  console.log(`  API prefix     : ${API_PREFIX}`);
+  console.log(`  Agent auth     : ANTHROPIC_API_KEY ${hasKey ? 'set ✓' : 'NOT SET ✗ (agent runs will fail until set)'}`);
+  console.log('  ---------------------------------------------------------------');
+  console.log('  Watch this log for activity:');
+  console.log('    [http]      every HTTP request (method, path, status, user)');
+  console.log('    [chat]      chat sessions + agent runs started');
+  console.log('    [run:xxxx]  agent run lifecycle');
+  console.log('    [tool] / hooks → tool calls logged to each vault\'s .activity.json');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log('');
 });

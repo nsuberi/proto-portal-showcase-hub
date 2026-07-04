@@ -89,8 +89,8 @@ export default function AgentActivityStrip({
       {/* Header bar */}
       <div className="glass-header flex items-center justify-between px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <Shield className="w-3.5 h-3.5 text-on-surface-variant/60" />
-          <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/60">
+          <Shield className="w-3.5 h-3.5 text-on-surface-variant/80" />
+          <span className="font-label text-xs font-semibold uppercase tracking-wider text-on-surface-variant/80">
             Agent Activity
           </span>
           {runs.some((r) => r.status === "running") && (
@@ -106,14 +106,14 @@ export default function AgentActivityStrip({
             className={`px-1.5 py-0.5 rounded text-[9px] font-label transition-colors ${
               polling
                 ? "text-accent-success bg-accent-success/10"
-                : "text-on-surface-variant/40 bg-on-surface/[0.04]"
+                : "text-on-surface-variant/65 bg-on-surface/[0.04]"
             }`}
           >
             {polling ? "Live" : "Paused"}
           </button>
           <button
             onClick={clearLog}
-            className="p-0.5 text-on-surface-variant/40 hover:text-error transition-colors"
+            className="p-0.5 text-on-surface-variant/65 hover:text-error transition-colors"
             title="Clear log"
           >
             <Trash2 className="w-3 h-3" />
@@ -150,7 +150,7 @@ export default function AgentActivityStrip({
         ) : visibleRuns.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
             <Shield className="w-8 h-8 text-on-surface-variant/15 mb-2" />
-            <p className="font-label text-[10px] text-on-surface-variant/30">
+            <p className="font-label text-[10px] text-on-surface-variant/60">
               Agent tool use is audited here.
             </p>
             <p className="font-label text-[10px] text-on-surface-variant/20 mt-1">
