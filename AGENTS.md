@@ -114,6 +114,8 @@ GitHub Actions (`.github/workflows/deploy.yml`) runs on push to `main`:
 
 See `terraform/AGENTS.md` for detailed infrastructure guidance.
 
+**Cost discipline:** the expected AWS spend model lives in [`billing.md`](billing.md) (~$30/mo idle, scale-to-zero architecture). Any change to deployed infrastructure must update that file — the checklist is in `terraform/AGENTS.md` → "Cost Impact of Changes".
+
 Key resources: S3 (static hosting), CloudFront (CDN + SPA routing), Lambda (API), API Gateway, Route53 (DNS), Secrets Manager.
 
 State stored in S3 with DynamoDB locking.

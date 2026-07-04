@@ -96,6 +96,8 @@ aws sts get-caller-identity          # verifies; the CLI assumes the role under 
 
 **ARM64:** ECS uses Graviton. Do NOT add `--platform linux/amd64` to Docker builds. CI uses ARM64 runners.
 
+**Cost model:** `billing.md` tracks expected AWS spend (~$30/mo idle, scale-to-zero). Every infrastructure change MUST update it — see `terraform/AGENTS.md` → "Cost Impact of Changes".
+
 ## Git Commits
 
 - Conventional prefixes: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
